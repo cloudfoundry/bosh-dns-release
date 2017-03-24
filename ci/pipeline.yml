@@ -1,0 +1,16 @@
+---
+jobs:
+- name: test-unit
+  public: true
+  plan:
+    - get: dns-release
+      trigger: true
+    - task: test-unit
+      file: dns-release/ci/tasks/test-unit.yml
+
+resources:
+- name: dns-release
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/dns-release
+    branch: master

@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"time"
 
-	"fmt"
 	"github.com/miekg/dns"
 	"net"
 )
@@ -23,7 +22,6 @@ var _ = Describe("main", func() {
 	})
 
 	AfterEach(func() {
-		fmt.Println("in the after each")
 		cmd.Process.Kill()
 	})
 
