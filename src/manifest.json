@@ -1,0 +1,13 @@
+{
+    "dependencies": {
+        "github.com/miekg/dns": {
+            "branch": "master"
+        },
+        "github.com/onsi/ginkgo": {
+            "branch": "master"
+        },
+        "github.com/onsi/gomega": {
+            "branch": "master"
+        }
+    }
+}
