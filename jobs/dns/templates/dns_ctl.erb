@@ -8,6 +8,7 @@ DNS_PACKAGE=/var/vcap/packages/dns
 
 function start_dns() {
   "${DNS_PACKAGE}/bin/dns" \
+    --config "${JOB_DIR}/config/config.json" \
     1> >(tee -a ${LOG_DIR}/dns.stdout.log) \
     2> >(tee -a ${LOG_DIR}/dns.stderr.log) &
 

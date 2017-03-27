@@ -3,6 +3,7 @@ name: dns
 
 templates:
   dns_ctl.erb: bin/dns_ctl
+  config.json.erb: config/config.json
 
 packages:
   - dns

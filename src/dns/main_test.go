@@ -1,6 +1,8 @@
 package main_test
 
 import (
+	"fmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -11,20 +13,112 @@ import (
 
 	"net"
 
+	"io/ioutil"
+	"strconv"
+
 	"github.com/miekg/dns"
 )
 
+func getFreePort() (int, error) {
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+	l.Close()
+
+	_, port, err := net.SplitHostPort(l.Addr().String())
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.Atoi(port)
+}
+
 var _ = Describe("main", func() {
 	var (
-		cmd *exec.Cmd
+		cmd           *exec.Cmd
+		listenAddress string
+		listenPort    int
 	)
 
 	BeforeEach(func() {
-		cmd = exec.Command(pathToServer)
+		configFile, err := ioutil.TempFile("", "")
+		Expect(err).NotTo(HaveOccurred())
+
+		listenAddress = "127.0.0.1"
+		listenPort, err = getFreePort()
+		Expect(err).NotTo(HaveOccurred())
+
+		_, err = configFile.Write([]byte(fmt.Sprintf(`{
+			"dns": {
+				"address": "%s",
+				"port": %d
+			}
+		}`, listenAddress, listenPort)))
+
+		Expect(err).NotTo(HaveOccurred())
+
+		args := []string{
+			"--config",
+			configFile.Name(),
+		}
+
+		cmd = exec.Command(pathToServer, args...)
 	})
 
 	AfterEach(func() {
 		cmd.Process.Kill()
+	})
+
+	Describe("flags", func() {
+		It("exits 1 if the config file has not been provided", func() {
+			cmd = exec.Command(pathToServer)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			session.Wait()
+
+			Expect(session.ExitCode()).To(Equal(1))
+			Expect(string(session.Out.Contents())).To(ContainSubstring("--config is a required flag"))
+		})
+
+		It("exits 1 if the config file does not exist", func() {
+			args := []string{
+				"--config",
+				"some/fake/path",
+			}
+
+			cmd = exec.Command(pathToServer, args...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			session.Wait()
+
+			Expect(session.ExitCode()).To(Equal(1))
+			Expect(string(session.Out.Contents())).To(ContainSubstring("some/fake/path: no such file or directory"))
+		})
+
+		It("exits 1 if the config file is busted", func() {
+			configFile, err := ioutil.TempFile("", "")
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = configFile.Write([]byte(fmt.Sprintf(`%%%`)))
+			Expect(err).NotTo(HaveOccurred())
+
+			args := []string{
+				"--config",
+				configFile.Name(),
+			}
+
+			cmd = exec.Command(pathToServer, args...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			session.Wait()
+
+			Expect(session.ExitCode()).To(Equal(1))
+			Expect(string(session.Out.Contents())).To(ContainSubstring("invalid character '%' looking for beginning of value"))
+		})
 	})
 
 	DescribeTable("it responds to DNS requests",
@@ -44,7 +138,7 @@ var _ = Describe("main", func() {
 			zone := "example.com"
 
 			m.SetQuestion(dns.Fqdn(zone), dns.TypeANY)
-			r, _, err := c.Exchange(m, "127.0.0.1:9955")
+			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
@@ -75,7 +169,7 @@ var _ = Describe("main", func() {
 			m.Question = append(m.Question, dns.Question{".", dns.TypeANY, dns.ClassINET})
 		}
 
-		r, _, err := c.Exchange(m, "127.0.0.1:9955")
+		r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
@@ -83,7 +177,7 @@ var _ = Describe("main", func() {
 	})
 
 	It("exits 1 when fails to bind to the tcp port", func() {
-		listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 9955})
+		listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP(listenAddress), Port: listenPort})
 		Expect(err).NotTo(HaveOccurred())
 		defer listener.Close()
 
@@ -96,7 +190,7 @@ var _ = Describe("main", func() {
 	})
 
 	It("exits 1 when fails to bind to the udp port", func() {
-		listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 9955})
+		listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(listenAddress), Port: listenPort})
 		Expect(err).NotTo(HaveOccurred())
 		defer listener.Close()
 
