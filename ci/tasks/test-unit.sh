@@ -32,5 +32,5 @@ ln -s $PWD/dns-release/src/vendor/github.com/onsi/ginkgo $PWD/go/src/github.com/
 go install github.com/onsi/ginkgo/ginkgo
 
 pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src
-    ginkgo -r .
+    ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
 popd
