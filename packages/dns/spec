@@ -1,0 +1,8 @@
+---
+name: dns
+
+dependencies:
+- golang
+
+files:
+- ./**/*

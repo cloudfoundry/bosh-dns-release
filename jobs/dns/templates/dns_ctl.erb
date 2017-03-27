@@ -1,0 +1,40 @@
+#!/bin/bash -exu
+
+RUN_DIR=/var/vcap/sys/run/dns
+PIDFILE=$RUN_DIR/dns.pid
+LOG_DIR=/var/vcap/sys/log/dns
+JOB_DIR=/var/vcap/jobs/dns
+DNS_PACKAGE=/var/vcap/packages/dns
+
+function start_dns() {
+  "${DNS_PACKAGE}/bin/dns" \
+    1> >(tee -a ${LOG_DIR}/dns.stdout.log) \
+    2> >(tee -a ${LOG_DIR}/dns.stderr.log) &
+
+   echo $! > $PIDFILE
+}
+
+function stop_dns() {
+    kill -9 $(cat $PIDFILE)
+    rm -f $PIDFILE
+}
+
+function main() {
+  mkdir -p "${RUN_DIR}"
+
+  case ${1} in
+        start)
+          start_dns
+          ;;
+
+        stop)
+          stop_dns
+          ;;
+
+        *)
+    echo "Usage: ${0} {start|stop}"
+          ;;
+  esac
+}
+
+main $@

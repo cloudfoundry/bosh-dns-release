@@ -20,7 +20,7 @@ var (
 var _ = BeforeSuite(func() {
 	var err error
 
-	pathToServer, err = gexec.Build("github.com/cloudfoundry/dns-release/src")
+	pathToServer, err = gexec.Build("github.com/cloudfoundry/dns-release/src/dns")
 	Expect(err).NotTo(HaveOccurred())
 })
 

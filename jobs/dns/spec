@@ -1,0 +1,20 @@
+---
+name: dns
+
+templates:
+  dns_ctl.erb: bin/dns_ctl
+
+packages:
+  - dns
+
+provides: []
+
+consumes: []
+
+properties:
+  dns.address:
+    description: "Address in which the DNS server will bind"
+    default: 127.0.0.1
+  dns.port:
+    description: "Port that the DNS server will bind to"
+    default: 53
