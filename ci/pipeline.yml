@@ -15,6 +15,7 @@ jobs:
       trigger: true
       passed: [test-unit]
     - task: test-acceptance
+      privileged: true
       file: dns-release/ci/tasks/test-acceptance.yml
 
 resources:
