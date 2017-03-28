@@ -8,6 +8,15 @@ jobs:
     - task: test-unit
       file: dns-release/ci/tasks/test-unit.yml
 
+- name: test-acceptance
+  public: true
+  plan:
+    - get: dns-release
+      trigger: true
+      passed: [test-unit]
+    - task: test-acceptance
+      file: dns-release/ci/tasks/test-acceptance.yml
+
 resources:
 - name: dns-release
   type: git
