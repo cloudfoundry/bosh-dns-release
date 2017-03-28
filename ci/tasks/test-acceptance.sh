@@ -10,7 +10,8 @@ source /tmp/local-bosh/director/env
 bosh int /tmp/local-bosh/director/creds.yml --path /jumpbox_ssh/private_key > /tmp/jumpbox_ssh_key.pem
 chmod 400 /tmp/jumpbox_ssh_key.pem
 
-export BOSH_SSH_PRIVATE_KEY_PATH="/tmp/jumpbox_ssh_key.pem"
+export BOSH_GW_PRIVATE_KEY="/tmp/jumpbox_ssh_key.pem"
+export BOSH_GW_USER="jumpbox"
 export BOSH_DIRECTOR_IP="10.245.0.3"
 export BOSH_BINARY_PATH=$(which bosh)
 export BOSH_DEPLOYMENT="bosh-dns"

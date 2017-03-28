@@ -1,21 +1,20 @@
 package acceptance_test
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"os/exec"
 
+	"time"
+
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-	"time"
 )
 
 var _ = Describe("Integration", func() {
 	It("should start a dns server on port 53", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", fmt.Sprintf("--gw-private-key=%s", sshPrivateKeyPath), "--gw-user=jumpbox", "-c", "sudo lsof -i :53"}...)
+		cmd := exec.Command(boshBinaryPath, []string{"ssh", "-c", "sudo lsof -i :53"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -25,7 +24,7 @@ var _ = Describe("Integration", func() {
 	})
 
 	It("should respond to tcp dns queries", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", fmt.Sprintf("--gw-private-key=%s", sshPrivateKeyPath), "--gw-user=jumpbox", "-c", "dig +tcp bosh.io @127.0.0.1"}...)
+		cmd := exec.Command(boshBinaryPath, []string{"ssh", "-c", "dig +tcp bosh.io @127.0.0.1"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -37,7 +36,7 @@ var _ = Describe("Integration", func() {
 	})
 
 	It("should respond to udp dns queries", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", fmt.Sprintf("--gw-private-key=%s", sshPrivateKeyPath), "--gw-user=jumpbox", "-c", "dig +notcp bosh.io @127.0.0.1"}...)
+		cmd := exec.Command(boshBinaryPath, []string{"ssh", "-c", "dig +notcp bosh.io @127.0.0.1"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 

@@ -16,17 +16,17 @@ func TestAcceptance(t *testing.T) {
 }
 
 var (
-	sshPrivateKeyPath string
-	boshBinaryPath    string
+	boshBinaryPath string
 )
 var _ = BeforeSuite(func() {
-	sshPrivateKeyPath = assertEnvExists("BOSH_SSH_PRIVATE_KEY_PATH")
 	boshBinaryPath = assertEnvExists("BOSH_BINARY_PATH")
 	assertEnvExists("BOSH_CLIENT")
 	assertEnvExists("BOSH_CLIENT_SECRET")
 	assertEnvExists("BOSH_CA_CERT")
 	assertEnvExists("BOSH_ENVIRONMENT")
 	assertEnvExists("BOSH_DEPLOYMENT")
+	assertEnvExists("BOSH_GW_PRIVATE_KEY")
+	assertEnvExists("BOSH_GW_USER")
 })
 
 func assertEnvExists(envName string) string {
