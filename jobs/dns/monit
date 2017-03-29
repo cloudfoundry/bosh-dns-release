@@ -1,5 +1,7 @@
 check process dns
   with pidfile /var/vcap/sys/run/dns/dns.pid
   start program "/var/vcap/jobs/dns/bin/dns_ctl start"
+    as uid vcap and gid vcap
   stop program "/var/vcap/jobs/dns/bin/dns_ctl stop"
+    as uid vcap and gid vcap
   group vcap

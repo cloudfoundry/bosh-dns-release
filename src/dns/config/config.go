@@ -7,10 +7,6 @@ import (
 )
 
 type Config struct {
-	DNS DNSConfig
-}
-
-type DNSConfig struct {
 	Address string
 	Port    int
 }
@@ -26,7 +22,7 @@ func LoadFromFile(configFilePath string) (Config, error) {
 		return Config{}, err
 	}
 
-	if c.DNS.Port == 0 {
+	if c.Port == 0 {
 		return Config{}, errors.New("port is required")
 	}
 

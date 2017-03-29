@@ -57,14 +57,14 @@ func main() {
 
 	wg.Add(1)
 	go func() {
-		if createServer("tcp", c.DNS.Address, c.DNS.Port, &wg) != nil {
+		if createServer("tcp", c.Address, c.Port, &wg) != nil {
 			os.Exit(1)
 		}
 	}()
 
 	wg.Add(1)
 	go func() {
-		if createServer("udp", c.DNS.Address, c.DNS.Port, &wg) != nil {
+		if createServer("udp", c.Address, c.Port, &wg) != nil {
 			os.Exit(1)
 		}
 	}()

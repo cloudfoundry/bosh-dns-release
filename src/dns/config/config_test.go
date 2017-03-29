@@ -26,19 +26,15 @@ var _ = Describe("Config", func() {
 
 	It("returns config from a config file", func() {
 		configFilePath := writeConfigFile(fmt.Sprintf(`{
-			"dns": {
-				"address": "%s",
-				"port": %d
-			}
+		  "address": "%s",
+		  "port": %d
 		}`, listenAddress, listenPort))
 
 		dnsConfig, err := config.LoadFromFile(configFilePath)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dnsConfig).To(Equal(config.Config{
-			DNS: config.DNSConfig{
-				Address: listenAddress,
-				Port:    listenPort,
-			},
+			Address: listenAddress,
+			Port:    listenPort,
 		}))
 	})
 
@@ -56,7 +52,7 @@ var _ = Describe("Config", func() {
 	})
 
 	It("returns error if port is not found", func() {
-		configFilePath := writeConfigFile(`{"dns": {"address": "127.0.0.1"}}`)
+		configFilePath := writeConfigFile(`{"address": "127.0.0.1"}`)
 
 		_, err := config.LoadFromFile(configFilePath)
 		Expect(err).To(MatchError("port is required"))

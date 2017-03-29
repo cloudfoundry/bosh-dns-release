@@ -50,10 +50,8 @@ var _ = Describe("main", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		_, err = configFile.Write([]byte(fmt.Sprintf(`{
-			"dns": {
-				"address": "%s",
-				"port": %d
-			}
+		  "address": "%s",
+		  "port": %d
 		}`, listenAddress, listenPort)))
 
 		Expect(err).NotTo(HaveOccurred())
