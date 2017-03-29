@@ -1,4 +1,5 @@
 ---
+name: dns
 blobstore:
   provider: s3
   options:
