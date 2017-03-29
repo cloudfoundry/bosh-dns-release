@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
-
 	"time"
 
 	"github.com/cloudfoundry/dns-release/src/dns/config"
@@ -54,13 +53,6 @@ var _ = Describe("Config", func() {
 
 		_, err := config.LoadFromFile(configFilePath)
 		Expect(err).To(MatchError(ContainSubstring("unexpected end of JSON input")))
-	})
-
-	It("returns error if address is not a valid ipv4 address", func() {
-		configFilePath := writeConfigFile(`{"dns": {"address": "%%%%%%%", "port": 100}}`)
-
-		_, err := config.LoadFromFile(configFilePath)
-		Expect(err).To(MatchError("address is not ipv4"))
 	})
 
 	It("returns error if port is not found", func() {
