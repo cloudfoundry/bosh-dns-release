@@ -25,8 +25,6 @@ var _ = BeforeSuite(func() {
 	assertEnvExists("BOSH_CA_CERT")
 	assertEnvExists("BOSH_ENVIRONMENT")
 	assertEnvExists("BOSH_DEPLOYMENT")
-	assertEnvExists("BOSH_GW_PRIVATE_KEY")
-	assertEnvExists("BOSH_GW_USER")
 })
 
 func assertEnvExists(envName string) string {
