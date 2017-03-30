@@ -4,7 +4,6 @@ name: dns
 templates:
   dns_ctl.erb: bin/dns_ctl
   config.json.erb: config/config.json
-  pre-start.erb: bin/pre-start
 
 packages:
   - dns
