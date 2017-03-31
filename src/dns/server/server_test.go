@@ -57,9 +57,13 @@ func udpServerStub(bindAddress string, timeout time.Duration, stop chan struct{}
 
 		buf := make([]byte, 1)
 		for {
-			_, addr, err := listener.ReadFrom(buf)
+			n, addr, err := listener.ReadFrom(buf)
 			if err != nil {
 				return err
+			}
+
+			if n == 0 {
+				return errors.New("not enough bytes read")
 			}
 
 			if _, err := listener.WriteTo(buf, addr); err != nil {

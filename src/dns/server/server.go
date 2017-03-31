@@ -59,7 +59,7 @@ func (s Server) ListenAndServe() error {
 				continue
 			}
 
-			if _, err := conn.Write([]byte{}); err != nil {
+			if _, err := conn.Write([]byte{0x00}); err != nil {
 				continue
 			}
 
