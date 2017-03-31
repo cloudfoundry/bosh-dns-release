@@ -4,11 +4,32 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"time"
 )
 
 type Config struct {
 	Address string
 	Port    int
+	Timeout Timeout
+}
+
+type Timeout time.Duration
+
+func (t *Timeout) UnmarshalJSON(b []byte) error {
+	var s string
+
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	timeoutDuration, err := time.ParseDuration(s)
+	if err != nil {
+		return err
+	}
+
+	*t = Timeout(timeoutDuration)
+
+	return nil
 }
 
 func LoadFromFile(configFilePath string) (Config, error) {
@@ -17,7 +38,10 @@ func LoadFromFile(configFilePath string) (Config, error) {
 		return Config{}, err
 	}
 
-	c := Config{}
+	c := Config{
+		Timeout: Timeout(5 * time.Second),
+	}
+
 	if err := json.Unmarshal(configFileContents, &c); err != nil {
 		return Config{}, err
 	}

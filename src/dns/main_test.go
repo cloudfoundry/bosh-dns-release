@@ -17,6 +17,7 @@ import (
 	"strconv"
 
 	"github.com/miekg/dns"
+	"github.com/onsi/gomega/gbytes"
 )
 
 func getFreePort() (int, error) {
@@ -74,9 +75,7 @@ var _ = Describe("main", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			session.Wait()
-
-			Expect(session.ExitCode()).To(Equal(1))
+			Eventually(session).Should(gexec.Exit(1))
 			Expect(string(session.Out.Contents())).To(ContainSubstring("--config is a required flag"))
 		})
 
@@ -112,9 +111,7 @@ var _ = Describe("main", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			session.Wait()
-
-			Expect(session.ExitCode()).To(Equal(1))
+			Eventually(session).Should(gexec.Exit(1))
 			Expect(string(session.Out.Contents())).To(ContainSubstring("invalid character '%' looking for beginning of value"))
 		})
 	})
@@ -154,6 +151,7 @@ var _ = Describe("main", func() {
 		}()
 
 		time.Sleep(1 * time.Second)
+
 		c := new(dns.Client)
 		c.Net = "udp"
 
@@ -166,7 +164,6 @@ var _ = Describe("main", func() {
 		for i := 0; i < 1800; i++ {
 			m.Question = append(m.Question, dns.Question{".", dns.TypeANY, dns.ClassINET})
 		}
-
 		r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 		Expect(err).NotTo(HaveOccurred())
@@ -183,8 +180,7 @@ var _ = Describe("main", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer cmd.Process.Kill()
 
-		session.Wait()
-		Expect(session.ExitCode()).To(Equal(1))
+		Eventually(session).Should(gexec.Exit(1))
 	})
 
 	It("exits 1 when fails to bind to the udp port", func() {
@@ -196,7 +192,31 @@ var _ = Describe("main", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer cmd.Process.Kill()
 
-		session.Wait()
-		Expect(session.ExitCode()).To(Equal(1))
+		Eventually(session).Should(gexec.Exit(1))
+	})
+
+	It("exits 1 and logs a helpful error message when the server times out binding to ports", func() {
+		configFile, err := ioutil.TempFile("", "")
+		Expect(err).NotTo(HaveOccurred())
+
+		_, err = configFile.Write([]byte(fmt.Sprintf(`{
+		  "address": "%s",
+		  "port": %d,
+		  "timeout": "0s"
+		}`, listenAddress, listenPort)))
+
+		Expect(err).NotTo(HaveOccurred())
+
+		args := []string{
+			"--config",
+			configFile.Name(),
+		}
+
+		cmd = exec.Command(pathToServer, args...)
+
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+		Eventually(session).Should(gexec.Exit(1))
+		Eventually(session.Out).Should(gbytes.Say("timed out waiting for server to bind"))
 	})
 })

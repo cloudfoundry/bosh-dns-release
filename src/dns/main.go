@@ -4,19 +4,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"os"
-	"sync"
 
 	"github.com/cloudfoundry/dns-release/src/dns/config"
+	"github.com/cloudfoundry/dns-release/src/dns/server"
 	"github.com/miekg/dns"
+	"time"
 )
-
-func createServer(protocol string, address string, port int, wg *sync.WaitGroup) error {
-	defer wg.Done()
-
-	server := &dns.Server{Addr: fmt.Sprintf("%s:%d", address, port), Net: protocol, UDPSize: 65535}
-	return server.ListenAndServe()
-}
 
 func parseFlags() (string, error) {
 	var configPath string
@@ -53,21 +48,13 @@ func main() {
 		w.WriteMsg(m)
 	})
 
-	wg := sync.WaitGroup{}
+	bindAddress := fmt.Sprintf("%s:%d", c.Address, c.Port)
+	tcpServer := &dns.Server{Addr: bindAddress, Net: "tcp"}
+	udpServer := &dns.Server{Addr: bindAddress, Net: "udp", UDPSize: 65535}
 
-	wg.Add(1)
-	go func() {
-		if createServer("tcp", c.Address, c.Port, &wg) != nil {
-			os.Exit(1)
-		}
-	}()
+	if err := server.New(tcpServer, udpServer, net.Dial, time.Duration(c.Timeout), bindAddress).ListenAndServe(); err != nil {
+		fmt.Println(err)
 
-	wg.Add(1)
-	go func() {
-		if createServer("udp", c.Address, c.Port, &wg) != nil {
-			os.Exit(1)
-		}
-	}()
-
-	wg.Wait()
+		os.Exit(1)
+	}
 }
