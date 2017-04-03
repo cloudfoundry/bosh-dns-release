@@ -22,6 +22,23 @@ type Server struct {
 	bindAddress string
 }
 
+func (s Server) udpHealthCheck() error {
+	conn, err := s.dial("udp", s.bindAddress)
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	if _, err := conn.Write([]byte{0x00}); err != nil {
+		return err
+	}
+
+	_, err = conn.Read(make([]byte, 1))
+
+	return err
+}
+
 func (s Server) ListenAndServe() error {
 	err := make(chan error)
 	go func() {
@@ -43,8 +60,9 @@ func (s Server) ListenAndServe() error {
 
 	go func() {
 		for {
-			_, err := s.dial("tcp", s.bindAddress)
+			conn, err := s.dial("tcp", s.bindAddress)
 			if err == nil {
+				conn.Close()
 				break
 			}
 		}
@@ -54,17 +72,7 @@ func (s Server) ListenAndServe() error {
 
 	go func() {
 		for {
-			conn, err := s.dial("udp", s.bindAddress)
-			if err != nil {
-				continue
-			}
-
-			if _, err := conn.Write([]byte{0x00}); err != nil {
-				continue
-			}
-
-			_, err = conn.Read(make([]byte, 1))
-			if err == nil {
+			if err := s.udpHealthCheck(); err == nil {
 				break
 			}
 		}
