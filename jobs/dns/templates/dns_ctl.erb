@@ -7,8 +7,14 @@ JOB_DIR=/var/vcap/jobs/dns
 DNS_PACKAGE=/var/vcap/packages/dns
 SCRIPT_NAME=dns_ctl
 
-exec > >(tee -a | sed -e "s/^/[`date +\"%Y-%m-%d %H:%M:%S%z\"`] /" >> $LOG_DIR/${SCRIPT_NAME}.log)
-exec 2> >(tee -a |  sed -e "s/^/[`date +\"%Y-%m-%d %H:%M:%S%z\"`] /" >> $LOG_DIR/${SCRIPT_NAME}.err.log)
+function start_logging() {
+  exec > >(prepend_datetime >> $LOG_DIR/${SCRIPT_NAME}.stdout.log)
+  exec 2> >(prepend_datetime >> $LOG_DIR/${SCRIPT_NAME}.stderr.log)
+}
+
+function prepend_datetime() {
+  awk -W interactive '{ system("echo -n [$(date +\"%Y-%m-%d %H:%M:%S%z\")]"); print " " $0 }'
+}
 
 function pid_exists() {
   ps -p $1 &> /dev/null
@@ -25,11 +31,11 @@ function create_directories_and_chown_to_vcap() {
 function start_dns() {
   setcap cap_net_bind_service=+ep ${DNS_PACKAGE}/bin/dns
 
-  exec chpst -u vcap:vcap \
+  chpst -u vcap:vcap \
     "${DNS_PACKAGE}/bin/dns" \
     --config "${JOB_DIR}/config/config.json" \
-    1> ${LOG_DIR}/dns.stdout.log \
-    2> ${LOG_DIR}/dns.stderr.log &
+    1>> ${LOG_DIR}/dns.stdout.log \
+    2>> ${LOG_DIR}/dns.stderr.log &
 
    echo $! > $PIDFILE
 }
@@ -44,13 +50,6 @@ function stop_dns() {
     exit 0
   fi
 
-  if [ ! -z $pid ] && pid_exists $pid
-  then
-    set +e
-    kill $pid
-    set -e
-  fi
-
   if [ -e /proc/$pid ]
   then
     set +e
@@ -63,19 +62,20 @@ function stop_dns() {
 
 function main() {
   create_directories_and_chown_to_vcap
+  start_logging
 
   case ${1} in
-        start)
-          start_dns
-          ;;
+    start)
+      start_dns
+      ;;
 
-        stop)
-          stop_dns
-          ;;
+    stop)
+      stop_dns
+      ;;
 
-        *)
-    echo "Usage: ${0} {start|stop}"
-          ;;
+    *)
+      echo "Usage: ${0} {start|stop}"
+      ;;
   esac
 }
 
