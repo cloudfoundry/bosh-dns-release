@@ -2,12 +2,9 @@ package server
 
 import (
 	"errors"
-	"net"
 	"sync"
 	"time"
 )
-
-type Dialer func(string, string) (net.Conn, error)
 
 //go:generate counterfeiter . ListenAndServer
 type ListenAndServer interface {
@@ -15,70 +12,40 @@ type ListenAndServer interface {
 }
 
 type Server struct {
-	udpServer   ListenAndServer
-	tcpServer   ListenAndServer
-	timeout     time.Duration
-	dial        Dialer
-	bindAddress string
-}
-
-func (s Server) udpHealthCheck() error {
-	conn, err := s.dial("udp", s.bindAddress)
-	if err != nil {
-		return err
-	}
-
-	defer conn.Close()
-
-	if _, err := conn.Write([]byte{0x00}); err != nil {
-		return err
-	}
-
-	_, err = conn.Read(make([]byte, 1))
-
-	return err
+	servers      []ListenAndServer
+	healthchecks []HealthCheck
+	timeout      time.Duration
 }
 
 func (s Server) ListenAndServe() error {
 	err := make(chan error)
-	go func() {
-		err <- s.tcpServer.ListenAndServe()
-	}()
 
-	go func() {
-		err <- s.udpServer.ListenAndServe()
-	}()
+	for _, server := range s.servers {
+		go func(server ListenAndServer) {
+			err <- server.ListenAndServe()
+		}(server)
+	}
 
 	done := make(chan struct{})
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(len(s.healthchecks))
 
 	go func() {
 		wg.Wait()
 		close(done)
 	}()
 
-	go func() {
-		for {
-			conn, err := s.dial("tcp", s.bindAddress)
-			if err == nil {
-				conn.Close()
-				break
+	for _, healthcheck := range s.healthchecks {
+		go func(healthcheck HealthCheck) {
+			for {
+				if err := healthcheck.IsHealthy(); err == nil {
+					break
+				}
 			}
-		}
 
-		wg.Done()
-	}()
-
-	go func() {
-		for {
-			if err := s.udpHealthCheck(); err == nil {
-				break
-			}
-		}
-
-		wg.Done()
-	}()
+			wg.Done()
+		}(healthcheck)
+	}
 
 	select {
 	case e := <-err:
@@ -91,12 +58,10 @@ func (s Server) ListenAndServe() error {
 	select {}
 }
 
-func New(tcpServer ListenAndServer, udpServer ListenAndServer, dial Dialer, timeout time.Duration, bindAddress string) Server {
+func New(servers []ListenAndServer, healthchecks []HealthCheck, timeout time.Duration) Server {
 	return Server{
-		tcpServer:   tcpServer,
-		udpServer:   udpServer,
-		timeout:     timeout,
-		dial:        dial,
-		bindAddress: bindAddress,
+		servers:      servers,
+		healthchecks: healthchecks,
+		timeout:      timeout,
 	}
 }

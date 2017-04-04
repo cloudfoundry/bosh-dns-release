@@ -126,13 +126,13 @@ var _ = Describe("main", func() {
 			}()
 
 			time.Sleep(1 * time.Second)
-			c := new(dns.Client)
-			c.Net = protocol
+			c := &dns.Client{
+				Net: protocol,
+			}
 
-			m := new(dns.Msg)
-			zone := "example.com"
+			m := &dns.Msg{}
 
-			m.SetQuestion(dns.Fqdn(zone), dns.TypeANY)
+			m.SetQuestion("example.com.", dns.TypeANY)
 			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 			Expect(err).NotTo(HaveOccurred())
@@ -152,13 +152,13 @@ var _ = Describe("main", func() {
 
 		time.Sleep(1 * time.Second)
 
-		c := new(dns.Client)
-		c.Net = "udp"
+		c := &dns.Client{
+			Net: "udp",
+		}
 
-		m := new(dns.Msg)
-		zone := "example.com"
+		m := &dns.Msg{}
 
-		m.SetQuestion(dns.Fqdn(zone), dns.TypeANY)
+		m.SetQuestion("example.com.", dns.TypeANY)
 
 		// 1800 is a semi magic number which we've determined will cause a truncation if the UDPSize is not set to 65535
 		for i := 0; i < 1800; i++ {

@@ -10,6 +10,8 @@ import (
 	"net"
 	"time"
 
+	"sync"
+
 	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/serverfakes"
 	. "github.com/onsi/ginkgo"
@@ -88,15 +90,34 @@ func notListeningStub(stop chan struct{}) func() error {
 	}
 }
 
+func healthyCheck() *serverfakes.FakeHealthCheck {
+	return &serverfakes.FakeHealthCheck{
+		IsHealthyStub: func() error {
+			return nil
+		},
+	}
+}
+
+func unhealthyCheck() *serverfakes.FakeHealthCheck {
+	return &serverfakes.FakeHealthCheck{
+		IsHealthyStub: func() error {
+			return errors.New("fake unhealthy")
+		},
+	}
+}
+
 var _ = Describe("Server", func() {
 	var (
 		dnsServer      server.Server
 		fakeTCPServer  *serverfakes.FakeListenAndServer
 		fakeUDPServer  *serverfakes.FakeListenAndServer
+		tcpHealthCheck *serverfakes.FakeHealthCheck
+		udpHealthCheck *serverfakes.FakeHealthCheck
 		fakeDialer     server.Dialer
 		timeout        time.Duration
 		bindAddress    string
 		stopFakeServer chan struct{}
+		lock           sync.Mutex
 	)
 
 	BeforeEach(func() {
@@ -113,11 +134,18 @@ var _ = Describe("Server", func() {
 		fakeTCPServer.ListenAndServeStub = tcpServerStub(bindAddress, stopFakeServer)
 		fakeUDPServer.ListenAndServeStub = udpServerStub(bindAddress, timeout, stopFakeServer)
 
+		tcpHealthCheck = healthyCheck()
+		udpHealthCheck = healthyCheck()
+
 		fakeDialer = net.Dial
 	})
 
 	JustBeforeEach(func() {
-		dnsServer = server.New(fakeTCPServer, fakeUDPServer, fakeDialer, timeout, bindAddress)
+		dnsServer = server.New(
+			[]server.ListenAndServer{fakeTCPServer, fakeUDPServer},
+			[]server.HealthCheck{tcpHealthCheck, udpHealthCheck},
+			timeout,
+		)
 	})
 
 	AfterEach(func() {
@@ -126,7 +154,12 @@ var _ = Describe("Server", func() {
 
 	Context("when the timeout has been reached", func() {
 		Context("and the servers are not up", func() {
+			BeforeEach(func() {
+				tcpHealthCheck = unhealthyCheck()
+				udpHealthCheck = unhealthyCheck()
+			})
 			It("returns an error", func() {
+
 				fakeTCPServer.ListenAndServeStub = notListeningStub(stopFakeServer)
 				fakeUDPServer.ListenAndServeStub = notListeningStub(stopFakeServer)
 
@@ -142,16 +175,19 @@ var _ = Describe("Server", func() {
 	})
 
 	Context("when a provided tcp server cannot listen and serve", func() {
-		It("should return an error", func() {
+		BeforeEach(func() {
+			tcpHealthCheck = unhealthyCheck()
+			udpHealthCheck = unhealthyCheck()
+		})
+
+		It("should return an error when the tcp server cannot listen and serve", func() {
 			fakeTCPServer.ListenAndServeReturns(errors.New("some-fake-tcp-error"))
 
 			err := dnsServer.ListenAndServe()
 			Expect(err).To(MatchError("some-fake-tcp-error"))
 		})
-	})
 
-	Context("when a provided udp server cannot listen and serve", func() {
-		It("should return an error", func() {
+		It("should return an error when the udp server cannot listen and serve", func() {
 			fakeUDPServer.ListenAndServeReturns(errors.New("some-fake-udp-error"))
 
 			err := dnsServer.ListenAndServe()
@@ -184,7 +220,9 @@ var _ = Describe("Server", func() {
 
 			BeforeEach(func() {
 				fakeDialer = func(protocol, address string) (net.Conn, error) {
+					lock.Lock()
 					fakeProtocolDialConn[protocol]++
+					lock.Unlock()
 
 					return fakeProtocolConn[protocol], nil
 				}
@@ -204,6 +242,10 @@ var _ = Describe("Server", func() {
 		})
 
 		Context("when the udp server never binds to a port", func() {
+			BeforeEach(func() {
+				udpHealthCheck = unhealthyCheck()
+			})
+
 			It("returns an error", func() {
 				fakeUDPServer.ListenAndServeStub = notListeningStub(stopFakeServer)
 
@@ -218,6 +260,10 @@ var _ = Describe("Server", func() {
 		})
 
 		Context("when the tcp server never binds to a port", func() {
+			BeforeEach(func() {
+				tcpHealthCheck = unhealthyCheck()
+			})
+
 			It("returns an error", func() {
 				fakeTCPServer.ListenAndServeStub = notListeningStub(stopFakeServer)
 
@@ -228,82 +274,6 @@ var _ = Describe("Server", func() {
 
 				err := errors.New("timed out waiting for server to bind")
 				Eventually(dnsServerFinished, timeout+(2*time.Second)).Should(Receive(&err))
-			})
-		})
-
-		Context("when the udp health checking fails", func() {
-			Context("dialing fails", func() {
-				BeforeEach(func() {
-					fakeDialer = func(protocol, address string) (net.Conn, error) {
-						if protocol == "udp" {
-							return nil, errors.New("failed to dial")
-						}
-
-						return net.Dial(protocol, address)
-					}
-				})
-
-				It("does not exit before the timeout is reached", func() {
-					dnsServerFinished := make(chan error)
-					go func() {
-						dnsServerFinished <- dnsServer.ListenAndServe()
-					}()
-
-					err := errors.New("timed out waiting for server to bind")
-					Eventually(dnsServerFinished, timeout+(2*time.Second)).Should(Receive(&err))
-				})
-			})
-
-			Context("writing udp payload fails", func() {
-				BeforeEach(func() {
-					fakeDialer = func(protocol, address string) (net.Conn, error) {
-						if protocol == "udp" {
-							return fakeConn, nil
-						}
-
-						return net.Dial(protocol, address)
-					}
-				})
-
-				It("does not exit before the timeout is reached", func() {
-					fakeConn.WriteReturns(0, errors.New("fake write error"))
-
-					dnsServerFinished := make(chan error)
-					go func() {
-						dnsServerFinished <- dnsServer.ListenAndServe()
-					}()
-
-					err := errors.New("timed out waiting for server to bind")
-					Eventually(dnsServerFinished, timeout+(2*time.Second)).Should(Receive(&err))
-
-					Expect(fakeConn.CloseCallCount()).To(BeNumerically(">", 0))
-				})
-			})
-
-			Context("reading udp payload fails", func() {
-				BeforeEach(func() {
-					fakeDialer = func(protocol, address string) (net.Conn, error) {
-						if protocol == "udp" {
-							return fakeConn, nil
-						}
-
-						return net.Dial(protocol, address)
-					}
-				})
-
-				It("does not exit before the timeout is reached", func() {
-					fakeConn.ReadReturns(0, errors.New("fake read error"))
-
-					dnsServerFinished := make(chan error)
-					go func() {
-						dnsServerFinished <- dnsServer.ListenAndServe()
-					}()
-
-					err := errors.New("timed out waiting for server to bind")
-					Eventually(dnsServerFinished, timeout+(2*time.Second)).Should(Receive(&err))
-
-					Expect(fakeConn.CloseCallCount()).To(BeNumerically(">", 0))
-				})
 			})
 		})
 	})

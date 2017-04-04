@@ -49,10 +49,20 @@ func main() {
 	})
 
 	bindAddress := fmt.Sprintf("%s:%d", c.Address, c.Port)
-	tcpServer := &dns.Server{Addr: bindAddress, Net: "tcp"}
-	udpServer := &dns.Server{Addr: bindAddress, Net: "udp", UDPSize: 65535}
 
-	if err := server.New(tcpServer, udpServer, net.Dial, time.Duration(c.Timeout), bindAddress).ListenAndServe(); err != nil {
+	dnsServer := server.New(
+		[]server.ListenAndServer{
+			&dns.Server{Addr: bindAddress, Net: "tcp"},
+			&dns.Server{Addr: bindAddress, Net: "udp", UDPSize: 65535},
+		},
+		[]server.HealthCheck{
+			server.NewUDPHealthCheck(net.Dial, bindAddress),
+			server.NewTCPHealthCheck(net.Dial, bindAddress),
+		},
+		time.Duration(c.Timeout),
+	)
+
+	if err := dnsServer.ListenAndServe(); err != nil {
 		fmt.Println(err)
 
 		os.Exit(1)
