@@ -16,6 +16,8 @@ import (
 	"io/ioutil"
 	"strconv"
 
+	"syscall"
+
 	"github.com/miekg/dns"
 	"github.com/onsi/gomega/gbytes"
 )
@@ -168,7 +170,16 @@ var _ = Describe("main", func() {
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+	})
 
+	It("gracefully shuts down on TERM", func() {
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+
+		time.Sleep(1 * time.Second)
+		session.Signal(syscall.SIGTERM)
+
+		Eventually(session).Should(gexec.Exit(0))
 	})
 
 	It("exits 1 when fails to bind to the tcp port", func() {

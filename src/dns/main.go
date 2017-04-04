@@ -10,6 +10,8 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/config"
 	"github.com/cloudfoundry/dns-release/src/dns/server"
 	"github.com/miekg/dns"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -49,9 +51,9 @@ func main() {
 	})
 
 	bindAddress := fmt.Sprintf("%s:%d", c.Address, c.Port)
-
+	shutdown := make(chan struct{})
 	dnsServer := server.New(
-		[]server.ListenAndServer{
+		[]server.DNSServer{
 			&dns.Server{Addr: bindAddress, Net: "tcp"},
 			&dns.Server{Addr: bindAddress, Net: "udp", UDPSize: 65535},
 		},
@@ -60,11 +62,22 @@ func main() {
 			server.NewTCPHealthCheck(net.Dial, bindAddress),
 		},
 		time.Duration(c.Timeout),
+		shutdown,
 	)
 
-	if err := dnsServer.ListenAndServe(); err != nil {
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGTERM)
+
+	go func() {
+		<-sigterm
+		close(shutdown)
+	}()
+
+	if err := dnsServer.Run(); err != nil {
 		fmt.Println(err)
 
 		os.Exit(1)
 	}
+
+	os.Exit(0)
 }

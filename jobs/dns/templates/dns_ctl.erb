@@ -50,6 +50,13 @@ function stop_dns() {
     exit 0
   fi
 
+  if [ ! -z $pid ] && pid_exists $pid
+  then
+    set +e
+    kill -15 $pid
+    set -e
+  fi
+
   if [ -e /proc/$pid ]
   then
     set +e
