@@ -28,6 +28,10 @@ function create_directories_and_chown_to_vcap() {
   chown -R vcap:vcap "${RUN_DIR}"
 }
 
+function create_network_alias() {
+  ifconfig lo:0 <%= p('address') %> up
+}
+
 function start_dns() {
   setcap cap_net_bind_service=+ep ${DNS_PACKAGE}/bin/dns
 
@@ -70,6 +74,7 @@ function stop_dns() {
 function main() {
   create_directories_and_chown_to_vcap
   start_logging
+  create_network_alias
 
   case ${1} in
     start)

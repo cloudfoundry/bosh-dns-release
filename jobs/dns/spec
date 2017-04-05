@@ -16,7 +16,7 @@ consumes: []
 properties:
   address:
     description: "Address in which the DNS server will bind"
-    default: 127.0.0.1
+    default: 169.254.0.2
   port:
     description: "Port that the DNS server will bind to"
     default: 53
