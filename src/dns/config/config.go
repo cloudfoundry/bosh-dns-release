@@ -11,6 +11,7 @@ type Config struct {
 	Address string
 	Port    int
 	Timeout Timeout
+	Recursors []string
 }
 
 type Timeout time.Duration

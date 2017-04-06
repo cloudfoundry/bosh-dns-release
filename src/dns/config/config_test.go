@@ -89,6 +89,27 @@ var _ = Describe("Config", func() {
 			Expect(err).To(MatchError("invalid character '%' looking for beginning of value"))
 		})
 	})
+
+	Context("configurable recursors", func() {
+		It("allows multiple recursors to be configured", func(){
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursors": ["1","2"]}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.Recursors).To(ContainElement("1"))
+			Expect(dnsConfig.Recursors).To(ContainElement("2"))
+		})
+
+		It("defaults to no recursors", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(len(dnsConfig.Recursors)).To(Equal(0))
+		})
+	})
 })
 
 func writeConfigFile(json string) string {

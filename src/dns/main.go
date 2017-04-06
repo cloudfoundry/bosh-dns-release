@@ -7,12 +7,14 @@ import (
 	"net"
 	"os"
 
-	"github.com/cloudfoundry/dns-release/src/dns/config"
-	"github.com/cloudfoundry/dns-release/src/dns/server"
-	"github.com/miekg/dns"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/cloudfoundry/dns-release/src/dns/config"
+	"github.com/cloudfoundry/dns-release/src/dns/server"
+	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
+	"github.com/miekg/dns"
 )
 
 func parseFlags() (string, error) {
@@ -44,18 +46,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	dns.HandleFunc(".", func(w dns.ResponseWriter, r *dns.Msg) {
-		m := new(dns.Msg)
-		m.SetReply(r)
-		w.WriteMsg(m)
-	})
+	mux := dns.NewServeMux()
+	mux.Handle(".", handlers.NewRecursion(c.Recursors, func(net string) handlers.Exchanger {
+		return &dns.Client{Net: net}
+	}))
 
 	bindAddress := fmt.Sprintf("%s:%d", c.Address, c.Port)
 	shutdown := make(chan struct{})
 	dnsServer := server.New(
 		[]server.DNSServer{
-			&dns.Server{Addr: bindAddress, Net: "tcp"},
-			&dns.Server{Addr: bindAddress, Net: "udp", UDPSize: 65535},
+			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: mux},
+			&dns.Server{Addr: bindAddress, Net: "udp", UDPSize: 65535, Handler: mux},
 		},
 		[]server.HealthCheck{
 			server.NewUDPHealthCheck(net.Dial, bindAddress),
