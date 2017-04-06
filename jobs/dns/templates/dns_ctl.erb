@@ -29,7 +29,7 @@ function create_directories_and_chown_to_vcap() {
 }
 
 function create_network_alias() {
-  ifconfig lo:0 <%= p('address') %> up
+  ip addr add <%= p('address') %> dev lo
 }
 
 function start_dns() {
