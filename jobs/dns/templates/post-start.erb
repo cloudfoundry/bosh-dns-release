@@ -1,4 +1,4 @@
 #!/bin/bash -exu
 
-dig +tcp +time=10 +tries=1 -p <%= p('port') %> google.com @<%= p('address') %>
-dig +notcp +time=10 +tries=1 -p <%= p('port') %> google.com @<%= p('address') %>
+dig +tcp +time=10 +tries=1 -p <%= p('port') %> healthcheck.bosh-dns. @<%= p('address') %>
+dig +notcp +time=10 +tries=1 -p <%= p('port') %> healthcheck.bosh-dns. @<%= p('address') %>
