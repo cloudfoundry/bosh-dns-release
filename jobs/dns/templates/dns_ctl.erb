@@ -1,5 +1,7 @@
 #!/bin/bash -exu
 
+set -o pipefail
+
 RUN_DIR=/var/vcap/sys/run/dns
 PIDFILE=$RUN_DIR/dns.pid
 LOG_DIR=/var/vcap/sys/log/dns
@@ -29,7 +31,17 @@ function create_directories_and_chown_to_vcap() {
 }
 
 function create_network_alias() {
-  ip addr add <%= p('address') %> dev lo
+  if ! ip addr show dev lo | grep -q <%= p('address') %>
+  then
+    ip addr add <%= p('address') %> dev lo
+  fi
+}
+
+function remove_network_alias() {
+  if ip addr show dev lo | grep -q <%= p('address') %>
+  then
+    ip addr del <%= p('address') %>/32 dev lo
+  fi
 }
 
 function start_dns() {
@@ -74,15 +86,16 @@ function stop_dns() {
 function main() {
   create_directories_and_chown_to_vcap
   start_logging
-  create_network_alias
 
   case ${1} in
     start)
+      create_network_alias
       start_dns
       ;;
 
     stop)
       stop_dns
+      remove_network_alias
       ;;
 
     *)
