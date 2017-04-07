@@ -47,6 +47,7 @@ func main() {
 	}
 
 	mux := dns.NewServeMux()
+	mux.Handle("healthcheck.bosh-dns.", handlers.NewHealthCheckHandler())
 	mux.Handle(".", handlers.NewRecursion(c.Recursors, func(net string) handlers.Exchanger {
 		return &dns.Client{Net: net}
 	}))

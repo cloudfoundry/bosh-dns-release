@@ -145,7 +145,33 @@ var _ = Describe("main", func() {
 		Entry("when the request is tcp", "tcp"),
 	)
 
-	PIt("can respond to UDP messages up to 65535 bytes", func() {
+	Describe("handlers", func() {
+		Context("healthcheck.bosh-dns.", func() {
+			It("responds with a success rcode", func() {
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				defer func() {
+					session.Kill()
+					session.Wait()
+				}()
+
+				time.Sleep(1 * time.Second)
+				c := &dns.Client{
+					Net: "tcp",
+				}
+
+				m := &dns.Msg{}
+
+				m.SetQuestion("healthcheck.bosh-dns.", dns.TypeA)
+				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+			})
+		})
+	})
+
+	It("can respond to UDP messages up to 65535 bytes", func() {
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		defer func() {
@@ -161,12 +187,13 @@ var _ = Describe("main", func() {
 
 		m := &dns.Msg{}
 
-		m.SetQuestion("example.com.", dns.TypeANY)
+		m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
 
-		// 1800 is a semi magic number which we've determined will cause a truncation if the UDPSize is not set to 65535
-		for i := 0; i < 1800; i++ {
-			m.Question = append(m.Question, dns.Question{".", dns.TypeANY, dns.ClassINET})
+		// 353 is a semi magic number which we've determined will cause a truncation if the UDPSize is not set to 65535
+		for i := 0; i < 353; i++ {
+			m.Question = append(m.Question, dns.Question{"healthcheck.bosh-dns.", dns.TypeANY, dns.ClassINET})
 		}
+
 		r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 		Expect(err).NotTo(HaveOccurred())
