@@ -7,7 +7,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-type Recursion struct {
+type ForwardHandler struct {
 	recursors        []string
 	exchangerFactory ExchangerFactory
 }
@@ -17,16 +17,14 @@ type Exchanger interface {
 	Exchange(*dns.Msg, string) (*dns.Msg, time.Duration, error)
 }
 
-type ExchangerFactory func(string) Exchanger
-
-func NewRecursion(recursors []string, exchangerFactory ExchangerFactory) Recursion {
-	return Recursion{
+func NewForwardHandler(recursors []string, exchangerFactory ExchangerFactory) ForwardHandler {
+	return ForwardHandler{
 		recursors:        recursors,
 		exchangerFactory: exchangerFactory,
 	}
 }
 
-func (r Recursion) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
+func (r ForwardHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 	m := new(dns.Msg)
 
 	if len(req.Question) == 0 {

@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"errors"
 	"fmt"
 
 	. "github.com/onsi/ginkgo"
@@ -39,42 +40,21 @@ func getFreePort() (int, error) {
 
 var _ = Describe("main", func() {
 	var (
-		cmd           *exec.Cmd
 		listenAddress string
 		listenPort    int
 	)
 
 	BeforeEach(func() {
-		configFile, err := ioutil.TempFile("", "")
-		Expect(err).NotTo(HaveOccurred())
+		var err error
 
 		listenAddress = "127.0.0.1"
 		listenPort, err = getFreePort()
 		Expect(err).NotTo(HaveOccurred())
-
-		_, err = configFile.Write([]byte(fmt.Sprintf(`{
-		  "address": "%s",
-		  "port": %d,
-		  "recursors": ["8.8.8.8:53"]
-		}`, listenAddress, listenPort)))
-
-		Expect(err).NotTo(HaveOccurred())
-
-		args := []string{
-			"--config",
-			configFile.Name(),
-		}
-
-		cmd = exec.Command(pathToServer, args...)
-	})
-
-	AfterEach(func() {
-		cmd.Process.Kill()
 	})
 
 	Describe("flags", func() {
 		It("exits 1 if the config file has not been provided", func() {
-			cmd = exec.Command(pathToServer)
+			cmd := exec.Command(pathToServer)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -88,7 +68,7 @@ var _ = Describe("main", func() {
 				"some/fake/path",
 			}
 
-			cmd = exec.Command(pathToServer, args...)
+			cmd := exec.Command(pathToServer, args...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -99,18 +79,8 @@ var _ = Describe("main", func() {
 		})
 
 		It("exits 1 if the config file is busted", func() {
-			configFile, err := ioutil.TempFile("", "")
-			Expect(err).NotTo(HaveOccurred())
+			cmd := newCommandWithConfig("%%%")
 
-			_, err = configFile.Write([]byte(fmt.Sprintf(`%%%`)))
-			Expect(err).NotTo(HaveOccurred())
-
-			args := []string{
-				"--config",
-				configFile.Name(),
-			}
-
-			cmd = exec.Command(pathToServer, args...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -119,143 +89,211 @@ var _ = Describe("main", func() {
 		})
 	})
 
-	DescribeTable("it responds to DNS requests",
-		func(protocol string) {
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+	Context("when the server starts successfully", func() {
+		var (
+			cmd     *exec.Cmd
+			session *gexec.Session
+		)
+
+		BeforeEach(func() {
+			var err error
+
+			cmd = newCommandWithConfig(fmt.Sprintf(`{
+				"address": %q,
+				"port": %d
+			}`, listenAddress, listenPort))
+
+			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			defer func() {
+
+			Expect(waitForServer(listenPort)).To(Succeed())
+		})
+
+		AfterEach(func() {
+			if cmd.Process != nil {
 				session.Kill()
 				session.Wait()
-			}()
-
-			time.Sleep(1 * time.Second)
-			c := &dns.Client{
-				Net: protocol,
 			}
+		})
 
-			m := &dns.Msg{}
-
-			m.SetQuestion("bosh.io.", dns.TypeA)
-			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-
-			Expect(err).NotTo(HaveOccurred())
-			Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-		},
-		Entry("when the request is udp", "udp"),
-		Entry("when the request is tcp", "tcp"),
-	)
-
-	Describe("handlers", func() {
-		Context("healthcheck.bosh-dns.", func() {
-			It("responds with a success rcode", func() {
-				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
-				defer func() {
-					session.Kill()
-					session.Wait()
-				}()
-
-				time.Sleep(1 * time.Second)
+		DescribeTable("it responds to DNS requests",
+			func(protocol string) {
 				c := &dns.Client{
-					Net: "tcp",
+					Net: protocol,
 				}
 
 				m := &dns.Msg{}
 
-				m.SetQuestion("healthcheck.bosh-dns.", dns.TypeA)
+				m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
 				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+			},
+			Entry("when the request is udp", "udp"),
+			Entry("when the request is tcp", "tcp"),
+		)
+
+		Context("handlers", func() {
+			Context("healthcheck.bosh-dns.", func() {
+				It("responds with a success rcode", func() {
+					c := &dns.Client{
+						Net: "tcp",
+					}
+
+					m := &dns.Msg{}
+
+					m.SetQuestion("healthcheck.bosh-dns.", dns.TypeA)
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+				})
 			})
+		})
+
+		It("can respond to UDP messages up to 65535 bytes", func() {
+			c := &dns.Client{
+				Net: "udp",
+			}
+
+			m := &dns.Msg{}
+
+			m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
+
+			// 353 is a semi magic number which we've determined will cause a truncation if the UDPSize is not set to 65535
+			for i := 0; i < 353; i++ {
+				m.Question = append(m.Question, dns.Question{"healthcheck.bosh-dns.", dns.TypeANY, dns.ClassINET})
+			}
+
+			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+		})
+
+		It("gracefully shuts down on TERM", func() {
+			session.Signal(syscall.SIGTERM)
+
+			Eventually(session).Should(gexec.Exit(0))
 		})
 	})
 
-	It("can respond to UDP messages up to 65535 bytes", func() {
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		defer func() {
-			session.Kill()
-			session.Wait()
-		}()
+	Context("when recursing has been enabled", func() {
+		It("will timeout after the recursor_timeout has been reached", func() {
+			l, err := net.Listen("tcp", ":0")
+			Expect(err).NotTo(HaveOccurred())
+			defer l.Close()
 
-		time.Sleep(1 * time.Second)
+			go func() {
+				l.Accept()
+			}()
 
-		c := &dns.Client{
-			Net: "udp",
-		}
+			cmd := newCommandWithConfig(fmt.Sprintf(`{
+				"address": %q,
+				"port": %d,
+				"recursors": [%q],
+				"recursor_timeout": %q
+			}`, listenAddress, listenPort, l.Addr().String(), "1s"))
 
-		m := &dns.Msg{}
+			_, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
 
-		m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
+			Expect(waitForServer(listenPort)).To(Succeed())
 
-		// 353 is a semi magic number which we've determined will cause a truncation if the UDPSize is not set to 65535
-		for i := 0; i < 353; i++ {
-			m.Question = append(m.Question, dns.Question{"healthcheck.bosh-dns.", dns.TypeANY, dns.ClassINET})
-		}
+			timeoutNeverToBeReached := 10 * time.Second
+			c := &dns.Client{
+				Net:     "tcp",
+				Timeout: timeoutNeverToBeReached,
+			}
 
-		r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+			m := &dns.Msg{}
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+			m.SetQuestion("bosh.io.", dns.TypeANY)
+
+			startTime := time.Now()
+			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+			Expect(time.Now().Sub(startTime)).Should(BeNumerically(">=", 1*time.Second))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
+		})
 	})
 
-	It("gracefully shuts down on TERM", func() {
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
+	Context("failure cases", func() {
+		var (
+			cmd *exec.Cmd
+		)
 
-		time.Sleep(1 * time.Second)
-		session.Signal(syscall.SIGTERM)
+		BeforeEach(func() {
+			cmd = newCommandWithConfig(fmt.Sprintf(`{
+				"address": "%s",
+				"port": %d,
+				"recursors": ["8.8.8.8:53"]
+			}`, listenAddress, listenPort))
+		})
 
-		Eventually(session).Should(gexec.Exit(0))
-	})
+		It("exits 1 when fails to bind to the tcp port", func() {
+			listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP(listenAddress), Port: listenPort})
+			Expect(err).NotTo(HaveOccurred())
+			defer listener.Close()
 
-	It("exits 1 when fails to bind to the tcp port", func() {
-		listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP(listenAddress), Port: listenPort})
-		Expect(err).NotTo(HaveOccurred())
-		defer listener.Close()
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(1))
+		})
 
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		defer cmd.Process.Kill()
+		It("exits 1 when fails to bind to the udp port", func() {
+			listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(listenAddress), Port: listenPort})
+			Expect(err).NotTo(HaveOccurred())
+			defer listener.Close()
 
-		Eventually(session).Should(gexec.Exit(1))
-	})
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(1))
+		})
 
-	It("exits 1 when fails to bind to the udp port", func() {
-		listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(listenAddress), Port: listenPort})
-		Expect(err).NotTo(HaveOccurred())
-		defer listener.Close()
+		It("exits 1 and logs a helpful error message when the server times out binding to ports", func() {
+			cmd := newCommandWithConfig(fmt.Sprintf(`{
+				"address": "%s",
+				"port": %d,
+				"timeout": "0s"
+			}`, listenAddress, listenPort))
 
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		defer cmd.Process.Kill()
-
-		Eventually(session).Should(gexec.Exit(1))
-	})
-
-	It("exits 1 and logs a helpful error message when the server times out binding to ports", func() {
-		configFile, err := ioutil.TempFile("", "")
-		Expect(err).NotTo(HaveOccurred())
-
-		_, err = configFile.Write([]byte(fmt.Sprintf(`{
-		  "address": "%s",
-		  "port": %d,
-		  "timeout": "0s"
-		}`, listenAddress, listenPort)))
-
-		Expect(err).NotTo(HaveOccurred())
-
-		args := []string{
-			"--config",
-			configFile.Name(),
-		}
-
-		cmd = exec.Command(pathToServer, args...)
-
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(1))
-		Eventually(session.Out).Should(gbytes.Say("timed out waiting for server to bind"))
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session.Out).Should(gbytes.Say("timed out waiting for server to bind"))
+		})
 	})
 })
+
+func newCommandWithConfig(config string) *exec.Cmd {
+	configFile, err := ioutil.TempFile("", "")
+	Expect(err).NotTo(HaveOccurred())
+
+	_, err = configFile.Write([]byte(config))
+
+	Expect(err).NotTo(HaveOccurred())
+
+	args := []string{
+		"--config",
+		configFile.Name(),
+	}
+
+	return exec.Command(pathToServer, args...)
+}
+
+func waitForServer(port int) error {
+	for i := 0; i < 20; i++ {
+		c, err := net.Dial("tcp", fmt.Sprintf(":%s", strconv.Itoa(port)))
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+
+		c.Close()
+		return nil
+	}
+
+	return errors.New("dns server failed to start")
+}

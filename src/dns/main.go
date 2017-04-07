@@ -48,9 +48,7 @@ func main() {
 
 	mux := dns.NewServeMux()
 	mux.Handle("healthcheck.bosh-dns.", handlers.NewHealthCheckHandler())
-	mux.Handle(".", handlers.NewRecursion(c.Recursors, func(net string) handlers.Exchanger {
-		return &dns.Client{Net: net}
-	}))
+	mux.Handle(".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout))))
 
 	bindAddress := fmt.Sprintf("%s:%d", c.Address, c.Port)
 	shutdown := make(chan struct{})

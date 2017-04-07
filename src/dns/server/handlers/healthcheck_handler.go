@@ -2,7 +2,7 @@ package handlers
 
 import "github.com/miekg/dns"
 
-type HealthCheckHandler struct {}
+type HealthCheckHandler struct{}
 
 func NewHealthCheckHandler() HealthCheckHandler {
 	return HealthCheckHandler{}

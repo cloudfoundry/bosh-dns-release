@@ -13,9 +13,10 @@ import (
 
 var _ = Describe("Config", func() {
 	var (
-		listenAddress string
-		listenPort    int
-		timeout       string
+		listenAddress   string
+		listenPort      int
+		timeout         string
+		recursorTimeout string
 	)
 
 	BeforeEach(func() {
@@ -24,24 +25,30 @@ var _ = Describe("Config", func() {
 		listenAddress = fmt.Sprintf("192.168.1.%d", rand.Int31n(256))
 		listenPort = rand.Int()
 		timeout = fmt.Sprintf("%vs", rand.Int31n(16))
+		recursorTimeout = fmt.Sprintf("%vs", rand.Int31n(16))
 	})
 
 	It("returns config from a config file", func() {
 		configFilePath := writeConfigFile(fmt.Sprintf(`{
 		  "address": "%s",
 		  "port": %d,
-		  "timeout": "%s"
-		}`, listenAddress, listenPort, timeout))
+		  "timeout": "%s",
+		  "recursor_timeout": "%s"
+		}`, listenAddress, listenPort, timeout, recursorTimeout))
 
 		timeoutDuration, err := time.ParseDuration(timeout)
+		Expect(err).ToNot(HaveOccurred())
+
+		recursorTimeoutDuration, err := time.ParseDuration(recursorTimeout)
 		Expect(err).ToNot(HaveOccurred())
 
 		dnsConfig, err := config.LoadFromFile(configFilePath)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dnsConfig).To(Equal(config.Config{
-			Address: listenAddress,
-			Port:    listenPort,
-			Timeout: config.Timeout(timeoutDuration),
+			Address:         listenAddress,
+			Port:            listenPort,
+			Timeout:         config.Timeout(timeoutDuration),
+			RecursorTimeout: config.Timeout(recursorTimeoutDuration),
 		}))
 	})
 
@@ -65,7 +72,18 @@ var _ = Describe("Config", func() {
 		Expect(err).To(MatchError("port is required"))
 	})
 
-	Context("configurable timeout", func() {
+	Context("recursor_timeout", func() {
+		It("defaults the recursor_timeout when not specified", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.RecursorTimeout).To(Equal(config.Timeout(2 * time.Second)))
+		})
+	})
+
+	Context("timeout", func() {
 		It("defaults timeout when not specified", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)
 
@@ -74,15 +92,17 @@ var _ = Describe("Config", func() {
 
 			Expect(dnsConfig.Timeout).To(Equal(config.Timeout(5 * time.Second)))
 		})
+	})
 
-		It("returns error if timeout is not a valid time duration", func() {
+	Context("timeouts", func() {
+		It("returns error if a timeout is not a valid time duration", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "timeout": "something"}`)
 
 			_, err := config.LoadFromFile(configFilePath)
 			Expect(err).To(MatchError("time: invalid duration something"))
 		})
 
-		It("returns error if timeout cannot be parsed", func() {
+		It("returns error if a timeout cannot be parsed", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "timeout": %%}`)
 
 			_, err := config.LoadFromFile(configFilePath)
@@ -91,7 +111,7 @@ var _ = Describe("Config", func() {
 	})
 
 	Context("configurable recursors", func() {
-		It("allows multiple recursors to be configured", func(){
+		It("allows multiple recursors to be configured", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursors": ["1","2"]}`)
 
 			dnsConfig, err := config.LoadFromFile(configFilePath)

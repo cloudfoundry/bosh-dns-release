@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	Address string
-	Port    int
-	Timeout Timeout
-	Recursors []string
+	Address         string
+	Port            int
+	Timeout         Timeout
+	RecursorTimeout Timeout `json:"recursor_timeout"`
+	Recursors       []string
 }
 
 type Timeout time.Duration
@@ -40,7 +41,8 @@ func LoadFromFile(configFilePath string) (Config, error) {
 	}
 
 	c := Config{
-		Timeout: Timeout(5 * time.Second),
+		Timeout:         Timeout(5 * time.Second),
+		RecursorTimeout: Timeout(2 * time.Second),
 	}
 
 	if err := json.Unmarshal(configFileContents, &c); err != nil {

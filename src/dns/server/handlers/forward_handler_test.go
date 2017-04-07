@@ -16,11 +16,11 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Recursion", func() {
+var _ = Describe("ForwardHandler", func() {
 	Describe("ServeDNS", func() {
 		var (
 			fakeWriter       *internalfakes.FakeResponseWriter
-			recursionHandler handlers.Recursion
+			recursionHandler handlers.ForwardHandler
 			fakeExchanger    *handlersfakes.FakeExchanger
 		)
 
@@ -30,12 +30,12 @@ var _ = Describe("Recursion", func() {
 			fakeExchangerFactory := func(net string) handlers.Exchanger {
 				return fakeExchanger
 			}
-			recursionHandler = handlers.NewRecursion([]string{"127.0.0.1", "10.244.5.4"}, fakeExchangerFactory)
+			recursionHandler = handlers.NewForwardHandler([]string{"127.0.0.1", "10.244.5.4"}, fakeExchangerFactory)
 		})
 
 		Context("when no recursors are configured", func() {
 			It("sets a failure rcode", func() {
-				recursionHandler := handlers.NewRecursion([]string{}, func(string) handlers.Exchanger { return nil })
+				recursionHandler := handlers.NewForwardHandler([]string{}, func(string) handlers.Exchanger { return nil })
 
 				m := &dns.Msg{}
 				m.SetQuestion("example.com.", dns.TypeANY)
@@ -75,7 +75,7 @@ var _ = Describe("Recursion", func() {
 					}
 
 					fakeWriter.RemoteAddrReturns(remoteAddrReturns)
-					recursionHandler := handlers.NewRecursion([]string{"127.0.0.1"}, fakeExchangerFactory)
+					recursionHandler := handlers.NewForwardHandler([]string{"127.0.0.1"}, fakeExchangerFactory)
 
 					m := &dns.Msg{}
 					m.SetQuestion("example.com.", dns.TypeANY)
