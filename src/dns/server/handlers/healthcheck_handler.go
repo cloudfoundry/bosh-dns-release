@@ -1,11 +1,18 @@
 package handlers
 
-import "github.com/miekg/dns"
+import (
+	"github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/miekg/dns"
+)
 
-type HealthCheckHandler struct{}
+type HealthCheckHandler struct {
+	logger logger.Logger
+}
 
-func NewHealthCheckHandler() HealthCheckHandler {
-	return HealthCheckHandler{}
+func NewHealthCheckHandler(logger logger.Logger) HealthCheckHandler {
+	return HealthCheckHandler{
+		logger: logger,
+	}
 }
 
 func (h HealthCheckHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
@@ -14,5 +21,7 @@ func (h HealthCheckHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 	m.RecursionAvailable = false
 	m.Authoritative = true
 	m.SetRcode(req, dns.RcodeSuccess)
-	resp.WriteMsg(m)
+	if err := resp.WriteMsg(m); err != nil {
+		h.logger.Error("HealthCheckHandler", err.Error())
+	}
 }

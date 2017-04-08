@@ -15,6 +15,7 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/server"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
 	"github.com/miekg/dns"
+	"github.com/cloudfoundry/bosh-utils/logger"
 )
 
 func parseFlags() (string, error) {
@@ -46,9 +47,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger := logger.NewLogger(logger.LevelDebug)
 	mux := dns.NewServeMux()
-	mux.Handle("healthcheck.bosh-dns.", handlers.NewHealthCheckHandler())
-	mux.Handle(".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout))))
+	mux.Handle("healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger))
+	mux.Handle(".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout)), logger))
+
 
 	bindAddress := fmt.Sprintf("%s:%d", c.Address, c.Port)
 	shutdown := make(chan struct{})

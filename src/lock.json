@@ -1,6 +1,15 @@
 {
-    "memo": "e32445a41717a82ba18d1af0e318810330cf93cc2c0ec5e9065117c16e74f8cc",
+    "memo": "fd3d364d149667ca43612b2fefa7608ffc89a6df3e6fff07cca9e0102f1eadeb",
     "projects": [
+        {
+            "name": "github.com/cloudfoundry/bosh-utils",
+            "branch": "master",
+            "revision": "0d36faac740305072f50b237368b8ae4c8fa097c",
+            "packages": [
+                "logger",
+                "logger/loggerfakes"
+            ]
+        },
         {
             "name": "github.com/miekg/dns",
             "branch": "master",
@@ -16,6 +25,7 @@
             "packages": [
                 ".",
                 "config",
+                "extensions/table",
                 "internal/codelocation",
                 "internal/containernode",
                 "internal/failer",
@@ -41,6 +51,8 @@
             "packages": [
                 ".",
                 "format",
+                "gbytes",
+                "gexec",
                 "internal/assertion",
                 "internal/asyncassertion",
                 "internal/oraclematcher",

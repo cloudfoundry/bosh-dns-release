@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"github.com/miekg/dns"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 type ExchangerFactory func(string) Exchanger
