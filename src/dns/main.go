@@ -51,6 +51,7 @@ func main() {
 	}
 
 	mux := dns.NewServeMux()
+	mux.Handle("bosh.", handlers.NewDiscoveryHandler(logger))
 	mux.Handle("arpa.", handlers.NewArpaHandler(logger))
 	mux.Handle("healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger))
 	mux.Handle(".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout)), logger))

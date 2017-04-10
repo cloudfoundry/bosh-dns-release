@@ -162,6 +162,22 @@ var _ = Describe("main", func() {
 					Expect(r.RecursionAvailable).To(BeFalse())
 				})
 			})
+
+			Context("bosh.", func() {
+				It("responds to bosh. requests with an rcode server failure for A records", func() {
+					c := &dns.Client{}
+
+					m := &dns.Msg{}
+
+					m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeA)
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
+					Expect(r.Authoritative).To(BeTrue())
+					Expect(r.RecursionAvailable).To(BeFalse())
+				})
+			})
 		})
 
 		It("can respond to UDP messages up to 65535 bytes", func() {
