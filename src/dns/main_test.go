@@ -135,9 +135,7 @@ var _ = Describe("main", func() {
 		Context("handlers", func() {
 			Context("healthcheck.bosh-dns.", func() {
 				It("responds with a success rcode", func() {
-					c := &dns.Client{
-						Net: "tcp",
-					}
+					c := &dns.Client{}
 
 					m := &dns.Msg{}
 
@@ -146,6 +144,22 @@ var _ = Describe("main", func() {
 
 					Expect(err).NotTo(HaveOccurred())
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+				})
+			})
+
+			Context("arpa.", func() {
+				It("responds to arpa. requests with an rcode server failure", func() {
+					c := &dns.Client{}
+
+					m := &dns.Msg{}
+
+					m.SetQuestion("109.22.25.104.in-addr.arpa.", dns.TypePTR)
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
+					Expect(r.Authoritative).To(BeTrue())
+					Expect(r.RecursionAvailable).To(BeFalse())
 				})
 			})
 		})
