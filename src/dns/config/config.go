@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"net"
+	"strings"
 	"time"
 )
 
@@ -51,6 +53,17 @@ func LoadFromFile(configFilePath string) (Config, error) {
 
 	if c.Port == 0 {
 		return Config{}, errors.New("port is required")
+	}
+
+	for i := range c.Recursors {
+		_, _, err := net.SplitHostPort(c.Recursors[i])
+		if err != nil {
+			if strings.Contains(err.Error(), "missing port in address") {
+				c.Recursors[i] = net.JoinHostPort(c.Recursors[i], "53")
+			} else {
+				return Config{}, err
+			}
+		}
 	}
 
 	return c, nil

@@ -111,14 +111,14 @@ var _ = Describe("Config", func() {
 	})
 
 	Context("configurable recursors", func() {
-		It("allows multiple recursors to be configured", func() {
-			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursors": ["1","2"]}`)
+		It("allows multiple recursors to be configured with default port of 53", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursors": ["8.8.8.8","10.244.4.4:9700"]}`)
 
 			dnsConfig, err := config.LoadFromFile(configFilePath)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(dnsConfig.Recursors).To(ContainElement("1"))
-			Expect(dnsConfig.Recursors).To(ContainElement("2"))
+			Expect(dnsConfig.Recursors).To(ContainElement("8.8.8.8:53"))
+			Expect(dnsConfig.Recursors).To(ContainElement("10.244.4.4:9700"))
 		})
 
 		It("defaults to no recursors", func() {
@@ -128,6 +128,13 @@ var _ = Describe("Config", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(len(dnsConfig.Recursors)).To(Equal(0))
+		})
+
+		It("returns an error if the recursor address is malformed", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursors": ["::::::::::::"]}`)
+
+			_, err := config.LoadFromFile(configFilePath)
+			Expect(err).To(MatchError("too many colons in address ::::::::::::"))
 		})
 	})
 })

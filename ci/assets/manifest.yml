@@ -22,7 +22,7 @@ instance_groups:
     release: dns
   properties:
     recursors:
-    - 8.8.8.8:53
+    - 8.8.8.8
 
 releases:
 - name: dns

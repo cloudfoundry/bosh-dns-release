@@ -47,7 +47,7 @@ var _ = Describe("Integration", func() {
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
 
-	It("fowards queries to the configured recursors", func(){
+	It("fowards queries to the configured recursors", func() {
 		cmd := exec.Command(boshBinaryPath, []string{"ssh", "-c", "dig -t A pivotal.io @169.254.0.2"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())

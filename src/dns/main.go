@@ -11,11 +11,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/dns-release/src/dns/config"
 	"github.com/cloudfoundry/dns-release/src/dns/server"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
 	"github.com/miekg/dns"
-	"github.com/cloudfoundry/bosh-utils/logger"
 )
 
 func parseFlags() (string, error) {

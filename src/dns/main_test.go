@@ -228,7 +228,7 @@ var _ = Describe("main", func() {
 			cmd = newCommandWithConfig(fmt.Sprintf(`{
 				"address": "%s",
 				"port": %d,
-				"recursors": ["8.8.8.8:53"]
+				"recursors": ["8.8.8.8"]
 			}`, listenAddress, listenPort))
 		})
 
