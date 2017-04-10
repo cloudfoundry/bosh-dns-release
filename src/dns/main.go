@@ -35,19 +35,20 @@ func parseFlags() (string, error) {
 }
 
 func main() {
+	logger := logger.NewLogger(logger.LevelDebug)
+	logTag := "main"
+
 	configPath, err := parseFlags()
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(logTag, err.Error())
 		os.Exit(1)
 	}
 
 	c, err := config.LoadFromFile(configPath)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(logTag, err.Error())
 		os.Exit(1)
 	}
-
-	logger := logger.NewLogger(logger.LevelDebug)
 
 	mux := dns.NewServeMux()
 	mux.Handle("healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger))
@@ -77,8 +78,7 @@ func main() {
 	}()
 
 	if err := dnsServer.Run(); err != nil {
-		fmt.Println(err)
-
+		logger.Error(logTag, err.Error())
 		os.Exit(1)
 	}
 

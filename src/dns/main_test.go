@@ -59,7 +59,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(string(session.Out.Contents())).To(ContainSubstring("--config is a required flag"))
+			Expect(session.Err).To(gbytes.Say("[main].*ERROR - --config is a required flag"))
 		})
 
 		It("exits 1 if the config file does not exist", func() {
@@ -72,20 +72,18 @@ var _ = Describe("main", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			session.Wait()
-
-			Expect(session.ExitCode()).To(Equal(1))
-			Expect(string(session.Out.Contents())).To(ContainSubstring("some/fake/path: no such file or directory"))
+			Eventually(session).Should(gexec.Exit(1))
+			Expect(session.Err).To(gbytes.Say("[main].*ERROR - stat some/fake/path: no such file or directory"))
 		})
 
 		It("exits 1 if the config file is busted", func() {
-			cmd := newCommandWithConfig("%%%")
+			cmd := newCommandWithConfig("{")
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(string(session.Out.Contents())).To(ContainSubstring("invalid character '%' looking for beginning of value"))
+			Expect(session.Err).To(gbytes.Say("[main].*ERROR - unexpected end of JSON input"))
 		})
 	})
 
@@ -261,8 +259,9 @@ var _ = Describe("main", func() {
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
+
 			Eventually(session).Should(gexec.Exit(1))
-			Eventually(session.Out).Should(gbytes.Say("timed out waiting for server to bind"))
+			Eventually(session.Err).Should(gbytes.Say("[main].*ERROR - timed out waiting for server to bind"))
 		})
 	})
 })
