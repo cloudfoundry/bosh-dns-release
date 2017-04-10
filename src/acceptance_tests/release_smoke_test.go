@@ -46,4 +46,16 @@ var _ = Describe("Integration", func() {
 		Eventually(session.Out).Should(gbytes.Say(";healthcheck\\.bosh-dns\\.\\s+IN\\s+A"))
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
+
+	It("fowards queries to the configured recursors", func(){
+		cmd := exec.Command(boshBinaryPath, []string{"ssh", "-c", "dig -t A pivotal.io @169.254.0.2"}...)
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
+		Eventually(session.Out).Should(gbytes.Say("flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1"))
+		Eventually(session.Out).Should(gbytes.Say("pivotal\\.io\\.\\s+\\d+\\s+IN\\s+A\\s+\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"))
+		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
+	})
 })

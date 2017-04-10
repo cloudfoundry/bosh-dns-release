@@ -48,10 +48,10 @@ func main() {
 	}
 
 	logger := logger.NewLogger(logger.LevelDebug)
+
 	mux := dns.NewServeMux()
 	mux.Handle("healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger))
 	mux.Handle(".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout)), logger))
-
 
 	bindAddress := fmt.Sprintf("%s:%d", c.Address, c.Port)
 	shutdown := make(chan struct{})

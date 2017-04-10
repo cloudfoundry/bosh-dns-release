@@ -20,6 +20,9 @@ instance_groups:
   jobs:
   - name: dns
     release: dns
+  properties:
+    recursors:
+    - 8.8.8.8:53
 
 releases:
 - name: dns
