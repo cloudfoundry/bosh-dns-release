@@ -23,3 +23,6 @@ properties:
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"
     default: []
+  records_file:
+    description: "Path to the file containing information that the DNS server will use to create DNS records"
+    default: /var/vcap/instance/dns/records.json

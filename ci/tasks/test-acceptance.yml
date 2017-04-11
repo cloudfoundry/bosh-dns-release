@@ -8,6 +8,8 @@ image_resource:
 
 inputs:
   - name: dns-release
+  - name: bosh-candidate-stemcell
+  - name: bosh-candidate-release
 
 params: []
 

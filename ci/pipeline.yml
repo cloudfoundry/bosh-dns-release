@@ -24,6 +24,8 @@ jobs:
     - get: dns-release
       trigger: true
       passed: [test-unit]
+    - get: bosh-candidate-stemcell
+    - get: bosh-candidate-release
     - task: test-acceptance
       privileged: true
       file: dns-release/ci/tasks/test-acceptance.yml
@@ -34,3 +36,15 @@ resources:
   source:
     uri: https://github.com/cloudfoundry/dns-release
     branch: master
+
+- name: bosh-candidate-stemcell
+  type: s3
+  source:
+    bucket: bosh-core-stemcells-candidate
+    regexp: warden/bosh-stemcell-(.+)-warden-boshlite-ubuntu-trusty-go_agent.tgz
+
+- name: bosh-candidate-release
+  type: s3
+  source:
+    bucket: bosh-candidate-release-tarballs
+    versioned_file: bosh-dev-release.tgz
