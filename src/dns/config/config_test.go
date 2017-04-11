@@ -83,6 +83,16 @@ var _ = Describe("Config", func() {
 		})
 	})
 
+	Context("records_file", func() {
+		It("allows configuring the path", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "records_file": "/some/path"}`)
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(dnsConfig.RecordsFile).To(Equal("/some/path"))
+		})
+	})
+
 	Context("timeout", func() {
 		It("defaults timeout when not specified", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)

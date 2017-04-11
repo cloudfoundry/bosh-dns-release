@@ -15,6 +15,7 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/config"
 	"github.com/cloudfoundry/dns-release/src/dns/server"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	"github.com/miekg/dns"
 )
 
@@ -51,7 +52,7 @@ func main() {
 	}
 
 	mux := dns.NewServeMux()
-	mux.Handle("bosh.", handlers.NewDiscoveryHandler(logger))
+	mux.Handle("bosh.", handlers.NewDiscoveryHandler(logger, records.NewRepo(c.RecordsFile)))
 	mux.Handle("arpa.", handlers.NewArpaHandler(logger))
 	mux.Handle("healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger))
 	mux.Handle(".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout)), logger))

@@ -96,10 +96,21 @@ var _ = Describe("main", func() {
 		BeforeEach(func() {
 			var err error
 
+			recordsFile, err := ioutil.TempFile("", "recordsjson")
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = recordsFile.Write([]byte(fmt.Sprint(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
+				"record_infos": [
+					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"]
+				]
+			}`)))
+
 			cmd = newCommandWithConfig(fmt.Sprintf(`{
 				"address": %q,
-				"port": %d
-			}`, listenAddress, listenPort))
+				"port": %d,
+				"records_file": %q
+			}`, listenAddress, listenPort, recordsFile.Name()))
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -164,18 +175,29 @@ var _ = Describe("main", func() {
 			})
 
 			Context("bosh.", func() {
-				It("responds to bosh. requests with an rcode server failure for A records", func() {
+				It("responds to A queries for bosh. with content from the record API", func() {
 					c := &dns.Client{}
-
 					m := &dns.Msg{}
 
-					m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeA)
+					m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-
 					Expect(err).NotTo(HaveOccurred())
-					Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
+
+					Expect(r.Answer).To(HaveLen(1))
+
+					answer := r.Answer[0]
+					header := answer.Header()
+
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 					Expect(r.Authoritative).To(BeTrue())
 					Expect(r.RecursionAvailable).To(BeFalse())
+
+					Expect(header.Rrtype).To(Equal(dns.TypeA))
+					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+					Expect(header.Ttl).To(Equal(uint32(0)))
+
+					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+					Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.123"))
 				})
 			})
 		})

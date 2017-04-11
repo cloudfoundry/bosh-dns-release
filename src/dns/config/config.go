@@ -15,6 +15,7 @@ type Config struct {
 	Timeout         Timeout
 	RecursorTimeout Timeout `json:"recursor_timeout"`
 	Recursors       []string
+	RecordsFile     string `json:"records_file"`
 }
 
 type Timeout time.Duration
