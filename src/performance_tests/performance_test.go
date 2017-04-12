@@ -8,7 +8,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-	"fmt"
 )
 
 type PerformanceTestInfo struct {
@@ -46,21 +45,20 @@ var _ = Describe("Performance", func() {
 			concreteSigar := sigar.ConcreteSigar{}
 			cpuChannel, stopCpuChannel := concreteSigar.CollectCpuStats(100 * time.Millisecond)
 
-			b.Time("dns queries", func() {
+			b.Time("420 DNS queries", func() {
 				for i := 0; i < maxDnsRequestsPerMin; i++ {
 					go MakeDnsRequest(GooglePicker{}, flowSignal, result, wg)
+					mem := sigar.ProcMem{}
+					if err := mem.Get(dnsServerPid); err == nil {
+						b.RecordValue("DNS Server Memory Usage (in Mb)", float64(mem.Resident/1024/1024))
+					}
 				}
 				<-finishedDnsRequestsSignal
 				close(stopCpuChannel)
 			})
 
-			mem := sigar.ProcMem{}
-			if err := mem.Get(dnsServerPid); err == nil {
-				b.RecordValue("DNS Server Memory Usage (in Mb)", float64(mem.Resident/1024/1024))
-			}
-
-			cpuResult := <- cpuChannel
-			b.RecordValue("Total CPU Usage (%)", (float64(cpuResult.User + cpuResult.Sys) / float64(cpuResult.Total())) * 100)
+			cpuResult := <-cpuChannel
+			b.RecordValue("Total CPU Usage (%)", (float64(cpuResult.User+cpuResult.Sys)/float64(cpuResult.Total()))*100)
 		}, 5)
 
 		It("never errors", func() {
