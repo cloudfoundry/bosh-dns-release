@@ -21,8 +21,8 @@ instance_groups:
   - name: dns
     release: dns
   properties:
+    address: 10.245.0.2
     recursors:
-    - 172.16.0.23
     - 8.8.8.8
 
 releases:

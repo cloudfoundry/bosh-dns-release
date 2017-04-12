@@ -1,12 +1,12 @@
 package performance_test
 
-import  (
+import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry/gosigar"
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestAcceptance(t *testing.T) {
