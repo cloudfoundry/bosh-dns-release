@@ -62,7 +62,7 @@ var _ = Describe("Integration", func() {
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
 
-	PIt("returns records for bosh instances", func() {
+	It("returns records for bosh instances", func() {
 		cmd := exec.Command(boshBinaryPath, []string{"instances", "--column", "Instance"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
