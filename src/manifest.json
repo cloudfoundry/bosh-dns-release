@@ -3,6 +3,9 @@
         "github.com/cloudfoundry/bosh-utils": {
             "branch": "master"
         },
+        "github.com/cloudfoundry/gosigar": {
+            "branch": "master"
+        },
         "github.com/miekg/dns": {
             "branch": "master"
         },

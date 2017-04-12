@@ -1,5 +1,5 @@
 {
-    "memo": "fd3d364d149667ca43612b2fefa7608ffc89a6df3e6fff07cca9e0102f1eadeb",
+    "memo": "dfcc6dbfa164c2b1721856bf9175c20ab105e7de857bae8ec3dfb4d469be003e",
     "projects": [
         {
             "name": "github.com/cloudfoundry/bosh-utils",
@@ -8,6 +8,14 @@
             "packages": [
                 "logger",
                 "logger/loggerfakes"
+            ]
+        },
+        {
+            "name": "github.com/cloudfoundry/gosigar",
+            "branch": "master",
+            "revision": "dfaa4d491586af21e1ce06028df3926389a99654",
+            "packages": [
+                "."
             ]
         },
         {
