@@ -14,6 +14,8 @@ jobs:
     - get: dns-release
       trigger: true
       passed: [test-unit]
+    - get: bosh-candidate-stemcell
+    - get: bosh-candidate-release
     - task: test-performance
       privileged: true
       file: dns-release/ci/tasks/test-performance.yml
