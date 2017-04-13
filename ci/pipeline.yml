@@ -17,6 +17,8 @@ jobs:
     - task: test-performance
       privileged: true
       file: dns-release/ci/tasks/test-performance.yml
+      params:
+        ZONES_JSON_HASH: {{zones_json_hash}}
 
 - name: test-acceptance
   public: true

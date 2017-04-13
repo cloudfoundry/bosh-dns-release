@@ -8,6 +8,8 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	zp "github.com/cloudfoundry/dns-release/src/performance_tests/zone_pickers"
 )
 
 type PerformanceTestInfo struct {
@@ -27,62 +29,69 @@ var _ = Describe("Performance", func() {
 
 	var dnsServerPid int
 
-	Context("420 req / min", func() {
-		BeforeEach(func() {
-			var found bool
-			dnsServerPid, found = GetPidFor("dns")
-			Expect(found).To(BeTrue())
+	testDnsPerformance := func(picker zp.ZonePicker) {
+		Context("420 req / min", func() {
+			BeforeEach(func() {
+				var found bool
+				dnsServerPid, found = GetPidFor("dns")
+				Expect(found).To(BeTrue())
 
-			maxDnsRequestsPerMin = 420
-			info = PerformanceTestInfo{}
+				maxDnsRequestsPerMin = 420
+				info = PerformanceTestInfo{}
 
-			flowSignal = createFlowSignal(10)
-			wg, finishedDnsRequestsSignal = setupWaitGroupWithSignaler(maxDnsRequestsPerMin)
-			result = make(chan DnsResult, maxDnsRequestsPerMin*2)
-		})
-
-		Measure("should handle with less than 0.797ms median", func(b Benchmarker) {
-			concreteSigar := sigar.ConcreteSigar{}
-			cpuChannel, stopCpuChannel := concreteSigar.CollectCpuStats(100 * time.Millisecond)
-
-			b.Time("420 DNS queries", func() {
-				for i := 0; i < maxDnsRequestsPerMin; i++ {
-					go MakeDnsRequestUntilSuccessful(GooglePicker{}, flowSignal, result, wg)
-					mem := sigar.ProcMem{}
-					if err := mem.Get(dnsServerPid); err == nil {
-						b.RecordValue("DNS Server Memory Usage (in Mb)", float64(mem.Resident/1024/1024))
-					}
-				}
-				<-finishedDnsRequestsSignal
-				close(stopCpuChannel)
+				flowSignal = createFlowSignal(10)
+				wg, finishedDnsRequestsSignal = setupWaitGroupWithSignaler(maxDnsRequestsPerMin)
+				result = make(chan DnsResult, maxDnsRequestsPerMin*2)
 			})
 
-			cpuResult := <-cpuChannel
-			b.RecordValue("Total CPU Usage (%)", (float64(cpuResult.User+cpuResult.Sys)/float64(cpuResult.Total()))*100)
-		}, 5)
+			Measure("should handle with less than 0.797ms median", func(b Benchmarker) {
+				concreteSigar := sigar.ConcreteSigar{}
+				cpuChannel, stopCpuChannel := concreteSigar.CollectCpuStats(100 * time.Millisecond)
 
-		It("handles DNS responses quickly", func() {
-			startTime := time.Now()
-			var resultSummary map[int]*DnsResult
-			for i := 0; i < maxDnsRequestsPerMin; i++ {
-				go MakeDnsRequestUntilSuccessful(GooglePicker{}, flowSignal, result, wg)
-			}
-			<-finishedDnsRequestsSignal
-			endTime := time.Now()
+				b.Time("420 DNS queries", func() {
+					for i := 0; i < maxDnsRequestsPerMin; i++ {
+						go MakeDnsRequestUntilSuccessful(picker, flowSignal, result, wg)
+						mem := sigar.ProcMem{}
+						if err := mem.Get(dnsServerPid); err == nil {
+							b.RecordValue("DNS Server Memory Usage (in Mb)", float64(mem.Resident/1024/1024))
+						}
+					}
+					<-finishedDnsRequestsSignal
+					close(stopCpuChannel)
+				})
 
-			resultSummary = buildResultSummarySync(result)
+				cpuResult := <-cpuChannel
+				b.RecordValue("Total CPU Usage (%)", (float64(cpuResult.User+cpuResult.Sys)/float64(cpuResult.Total()))*100)
+			}, 5)
 
-			resultTimes := []int{}
-			for _, summary := range resultSummary {
-				resultTimes = append(resultTimes, int(summary.EndTime.Sub(summary.StartTime)))
-			}
+			It("handles DNS responses quickly", func() {
+				startTime := time.Now()
+				var resultSummary map[int]*DnsResult
+				for i := 0; i < maxDnsRequestsPerMin; i++ {
+					go MakeDnsRequestUntilSuccessful(picker, flowSignal, result, wg)
+				}
+				<-finishedDnsRequestsSignal
+				endTime := time.Now()
 
-			sort.Ints([]int(resultTimes))
-			median := (time.Duration(resultTimes[209]) + time.Duration(resultTimes[210])) / 2
+				resultSummary = buildResultSummarySync(result)
 
-			Expect(endTime).Should(BeTemporally("<", startTime.Add(1*time.Minute)))
-			Expect(median).To(BeNumerically("<", 797*time.Microsecond))
+				resultTimes := []int{}
+				for _, summary := range resultSummary {
+					resultTimes = append(resultTimes, int(summary.EndTime.Sub(summary.StartTime)))
+				}
+
+				sort.Ints([]int(resultTimes))
+				median := (time.Duration(resultTimes[209]) + time.Duration(resultTimes[210])) / 2
+
+				Expect(endTime).Should(BeTemporally("<", startTime.Add(1*time.Minute)))
+				Expect(median).To(BeNumerically("<", 797*time.Microsecond))
+			})
 		})
+	}
+
+	Describe("using zones from file", func() {
+		thing, _ := zp.NewJsonFileZonePicker("/tmp/zones.json")
+		testDnsPerformance(thing)
 	})
 })
 
@@ -99,21 +108,11 @@ func setupWaitGroupWithSignaler(maxDnsRequests int) (*sync.WaitGroup, chan struc
 	return wg, finishedDnsRequests
 }
 
-type ZonePicker interface {
-	NextZone() string
-}
-
 type DnsResult struct {
 	Id        int
 	RCode     int
 	StartTime time.Time
 	EndTime   time.Time
-}
-
-type GooglePicker struct{}
-
-func (GooglePicker) NextZone() string {
-	return "google.com."
 }
 
 func createFlowSignal(goRoutineSize int) chan bool {
@@ -125,7 +124,7 @@ func createFlowSignal(goRoutineSize int) chan bool {
 	return flow
 }
 
-func MakeDnsRequestUntilSuccessful(picker ZonePicker, flow chan bool, result chan DnsResult, wg *sync.WaitGroup) {
+func MakeDnsRequestUntilSuccessful(picker zp.ZonePicker, flow chan bool, result chan DnsResult, wg *sync.WaitGroup) {
 	defer func() {
 		flow <- true
 		wg.Done()
@@ -145,7 +144,8 @@ func MakeDnsRequestUntilSuccessful(picker ZonePicker, flow chan bool, result cha
 }
 
 func makeRequest(c *dns.Client, m *dns.Msg) *dns.Msg {
-	r, _, err := c.Exchange(m, "10.245.0.2:53")
+	//r, _, err := c.Exchange(m, "10.245.0.2:53")
+	r, _, err := c.Exchange(m, "8.8.8.8:53")
 	if err != nil {
 		return makeRequest(c, m)
 	}

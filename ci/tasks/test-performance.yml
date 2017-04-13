@@ -8,8 +8,11 @@ image_resource:
 
 inputs:
   - name: dns-release
+  - name: bosh-candidate-stemcell
+  - name: bosh-candidate-release
 
-params: []
+params:
+  ZONES_JSON_HASH:
 
 run:
   path: dns-release/ci/tasks/test-performance.sh
