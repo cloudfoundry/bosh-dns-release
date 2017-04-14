@@ -37,7 +37,7 @@ var _ = Describe("Repo", func() {
 		Context("failure cases", func() {
 			It("returns an error when the file does not exist", func() {
 				repo := records.NewRepo("/some/fake/path")
-				_, err := repo.GetIPs("")
+				_, err := repo.Get()
 				Expect(err).To(MatchError("open /some/fake/path: no such file or directory"))
 			})
 
@@ -45,18 +45,21 @@ var _ = Describe("Repo", func() {
 				recordsFile, err := ioutil.TempFile("", "")
 				Expect(err).NotTo(HaveOccurred())
 
-				_, err = recordsFile.Write([]byte(fmt.Sprint(`{{{{{{`)))
+				_, err = recordsFile.Write([]byte(fmt.Sprint(`invalid json`)))
 				Expect(err).NotTo(HaveOccurred())
 
 				repo := records.NewRepo(recordsFile.Name())
-				_, err = repo.GetIPs("")
-				Expect(err).To(MatchError("invalid character '{' looking for beginning of object key string"))
+				_, err = repo.Get()
+				Expect(err).To(MatchError("invalid character 'i' looking for beginning of value"))
 			})
 		})
 
 		Context("when there are records matching the specified fqdn", func() {
 			It("returns all records for that name", func() {
-				records, err := repo.GetIPs("my-instance.my-group.my-network.my-deployment.bosh.")
+				recordSet, err := repo.Get()
+				Expect(err).NotTo(HaveOccurred())
+
+				records, err := recordSet.Resolve("my-instance.my-group.my-network.my-deployment.bosh.")
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(records).To(ContainElement("123.123.123.123"))
@@ -66,7 +69,9 @@ var _ = Describe("Repo", func() {
 
 		Context("when there are no records matching the specified fqdn", func() {
 			It("returns an empty set of records", func() {
-				records, err := repo.GetIPs("some.garbage.fqdn.deploy.bosh")
+				recordSet, err := repo.Get()
+				Expect(err).NotTo(HaveOccurred())
+				records, err := recordSet.Resolve("some.garbage.fqdn.deploy.bosh")
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(records).To(HaveLen(0))

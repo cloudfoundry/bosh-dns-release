@@ -3,16 +3,10 @@ package records
 import (
 	"encoding/json"
 	"io/ioutil"
-	"strings"
 )
 
 type Repo struct {
 	recordsFilePath string
-}
-
-type records struct {
-	Keys  []string   `json:"record_keys"`
-	Infos [][]string `json:"record_infos"`
 }
 
 func NewRepo(recordsFilePath string) Repo {
@@ -21,43 +15,20 @@ func NewRepo(recordsFilePath string) Repo {
 	}
 }
 
-func (r Repo) GetIPs(fqdn string) ([]string, error) {
+func (r Repo) Get() (RecordSet, error) {
+	return r.createFromFileSystem()
+}
+
+func (r Repo) createFromFileSystem() (RecordSet, error) {
 	buf, err := ioutil.ReadFile(r.recordsFilePath)
 	if err != nil {
-		return []string{}, err
+		return RecordSet{}, err
 	}
 
-	var records records
+	var records RecordSet
 	if err := json.Unmarshal(buf, &records); err != nil {
-		return []string{}, err
+		return RecordSet{}, err
 	}
 
-	var idIndex, groupIndex, networkIndex, deploymentIndex, ipIndex int
-
-	for i, k := range records.Keys {
-		switch k {
-		case "id":
-			idIndex = i
-		case "instance_group":
-			groupIndex = i
-		case "network":
-			networkIndex = i
-		case "deployment":
-			deploymentIndex = i
-		case "ip":
-			ipIndex = i
-		default:
-			continue
-		}
-	}
-	var ips []string
-
-	for _, i := range records.Infos {
-		compare := strings.Join([]string{i[idIndex], i[groupIndex], i[networkIndex], i[deploymentIndex], "bosh."}, ".")
-		if compare == fqdn {
-			ips = append(ips, i[ipIndex])
-		}
-	}
-
-	return ips, nil
+	return records, nil
 }

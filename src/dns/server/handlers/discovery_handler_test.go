@@ -11,23 +11,24 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/ginkgo/extensions/table"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 )
 
 var _ = Describe("DiscoveryHandler", func() {
 	Context("ServeDNS", func() {
 		var (
-			discoveryHandler handlers.DiscoveryHandler
-			fakeWriter       *internalfakes.FakeResponseWriter
-			fakeLogger       *loggerfakes.FakeLogger
-			fakeIPGetter     *handlersfakes.FakeIPGetter
+			discoveryHandler  handlers.DiscoveryHandler
+			fakeWriter        *internalfakes.FakeResponseWriter
+			fakeLogger        *loggerfakes.FakeLogger
+			fakeRecordSetRepo *handlersfakes.FakeRecordSetRepo
 		)
 
 		BeforeEach(func() {
 			fakeWriter = &internalfakes.FakeResponseWriter{}
 			fakeLogger = &loggerfakes.FakeLogger{}
-			fakeIPGetter = &handlersfakes.FakeIPGetter{}
+			fakeRecordSetRepo = &handlersfakes.FakeRecordSetRepo{}
 
-			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, fakeIPGetter)
+			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, fakeRecordSetRepo)
 		})
 
 		Context("when there are no questions", func() {
@@ -77,10 +78,14 @@ var _ = Describe("DiscoveryHandler", func() {
 			Context("when the question is an A or ANY record", func() {
 				DescribeTable("returns an A record based off of the records data",
 					func(queryType uint16) {
-						fakeIPGetter.GetIPsReturns([]string{"123.123.123.123"}, nil)
+						recordSet := records.RecordSet{
+							Keys: []string{"id", "instance_group", "az", "network", "deployment", "ip"},
+							Infos: [][]string{{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"}},
+						}
+						fakeRecordSetRepo.GetReturns(recordSet, nil)
 
 						m := &dns.Msg{}
-						m.SetQuestion("my-instance.my-network.my-deployment.bosh.", queryType)
+						m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", queryType)
 
 						discoveryHandler.ServeDNS(fakeWriter, m)
 						message := fakeWriter.WriteMsgArgsForCall(0)
@@ -108,25 +113,33 @@ var _ = Describe("DiscoveryHandler", func() {
 				)
 
 				It("logs a message if multiple records were found for the FQDN", func() {
-					fakeIPGetter.GetIPsReturns([]string{"123.123.123.123", "127.0.0.1"}, nil)
+					recordSet := records.RecordSet{
+						Keys: []string{"id", "instance_group", "az", "network", "deployment", "ip"},
+						Infos: [][]string{
+							{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"},
+							{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1"},
+						},
+					}
+					fakeRecordSetRepo.GetReturns(recordSet, nil)
 
 					m := &dns.Msg{}
 
-					m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeA)
+					m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 					discoveryHandler.ServeDNS(fakeWriter, m)
 
 					Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 					tag, msg, args := fakeLogger.InfoArgsForCall(0)
 					Expect(tag).To(Equal("DiscoveryHandler"))
 					Expect(msg).To(Equal("got multiple ip addresses for %s: %v"))
-					Expect(args[0]).To(Equal("my-instance.my-network.my-deployment.bosh."))
+					Expect(args[0]).To(Equal("my-instance.my-group.my-network.my-deployment.bosh."))
 					Expect(args[1]).To(Equal([]string{"123.123.123.123", "127.0.0.1"}))
 				})
 			})
 
-			Context("when fetching ips returns an error", func() {
+			Context("when loading the records returns an error", func() {
 				BeforeEach(func() {
-					fakeIPGetter.GetIPsReturns([]string{}, errors.New("i screwed up"))
+					recordSet := records.RecordSet{}
+					fakeRecordSetRepo.GetReturns(recordSet, errors.New("i screwed up"))
 				})
 
 				It("returns rcode server failure", func() {
@@ -150,6 +163,37 @@ var _ = Describe("DiscoveryHandler", func() {
 					Expect(tag).To(Equal("DiscoveryHandler"))
 					Expect(msg).To(Equal("failed to get ip addresses: %v"))
 					Expect(args[0]).To(MatchError("i screwed up"))
+				})
+			})
+
+			Context("when parsing the query returns an error", func() {
+				var question string
+				BeforeEach(func() {
+					recordSet := records.RecordSet{}
+					fakeRecordSetRepo.GetReturns(recordSet, nil)
+					question = "q-&^$*^*#^.my-group.my-network.my-deployment.bosh."
+				})
+
+				It("returns rcode format error", func() {
+					m := &dns.Msg{}
+					m.SetQuestion(question, dns.TypeA)
+
+					discoveryHandler.ServeDNS(fakeWriter, m)
+					message := fakeWriter.WriteMsgArgsForCall(0)
+					Expect(message.Rcode).To(Equal(dns.RcodeFormatError))
+					Expect(message.Authoritative).To(Equal(true))
+					Expect(message.RecursionAvailable).To(Equal(false))
+				})
+
+				It("logs the error", func() {
+					m := &dns.Msg{}
+					m.SetQuestion(question, dns.TypeA)
+					discoveryHandler.ServeDNS(fakeWriter, m)
+
+					Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
+					tag, msg, _ := fakeLogger.ErrorArgsForCall(0)
+					Expect(tag).To(Equal("DiscoveryHandler"))
+					Expect(msg).To(Equal("failed to decode query: %v"))
 				})
 			})
 		})

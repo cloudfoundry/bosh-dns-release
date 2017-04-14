@@ -2,7 +2,6 @@ package acceptance_test
 
 import (
 	"fmt"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -63,28 +62,39 @@ var _ = Describe("Integration", func() {
 	})
 
 	It("returns records for bosh instances", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"instances", "--column", "Instance"}...)
+		firstInstance := allDeployedInstances[0]
+
+		cmd := exec.Command(
+			boshBinaryPath,
+			"ssh",
+			"-c",
+			fmt.Sprintf("dig -t A %s.dns.default.bosh-dns.bosh @10.245.0.2", firstInstance.InstanceID))
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-
-		instanceID := strings.Split(strings.TrimSpace(string(session.Out.Contents())), "/")[1]
-
-		cmd = exec.Command(boshBinaryPath, []string{"instances", "--column", "IPs"}...)
-		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-
-		ip := strings.TrimSpace(string(session.Out.Contents()))
-
-		cmd = exec.Command(boshBinaryPath, []string{"ssh", "-c", fmt.Sprintf("dig -t A %s.dns.default.bosh-dns.bosh @10.245.0.2", instanceID)}...)
-		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
 		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-		Eventually(session.Out).Should(gbytes.Say("%s\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", instanceID, ip))
+		Eventually(session.Out).Should(gbytes.Say(
+			"%s\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s",
+			firstInstance.InstanceID,
+			firstInstance.IP))
+		Eventually(session.Out).Should(gbytes.Say("SERVER: 10.245.0.2#53"))
+	})
+
+	It("returns records for bosh instances found with query for all records", func() {
+		Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
+
+		cmd := exec.Command(boshBinaryPath, "ssh", "-c", "dig -t A q-YWxs.dns.default.bosh-dns.bosh @10.245.0.2")
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
+		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
+		for _, info := range allDeployedInstances {
+			Eventually(session.Out).Should(gbytes.Say("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
+		}
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 10.245.0.2#53"))
 	})
 })

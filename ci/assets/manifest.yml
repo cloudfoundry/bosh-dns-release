@@ -10,9 +10,8 @@ update:
 
 instance_groups:
 - name: dns
-  azs:
-  - z1
-  instances: 1
+  azs: [z1]
+  instances: 2
   vm_type: default
   stemcell: default
   networks:

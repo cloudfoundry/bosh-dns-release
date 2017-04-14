@@ -4,24 +4,25 @@ import (
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 	"net"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 )
 
 type DiscoveryHandler struct {
-	logger   logger.Logger
-	logTag   string
-	ipGetter IPGetter
+	logger        logger.Logger
+	logTag        string
+	recordSetRepo RecordSetRepo
 }
 
-//go:generate counterfeiter . IPGetter
-type IPGetter interface {
-	GetIPs(string) ([]string, error)
+//go:generate counterfeiter . RecordSetRepo
+type RecordSetRepo interface {
+	Get() (records.RecordSet, error)
 }
 
-func NewDiscoveryHandler(logger logger.Logger, ipGetter IPGetter) DiscoveryHandler {
+func NewDiscoveryHandler(logger logger.Logger, recordSetRepo RecordSetRepo) DiscoveryHandler {
 	return DiscoveryHandler{
-		logger:   logger,
-		logTag:   "DiscoveryHandler",
-		ipGetter: ipGetter,
+		logger:        logger,
+		logTag:        "DiscoveryHandler",
+		recordSetRepo: recordSetRepo,
 	}
 }
 
@@ -54,10 +55,17 @@ func (d DiscoveryHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 }
 
 func (d DiscoveryHandler) buildARecords(msg, req *dns.Msg) {
-	records, err := d.ipGetter.GetIPs(req.Question[0].Name)
+	recordSet, err := d.recordSetRepo.Get()
 	if err != nil {
 		d.logger.Error(d.logTag, "failed to get ip addresses: %v", err)
 		msg.SetRcode(req, dns.RcodeServerFailure)
+		return
+	}
+
+	records, err := recordSet.Resolve(req.Question[0].Name)
+	if err != nil {
+		d.logger.Error(d.logTag, "failed to decode query: %v", err)
+		msg.SetRcode(req, dns.RcodeFormatError)
 		return
 	}
 

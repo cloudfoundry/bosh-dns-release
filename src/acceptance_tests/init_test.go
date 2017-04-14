@@ -6,8 +6,13 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"encoding/json"
+	"github.com/onsi/gomega/gexec"
 	"os"
+	"os/exec"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestAcceptance(t *testing.T) {
@@ -16,7 +21,8 @@ func TestAcceptance(t *testing.T) {
 }
 
 var (
-	boshBinaryPath string
+	boshBinaryPath       string
+	allDeployedInstances []instanceInfo
 )
 var _ = BeforeSuite(func() {
 	boshBinaryPath = assertEnvExists("BOSH_BINARY_PATH")
@@ -25,6 +31,8 @@ var _ = BeforeSuite(func() {
 	assertEnvExists("BOSH_CA_CERT")
 	assertEnvExists("BOSH_ENVIRONMENT")
 	assertEnvExists("BOSH_DEPLOYMENT")
+
+	allDeployedInstances = getInstanceInfos(boshBinaryPath)
 })
 
 func assertEnvExists(envName string) string {
@@ -33,4 +41,39 @@ func assertEnvExists(envName string) string {
 		Fail(fmt.Sprintf("Expected %s", envName))
 	}
 	return val
+}
+
+type instanceInfo struct {
+	IP            string
+	InstanceID    string
+	InstanceGroup string
+}
+
+func getInstanceInfos(boshBinary string) []instanceInfo {
+	cmd := exec.Command(boshBinary, "instances", "--json")
+	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+	Expect(err).NotTo(HaveOccurred())
+	Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+	var response struct {
+		Tables []struct {
+			Rows []map[string]string
+		}
+	}
+
+	out := []instanceInfo{}
+
+	json.Unmarshal(session.Out.Contents(), &response)
+
+	for _, row := range response.Tables[0].Rows {
+		instanceStrings := strings.Split(row["instance"], "/")
+
+		out = append(out, instanceInfo{
+			IP:            row["ips"],
+			InstanceGroup: instanceStrings[0],
+			InstanceID:    instanceStrings[1],
+		})
+	}
+
+	return out
 }
