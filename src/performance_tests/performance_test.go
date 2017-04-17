@@ -90,8 +90,13 @@ var _ = Describe("Performance", func() {
 	}
 
 	Describe("using zones from file", func() {
-		thing, _ := zp.NewJsonFileZonePicker("/tmp/zones.json")
-		testDnsPerformance(thing)
+		picker, _ := zp.NewJsonFileZonePicker("/tmp/zones.json")
+		testDnsPerformance(picker)
+	})
+
+	Describe("using healthcheck zone", func() {
+		picker := zp.NewStaticZonePicker("healthcheck.bosh-dns.")
+		testDnsPerformance(picker)
 	})
 })
 
@@ -145,6 +150,7 @@ func MakeDnsRequestUntilSuccessful(picker zp.ZonePicker, flow chan bool, result 
 
 func makeRequest(c *dns.Client, m *dns.Msg) *dns.Msg {
 	r, _, err := c.Exchange(m, "10.245.0.34:53")
+
 	if err != nil {
 		return makeRequest(c, m)
 	}
