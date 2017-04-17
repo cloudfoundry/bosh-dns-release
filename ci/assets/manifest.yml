@@ -10,17 +10,18 @@ update:
 
 instance_groups:
 - name: dns
-  azs: [z1]
+  azs: [z1,z2]
   instances: 2
   vm_type: default
   stemcell: default
   networks:
   - name: default
+    static_ips: [10.245.0.34,10.245.0.35]
   jobs:
   - name: dns
     release: dns
   properties:
-    address: 10.245.0.2
+    address: 0.0.0.0
     recursors:
     - 8.8.8.8
 

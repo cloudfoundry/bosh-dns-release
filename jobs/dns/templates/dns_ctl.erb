@@ -31,14 +31,14 @@ function create_directories_and_chown_to_vcap() {
 }
 
 function create_network_alias() {
-  if ! ip addr show dev lo | grep -q <%= p('address') %>
+  if ! ip addr show dev lo | grep -q <%= p('aliased_address') %>
   then
     ip addr add <%= p('address') %> dev lo
   fi
 }
 
 function remove_network_alias() {
-  if ip addr show dev lo | grep -q <%= p('address') %>
+  if ip addr show dev lo | grep -q <%= p('aliased_address') %>
   then
     ip addr del <%= p('address') %>/32 dev lo
   fi

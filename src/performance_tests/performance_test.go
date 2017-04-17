@@ -144,8 +144,7 @@ func MakeDnsRequestUntilSuccessful(picker zp.ZonePicker, flow chan bool, result 
 }
 
 func makeRequest(c *dns.Client, m *dns.Msg) *dns.Msg {
-	//r, _, err := c.Exchange(m, "10.245.0.2:53")
-	r, _, err := c.Exchange(m, "8.8.8.8:53")
+	r, _, err := c.Exchange(m, "10.245.0.34:53")
 	if err != nil {
 		return makeRequest(c, m)
 	}
