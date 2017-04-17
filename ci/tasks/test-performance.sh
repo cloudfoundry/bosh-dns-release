@@ -20,6 +20,11 @@ export BOSH_DIRECTOR_IP="10.245.0.3"
 export BOSH_BINARY_PATH=$(which bosh)
 export BOSH_DEPLOYMENT="bosh-dns"
 
+bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
+    -o $ROOT_DIR/dns-release/ci/assets/add-static-ips.yml > /tmp/cloud-config.yml
+
+bosh -n update-cloud-config /tmp/cloud-config.yml
+
 bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
 bosh -n deploy -v dns_release_path=$ROOT_DIR/dns-release $ROOT_DIR/dns-release/ci/assets/manifest.yml
 
