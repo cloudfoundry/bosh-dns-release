@@ -80,5 +80,36 @@ var _ = Describe("JsonFileZonePicker", func() {
 				Expect(zone4).To(Equal("1.domain."))
 			})
 		})
+
+		Context("when the specified file has only one zone", func() {
+			BeforeEach(func() {
+				file, err := ioutil.TempFile("/tmp", "dns_zone_data")
+				Expect(err).ToNot(HaveOccurred())
+
+				zoneContents := []byte(`{"zones":["1.domain."]}`)
+				_, err = file.Write(zoneContents)
+				Expect(err).ToNot(HaveOccurred())
+
+				sourceFile = file.Name()
+				picker, err = NewJsonFileZonePicker(sourceFile)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				os.Remove(sourceFile)
+			})
+
+			It("round-robins through the list on each call", func() {
+				zone1 := picker.NextZone()
+				zone2 := picker.NextZone()
+				zone3 := picker.NextZone()
+				zone4 := picker.NextZone()
+
+				Expect(zone1).To(Equal("1.domain."))
+				Expect(zone2).To(Equal("1.domain."))
+				Expect(zone3).To(Equal("1.domain."))
+				Expect(zone4).To(Equal("1.domain."))
+			})
+		})
 	})
 })

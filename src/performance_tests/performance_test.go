@@ -10,6 +10,13 @@ import (
 	"time"
 
 	zp "github.com/cloudfoundry/dns-release/src/performance_tests/zone_pickers"
+
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os/exec"
+	"strconv"
+	"strings"
 )
 
 type PerformanceTestInfo struct {
@@ -26,79 +33,197 @@ var _ = Describe("Performance", func() {
 	var wg *sync.WaitGroup
 	var finishedDnsRequestsSignal chan struct{}
 	var result chan DnsResult
+	var picker zp.ZonePicker
+	var label string
 
 	var dnsServerPid int
 
-	testDnsPerformance := func(picker zp.ZonePicker) {
-		Context("420 req / min", func() {
-			BeforeEach(func() {
-				var found bool
-				dnsServerPid, found = GetPidFor("dns")
-				Expect(found).To(BeTrue())
+	BeforeEach(func() {
+		var found bool
+		dnsServerPid, found = GetPidFor("dns")
+		Expect(found).To(BeTrue())
 
-				maxDnsRequestsPerMin = 420
-				info = PerformanceTestInfo{}
+		maxDnsRequestsPerMin = 420
+		info = PerformanceTestInfo{}
 
-				flowSignal = createFlowSignal(10)
-				wg, finishedDnsRequestsSignal = setupWaitGroupWithSignaler(maxDnsRequestsPerMin)
-				result = make(chan DnsResult, maxDnsRequestsPerMin*2)
-			})
+		flowSignal = createFlowSignal(10)
+		wg, finishedDnsRequestsSignal = setupWaitGroupWithSignaler(maxDnsRequestsPerMin)
+		result = make(chan DnsResult, maxDnsRequestsPerMin*2)
+	})
 
-			Measure("should handle with less than 0.797ms median", func(b Benchmarker) {
-				concreteSigar := sigar.ConcreteSigar{}
-				cpuChannel, stopCpuChannel := concreteSigar.CollectCpuStats(100 * time.Millisecond)
-
-				b.Time("420 DNS queries", func() {
-					for i := 0; i < maxDnsRequestsPerMin; i++ {
-						go MakeDnsRequestUntilSuccessful(picker, flowSignal, result, wg)
-						mem := sigar.ProcMem{}
-						if err := mem.Get(dnsServerPid); err == nil {
-							b.RecordValue("DNS Server Memory Usage (in Mb)", float64(mem.Resident/1024/1024))
-						}
-					}
-					<-finishedDnsRequestsSignal
-					close(stopCpuChannel)
-				})
-
-				cpuResult := <-cpuChannel
-				b.RecordValue("Total CPU Usage (%)", (float64(cpuResult.User+cpuResult.Sys)/float64(cpuResult.Total()))*100)
-			}, 5)
-
-			It("handles DNS responses quickly", func() {
-				startTime := time.Now()
-				var resultSummary map[int]*DnsResult
-				for i := 0; i < maxDnsRequestsPerMin; i++ {
-					go MakeDnsRequestUntilSuccessful(picker, flowSignal, result, wg)
+	MeasureDNSPerformance := func(b Benchmarker) {
+		b.Time(fmt.Sprintf("420 DNS queries for %s", label), func() {
+			for i := 0; i < maxDnsRequestsPerMin; i++ {
+				go MakeDnsRequestUntilSuccessful(picker, flowSignal, result, wg)
+				mem := sigar.ProcMem{}
+				if err := mem.Get(dnsServerPid); err == nil {
+					b.RecordValue(fmt.Sprintf("DNS Server Resident Memory Usage (in Mb) for %s", label), float64(mem.Resident)/1024/1024)
 				}
-				<-finishedDnsRequestsSignal
-				endTime := time.Now()
-
-				resultSummary = buildResultSummarySync(result)
-
-				resultTimes := []int{}
-				for _, summary := range resultSummary {
-					resultTimes = append(resultTimes, int(summary.EndTime.Sub(summary.StartTime)))
-				}
-
-				sort.Ints([]int(resultTimes))
-				median := (time.Duration(resultTimes[209]) + time.Duration(resultTimes[210])) / 2
-
-				Expect(endTime).Should(BeTemporally("<", startTime.Add(1*time.Minute)))
-				Expect(median).To(BeNumerically("<", 797*time.Microsecond))
-			})
+				b.RecordValue(fmt.Sprintf("DNS Server CPU Usage (%%) for %s", label), getProcessCPU(dnsServerPid))
+			}
+			<-finishedDnsRequestsSignal
 		})
 	}
 
+	TestDNSPerformance := func() {
+		startTime := time.Now()
+		var resultSummary map[int]*DnsResult
+		for i := 0; i < maxDnsRequestsPerMin; i++ {
+			go MakeDnsRequestUntilSuccessful(picker, flowSignal, result, wg)
+		}
+		<-finishedDnsRequestsSignal
+		endTime := time.Now()
+
+		resultSummary = buildResultSummarySync(result)
+
+		resultTimes := []int{}
+		for _, summary := range resultSummary {
+			resultTimes = append(resultTimes, int(summary.EndTime.Sub(summary.StartTime)))
+		}
+
+		sort.Ints([]int(resultTimes))
+		median := (time.Duration(resultTimes[209]) + time.Duration(resultTimes[210])) / 2
+
+		Expect(endTime).Should(BeTemporally("<", startTime.Add(1*time.Minute)))
+		Expect(median).To(BeNumerically("<", 797*time.Microsecond))
+	}
+
 	Describe("using zones from file", func() {
-		picker, _ := zp.NewJsonFileZonePicker("/tmp/zones.json")
-		testDnsPerformance(picker)
+		BeforeEach(func() {
+			picker, _ = zp.NewJsonFileZonePicker("/tmp/zones.json")
+			label = "prod-like zones"
+		})
+
+		Measure("DNS performance for prod-like zones", func(b Benchmarker) {
+			MeasureDNSPerformance(b)
+		}, 5)
+
+		It("handles DNS responses quickly for prod like zones", func() {
+			TestDNSPerformance()
+		})
 	})
 
 	Describe("using healthcheck zone", func() {
-		picker := zp.NewStaticZonePicker("healthcheck.bosh-dns.")
-		testDnsPerformance(picker)
+		BeforeEach(func() {
+			picker = zp.NewStaticZonePicker("healthcheck.bosh-dns.")
+			label = "healthcheck zone"
+		})
+
+		Measure("DNS performance for healthcheck zone", func(b Benchmarker) {
+			MeasureDNSPerformance(b)
+		}, 5)
+
+		It("handles DNS responses quickly for healthcheck zone", func() {
+			TestDNSPerformance()
+		})
+	})
+
+	Describe("using local bosh dns records", func() {
+		BeforeEach(func() {
+			cmd := exec.Command(boshBinaryPath, []string{"ssh", "dns", "--json", "--results", "-c", "sudo cat /var/vcap/instance/dns/records.json"}...)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				panic(fmt.Sprintf("Failed to BOSH SSH: %s\nOutput: %s", err.Error(), output))
+			}
+
+			jsonResultsOutput := parseBoshSSHOutput(output)
+			records := getRecordsFromJSON(jsonResultsOutput)
+			file := writeTmpFileWithRecords(records)
+
+			picker, _ = zp.NewJsonFileZonePicker(file)
+			label = "local zones"
+		})
+
+		Measure("DNS performance for local zones", func(b Benchmarker) {
+			MeasureDNSPerformance(b)
+		}, 5)
+
+		It("handles DNS responses quickly for local zones", func() {
+			TestDNSPerformance()
+		})
 	})
 })
+
+func getProcessCPU(pid int) float64 {
+	cmd := exec.Command("ps", []string{"-p", strconv.Itoa(pid), "-o", "%cpu"}...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		panic(string(output))
+	}
+
+	percentString := strings.TrimSpace(strings.Split(string(output), "\n")[1])
+	percent, err := strconv.ParseFloat(percentString, 64)
+	Expect(err).ToNot(HaveOccurred())
+
+	return percent
+}
+
+func writeTmpFileWithRecords(records []string) string {
+	file, err := ioutil.TempFile("/tmp", "local-dns-records")
+	if err != nil {
+		panic(fmt.Sprintf("Creating temp file: %s", err.Error()))
+	}
+
+	ZoneFile := ZoneFile{Zones: records}
+
+	bytes, err := json.Marshal(ZoneFile)
+	if err != nil {
+		panic(fmt.Sprintf("Marshalling records: %s", err.Error()))
+	}
+
+	_, err = file.Write(bytes)
+	if err != nil {
+		panic(fmt.Sprintf("Writing test records file: %s", err.Error()))
+	}
+
+	return file.Name()
+}
+
+type ZoneFile struct {
+	Zones []string `json:"zones"`
+}
+
+func getRecordsFromJSON(escapedJSONString string) []string {
+	recordsJSON := RecordsJSON{}
+	err := json.Unmarshal([]byte(escapedJSONString), &recordsJSON)
+	if err != nil {
+		panic(fmt.Sprintf("Unmarshalling JSON into struct: %s", err.Error()))
+	}
+
+	records := []string{}
+	for _, record := range recordsJSON.Records {
+		records = append(records, record[1])
+	}
+
+	return records
+}
+
+type RecordsJSON struct {
+	Records [][]string `json:"records"`
+}
+
+func parseBoshSSHOutput(output []byte) string {
+	catOutput := CatOutput{}
+
+	err := json.Unmarshal(output, &catOutput)
+	if err != nil {
+		panic(fmt.Sprintf("Reading BOSH output: %s", err.Error()))
+	}
+
+	return catOutput.Tables[0].Rows[0].Content
+}
+
+type CatOutput struct {
+	Tables []Table `json:"Tables"`
+}
+
+type Table struct {
+	Rows []Row `json:"Rows"`
+}
+
+type Row struct {
+	Content string `json:"stdout"`
+}
 
 func setupWaitGroupWithSignaler(maxDnsRequests int) (*sync.WaitGroup, chan struct{}) {
 	wg := &sync.WaitGroup{}

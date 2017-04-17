@@ -6,12 +6,11 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/handlersfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal/internalfakes"
-	"github.com/miekg/dns"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/ginkgo/extensions/table"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
+	"github.com/miekg/dns"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("DiscoveryHandler", func() {
@@ -79,7 +78,7 @@ var _ = Describe("DiscoveryHandler", func() {
 				DescribeTable("returns an A record based off of the records data",
 					func(queryType uint16) {
 						recordSet := records.RecordSet{
-							Keys: []string{"id", "instance_group", "az", "network", "deployment", "ip"},
+							Keys:  []string{"id", "instance_group", "az", "network", "deployment", "ip"},
 							Infos: [][]string{{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"}},
 						}
 						fakeRecordSetRepo.GetReturns(recordSet, nil)

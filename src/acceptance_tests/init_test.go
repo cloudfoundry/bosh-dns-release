@@ -24,6 +24,7 @@ var (
 	boshBinaryPath       string
 	allDeployedInstances []instanceInfo
 )
+
 var _ = BeforeSuite(func() {
 	boshBinaryPath = assertEnvExists("BOSH_BINARY_PATH")
 	assertEnvExists("BOSH_CLIENT")
