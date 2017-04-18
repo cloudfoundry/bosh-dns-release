@@ -45,7 +45,7 @@ func main() {
 func mainExitCode() int {
 	logger := boshlog.NewAsyncWriterLogger(logger.LevelDebug, os.Stdout, os.Stderr)
 	logTag := "main"
-	defer logger.Flush()
+	defer logger.FlushTimeout(5 * time.Second)
 
 	configPath, err := parseFlags()
 	if err != nil {
