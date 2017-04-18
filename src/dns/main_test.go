@@ -144,27 +144,42 @@ var _ = Describe("main", func() {
 		)
 
 		Context("handlers", func() {
+			var (
+				c *dns.Client
+				m *dns.Msg
+			)
+
+			BeforeEach(func() {
+				c = &dns.Client{}
+				m = &dns.Msg{}
+			})
+
 			Context("healthcheck.bosh-dns.", func() {
-				It("responds with a success rcode", func() {
-					c := &dns.Client{}
-
-					m := &dns.Msg{}
-
+				BeforeEach(func() {
 					m.SetQuestion("healthcheck.bosh-dns.", dns.TypeA)
+				})
+
+				It("responds with a success rcode", func() {
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 					Expect(err).NotTo(HaveOccurred())
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 				})
+
+				It("logs handler time", func() {
+					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+					Expect(err).NotTo(HaveOccurred())
+
+					Eventually(session.Out).Should(gbytes.Say(`Request \[1\] healthcheck\.bosh-dns\. 0 \d+ns`))
+				})
 			})
 
 			Context("arpa.", func() {
-				It("responds to arpa. requests with an rcode server failure", func() {
-					c := &dns.Client{}
-
-					m := &dns.Msg{}
-
+				BeforeEach(func() {
 					m.SetQuestion("109.22.25.104.in-addr.arpa.", dns.TypePTR)
+				})
+
+				It("responds to arpa. requests with an rcode server failure", func() {
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 					Expect(err).NotTo(HaveOccurred())
@@ -172,14 +187,21 @@ var _ = Describe("main", func() {
 					Expect(r.Authoritative).To(BeTrue())
 					Expect(r.RecursionAvailable).To(BeFalse())
 				})
+
+				It("logs handler time", func() {
+					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+					Expect(err).NotTo(HaveOccurred())
+
+					Eventually(session.Out).Should(gbytes.Say(`Request \[12\] arpa\. 2 \d+ns`))
+				})
 			})
 
 			Context("bosh.", func() {
-				It("responds to A queries for bosh. with content from the record API", func() {
-					c := &dns.Client{}
-					m := &dns.Msg{}
-
+				BeforeEach(func() {
 					m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+				})
+
+				It("responds to A queries for bosh. with content from the record API", func() {
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
@@ -198,6 +220,13 @@ var _ = Describe("main", func() {
 
 					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
 					Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.123"))
+				})
+
+				It("logs handler time", func() {
+					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+					Expect(err).NotTo(HaveOccurred())
+
+					Eventually(session.Out).Should(gbytes.Say(`Request \[1\] bosh\. 0 \d+ns`))
 				})
 			})
 		})
@@ -230,6 +259,11 @@ var _ = Describe("main", func() {
 	})
 
 	Context("when recursing has been enabled", func() {
+		var (
+			cmd     *exec.Cmd
+			session *gexec.Session
+		)
+
 		It("will timeout after the recursor_timeout has been reached", func() {
 			l, err := net.Listen("tcp", ":0")
 			Expect(err).NotTo(HaveOccurred())
@@ -239,14 +273,14 @@ var _ = Describe("main", func() {
 				l.Accept()
 			}()
 
-			cmd := newCommandWithConfig(fmt.Sprintf(`{
+			cmd = newCommandWithConfig(fmt.Sprintf(`{
 				"address": %q,
 				"port": %d,
 				"recursors": [%q],
 				"recursor_timeout": %q
 			}`, listenAddress, listenPort, l.Addr().String(), "1s"))
 
-			_, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(waitForServer(listenPort)).To(Succeed())
@@ -266,6 +300,15 @@ var _ = Describe("main", func() {
 			Expect(time.Now().Sub(startTime)).Should(BeNumerically(">=", 1*time.Second))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
+
+			Eventually(session.Out).Should(gbytes.Say(`Request \[255\] \. 2 \d+ns`))
+		})
+
+		AfterEach(func() {
+			if cmd.Process != nil {
+				session.Kill()
+				session.Wait()
+			}
 		})
 	})
 

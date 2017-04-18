@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/dns-release/src/dns/clock"
 	"github.com/cloudfoundry/dns-release/src/dns/config"
 	"github.com/cloudfoundry/dns-release/src/dns/server"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
@@ -52,10 +53,11 @@ func main() {
 	}
 
 	mux := dns.NewServeMux()
-	mux.Handle("bosh.", handlers.NewDiscoveryHandler(logger, records.NewRepo(c.RecordsFile)))
-	mux.Handle("arpa.", handlers.NewArpaHandler(logger))
-	mux.Handle("healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger))
-	mux.Handle(".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout)), logger))
+
+	addHandler(mux, "bosh.", handlers.NewDiscoveryHandler(logger, records.NewRepo(c.RecordsFile)), logger)
+	addHandler(mux, "arpa.", handlers.NewArpaHandler(logger), logger)
+	addHandler(mux, "healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger), logger)
+	addHandler(mux, ".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout)), logger), logger)
 
 	bindAddress := fmt.Sprintf("%s:%d", c.Address, c.Port)
 	shutdown := make(chan struct{})
@@ -86,4 +88,8 @@ func main() {
 	}
 
 	os.Exit(0)
+}
+
+func addHandler(mux *dns.ServeMux, pattern string, handler dns.Handler, logger logger.Logger) {
+	mux.Handle(pattern, handlers.NewRequestLoggerHandler(pattern, handler, clock.Real, logger))
 }

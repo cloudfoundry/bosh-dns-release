@@ -1,8 +1,8 @@
 package records
 
 import (
-	"strings"
 	"encoding/base64"
+	"strings"
 )
 
 type RecordSet struct {
