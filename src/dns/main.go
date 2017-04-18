@@ -18,6 +18,8 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	"github.com/miekg/dns"
+
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 func parseFlags() (string, error) {
@@ -37,23 +39,27 @@ func parseFlags() (string, error) {
 }
 
 func main() {
-	logger := logger.NewLogger(logger.LevelDebug)
+	os.Exit(mainExitCode())
+}
+
+func mainExitCode() int {
+	logger := boshlog.NewAsyncWriterLogger(logger.LevelDebug, os.Stdout, os.Stderr)
 	logTag := "main"
+	defer logger.Flush()
 
 	configPath, err := parseFlags()
 	if err != nil {
 		logger.Error(logTag, err.Error())
-		os.Exit(1)
+		return 1
 	}
 
 	c, err := config.LoadFromFile(configPath)
 	if err != nil {
 		logger.Error(logTag, err.Error())
-		os.Exit(1)
+		return 1
 	}
 
 	mux := dns.NewServeMux()
-
 	addHandler(mux, "bosh.", handlers.NewDiscoveryHandler(logger, records.NewRepo(c.RecordsFile)), logger)
 	addHandler(mux, "arpa.", handlers.NewArpaHandler(logger), logger)
 	addHandler(mux, "healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger), logger)
@@ -84,10 +90,10 @@ func main() {
 
 	if err := dnsServer.Run(); err != nil {
 		logger.Error(logTag, err.Error())
-		os.Exit(1)
+		return 1
 	}
 
-	os.Exit(0)
+	return 0
 }
 
 func addHandler(mux *dns.ServeMux, pattern string, handler dns.Handler, logger logger.Logger) {

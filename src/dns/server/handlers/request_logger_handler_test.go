@@ -73,7 +73,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 			handler.ServeDNS(fakeWriter, m)
 
-			Eventually(fakeLogger.InfoCallCount).Should(Equal(1))
+			Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 			tag, message, _ := fakeLogger.InfoArgsForCall(0)
 			Expect(tag).To(Equal("RequestLoggerHandler"))
 			Expect(message).To(Equal("Request [255] mux-pattern 0 3ns"))
@@ -85,7 +85,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 				handler.ServeDNS(fakeWriter, m)
 
-				Eventually(fakeLogger.InfoCallCount).Should(Equal(1))
+				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.InfoArgsForCall(0)
 				Expect(message).To(Equal("Request [] mux-pattern 0 3ns"))
 			})
@@ -102,7 +102,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 				handler.ServeDNS(fakeWriter, m)
 
-				Eventually(fakeLogger.InfoCallCount).Should(Equal(1))
+				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.InfoArgsForCall(0)
 				Expect(message).To(Equal("Request [255,1] mux-pattern 0 3ns"))
 			})
@@ -121,7 +121,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 				handler.ServeDNS(fakeWriter, m)
 
-				Eventually(fakeLogger.InfoCallCount).Should(Equal(1))
+				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.InfoArgsForCall(0)
 				Expect(message).To(Equal("Request [1] mux-pattern 2 3ns"))
 			})

@@ -36,13 +36,11 @@ func (h RequestLoggerHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 
 	duration := h.clock.Now().Sub(before).Nanoseconds()
 
-	go func() {
-		types := make([]string, len(req.Question))
-		for i, q := range req.Question {
-			types[i] = fmt.Sprintf("%d", q.Qtype)
-		}
-		h.logger.Info(h.logTag, fmt.Sprintf("Request [%s] %s %d %dns", strings.Join(types, ","), h.muxPattern, respWriter.respRcode, duration))
-	}()
+	types := make([]string, len(req.Question))
+	for i, q := range req.Question {
+		types[i] = fmt.Sprintf("%d", q.Qtype)
+	}
+	h.logger.Info(h.logTag, fmt.Sprintf("Request [%s] %s %d %dns", strings.Join(types, ","), h.muxPattern, respWriter.respRcode, duration))
 }
 
 func newWrappedRespWriter(resp dns.ResponseWriter) respWriterWrapper {
