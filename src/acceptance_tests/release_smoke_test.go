@@ -26,8 +26,9 @@ var _ = Describe("Integration", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say("dns.*TCP .*:domain"))
-		Eventually(session.Out).Should(gbytes.Say("dns.*UDP .*:domain"))
+		output := string(session.Out.Contents())
+		Expect(output).To(MatchRegexp("dns.*TCP .*:domain"))
+		Expect(output).To(MatchRegexp("dns.*UDP .*:domain"))
 	})
 
 	It("should respond to tcp dns queries", func() {
