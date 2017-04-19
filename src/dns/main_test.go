@@ -170,7 +170,7 @@ var _ = Describe("main", func() {
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`Request \[1\] healthcheck\.bosh-dns\. 0 \d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.HealthCheckHandler Request \[1\] \[healthcheck\.bosh-dns\.\] 0 \d+ns`))
 				})
 			})
 
@@ -192,7 +192,7 @@ var _ = Describe("main", func() {
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`Request \[12\] arpa\. 2 \d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ArpaHandler Request \[12\] \[109\.22\.25\.104\.in-addr\.arpa\.\] 2 \d+ns`))
 				})
 			})
 
@@ -226,7 +226,7 @@ var _ = Describe("main", func() {
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`Request \[1\] bosh\. 0 \d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request \[1\] \[my-instance\.my-group\.my-network\.my-deployment\.bosh\.\] 0 \d+ns`))
 				})
 			})
 		})
@@ -301,7 +301,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
 
-			Eventually(session.Out).Should(gbytes.Say(`Request \[255\] \. 2 \d+ns`))
+			Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ForwardHandler Request \[255\] \[bosh\.io\.\] 2 \d+ns`))
 		})
 
 		AfterEach(func() {

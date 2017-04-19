@@ -97,5 +97,5 @@ func mainExitCode() int {
 }
 
 func addHandler(mux *dns.ServeMux, pattern string, handler dns.Handler, logger logger.Logger) {
-	mux.Handle(pattern, handlers.NewRequestLoggerHandler(pattern, handler, clock.Real, logger))
+	mux.Handle(pattern, handlers.NewRequestLoggerHandler(handler, clock.Real, logger))
 }

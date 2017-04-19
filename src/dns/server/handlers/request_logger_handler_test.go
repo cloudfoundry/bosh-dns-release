@@ -49,7 +49,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 		child = makeHandler(dns.RcodeSuccess)
 
-		handler = handlers.NewRequestLoggerHandler("mux-pattern", child, fakeClock, fakeLogger)
+		handler = handlers.NewRequestLoggerHandler(child, fakeClock, fakeLogger)
 	})
 
 	Describe("ServeDNS", func() {
@@ -76,7 +76,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 			Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 			tag, message, _ := fakeLogger.InfoArgsForCall(0)
 			Expect(tag).To(Equal("RequestLoggerHandler"))
-			Expect(message).To(Equal("Request [255] mux-pattern 0 3ns"))
+			Expect(message).To(Equal("dns.HandlerFunc Request [255] [healthcheck.bosh-dns.] 0 3ns"))
 		})
 
 		Context("when there are no questions", func() {
@@ -87,7 +87,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.InfoArgsForCall(0)
-				Expect(message).To(Equal("Request [] mux-pattern 0 3ns"))
+				Expect(message).To(Equal("dns.HandlerFunc Request [] [] 0 3ns"))
 			})
 		})
 
@@ -104,14 +104,14 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.InfoArgsForCall(0)
-				Expect(message).To(Equal("Request [255,1] mux-pattern 0 3ns"))
+				Expect(message).To(Equal("dns.HandlerFunc Request [255,1] [healthcheck.bosh-dns.,q-what.bosh.] 0 3ns"))
 			})
 		})
 
 		Context("when the child handler serves RcodeFailure", func() {
 			It("logs the rcode correctly", func() {
 				child = makeHandler(dns.RcodeServerFailure)
-				handler = handlers.NewRequestLoggerHandler("mux-pattern", child, fakeClock, fakeLogger)
+				handler = handlers.NewRequestLoggerHandler(child, fakeClock, fakeLogger)
 
 				m := &dns.Msg{
 					Question: []dns.Question{
@@ -123,7 +123,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.InfoArgsForCall(0)
-				Expect(message).To(Equal("Request [1] mux-pattern 2 3ns"))
+				Expect(message).To(Equal("dns.HandlerFunc Request [1] [q-what.bosh.] 2 3ns"))
 			})
 		})
 	})

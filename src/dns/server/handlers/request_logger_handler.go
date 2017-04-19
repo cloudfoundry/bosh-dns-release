@@ -17,13 +17,12 @@ type RequestLoggerHandler struct {
 	logTag     string
 }
 
-func NewRequestLoggerHandler(muxPattern string, child dns.Handler, clock clock.Clock, logger logger.Logger) RequestLoggerHandler {
+func NewRequestLoggerHandler(child dns.Handler, clock clock.Clock, logger logger.Logger) RequestLoggerHandler {
 	return RequestLoggerHandler{
-		muxPattern: muxPattern,
-		child:      child,
-		clock:      clock,
-		logger:     logger,
-		logTag:     "RequestLoggerHandler",
+		child:  child,
+		clock:  clock,
+		logger: logger,
+		logTag: "RequestLoggerHandler",
 	}
 }
 
@@ -37,10 +36,19 @@ func (h RequestLoggerHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 	duration := h.clock.Now().Sub(before).Nanoseconds()
 
 	types := make([]string, len(req.Question))
+	domains := make([]string, len(req.Question))
+
 	for i, q := range req.Question {
 		types[i] = fmt.Sprintf("%d", q.Qtype)
+		domains[i] = q.Name
 	}
-	h.logger.Info(h.logTag, fmt.Sprintf("Request [%s] %s %d %dns", strings.Join(types, ","), h.muxPattern, respWriter.respRcode, duration))
+	h.logger.Info(h.logTag, fmt.Sprintf("%T Request [%s] [%s] %d %dns",
+		h.child,
+		strings.Join(types, ","),
+		strings.Join(domains, ","),
+		respWriter.respRcode,
+		duration,
+	))
 }
 
 func newWrappedRespWriter(resp dns.ResponseWriter) respWriterWrapper {
