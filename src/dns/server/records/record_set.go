@@ -23,7 +23,7 @@ func (r RecordSet) Resolve(fqdn string) ([]string, error) {
 	if strings.HasPrefix(fqdn, "q-") {
 		matcher := strings.SplitN(fqdn, ".", 2)
 		base64EncodedQuery := strings.TrimPrefix(matcher[0], "q-")
-		decodedQuery, err := base64.StdEncoding.DecodeString(base64EncodedQuery)
+		decodedQuery, err := base64.RawURLEncoding.DecodeString(base64EncodedQuery)
 		if err != nil {
 			return ips, err
 		}

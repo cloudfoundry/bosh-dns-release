@@ -53,6 +53,24 @@ var _ = Describe("RecordSet", func() {
 				Expect(len(ips)).To(Equal(0))
 			})
 		})
+
+		Context("when the query is standard base64-encoded", func() {
+			It("returns an empty set", func() {
+				// b64(Ma~) == TWF+Cg==
+				_, err := recordSet.Resolve("q-TWF+Cg==.my-group.my-network.my-deployment.bosh.")
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("illegal base64 data at input byte 3"))
+			})
+		})
+
+		Context("when the query is base64-raw-URL encoded", func() {
+			It("returns an empty set", func() {
+				// b64_rawURL(Ma~) == TWF-Cg
+				ips, err := recordSet.Resolve("q-TWF-Cg.my-group.my-network.my-deployment.bosh.")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(ips)).To(Equal(0))
+			})
+		})
 	})
 
 	Context("when there are records matching the specified fqdn", func() {
