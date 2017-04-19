@@ -28,7 +28,8 @@ bosh -n update-cloud-config /tmp/cloud-config.yml -v network=director_network
 bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
 bosh -n deploy  $ROOT_DIR/dns-release/ci/assets/manifest.yml \
     -v dns_release_path=$ROOT_DIR/dns-release \
-    -o $ROOT_DIR/dns-release/ci/assets/two-instances-no-static-ips.yml
+    -o $ROOT_DIR/dns-release/ci/assets/two-instances-no-static-ips.yml \
+    -o $ROOT_DIR/dns-release/ci/assets/use-dns-release-default-bind-and-alias-addresses.yml
 
 export GOPATH=${ROOT_DIR}/go
 export PATH="${GOPATH}/bin":$PATH
