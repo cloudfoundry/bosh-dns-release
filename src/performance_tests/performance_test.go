@@ -51,25 +51,19 @@ var _ = Describe("Performance", func() {
 		result = make(chan DnsResult, maxDnsRequestsPerMin*2)
 	})
 
-	MeasureDNSPerformance := func(b Benchmarker) {
-		b.Time(fmt.Sprintf("420 DNS queries for %s", label), func() {
-			for i := 0; i < maxDnsRequestsPerMin; i++ {
-				go MakeDnsRequestUntilSuccessful(picker, flowSignal, result, wg)
-				mem := sigar.ProcMem{}
-				if err := mem.Get(dnsServerPid); err == nil {
-					b.RecordValue(fmt.Sprintf("DNS Server Resident Memory Usage (in Mb) for %s", label), float64(mem.Resident)/1024/1024)
-				}
-				b.RecordValue(fmt.Sprintf("DNS Server CPU Usage (%%) for %s", label), getProcessCPU(dnsServerPid))
-			}
-			<-finishedDnsRequestsSignal
-		})
-	}
-
 	TestDNSPerformance := func() {
 		startTime := time.Now()
-		var resultSummary map[int]*DnsResult
+		memUsageValues := []float64{}
+		CPUUsageValues := []float64{}
+
+		var resultSummary map[int]DnsResult
 		for i := 0; i < maxDnsRequestsPerMin; i++ {
 			go MakeDnsRequestUntilSuccessful(picker, flowSignal, result, wg)
+			mem := sigar.ProcMem{}
+			if err := mem.Get(dnsServerPid); err == nil {
+				memUsageValues = append(memUsageValues, float64(mem.Resident)/1024/1024)
+				CPUUsageValues = append(CPUUsageValues, getProcessCPU(dnsServerPid))
+			}
 		}
 		<-finishedDnsRequestsSignal
 		endTime := time.Now()
@@ -83,20 +77,36 @@ var _ = Describe("Performance", func() {
 
 		sort.Ints([]int(resultTimes))
 		median := (time.Duration(resultTimes[209]) + time.Duration(resultTimes[210])) / 2
+		max := time.Duration(resultTimes[len(resultTimes)-1])
+
+		sort.Float64s(memUsageValues)
+		maxMem := memUsageValues[len(memUsageValues)-1]
+
+		sort.Float64s(CPUUsageValues)
+		maxCPU := CPUUsageValues[len(CPUUsageValues)-1]
 
 		Expect(endTime).Should(BeTemporally("<", startTime.Add(1*time.Minute)))
+
+		fmt.Printf("Median DNS response time for %s: %s\n", label, median.String())
 		Expect(median).To(BeNumerically("<", 797*time.Microsecond))
+
+		fmt.Printf("Max DNS response time for %s: %s\n", label, max.String())
+		Expect(max).To(BeNumerically("<", 7540190*time.Microsecond))
+
+		fmt.Printf("Max DNS server memory usage for %s: %f Mb\n", label, maxMem)
+		Expect(maxMem).To(BeNumerically("<", 15))
+
+		fmt.Printf("Max DNS server CPU usage for %s: %f %%\n", label, maxCPU)
+		Expect(maxCPU).To(BeNumerically("<", 5))
 	}
 
 	Describe("using zones from file", func() {
 		BeforeEach(func() {
-			picker, _ = zp.NewJsonFileZonePicker("/tmp/zones.json")
+			var err error
+			picker, err = zp.NewJsonFileZonePicker("/tmp/zones.json")
+			Expect(err).ToNot(HaveOccurred())
 			label = "prod-like zones"
 		})
-
-		Measure("DNS performance for prod-like zones", func(b Benchmarker) {
-			MeasureDNSPerformance(b)
-		}, 5)
 
 		It("handles DNS responses quickly for prod like zones", func() {
 			TestDNSPerformance()
@@ -108,10 +118,6 @@ var _ = Describe("Performance", func() {
 			picker = zp.NewStaticZonePicker("healthcheck.bosh-dns.")
 			label = "healthcheck zone"
 		})
-
-		Measure("DNS performance for healthcheck zone", func(b Benchmarker) {
-			MeasureDNSPerformance(b)
-		}, 5)
 
 		It("handles DNS responses quickly for healthcheck zone", func() {
 			TestDNSPerformance()
@@ -133,10 +139,6 @@ var _ = Describe("Performance", func() {
 			picker, _ = zp.NewJsonFileZonePicker(file)
 			label = "local zones"
 		})
-
-		Measure("DNS performance for local zones", func(b Benchmarker) {
-			MeasureDNSPerformance(b)
-		}, 5)
 
 		It("handles DNS responses quickly for local zones", func() {
 			TestDNSPerformance()
@@ -283,8 +285,8 @@ func makeRequest(c *dns.Client, m *dns.Msg) *dns.Msg {
 	return r
 }
 
-func buildResultSummarySync(result chan DnsResult) map[int]*DnsResult {
-	resultSummary := make(map[int]*DnsResult)
+func buildResultSummarySync(result chan DnsResult) map[int]DnsResult {
+	resultSummary := make(map[int]DnsResult)
 	close(result)
 
 	for r := range result {
@@ -292,8 +294,9 @@ func buildResultSummarySync(result chan DnsResult) map[int]*DnsResult {
 			dnsResult := resultSummary[r.Id]
 			dnsResult.EndTime = r.EndTime
 			dnsResult.RCode = r.RCode
+			resultSummary[r.Id] = dnsResult
 		} else {
-			resultSummary[r.Id] = &r
+			resultSummary[r.Id] = r
 		}
 	}
 
