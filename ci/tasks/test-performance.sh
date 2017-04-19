@@ -21,7 +21,7 @@ export BOSH_BINARY_PATH=$(which bosh)
 export BOSH_DEPLOYMENT="bosh-dns"
 
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
-    -o $ROOT_DIR/dns-release/ci/assets/add-static-ips.yml > /tmp/cloud-config.yml
+    -o $ROOT_DIR/dns-release/ci/assets/add-static-ips-to-cloud-config.yml > /tmp/cloud-config.yml
 
 bosh -n update-cloud-config /tmp/cloud-config.yml -v network=director_network
 

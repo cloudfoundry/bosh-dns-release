@@ -1,0 +1,6 @@
+- type: remove
+  path: /instance_groups/name=dns/networks/name=default/static_ips
+
+- type: replace
+  path: /instance_groups/name=dns/instances
+  value: 2

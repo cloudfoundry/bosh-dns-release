@@ -21,12 +21,14 @@ export BOSH_BINARY_PATH=$(which bosh)
 export BOSH_DEPLOYMENT="bosh-dns"
 
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
-    -o $ROOT_DIR/dns-release/ci/assets/add-static-ips.yml > /tmp/cloud-config.yml
+    -o $ROOT_DIR/dns-release/ci/assets/add-static-ips-to-cloud-config.yml > /tmp/cloud-config.yml
 
 bosh -n update-cloud-config /tmp/cloud-config.yml -v network=director_network
 
 bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
-bosh -n deploy -v dns_release_path=$ROOT_DIR/dns-release $ROOT_DIR/dns-release/ci/assets/manifest.yml
+bosh -n deploy  $ROOT_DIR/dns-release/ci/assets/manifest.yml \
+    -v dns_release_path=$ROOT_DIR/dns-release \
+    -o $ROOT_DIR/dns-release/ci/assets/two-instances-no-static-ips.yml
 
 export GOPATH=${ROOT_DIR}/go
 export PATH="${GOPATH}/bin":$PATH
