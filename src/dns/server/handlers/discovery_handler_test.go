@@ -2,6 +2,8 @@ package handlers_test
 
 import (
 	"errors"
+	"net"
+
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/handlersfakes"
@@ -87,15 +89,16 @@ var _ = Describe("DiscoveryHandler", func() {
 						m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", queryType)
 
 						discoveryHandler.ServeDNS(fakeWriter, m)
-						message := fakeWriter.WriteMsgArgsForCall(0)
+						responseMsg := fakeWriter.WriteMsgArgsForCall(0)
 
-						Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-						Expect(message.Authoritative).To(Equal(true))
-						Expect(message.RecursionAvailable).To(Equal(false))
+						Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(responseMsg.Authoritative).To(Equal(true))
+						Expect(responseMsg.RecursionAvailable).To(Equal(false))
+						Expect(responseMsg.Truncated).To(Equal(false))
 
-						Expect(message.Answer).To(HaveLen(1))
+						Expect(responseMsg.Answer).To(HaveLen(1))
 
-						answer := message.Answer[0]
+						answer := responseMsg.Answer[0]
 						header := answer.Header()
 
 						Expect(header.Rrtype).To(Equal(dns.TypeA))
@@ -132,6 +135,57 @@ var _ = Describe("DiscoveryHandler", func() {
 					Expect(msg).To(Equal("got multiple ip addresses for %s: %v"))
 					Expect(args[0]).To(Equal("my-instance.my-group.my-network.my-deployment.bosh."))
 					Expect(args[1]).To(Equal([]string{"123.123.123.123", "127.0.0.1"}))
+				})
+
+				Context("when there are too many records to fit into 512 bytes", func() {
+					var (
+						recordSet records.RecordSet
+						req       *dns.Msg
+					)
+
+					BeforeEach(func() {
+						recordSet = records.RecordSet{
+							Keys: []string{"id", "instance_group", "az", "network", "deployment", "ip"},
+							Infos: [][]string{
+								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"},
+								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1"},
+								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.2"},
+								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.3"},
+								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.4"},
+								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.5"},
+								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.6"},
+							},
+						}
+
+						fakeRecordSetRepo.GetReturns(recordSet, nil)
+						req = &dns.Msg{}
+						req.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+					})
+
+					Context("when the request is udp", func() {
+						It("truncates the response", func() {
+							discoveryHandler.ServeDNS(fakeWriter, req)
+
+							responseMsg := fakeWriter.WriteMsgArgsForCall(0)
+							Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+							Expect(len(responseMsg.Answer)).To(Equal(6))
+							Expect(responseMsg.Truncated).To(Equal(true))
+							Expect(responseMsg.Len()).To(BeNumerically("<", 512))
+						})
+					})
+
+					Context("when the request is tcp", func() {
+						It("does not truncate", func() {
+							fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
+							discoveryHandler.ServeDNS(fakeWriter, req)
+
+							responseMsg := fakeWriter.WriteMsgArgsForCall(0)
+							Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+							Expect(responseMsg.Truncated).To(Equal(false))
+							Expect(len(responseMsg.Answer)).To(Equal(7))
+							Expect(responseMsg.Len()).To(BeNumerically(">", 512))
+						})
+					})
 				})
 			})
 

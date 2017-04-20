@@ -231,26 +231,6 @@ var _ = Describe("main", func() {
 			})
 		})
 
-		It("can respond to UDP messages up to 65535 bytes", func() {
-			c := &dns.Client{
-				Net: "udp",
-			}
-
-			m := &dns.Msg{}
-
-			m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
-
-			// 353 is a semi magic number which we've determined will cause a truncation if the UDPSize is not set to 65535
-			for i := 0; i < 353; i++ {
-				m.Question = append(m.Question, dns.Question{"healthcheck.bosh-dns.", dns.TypeANY, dns.ClassINET})
-			}
-
-			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-
-			Expect(err).NotTo(HaveOccurred())
-			Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-		})
-
 		It("gracefully shuts down on TERM", func() {
 			session.Signal(syscall.SIGTERM)
 

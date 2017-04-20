@@ -72,7 +72,7 @@ func mainExitCode() int {
 	dnsServer := server.New(
 		[]server.DNSServer{
 			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: mux},
-			&dns.Server{Addr: bindAddress, Net: "udp", UDPSize: 65535, Handler: mux},
+			&dns.Server{Addr: bindAddress, Net: "udp", Handler: mux},
 		},
 		[]server.HealthCheck{
 			server.NewUDPHealthCheck(net.Dial, bindAddress),

@@ -26,32 +26,44 @@ func NewDiscoveryHandler(logger logger.Logger, recordSetRepo RecordSetRepo) Disc
 	}
 }
 
-func (d DiscoveryHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
-	m := &dns.Msg{}
+func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, req *dns.Msg) {
+	response := &dns.Msg{}
 
-	m.Authoritative = true
-	m.RecursionAvailable = false
+	response.Authoritative = true
+	response.RecursionAvailable = false
 
 	if len(req.Question) == 0 {
-		m.SetRcode(req, dns.RcodeSuccess)
+		response.SetRcode(req, dns.RcodeSuccess)
 	} else {
 		switch req.Question[0].Qtype {
 		case dns.TypeMX:
-			m.SetRcode(req, dns.RcodeSuccess)
+			response.SetRcode(req, dns.RcodeSuccess)
 		case dns.TypeAAAA:
-			m.SetRcode(req, dns.RcodeSuccess)
+			response.SetRcode(req, dns.RcodeSuccess)
 		case dns.TypeA:
-			d.buildARecords(m, req)
+			d.buildARecords(response, req)
 		case dns.TypeANY:
-			d.buildARecords(m, req)
+			d.buildARecords(response, req)
 		default:
-			m.SetRcode(req, dns.RcodeServerFailure)
+			response.SetRcode(req, dns.RcodeServerFailure)
 		}
 	}
 
-	if err := resp.WriteMsg(m); err != nil {
+	if _, ok := responseWriter.RemoteAddr().(*net.TCPAddr); !ok {
+		d.trimIfNeeded(response)
+	}
+
+	if err := responseWriter.WriteMsg(response); err != nil {
 		d.logger.Error(d.logTag, err.Error())
 	}
+}
+
+func (DiscoveryHandler) trimIfNeeded(resp *dns.Msg) {
+	numAnswers := len(resp.Answer)
+	for len(resp.Answer) > 0 && resp.Len() > 512 {
+		resp.Answer = resp.Answer[:len(resp.Answer)-1]
+	}
+	resp.Truncated = len(resp.Answer) < numAnswers
 }
 
 func (d DiscoveryHandler) buildARecords(msg, req *dns.Msg) {
