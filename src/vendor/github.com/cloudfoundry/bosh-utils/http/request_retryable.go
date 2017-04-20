@@ -28,32 +28,29 @@ type requestRetryable struct {
 	bodyBytes []byte // buffer request body to memory for retries
 	response  *http.Response
 
-	uuidGenerator         boshuuid.Generator
-	seekableRequestBody   io.ReadCloser
-	logger                boshlog.Logger
-	logTag                string
-	isResponseAttemptable func(*http.Response, error) (bool, error)
+	uuidGenerator       boshuuid.Generator
+	seekableRequestBody io.ReadCloser
+	logger              boshlog.Logger
+	logTag              string
 }
 
 func NewRequestRetryable(
 	request *http.Request,
 	delegate Client,
 	logger boshlog.Logger,
-	isResponseAttemptable func(*http.Response, error) (bool, error),
 ) RequestRetryable {
-	if isResponseAttemptable == nil {
-		isResponseAttemptable = defaultIsAttemptable
-	}
-
 	return &requestRetryable{
-		request:               request,
-		delegate:              delegate,
-		attempt:               0,
-		uuidGenerator:         boshuuid.NewGenerator(),
-		logger:                logger,
-		logTag:                "clientRetryable",
-		isResponseAttemptable: isResponseAttemptable,
+		request:       request,
+		delegate:      delegate,
+		attempt:       0,
+		uuidGenerator: boshuuid.NewGenerator(),
+		logger:        logger,
+		logTag:        "clientRetryable",
 	}
+}
+
+type Seekable interface {
+	Seek(offset int64, whence int) (ret int64, err error)
 }
 
 func (r *requestRetryable) Attempt() (bool, error) {
@@ -66,18 +63,18 @@ func (r *requestRetryable) Attempt() (bool, error) {
 		}
 	}
 
-	_, implementsSeekable := r.request.Body.(io.ReadSeeker)
+	_, implementsSeekable := r.request.Body.(Seekable)
 	if r.seekableRequestBody != nil || implementsSeekable {
 		if r.seekableRequestBody == nil {
 			r.seekableRequestBody = r.request.Body
 		}
 
-		seekable, ok := r.seekableRequestBody.(io.ReadSeeker)
+		seekable, ok := r.seekableRequestBody.(Seekable)
 		if !ok {
 			return false, errors.New("Should never happen")
 		}
 		_, err := seekable.Seek(0, 0)
-		r.request.Body = ioutil.NopCloser(seekable)
+		r.request.Body = ioutil.NopCloser(r.seekableRequestBody)
 
 		if err != nil {
 			return false, bosherr.WrapErrorf(err, "Seeking to begining of seekable request body during attempt %d", r.attempt)
@@ -104,15 +101,20 @@ func (r *requestRetryable) Attempt() (bool, error) {
 
 	r.attempt++
 
-	r.logger.Debug(r.logTag, "[requestID=%s] Requesting (attempt=%d): %s", r.requestID, r.attempt, formatRequest(r.request))
+	r.logger.Debug(r.logTag, "[requestID=%s] Requesting (attempt=%d): %s", r.requestID, r.attempt, r.formatRequest(r.request))
 	r.response, err = r.delegate.Do(r.request)
-
-	attemptable, err := r.isResponseAttemptable(r.response, err)
-	if !attemptable && r.seekableRequestBody != nil {
-		r.seekableRequestBody.Close()
+	if err != nil {
+		r.logger.Debug(r.logTag, "[requestID=%s] Request attempt failed (attempts=%d), error: %s", r.requestID, r.attempt, err)
+		return true, err
 	}
 
-	return attemptable, err
+	if r.wasSuccessful(r.response) {
+		r.logger.Debug(r.logTag, "[requestID=%s] Request succeeded (attempts=%d), response: %s", r.requestID, r.attempt, r.formatResponse(r.response))
+		return false, nil
+	}
+
+	r.logger.Debug(r.logTag, "[requestID=%s] Request attempt failed (attempts=%d), response: %s", r.requestID, r.attempt, r.formatResponse(r.response))
+	return true, bosherr.Errorf("Request failed, response: %s", r.formatResponse(r.response))
 }
 
 func (r *requestRetryable) Response() *http.Response {
@@ -123,17 +125,7 @@ func (r *requestRetryable) wasSuccessful(resp *http.Response) bool {
 	return resp.StatusCode >= 200 && resp.StatusCode < 300
 }
 
-func defaultIsAttemptable(resp *http.Response, err error) (bool, error) {
-	if err != nil {
-		return true, err
-	}
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return false, nil
-	}
-	return true, bosherr.Errorf("Request failed, response: %s", formatResponse(resp))
-}
-
-func formatRequest(req *http.Request) string {
+func (r *requestRetryable) formatRequest(req *http.Request) string {
 	if req == nil {
 		return "Request(nil)"
 	}
@@ -141,7 +133,7 @@ func formatRequest(req *http.Request) string {
 	return fmt.Sprintf("Request{ Method: '%s', URL: '%s' }", req.Method, req.URL)
 }
 
-func formatResponse(resp *http.Response) string {
+func (r *requestRetryable) formatResponse(resp *http.Response) string {
 	if resp == nil {
 		return "Response(nil)"
 	}

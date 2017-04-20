@@ -16,23 +16,16 @@ type Client interface {
 
 func CreateDefaultClient(certPool *x509.CertPool) *http.Client {
 	insecureSkipVerify := false
-	return factory{}.New(insecureSkipVerify, certPool)
+	return createDefaultClient(insecureSkipVerify, certPool)
 }
 
 func CreateDefaultClientInsecureSkipVerify() *http.Client {
 	insecureSkipVerify := true
-	return factory{}.New(insecureSkipVerify, nil)
+	return createDefaultClient(insecureSkipVerify, nil)
 }
 
-type factory struct{}
-
-func (f factory) New(insecureSkipVerify bool, certPool *x509.CertPool) *http.Client {
-	defaultDialer := &net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 0,
-	}
-
-	client := &http.Client{
+func createDefaultClient(insecureSkipVerify bool, certPool *x509.CertPool) *http.Client {
+	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				RootCAs:            certPool,
@@ -40,12 +33,14 @@ func (f factory) New(insecureSkipVerify bool, certPool *x509.CertPool) *http.Cli
 			},
 
 			Proxy: http.ProxyFromEnvironment,
-			Dial:  SOCKS5DialFuncFromEnvironment(defaultDialer.Dial),
+
+			Dial: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 0,
+			}).Dial,
 
 			TLSHandshakeTimeout: 30 * time.Second,
 			DisableKeepAlives:   true,
 		},
 	}
-
-	return client
 }

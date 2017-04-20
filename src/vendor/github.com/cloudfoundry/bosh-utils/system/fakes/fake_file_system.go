@@ -100,7 +100,6 @@ type FakeFileStats struct {
 	FileMode os.FileMode
 	Flags    int
 	Username string
-	Groupname string
 
 	Open bool
 
@@ -387,12 +386,7 @@ func (fs *FakeFileSystem) Chown(path, username string) error {
 		return fmt.Errorf("Path does not exist: %s", path)
 	}
 
-	parts := strings.Split(username, ":")
-	stats.Username = parts[0]
-	stats.Groupname = parts[0]
-	if len(parts) > 1 {
-		stats.Groupname = parts[1]
-	}
+	stats.Username = username
 	return nil
 }
 

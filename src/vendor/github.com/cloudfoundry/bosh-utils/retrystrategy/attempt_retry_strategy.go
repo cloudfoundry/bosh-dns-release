@@ -34,7 +34,7 @@ func (s *attemptRetryStrategy) Try() error {
 	var isRetryable bool
 
 	for i := 0; i < s.maxAttempts; i++ {
-		s.logger.Debug(s.logTag, "Making attempt #%d for %T", i, s.retryable)
+		s.logger.Debug(s.logTag, "Making attempt #%d", i)
 
 		isRetryable, err = s.retryable.Attempt()
 		if err == nil {

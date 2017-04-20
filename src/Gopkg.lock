@@ -1,0 +1,54 @@
+memo = "7391f2351ec131e476121515de261b180082c867cdf6633cd6c5d833574eacf4"
+
+[[projects]]
+  name = "github.com/bmatcuk/doublestar"
+  packages = ["."]
+  revision = "b3608229437ba4dc33dae64d56a79a2a73f1f6b2"
+  version = "v1.0.9"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/charlievieth/fs"
+  packages = ["."]
+  revision = "7bfe628b7c9751909dba95fffb55acd8ca725ae7"
+
+[[projects]]
+  branch = "develop"
+  name = "github.com/cloudfoundry/bosh-utils"
+  packages = ["errors","logger","logger/loggerfakes","system","system/fakes"]
+  revision = "03006577df40ec7e1464206faeae3840bc768763"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/cloudfoundry/gosigar"
+  packages = ["."]
+  revision = "dfaa4d491586af21e1ce06028df3926389a99654"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/miekg/dns"
+  packages = ["."]
+  revision = "6ebcb714d36901126ee2807031543b38c56de963"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nu7hatch/gouuid"
+  packages = ["."]
+  revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/onsi/ginkgo"
+  packages = [".","config","extensions/table","internal/codelocation","internal/containernode","internal/failer","internal/leafnodes","internal/remote","internal/spec","internal/spec_iterator","internal/specrunner","internal/suite","internal/testingtproxy","internal/writer","reporters","reporters/stenographer","reporters/stenographer/support/go-colorable","reporters/stenographer/support/go-isatty","types"]
+  revision = "6adbc2648389a46e8ff0e96d07a07a9a9eb432de"
+
+[[projects]]
+  name = "github.com/onsi/gomega"
+  packages = [".","format","gbytes","gexec","internal/assertion","internal/asyncassertion","internal/testingtsupport","matchers","matchers/support/goraph/bipartitegraph","matchers/support/goraph/edge","matchers/support/goraph/node","matchers/support/goraph/util","types"]
+  revision = "f4f1caefe95e396ea97b72dd6c52973ae4a6978c"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "f3918c30c5c2cb527c0b071a27c35120a6c0719a"

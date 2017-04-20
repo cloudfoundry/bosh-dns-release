@@ -15,13 +15,13 @@ import (
 
 var _ = Describe("retryableBlobstore", func() {
 	var (
-		innerBlobstore     *fakeblob.FakeDigestBlobstore
+		innerBlobstore     *fakeblob.FakeBlobstore
 		logger             boshlog.Logger
-		retryableBlobstore boshblob.DigestBlobstore
+		retryableBlobstore boshblob.Blobstore
 	)
 
 	BeforeEach(func() {
-		innerBlobstore = &fakeblob.FakeDigestBlobstore{}
+		innerBlobstore = &fakeblob.FakeBlobstore{}
 		logger = boshlog.NewLogger(boshlog.LevelNone)
 		retryableBlobstore = boshblob.NewRetryableBlobstore(innerBlobstore, 3, logger)
 	})
@@ -29,70 +29,68 @@ var _ = Describe("retryableBlobstore", func() {
 	Describe("Get", func() {
 		Context("when inner blobstore succeeds before maximum number of get tries (first time)", func() {
 			It("returns path without an error", func() {
-				innerBlobstore.GetReturns("fake-path", nil)
-				digest := boshcrypto.NewDigest(boshcrypto.DigestAlgorithmSHA1, "fingerprint")
-				path, err := retryableBlobstore.Get("fake-blob-id", digest)
+				innerBlobstore.GetFileName = "fake-path"
+
+				path, err := retryableBlobstore.Get("fake-blob-id", boshcrypto.NewDigest("fake", "fingerprint"))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(path).To(Equal("fake-path"))
-				actualBlobID, actualDigest := innerBlobstore.GetArgsForCall(0)
-				Expect(actualBlobID).To(Equal("fake-blob-id"))
-				Expect(actualDigest).To(Equal(digest))
+
+				Expect(innerBlobstore.GetBlobIDs).To(Equal([]string{"fake-blob-id"}))
+				Expect(innerBlobstore.GetFingerprints).To(Equal([]boshcrypto.Digest{boshcrypto.NewDigest("fake", "fingerprint")}))
 			})
 		})
 
 		Context("when inner blobstore succeed exactly at maximum number of get tries", func() {
 			It("returns path without an error", func() {
-				tries := 0
-				getFileNames := []string{"", "", "fake-last-path"}
-				getErrs := []error{
+				innerBlobstore.GetFileNames = []string{"", "", "fake-last-path"}
+				innerBlobstore.GetErrs = []error{
 					errors.New("fake-get-err-1"),
 					errors.New("fake-get-err-2"),
 					nil,
 				}
-				innerBlobstore.GetStub = func(blobID string, digest boshcrypto.Digest) (fileName string, err error) {
-					defer func() { tries += 1 }()
-					return getFileNames[tries], getErrs[tries]
-				}
 
-				digest := boshcrypto.NewDigest(boshcrypto.DigestAlgorithmSHA1, "fingerprint")
-				path, err := retryableBlobstore.Get("fake-blob-id", digest)
+				path, err := retryableBlobstore.Get("fake-blob-id", boshcrypto.NewDigest("fake", "fingerprint"))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(path).To(Equal("fake-last-path"))
 
-				blobIDs := []string{"fake-blob-id", "fake-blob-id", "fake-blob-id"}
-				for call, expectedBlobID := range blobIDs {
-					blobID, actualDigest := innerBlobstore.GetArgsForCall(call)
-					Expect(blobID).To(Equal(expectedBlobID))
-					Expect(actualDigest).To(Equal(digest))
-				}
+				Expect(innerBlobstore.GetBlobIDs).To(Equal(
+					[]string{"fake-blob-id", "fake-blob-id", "fake-blob-id"},
+				))
+
+				Expect(innerBlobstore.GetFingerprints).To(Equal(
+					[]boshcrypto.Digest{
+						boshcrypto.NewDigest("fake", "fingerprint"),
+						boshcrypto.NewDigest("fake", "fingerprint"),
+						boshcrypto.NewDigest("fake", "fingerprint"),
+					},
+				))
 			})
 		})
 
 		Context("when inner blobstore does not succeed before maximum number of get tries", func() {
 			It("returns last try error from inner blobstore", func() {
-				tries := 0
-				getFileNames := []string{"", "", ""}
-				getErrs := []error{
+				innerBlobstore.GetFileNames = []string{"", "", ""}
+				innerBlobstore.GetErrs = []error{
 					errors.New("fake-get-err-1"),
 					errors.New("fake-get-err-2"),
 					errors.New("fake-last-get-err"),
 				}
-				innerBlobstore.GetStub = func(blobID string, digest boshcrypto.Digest) (fileName string, err error) {
-					defer func() { tries += 1 }()
-					return getFileNames[tries], getErrs[tries]
-				}
 
-				digest := boshcrypto.NewDigest(boshcrypto.DigestAlgorithmSHA1, "fingerprint")
-				_, err := retryableBlobstore.Get("fake-blob-id", digest)
+				_, err := retryableBlobstore.Get("fake-blob-id", boshcrypto.NewDigest("fake", "fingerprint"))
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("fake-last-get-err"))
 
-				blobIDs := []string{"fake-blob-id", "fake-blob-id", "fake-blob-id"}
-				for call, blobID := range blobIDs {
-					actualBlobID, actualDigest := innerBlobstore.GetArgsForCall(call)
-					Expect(actualBlobID).To(Equal(blobID))
-					Expect(actualDigest).To(Equal(digest))
-				}
+				Expect(innerBlobstore.GetBlobIDs).To(Equal(
+					[]string{"fake-blob-id", "fake-blob-id", "fake-blob-id"},
+				))
+
+				Expect(innerBlobstore.GetFingerprints).To(Equal(
+					[]boshcrypto.Digest{
+						boshcrypto.NewDigest("fake", "fingerprint"),
+						boshcrypto.NewDigest("fake", "fingerprint"),
+						boshcrypto.NewDigest("fake", "fingerprint"),
+					},
+				))
 			})
 		})
 	})
@@ -101,11 +99,12 @@ var _ = Describe("retryableBlobstore", func() {
 		It("delegates to inner blobstore to clean up", func() {
 			err := retryableBlobstore.CleanUp("/some/file")
 			Expect(err).ToNot(HaveOccurred())
-			Expect(innerBlobstore.CleanUpArgsForCall(0)).To(Equal("/some/file"))
+
+			Expect(innerBlobstore.CleanUpFileName).To(Equal("/some/file"))
 		})
 
 		It("returns error if inner blobstore cleaning up fails", func() {
-			innerBlobstore.CleanUpReturns(errors.New("fake-clean-up-error"))
+			innerBlobstore.CleanUpErr = errors.New("fake-clean-up-error")
 
 			err := retryableBlobstore.CleanUp("/some/file")
 			Expect(err).To(HaveOccurred())
@@ -114,95 +113,69 @@ var _ = Describe("retryableBlobstore", func() {
 	})
 
 	Describe("Delete", func() {
-		It("delegates to inner blobstore", func() {
+		It("delegates to inner blobstore to clean up", func() {
 			err := retryableBlobstore.Delete("some-blob")
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(innerBlobstore.DeleteArgsForCall(0)).To(Equal("some-blob"))
+			Expect(innerBlobstore.DeleteBlobID).To(Equal("some-blob"))
 		})
 
-		It("returns error if inner blobstore fails", func() {
-			innerBlobstore.DeleteReturns(errors.New("fake-delete-error"))
+		It("returns error if inner blobstore cleaning up fails", func() {
+			innerBlobstore.DeleteErr = errors.New("fake-clean-up-error")
 
 			err := retryableBlobstore.Delete("/some/file")
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("fake-delete-error"))
+			Expect(err.Error()).To(ContainSubstring("fake-clean-up-error"))
 		})
 	})
 
 	Describe("Create", func() {
 		Context("when inner blobstore succeeds before maximum number of create tries (first time)", func() {
 			It("returns blobID and fingerprint without an error", func() {
-				expectedDigest := boshcrypto.MultipleDigest{}
-				innerBlobstore.CreateReturns("fake-blob-id", expectedDigest, nil)
+				innerBlobstore.CreateBlobID = "fake-blob-id"
 
-				blobID, actualDigest, err := retryableBlobstore.Create("fake-file-name")
-
+				blobID, err := retryableBlobstore.Create("fake-file-name")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(blobID).To(Equal("fake-blob-id"))
-				Expect(actualDigest).To(Equal(expectedDigest))
-				Expect(innerBlobstore.CreateArgsForCall(0)).To(Equal("fake-file-name"))
+
+				Expect(innerBlobstore.CreateFileNames).To(Equal([]string{"fake-file-name"}))
 			})
 		})
 
 		Context("when inner blobstore succeed exactly at maximum number of create tries", func() {
 			It("returns blobID and fingerprint without an error", func() {
-
-				tries := 0
-				expectedDigest := boshcrypto.MustParseMultipleDigest("someshasum")
-				createBlobIDs := []string{"", "", "fake-last-blob-id"}
-
-				createDigests := []boshcrypto.MultipleDigest{
-					boshcrypto.MultipleDigest{},
-					boshcrypto.MultipleDigest{},
-					expectedDigest,
-				}
-				createErrs := []error{
+				innerBlobstore.CreateBlobIDs = []string{"", "", "fake-last-blob-id"}
+				innerBlobstore.CreateErrs = []error{
 					errors.New("fake-create-err-1"),
 					errors.New("fake-create-err-2"),
 					nil,
 				}
 
-				innerBlobstore.CreateStub = func(blobID string) (fileName string, digests boshcrypto.MultipleDigest, err error) {
-					defer func() { tries += 1 }()
-					return createBlobIDs[tries], createDigests[tries], createErrs[tries]
-				}
-
-				blobID, digest, err := retryableBlobstore.Create("fake-file-name")
+				blobID, err := retryableBlobstore.Create("fake-file-name")
 				Expect(err).ToNot(HaveOccurred())
-
-				Expect(digest).To(Equal(expectedDigest))
 				Expect(blobID).To(Equal("fake-last-blob-id"))
 
-				createFileNames := []string{"fake-file-name", "fake-file-name", "fake-file-name"}
-				for call, createFileName := range createFileNames {
-					Expect(innerBlobstore.CreateArgsForCall(call)).To(Equal(createFileName))
-				}
+				Expect(innerBlobstore.CreateFileNames).To(Equal(
+					[]string{"fake-file-name", "fake-file-name", "fake-file-name"},
+				))
 			})
 		})
 
 		Context("when inner blobstore does not succeed before maximum number of create tries", func() {
 			It("returns last try error from inner blobstore", func() {
-				createErrs := []error{
+				innerBlobstore.CreateErrs = []error{
 					errors.New("fake-create-err-1"),
 					errors.New("fake-create-err-2"),
 					errors.New("fake-last-create-err"),
 				}
 
-				tries := 0
-				innerBlobstore.CreateStub = func(blobID string) (fileName string, digests boshcrypto.MultipleDigest, err error) {
-					defer func() { tries += 1 }()
-					return "", boshcrypto.MultipleDigest{}, createErrs[tries]
-				}
-				_, _, err := retryableBlobstore.Create("fake-file-name")
-
+				_, err := retryableBlobstore.Create("fake-blob-id")
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("fake-last-create-err"))
 
-				createFileNames := []string{"fake-file-name", "fake-file-name", "fake-file-name"}
-				for call, createFileName := range createFileNames {
-					Expect(innerBlobstore.CreateArgsForCall(call)).To(Equal(createFileName))
-				}
+				Expect(innerBlobstore.CreateFileNames).To(Equal(
+					[]string{"fake-blob-id", "fake-blob-id", "fake-blob-id"},
+				))
 			})
 		})
 	})
@@ -224,7 +197,7 @@ var _ = Describe("retryableBlobstore", func() {
 		})
 
 		It("returns error if inner blobstore validation fails", func() {
-			innerBlobstore.ValidateReturns(bosherr.Error("fake-validate-error"))
+			innerBlobstore.ValidateError = bosherr.Error("fake-validate-error")
 
 			err := retryableBlobstore.Validate()
 			Expect(err).To(HaveOccurred())

@@ -1,7 +1,15 @@
 package blobstore
 
+import (
+	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
+)
+
 type Blobstore interface {
-	Get(blobID string) (fileName string, err error)
+	// Assuming that local file system is available,
+	// file handle is returned to downloaded blob.
+	// Caller must not assume anything about layout of such scratch space.
+	// Cleanup call is needed to properly cleanup downloaded blob.
+	Get(blobID string, digest boshcrypto.Digest) (fileName string, err error)
 
 	CleanUp(fileName string) (err error)
 
