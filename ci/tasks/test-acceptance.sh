@@ -31,7 +31,7 @@ bosh -n deploy  $ROOT_DIR/dns-release/ci/assets/manifest.yml \
     -o $ROOT_DIR/dns-release/ci/assets/two-instances-no-static-ips.yml \
     -o $ROOT_DIR/dns-release/ci/assets/use-dns-release-default-bind-and-alias-addresses.yml \
     -o $ROOT_DIR/dns-release/ci/assets/configure-recursor.yml \
-    -v recursor_ip="${BOSH_DIRECTOR_IP}:9955"
+    -v recursor_ip="172.17.0.1:9955" # docker's host ip (ie where tests are running)
 
 export GOPATH=${ROOT_DIR}/go
 export PATH="${GOPATH}/bin":$PATH
