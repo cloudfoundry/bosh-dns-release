@@ -75,6 +75,8 @@ var _ = Describe("Performance", func() {
 			resultTimes = append(resultTimes, int(summary.EndTime.Sub(summary.StartTime)))
 		}
 
+		max, min, median, ninetyPerc, ninetyFivePerc, ninetyNinePerc := getStatsForValues(resultTimes)
+
 		sort.Ints([]int(resultTimes))
 		median := (time.Duration(resultTimes[209]) + time.Duration(resultTimes[210])) / 2
 		max := time.Duration(resultTimes[len(resultTimes)-1])

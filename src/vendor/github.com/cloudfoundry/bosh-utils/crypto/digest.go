@@ -1,72 +1,56 @@
 package crypto
 
 import (
-	"errors"
 	"fmt"
+	"io"
+
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
+	"os"
 )
 
-type DigestAlgorithm string
-
 type digestImpl struct {
-	algorithm 		DigestAlgorithm
-	digest    		string
+	algorithm Algorithm
+	digest    string
 }
 
-func (c digestImpl) Algorithm() DigestAlgorithm {
-	return c.algorithm
+func NewDigest(algorithm Algorithm, digest string) digestImpl {
+	return digestImpl{
+		algorithm: algorithm,
+		digest:    digest,
+	}
 }
 
-func (c digestImpl) Digest() string {
-	return c.digest
-}
+func (c digestImpl) Algorithm() Algorithm { return c.algorithm }
 
 func (c digestImpl) String() string {
-	if c.algorithm == DigestAlgorithmSHA1 {
+	if c.algorithm.Name() == DigestAlgorithmSHA1.Name() {
 		return c.digest
 	}
 
-	return fmt.Sprintf("%s:%s", c.algorithm, c.digest)
+	return fmt.Sprintf("%s:%s", c.algorithm.Name(), c.digest)
 }
 
-func (c digestImpl) Verify(Digest Digest) error {
-	if c.algorithm != Digest.Algorithm() {
-		return errors.New(fmt.Sprintf(`Expected %s algorithm but received %s`, c.algorithm, Digest.Algorithm()))
-	} else if c.digest != Digest.Digest() {
-		return errors.New(fmt.Sprintf(`Expected %s digest "%s" but received "%s"`, c.algorithm, c.digest, Digest.Digest()))
+func (c digestImpl) Verify(reader io.Reader) error {
+	computedDigest, err := c.Algorithm().CreateDigest(reader)
+	if err != nil {
+		return bosherr.WrapError(err, "Computing digest from stream")
+	}
+
+	if c.String() != computedDigest.String() {
+		return bosherr.Errorf("Expected stream to have digest '%s' but was '%s'", c.String(), computedDigest.String())
 	}
 
 	return nil
 }
 
-func (c digestImpl) Compare(digest Digest) int {
-	switch c.algorithm {
-	case DigestAlgorithmSHA1:
-		if digest.Algorithm() == DigestAlgorithmSHA1 {
-			return 0
-		} else {
-			return -1
-		}
-	case DigestAlgorithmSHA256:
-		if digest.Algorithm() == DigestAlgorithmSHA1 {
-			return 1
-		} else if digest.Algorithm() == DigestAlgorithmSHA256 {
-			return 0
-		} else {
-			return -1
-		}
-	case DigestAlgorithmSHA512:
-		if digest.Algorithm() == DigestAlgorithmSHA512 {
-			return 0
-		} else {
-			return 1
-		}
+func (m digestImpl) VerifyFilePath(filePath string, fs boshsys.FileSystem) error {
+	file, err := fs.OpenFile(filePath, os.O_RDONLY, 0)
+	if err != nil {
+		return bosherr.WrapErrorf(err, "Calculating digest of '%s'", filePath)
 	}
-	return 0
-}
-
-func NewDigest(algorithm DigestAlgorithm, digest string) digestImpl {
-	return digestImpl{
-		algorithm: algorithm,
-		digest:    digest,
-	}
+	defer func() {
+		_ = file.Close()
+	}()
+	return m.Verify(file)
 }

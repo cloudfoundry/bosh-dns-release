@@ -20,6 +20,7 @@ import (
 	"github.com/miekg/dns"
 
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/system"
 )
 
 func parseFlags() (string, error) {
@@ -60,7 +61,8 @@ func mainExitCode() int {
 	}
 
 	mux := dns.NewServeMux()
-	addHandler(mux, "bosh.", handlers.NewDiscoveryHandler(logger, records.NewRepo(c.RecordsFile, logger)), logger)
+
+	addHandler(mux, "bosh.", handlers.NewDiscoveryHandler(logger, records.NewRepo(c.RecordsFile, system.NewOsFileSystem(logger), logger)), logger)
 	addHandler(mux, "arpa.", handlers.NewArpaHandler(logger), logger)
 	addHandler(mux, "healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger), logger)
 	addHandler(mux, ".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout)), logger), logger)

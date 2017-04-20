@@ -13,19 +13,17 @@ import (
 
 var _ = Describe("Provider", func() {
 	var (
-		fs             *fakesys.FakeFileSystem
-		runner         *fakesys.FakeCmdRunner
-		logger         boshlog.Logger
-		provider       Provider
-		digestProvider boshcrypto.DigestProvider
+		fs       *fakesys.FakeFileSystem
+		runner   *fakesys.FakeCmdRunner
+		logger   boshlog.Logger
+		provider Provider
 	)
 
 	BeforeEach(func() {
 		fs = fakesys.NewFakeFileSystem()
 		runner = fakesys.NewFakeCmdRunner()
 		logger = boshlog.NewLogger(boshlog.LevelNone)
-		digestProvider = boshcrypto.NewDigestProvider(fs)
-		provider = NewProvider(fs, runner, "/var/vcap/config", digestProvider, logger)
+		provider = NewProvider(fs, runner, "/var/vcap/config", logger)
 	})
 
 	Describe("Get", func() {
@@ -39,7 +37,7 @@ var _ = Describe("Provider", func() {
 			options := map[string]interface{}{"key": "value"}
 			runner.CommandExistsValue = true
 
-			expectedBlobstore := NewExternalBlobstore(
+			externalBlobstore := NewExternalBlobstore(
 				"fake-external-type",
 				options,
 				fs,
@@ -47,7 +45,12 @@ var _ = Describe("Provider", func() {
 				boshuuid.NewGenerator(),
 				"/var/vcap/config/blobstore-fake-external-type.json",
 			)
-			expectedBlobstore = NewDigestVerifiableBlobstore(expectedBlobstore, digestProvider)
+
+			expectedAlgos := []boshcrypto.Algorithm{
+				boshcrypto.DigestAlgorithmSHA1,
+			}
+
+			expectedBlobstore := NewDigestVerifiableBlobstore(externalBlobstore, fs, expectedAlgos)
 			expectedBlobstore = NewRetryableBlobstore(expectedBlobstore, 3, logger)
 
 			blobstore, err := provider.Get("fake-external-type", options)

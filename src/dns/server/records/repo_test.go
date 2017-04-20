@@ -2,27 +2,33 @@ package records_test
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"time"
+	"github.com/cloudfoundry/bosh-utils/system/fakes"
+
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
+	"errors"
 )
 
 var _ = Describe("Repo", func() {
-
 	Describe("NewRepo", func() {
 		var (
-			repo        *records.Repo
-			fakeLogger  = &loggerfakes.FakeLogger{}
+			repo           *records.Repo
+			fakeLogger     = &loggerfakes.FakeLogger{}
+			fakeFileSystem *fakes.FakeFileSystem
 		)
+
+		BeforeEach(func() {
+			fakeFileSystem = fakes.NewFakeFileSystem()
+		})
 
 		Context("initial failure cases", func() {
 			It("logs an error when the file does not exist", func() {
-				repo = records.NewRepo("file-does-not-exist", fakeLogger)
+
+				repo = records.NewRepo("file-does-not-exist", fakeFileSystem, fakeLogger)
 				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
 
 				tag, message, _ := fakeLogger.ErrorArgsForCall(0)
@@ -34,17 +40,17 @@ var _ = Describe("Repo", func() {
 
 	Describe("Get", func() {
 		var (
-			recordsFile *os.File
-			repo        *records.Repo
-			fakeLogger  = &loggerfakes.FakeLogger{}
+			recordsFile    boshsys.File
+			repo           *records.Repo
+			fakeLogger     = &loggerfakes.FakeLogger{}
+			fakeFileSystem *fakes.FakeFileSystem
 		)
 
 		BeforeEach(func() {
-			var err error
-			recordsFile, err = ioutil.TempFile("", "")
-			Expect(err).NotTo(HaveOccurred())
+			fakeFileSystem = fakes.NewFakeFileSystem()
+			recordsFile = fakes.NewFakeFile("/fake/file", fakeFileSystem)
 
-			_, err = recordsFile.Write([]byte(fmt.Sprint(`{
+			err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(fmt.Sprint(`{
 				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
 				"record_infos": [
 					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
@@ -53,24 +59,31 @@ var _ = Describe("Repo", func() {
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
-			repo = records.NewRepo(recordsFile.Name(), fakeLogger)
+			repo = records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeLogger)
 		})
 
 		Context("initial failure cases", func() {
+			var nonExistentFilePath string
+
+			BeforeEach(func() {
+				nonExistentFilePath =  "/some/fake/path"
+				fakeFileSystem.RegisterOpenFile(nonExistentFilePath, &fakes.FakeFile{
+					StatErr: errors.New("NOPE"),
+				})
+
+			})
+
 			It("returns an error when the file does not exist", func() {
-				repo := records.NewRepo("/some/fake/path", fakeLogger)
+				repo := records.NewRepo(nonExistentFilePath, fakeFileSystem, fakeLogger)
 				_, err := repo.Get()
-				Expect(err).To(MatchError("open /some/fake/path: no such file or directory"))
+				Expect(err).To(MatchError("Records file '/some/fake/path' not found"))
 			})
 
 			It("returns an error when the file is malformed json", func() {
-				recordsFile, err := ioutil.TempFile("", "")
+				err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte("invalid json"))
 				Expect(err).NotTo(HaveOccurred())
 
-				_, err = recordsFile.Write([]byte(fmt.Sprint(`invalid json`)))
-				Expect(err).NotTo(HaveOccurred())
-
-				repo := records.NewRepo(recordsFile.Name(), fakeLogger)
+				repo := records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeLogger)
 				_, err = repo.Get()
 				Expect(err).To(MatchError("invalid character 'i' looking for beginning of value"))
 			})
@@ -106,17 +119,20 @@ var _ = Describe("Repo", func() {
 					_, err := repo.Get()
 					Expect(err).NotTo(HaveOccurred())
 
-					err = ioutil.WriteFile(recordsFile.Name(), []byte(`{
+					err = fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
 				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
 				"record_infos": [
 					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
 					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"]
 				]
-			}`), os.ModePerm)
+			}`))
 					Expect(err).NotTo(HaveOccurred())
 
-					err = os.Chtimes(recordsFile.Name(), time.Time{}, time.Time{})
-					Expect(err).NotTo(HaveOccurred())
+					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+						Stats: &fakes.FakeFileStats{
+							ModTime: time.Time{},
+						},
+					})
 				})
 
 				It("should return all records from new file contents", func() {
@@ -133,7 +149,13 @@ var _ = Describe("Repo", func() {
 
 			Context("when file has been deleted after repo initialization", func() {
 				BeforeEach(func() {
-					os.Remove(recordsFile.Name())
+					err := fakeFileSystem.RemoveAll(recordsFile.Name())
+					Expect(err).ToNot(HaveOccurred())
+
+					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+						StatErr: errors.New("file does not exist"),
+					})
+
 				})
 
 				It("should return all records from original file contents", func() {
@@ -149,15 +171,21 @@ var _ = Describe("Repo", func() {
 
 				Context("when records json file has been re-added with different contents", func() {
 					BeforeEach(func() {
-						err := ioutil.WriteFile(recordsFile.Name(), []byte(`{
+						err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
 				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
 				"record_infos": [
 					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
 					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"]
 				]
-			}`), os.ModePerm)
+			}`))
 
 						Expect(err).NotTo(HaveOccurred())
+
+						fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+							Stats: &fakes.FakeFileStats{
+								ModTime: time.Now(),
+							},
+						})
 					})
 
 					It("should return all records from new file contents", func() {

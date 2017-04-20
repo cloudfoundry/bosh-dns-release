@@ -1,6 +1,6 @@
 
 [[dependencies]]
-  branch = "develop"
+  branch = "master"
   name = "github.com/cloudfoundry/bosh-utils"
 
 [[dependencies]]

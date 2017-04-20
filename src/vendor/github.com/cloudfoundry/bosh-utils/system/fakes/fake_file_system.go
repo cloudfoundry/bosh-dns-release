@@ -17,6 +17,7 @@ import (
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
+	"time"
 )
 
 type FakeFileType string
@@ -100,7 +101,9 @@ type FakeFileStats struct {
 	FileMode os.FileMode
 	Flags    int
 	Username string
+	Groupname string
 
+	ModTime time.Time
 	Open bool
 
 	SymlinkTarget string
@@ -119,6 +122,10 @@ type FakeFileInfo struct {
 
 func (fi FakeFileInfo) Mode() os.FileMode {
 	return fi.file.Stats.FileMode
+}
+
+func (fi FakeFileInfo) ModTime() time.Time {
+	return fi.file.Stats.ModTime
 }
 
 func (fi FakeFileInfo) Size() int64 {
@@ -386,7 +393,12 @@ func (fs *FakeFileSystem) Chown(path, username string) error {
 		return fmt.Errorf("Path does not exist: %s", path)
 	}
 
-	stats.Username = username
+	parts := strings.Split(username, ":")
+	stats.Username = parts[0]
+	stats.Groupname = parts[0]
+	if len(parts) > 1 {
+		stats.Groupname = parts[1]
+	}
 	return nil
 }
 

@@ -2,25 +2,28 @@ package records
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"time"
-	"os"
-	"github.com/cloudfoundry/bosh-utils/logger"
 	"fmt"
+	"github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/system"
+
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"time"
 )
 
 const logTag string = "RecordsRepo"
 
 type Repo struct {
+	fileSystem           system.FileSystem
 	recordsFilePath      string
 	cachedRecordSetError error
 	cachedRecordSet      *RecordSet
 	lastReadTime         time.Time
 }
 
-func NewRepo(recordsFilePath string, logger logger.Logger) *Repo {
+func NewRepo(recordsFilePath string, fileSys system.FileSystem, logger logger.Logger) *Repo {
 	repo := Repo{
 		recordsFilePath: recordsFilePath,
+		fileSystem:      fileSys,
 	}
 
 	_, err := repo.Get()
@@ -45,7 +48,7 @@ func (r Repo) shouldUseCachedValues() bool {
 		return false
 	}
 
-	info, err := os.Stat(r.recordsFilePath)
+	info, err := r.fileSystem.Stat(r.recordsFilePath)
 	if err != nil {
 		return true
 	}
@@ -58,13 +61,13 @@ func (r Repo) shouldUseCachedValues() bool {
 }
 
 func (r *Repo) createFromFileSystem() (*RecordSet, error) {
-	_, err := os.Open(r.recordsFilePath)
-	if err != nil {
-		return &RecordSet{}, err
+	found := r.fileSystem.FileExists(r.recordsFilePath)
+	if !found {
+		return &RecordSet{}, bosherr.Errorf("Records file '%s' not found", r.recordsFilePath)
 	}
 	r.lastReadTime = time.Now()
 
-	buf, err := ioutil.ReadFile(r.recordsFilePath)
+	buf, err := r.fileSystem.ReadFile(r.recordsFilePath)
 	if err != nil {
 		return &RecordSet{}, err
 	}
