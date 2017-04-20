@@ -13,7 +13,7 @@ import (
 
 func TestPerformance(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "performance")
+	RunSpecs(t, "Performance Tests")
 }
 
 var (

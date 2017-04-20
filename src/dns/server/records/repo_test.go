@@ -8,13 +8,14 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"time"
 )
 
 var _ = Describe("Repo", func() {
-	Context("GetIPs", func() {
+	Describe("Get", func() {
 		var (
 			recordsFile *os.File
-			repo        records.Repo
+			repo        *records.Repo
 		)
 
 		BeforeEach(func() {
@@ -34,7 +35,7 @@ var _ = Describe("Repo", func() {
 			repo = records.NewRepo(recordsFile.Name())
 		})
 
-		Context("failure cases", func() {
+		Context("initial failure cases", func() {
 			It("returns an error when the file does not exist", func() {
 				repo := records.NewRepo("/some/fake/path")
 				_, err := repo.Get()
@@ -75,6 +76,80 @@ var _ = Describe("Repo", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(records).To(HaveLen(0))
+			})
+		})
+
+		Context("when viability of file has changed", func() {
+			Context("when records json file has been re-added with different contents after getting initial values", func() {
+				BeforeEach(func() {
+					_, err := repo.Get()
+					Expect(err).NotTo(HaveOccurred())
+
+					err = ioutil.WriteFile(recordsFile.Name(), []byte(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
+				"record_infos": [
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"]
+				]
+			}`), os.ModePerm)
+					Expect(err).NotTo(HaveOccurred())
+
+					err = os.Chtimes(recordsFile.Name(), time.Time{}, time.Time{})
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				It("should return all records from new file contents", func() {
+					recordSet, err := repo.Get()
+					Expect(err).NotTo(HaveOccurred())
+
+					records, err := recordSet.Resolve("my-instance.my-group.my-network.my-deployment.bosh.")
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(records).To(ContainElement("123.123.123.123"))
+					Expect(records).To(ContainElement("123.123.123.124"))
+				})
+			})
+
+			Context("when file has been deleted after repo initialization", func() {
+				BeforeEach(func() {
+					os.Remove(recordsFile.Name())
+				})
+
+				It("should return all records from original file contents", func() {
+					recordSet, err := repo.Get()
+					Expect(err).NotTo(HaveOccurred())
+
+					records, err := recordSet.Resolve("my-instance.my-group.my-network.my-deployment.bosh.")
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(records).To(ContainElement("123.123.123.123"))
+					Expect(records).To(ContainElement("123.123.123.124"))
+				})
+
+				Context("when records json file has been re-added with different contents", func() {
+					BeforeEach(func() {
+						err := ioutil.WriteFile(recordsFile.Name(), []byte(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
+				"record_infos": [
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"]
+				]
+			}`), os.ModePerm)
+
+						Expect(err).NotTo(HaveOccurred())
+					})
+
+					It("should return all records from new file contents", func() {
+						recordSet, err := repo.Get()
+						Expect(err).NotTo(HaveOccurred())
+
+						records, err := recordSet.Resolve("my-instance2.my-group.my-network.my-deployment.bosh.")
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(records).To(ContainElement("123.123.123.123"))
+						Expect(records).To(ContainElement("123.123.123.124"))
+					})
+				})
 			})
 		})
 	})
