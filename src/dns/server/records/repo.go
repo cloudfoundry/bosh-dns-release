@@ -5,7 +5,11 @@ import (
 	"io/ioutil"
 	"time"
 	"os"
+	"github.com/cloudfoundry/bosh-utils/logger"
+	"fmt"
 )
+
+const logTag string = "RecordsRepo"
 
 type Repo struct {
 	recordsFilePath      string
@@ -14,12 +18,15 @@ type Repo struct {
 	lastReadTime         time.Time
 }
 
-func NewRepo(recordsFilePath string) *Repo {
+func NewRepo(recordsFilePath string, logger logger.Logger) *Repo {
 	repo := Repo{
 		recordsFilePath: recordsFilePath,
 	}
 
-	repo.Get()
+	_, err := repo.Get()
+	if err != nil {
+		logger.Error(logTag, fmt.Sprintf("Unable to open records file at: %s", recordsFilePath))
+	}
 	return &repo
 }
 

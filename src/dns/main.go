@@ -60,7 +60,7 @@ func mainExitCode() int {
 	}
 
 	mux := dns.NewServeMux()
-	addHandler(mux, "bosh.", handlers.NewDiscoveryHandler(logger, records.NewRepo(c.RecordsFile)), logger)
+	addHandler(mux, "bosh.", handlers.NewDiscoveryHandler(logger, records.NewRepo(c.RecordsFile, logger)), logger)
 	addHandler(mux, "arpa.", handlers.NewArpaHandler(logger), logger)
 	addHandler(mux, "healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger), logger)
 	addHandler(mux, ".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout)), logger), logger)

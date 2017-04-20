@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,10 +13,30 @@ import (
 )
 
 var _ = Describe("Repo", func() {
+
+	Describe("NewRepo", func() {
+		var (
+			repo        *records.Repo
+			fakeLogger  = &loggerfakes.FakeLogger{}
+		)
+
+		Context("initial failure cases", func() {
+			It("logs an error when the file does not exist", func() {
+				repo = records.NewRepo("file-does-not-exist", fakeLogger)
+				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
+
+				tag, message, _ := fakeLogger.ErrorArgsForCall(0)
+				Expect(tag).To(Equal("RecordsRepo"))
+				Expect(message).To(Equal("Unable to open records file at: file-does-not-exist"))
+			})
+		})
+	})
+
 	Describe("Get", func() {
 		var (
 			recordsFile *os.File
 			repo        *records.Repo
+			fakeLogger  = &loggerfakes.FakeLogger{}
 		)
 
 		BeforeEach(func() {
@@ -32,12 +53,12 @@ var _ = Describe("Repo", func() {
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
-			repo = records.NewRepo(recordsFile.Name())
+			repo = records.NewRepo(recordsFile.Name(), fakeLogger)
 		})
 
 		Context("initial failure cases", func() {
 			It("returns an error when the file does not exist", func() {
-				repo := records.NewRepo("/some/fake/path")
+				repo := records.NewRepo("/some/fake/path", fakeLogger)
 				_, err := repo.Get()
 				Expect(err).To(MatchError("open /some/fake/path: no such file or directory"))
 			})
@@ -49,7 +70,7 @@ var _ = Describe("Repo", func() {
 				_, err = recordsFile.Write([]byte(fmt.Sprint(`invalid json`)))
 				Expect(err).NotTo(HaveOccurred())
 
-				repo := records.NewRepo(recordsFile.Name())
+				repo := records.NewRepo(recordsFile.Name(), fakeLogger)
 				_, err = repo.Get()
 				Expect(err).To(MatchError("invalid character 'i' looking for beginning of value"))
 			})
