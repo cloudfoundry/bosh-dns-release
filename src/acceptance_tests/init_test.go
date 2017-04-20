@@ -21,8 +21,10 @@ func TestAcceptance(t *testing.T) {
 }
 
 var (
-	boshBinaryPath       string
-	allDeployedInstances []instanceInfo
+	pathToTestRecursorServer string
+	boshBinaryPath           string
+	allDeployedInstances     []instanceInfo
+	firstInstanceSlug        string
 )
 
 var _ = BeforeSuite(func() {
@@ -34,6 +36,15 @@ var _ = BeforeSuite(func() {
 	assertEnvExists("BOSH_DEPLOYMENT")
 
 	allDeployedInstances = getInstanceInfos(boshBinaryPath)
+	firstInstanceSlug = fmt.Sprintf("%s/%s", allDeployedInstances[0].InstanceGroup, allDeployedInstances[0].InstanceID)
+
+	var err error
+	pathToTestRecursorServer, err = gexec.Build("github.com/cloudfoundry/dns-release/src/acceptance_tests/test_recursor")
+	Expect(err).NotTo(HaveOccurred())
+})
+
+var _ = AfterSuite(func() {
+	gexec.CleanupBuildArtifacts()
 })
 
 func assertEnvExists(envName string) string {

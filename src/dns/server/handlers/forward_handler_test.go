@@ -58,6 +58,8 @@ var _ = Describe("ForwardHandler", func() {
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Question).To(Equal(msg.Question))
 				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+				Expect(message.Authoritative).To(Equal(false))
+				Expect(message.RecursionAvailable).To(Equal(true))
 			})
 
 			Context("when the message fails to write", func() {
@@ -106,12 +108,17 @@ var _ = Describe("ForwardHandler", func() {
 
 		Context("when request contains questions", func() {
 			DescribeTable("it responds to DNS requests",
-				func(protocol string, remoteAddrReturns net.Addr) {
-					exchangeMsg := &dns.Msg{
+				func(protocol string, remoteAddrReturns net.Addr, truncatedResponse bool) {
+					recursorAnswer := &dns.Msg{
 						Answer: []dns.RR{&dns.A{A: net.ParseIP("99.99.99.99")}},
 					}
 					fakeExchanger := &handlersfakes.FakeExchanger{}
-					fakeExchanger.ExchangeReturns(exchangeMsg, 0, nil)
+
+					var err error
+					if truncatedResponse {
+						err = dns.ErrTruncated
+					}
+					fakeExchanger.ExchangeReturns(recursorAnswer, 0, err)
 
 					fakeExchangerFactory := func(net string) handlers.Exchanger {
 						if net == protocol {
@@ -130,7 +137,7 @@ var _ = Describe("ForwardHandler", func() {
 					recursionHandler.ServeDNS(fakeWriter, m)
 					message := fakeWriter.WriteMsgArgsForCall(0)
 					Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(message.Answer).To(Equal(exchangeMsg.Answer))
+					Expect(message.Answer).To(Equal(recursorAnswer.Answer))
 
 					Expect(fakeExchanger.ExchangeCallCount()).To(Equal(1))
 					msg, recursor := fakeExchanger.ExchangeArgsForCall(0)
@@ -143,9 +150,59 @@ var _ = Describe("ForwardHandler", func() {
 					Expect(logMsg).To(Equal("attempting recursors"))
 
 				},
-				Entry("forwards query to recursor via udp for udp clients", "udp", nil),
-				Entry("forwards query to recursor via tcp for tcp clients", "tcp", &net.TCPAddr{}),
+				Entry("forwards query to recursor via udp for udp clients", "udp", nil, false),
+				Entry("forwards query to recursor via udp for udp clients when the response is truncated", "udp", nil, true),
+				Entry("forwards query to recursor via tcp for tcp clients", "tcp", &net.TCPAddr{}, false),
 			)
+
+			Context("when a recursor fails", func() {
+				var (
+					msg *dns.Msg
+				)
+
+				BeforeEach(func() {
+					fakeExchanger := &handlersfakes.FakeExchanger{}
+					fakeExchanger.ExchangeReturns(&dns.Msg{}, 0, errors.New("failed to exchange"))
+
+					fakeExchangerFactory := func(net string) handlers.Exchanger {
+						return fakeExchanger
+					}
+
+					recursionHandler := handlers.NewForwardHandler([]string{"127.0.0.1", "127.0.0.2"}, fakeExchangerFactory, fakeLogger)
+
+					msg = &dns.Msg{}
+					msg.SetQuestion("example.com.", dns.TypeANY)
+
+					recursionHandler.ServeDNS(fakeWriter, msg)
+				})
+
+				It("writes a failure result", func() {
+					Expect(fakeLogger.InfoCallCount()).To(Equal(4))
+					tag, msg, args := fakeLogger.InfoArgsForCall(1)
+					Expect(tag).To(Equal("ForwardHandler"))
+					Expect(msg).To(Equal("error recursing to %s %s"))
+					Expect(args[0]).To(Equal("127.0.0.1"))
+					Expect(args[1]).To(Equal("failed to exchange"))
+
+					tag, msg, args = fakeLogger.InfoArgsForCall(2)
+					Expect(tag).To(Equal("ForwardHandler"))
+					Expect(msg).To(Equal("error recursing to %s %s"))
+					Expect(args[0]).To(Equal("127.0.0.2"))
+					Expect(args[1]).To(Equal("failed to exchange"))
+				})
+
+				Context("when all recursors fail", func() {
+					It("returns a server failure", func() {
+						Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+
+						message := fakeWriter.WriteMsgArgsForCall(0)
+						Expect(message.Question).To(Equal(msg.Question))
+						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(message.Authoritative).To(Equal(false))
+						Expect(message.RecursionAvailable).To(Equal(true))
+					})
+				})
+			})
 
 			It("returns with the first recursor response", func() {
 				exchangeMsg := &dns.Msg{

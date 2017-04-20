@@ -52,12 +52,13 @@ func (r ForwardHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 	r.logger.Info(r.logTag, "attempting recursors")
 	for _, recursor := range r.recursors {
 		answer, _, err := client.Exchange(req, recursor)
-		if err == nil {
+		if err == nil || err == dns.ErrTruncated {
 			if err := resp.WriteMsg(answer); err != nil {
 				r.logger.Error(r.logTag, "error writing response %s", err.Error())
 			}
 			return
 		}
+		r.logger.Info(r.logTag, "error recursing to %s %s", recursor, err.Error())
 	}
 
 	r.logger.Info(r.logTag, "no response from recursors")

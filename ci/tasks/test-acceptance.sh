@@ -29,7 +29,9 @@ bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
 bosh -n deploy  $ROOT_DIR/dns-release/ci/assets/manifest.yml \
     -v dns_release_path=$ROOT_DIR/dns-release \
     -o $ROOT_DIR/dns-release/ci/assets/two-instances-no-static-ips.yml \
-    -o $ROOT_DIR/dns-release/ci/assets/use-dns-release-default-bind-and-alias-addresses.yml
+    -o $ROOT_DIR/dns-release/ci/assets/use-dns-release-default-bind-and-alias-addresses.yml \
+    -o $ROOT_DIR/dns-release/ci/assets/configure-recursor.yml \
+    -v recursor_ip="${BOSH_DIRECTOR_IP}:9955"
 
 export GOPATH=${ROOT_DIR}/go
 export PATH="${GOPATH}/bin":$PATH

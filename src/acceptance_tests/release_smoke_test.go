@@ -15,13 +15,8 @@ import (
 )
 
 var _ = Describe("Integration", func() {
-	var instanceSlug string
-	BeforeEach(func() {
-		instanceSlug = fmt.Sprintf("%s/%s", allDeployedInstances[0].InstanceGroup, allDeployedInstances[0].InstanceID)
-	})
-
 	It("should start a dns server on port 53", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", instanceSlug, "-c", "sudo lsof -n -i :53"}...)
+		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "sudo lsof -n -i :53"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -32,7 +27,7 @@ var _ = Describe("Integration", func() {
 	})
 
 	It("should respond to tcp dns queries", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", instanceSlug, "-c", "dig +tcp healthcheck.bosh-dns. @169.254.0.2"}...)
+		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +tcp healthcheck.bosh-dns. @169.254.0.2"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -44,7 +39,7 @@ var _ = Describe("Integration", func() {
 	})
 
 	It("should respond to udp dns queries", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", instanceSlug, "-c", "dig +notcp healthcheck.bosh-dns. @169.254.0.2"}...)
+		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +notcp healthcheck.bosh-dns. @169.254.0.2"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -55,25 +50,13 @@ var _ = Describe("Integration", func() {
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
 
-	It("fowards queries to the configured recursors", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", instanceSlug, "-c", "dig -t A pivotal.io @169.254.0.2"}...)
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-
-		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-		Eventually(session.Out).Should(gbytes.Say("flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1"))
-		Eventually(session.Out).Should(gbytes.Say("pivotal\\.io\\.\\s+\\d+\\s+IN\\s+A\\s+\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"))
-		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
-	})
-
 	It("returns records for bosh instances", func() {
 		firstInstance := allDeployedInstances[0]
 
 		cmd := exec.Command(
 			boshBinaryPath,
 			"ssh",
-			instanceSlug,
+			firstInstanceSlug,
 			"-c",
 			fmt.Sprintf("dig -t A %s.dns.default.bosh-dns.bosh @169.254.0.2", firstInstance.InstanceID))
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
