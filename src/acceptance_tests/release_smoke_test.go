@@ -80,11 +80,12 @@ var _ = Describe("Integration", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
+		output := string(session.Out.Contents())
+		Expect(output).To(ContainSubstring("Got answer:"))
+		Expect(output).To(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
 		for _, info := range allDeployedInstances {
-			Eventually(session.Out).Should(gbytes.Say("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
+			Expect(output).To(ContainSubstring("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
 		}
-		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
+		Expect(output).To(ContainSubstring("SERVER: 169.254.0.2#53"))
 	})
 })
