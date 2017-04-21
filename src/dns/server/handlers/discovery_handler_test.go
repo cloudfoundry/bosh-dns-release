@@ -22,14 +22,19 @@ var _ = Describe("DiscoveryHandler", func() {
 			fakeWriter        *internalfakes.FakeResponseWriter
 			fakeLogger        *loggerfakes.FakeLogger
 			fakeRecordSetRepo *handlersfakes.FakeRecordSetRepo
+			fakeShuffler      *handlersfakes.FakeShuffler
 		)
 
 		BeforeEach(func() {
 			fakeWriter = &internalfakes.FakeResponseWriter{}
 			fakeLogger = &loggerfakes.FakeLogger{}
 			fakeRecordSetRepo = &handlersfakes.FakeRecordSetRepo{}
+			fakeShuffler = &handlersfakes.FakeShuffler{}
+			fakeShuffler.ShuffleStub = func(input []string) []string {
+				return input
+			}
 
-			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, fakeRecordSetRepo)
+			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, fakeShuffler, fakeRecordSetRepo)
 		})
 
 		Context("when there are no questions", func() {
@@ -125,7 +130,6 @@ var _ = Describe("DiscoveryHandler", func() {
 					fakeRecordSetRepo.GetReturns(recordSet, nil)
 
 					m := &dns.Msg{}
-
 					m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 					discoveryHandler.ServeDNS(fakeWriter, m)
 
@@ -135,6 +139,30 @@ var _ = Describe("DiscoveryHandler", func() {
 					Expect(msg).To(Equal("got multiple ip addresses for %s: %v"))
 					Expect(args[0]).To(Equal("my-instance.my-group.my-network.my-deployment.bosh."))
 					Expect(args[1]).To(Equal([]string{"123.123.123.123", "127.0.0.1"}))
+				})
+
+				It("shuffles the records if multiple records were found", func() {
+					recordSet := records.RecordSet{
+						Keys: []string{"id", "instance_group", "az", "network", "deployment", "ip"},
+						Infos: [][]string{
+							{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"},
+							{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1"},
+						},
+					}
+					fakeRecordSetRepo.GetReturns(recordSet, nil)
+					fakeShuffler.ShuffleStub = nil
+					fakeShuffler.ShuffleReturns([]string{"127.0.0.1", "123.123.123.123"})
+
+					m := &dns.Msg{}
+					m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+					discoveryHandler.ServeDNS(fakeWriter, m)
+
+					shuffleInput := fakeShuffler.ShuffleArgsForCall(0)
+					Expect(shuffleInput).To(Equal([]string{"123.123.123.123", "127.0.0.1"}))
+
+					responseMsg := fakeWriter.WriteMsgArgsForCall(0)
+					Expect(responseMsg.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
+					Expect(responseMsg.Answer[1].(*dns.A).A.String()).To(Equal("123.123.123.123"))
 				})
 
 				Context("when there are too many records to fit into 512 bytes", func() {

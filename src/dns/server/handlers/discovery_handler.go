@@ -11,6 +11,12 @@ type DiscoveryHandler struct {
 	logger        logger.Logger
 	logTag        string
 	recordSetRepo RecordSetRepo
+	shuffler      Shuffler
+}
+
+//go:generate counterfeiter . Shuffler
+type Shuffler interface {
+	Shuffle(src []string) []string
 }
 
 //go:generate counterfeiter . RecordSetRepo
@@ -18,11 +24,12 @@ type RecordSetRepo interface {
 	Get() (records.RecordSet, error)
 }
 
-func NewDiscoveryHandler(logger logger.Logger, recordSetRepo RecordSetRepo) DiscoveryHandler {
+func NewDiscoveryHandler(logger logger.Logger, shuffler Shuffler, recordSetRepo RecordSetRepo) DiscoveryHandler {
 	return DiscoveryHandler{
 		logger:        logger,
 		logTag:        "DiscoveryHandler",
 		recordSetRepo: recordSetRepo,
+		shuffler:      shuffler,
 	}
 }
 
@@ -74,18 +81,20 @@ func (d DiscoveryHandler) buildARecords(msg, req *dns.Msg) {
 		return
 	}
 
-	records, err := recordSet.Resolve(req.Question[0].Name)
+	ips, err := recordSet.Resolve(req.Question[0].Name)
 	if err != nil {
 		d.logger.Error(d.logTag, "failed to decode query: %v", err)
 		msg.SetRcode(req, dns.RcodeFormatError)
 		return
 	}
 
-	if len(records) > 1 {
-		d.logger.Info(d.logTag, "got multiple ip addresses for %s: %v", req.Question[0].Name, records)
+	ips = d.shuffler.Shuffle(ips)
+
+	if len(ips) > 1 {
+		d.logger.Info(d.logTag, "got multiple ip addresses for %s: %v", req.Question[0].Name, ips)
 	}
 
-	for _, r := range records {
+	for _, ip := range ips {
 		msg.Answer = append(msg.Answer, &dns.A{
 			Hdr: dns.RR_Header{
 				Name:   req.Question[0].Name,
@@ -93,7 +102,7 @@ func (d DiscoveryHandler) buildARecords(msg, req *dns.Msg) {
 				Class:  dns.ClassINET,
 				Ttl:    0,
 			},
-			A: net.ParseIP(r),
+			A: net.ParseIP(ip),
 		})
 	}
 
