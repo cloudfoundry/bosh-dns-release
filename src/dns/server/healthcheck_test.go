@@ -9,6 +9,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"time"
 )
 
 var _ = Describe("Healthcheck", func() {
@@ -86,8 +87,11 @@ var _ = Describe("Healthcheck", func() {
 			})
 
 			It("returns nil", func() {
+				beforeTime := time.Now()
+
 				err := subject.IsHealthy()
 				Expect(err).NotTo(HaveOccurred())
+				Expect(fakeConn.SetReadDeadlineArgsForCall(0)).To(BeTemporally(">", beforeTime.Add(500*time.Millisecond)))
 			})
 		})
 	})

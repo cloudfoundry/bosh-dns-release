@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"time"
 
+	"os"
+
 	"github.com/cloudfoundry/dns-release/src/dns/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -55,7 +57,7 @@ var _ = Describe("Config", func() {
 	It("returns error if reading config file fails", func() {
 		bogusPath := "some-bogus-path"
 		_, err := config.LoadFromFile(bogusPath)
-		Expect(err).To(MatchError(ContainSubstring(fmt.Sprintf("%s: no such file or directory", bogusPath))))
+		Expect(os.IsNotExist(err)).To(BeTrue())
 	})
 
 	It("returns error if the config is not json", func() {

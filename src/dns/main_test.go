@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"strconv"
 
+	"runtime"
 	"syscall"
 
 	"github.com/miekg/dns"
@@ -73,7 +74,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(session.Err).To(gbytes.Say("[main].*ERROR - stat some/fake/path: no such file or directory"))
+			Expect(session.Err).To(gbytes.Say("[main].*ERROR - Unable to find config file at 'some/fake/path'"))
 		})
 
 		It("exits 1 if the config file is busted", func() {
@@ -232,6 +233,10 @@ var _ = Describe("main", func() {
 		})
 
 		It("gracefully shuts down on TERM", func() {
+			if runtime.GOOS == "windows" {
+				Skip("TERM is not supported in Windows")
+			}
+
 			session.Signal(syscall.SIGTERM)
 
 			Eventually(session).Should(gexec.Exit(0))
@@ -245,7 +250,7 @@ var _ = Describe("main", func() {
 		)
 
 		It("will timeout after the recursor_timeout has been reached", func() {
-			l, err := net.Listen("tcp", ":0")
+			l, err := net.Listen("tcp", "127.0.0.1:0")
 			Expect(err).NotTo(HaveOccurred())
 			defer l.Close()
 
@@ -359,7 +364,7 @@ func newCommandWithConfig(config string) *exec.Cmd {
 
 func waitForServer(port int) error {
 	for i := 0; i < 20; i++ {
-		c, err := net.Dial("tcp", fmt.Sprintf(":%s", strconv.Itoa(port)))
+		c, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", strconv.Itoa(port)))
 		if err != nil {
 			time.Sleep(100 * time.Millisecond)
 			continue

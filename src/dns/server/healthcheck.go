@@ -1,6 +1,9 @@
 package server
 
-import "net"
+import (
+	"net"
+	"time"
+)
 
 type Dialer func(string, string) (net.Conn, error)
 
@@ -33,8 +36,16 @@ func (hc UDPHealthCheck) IsHealthy() error {
 		return err
 	}
 
-	_, err = conn.Read(make([]byte, 1))
-	if err != nil {
+	conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+
+	// This value needs to have a length of at least 12, otherwise Windows will fail with an error like:
+	//
+	// A message sent on a datagram socket was larger than the internal message buffer or some other network
+	// limit, or the buffer used to receive a datagram into was smaller than the datagram itself.
+	//
+	// This is likely due to the fact that Windows requires a buffer that is large enough to at least hold
+	// a UDP header
+	if _, err := conn.Read(make([]byte, 12)); err != nil {
 		return err
 	}
 

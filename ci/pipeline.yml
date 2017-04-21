@@ -8,6 +8,14 @@ jobs:
     - task: test-unit
       file: dns-release/ci/tasks/test-unit.yml
 
+- name: test-unit-windows
+  public: true
+  plan:
+    - get: dns-release
+      trigger: true
+    - task: test-unit-windows
+      file: dns-release/ci/tasks/test-unit-windows.yml
+
 - name: test-performance
   public: true
   plan:

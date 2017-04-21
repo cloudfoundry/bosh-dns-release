@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
@@ -20,8 +19,10 @@ import (
 	"github.com/miekg/dns"
 
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	"github.com/cloudfoundry/bosh-utils/system"
 	"github.com/cloudfoundry/dns-release/src/dns/shuffle"
+	"syscall"
 )
 
 func parseFlags() (string, error) {
@@ -34,7 +35,7 @@ func parseFlags() (string, error) {
 	}
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return "", err
+		return "", bosherr.WrapError(err, fmt.Sprintf("Unable to find config file at '%s'", configPath))
 	}
 
 	return configPath, nil
