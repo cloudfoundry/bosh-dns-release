@@ -91,7 +91,7 @@ var _ = Describe("Healthcheck", func() {
 
 				err := subject.IsHealthy()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(fakeConn.SetReadDeadlineArgsForCall(0)).To(BeTemporally(">", beforeTime.Add(500*time.Millisecond)))
+				Expect(fakeConn.SetReadDeadlineArgsForCall(0)).To(BeTemporally(">=", beforeTime.Add(500*time.Millisecond)))
 			})
 		})
 	})
