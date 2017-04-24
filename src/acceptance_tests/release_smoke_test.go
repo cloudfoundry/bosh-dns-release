@@ -88,4 +88,16 @@ var _ = Describe("Integration", func() {
 		}
 		Expect(output).To(ContainSubstring("SERVER: 169.254.0.2#53"))
 	})
+
+	It("finds and resolves aliases specified in other jobs on the same instance", func() {
+		cmd := exec.Command(boshBinaryPath, "ssh", "-c", "dig -t A internal.alias. @169.254.0.2")
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
+		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
+
+		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
+	})
 })

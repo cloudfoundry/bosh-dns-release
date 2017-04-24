@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/dns-release/src/dns/clock"
+	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal"
 	"github.com/miekg/dns"
-	"net"
 	"strings"
 )
 
@@ -27,11 +27,14 @@ func NewRequestLoggerHandler(child dns.Handler, clock clock.Clock, logger logger
 }
 
 func (h RequestLoggerHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
-	respWriter := newWrappedRespWriter(resp)
+	var respRcode int
+	respWriter := internal.WrapWriterWithIntercept(resp, func(msg *dns.Msg) {
+		respRcode = msg.Rcode
+	})
 
 	before := h.clock.Now()
 
-	h.child.ServeDNS(&respWriter, req)
+	h.child.ServeDNS(respWriter, req)
 
 	duration := h.clock.Now().Sub(before).Nanoseconds()
 
@@ -46,32 +49,7 @@ func (h RequestLoggerHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 		h.child,
 		strings.Join(types, ","),
 		strings.Join(domains, ","),
-		respWriter.respRcode,
+		respRcode,
 		duration,
 	))
 }
-
-func newWrappedRespWriter(resp dns.ResponseWriter) respWriterWrapper {
-	return respWriterWrapper{
-		child: resp,
-	}
-}
-
-type respWriterWrapper struct {
-	respRcode int
-	child     dns.ResponseWriter
-}
-
-func (r *respWriterWrapper) WriteMsg(m *dns.Msg) error {
-	r.respRcode = m.Rcode
-	return r.child.WriteMsg(m)
-}
-
-func (r *respWriterWrapper) Write(b []byte) (int, error) { panic("not implemented, use WriteMsg") }
-
-func (r *respWriterWrapper) LocalAddr() net.Addr   { return r.child.LocalAddr() }
-func (r *respWriterWrapper) RemoteAddr() net.Addr  { return r.child.RemoteAddr() }
-func (r *respWriterWrapper) Close() error          { return r.child.Close() }
-func (r *respWriterWrapper) TsigStatus() error     { return r.child.TsigStatus() }
-func (r *respWriterWrapper) TsigTimersOnly(b bool) { r.child.TsigTimersOnly(b) }
-func (r *respWriterWrapper) Hijack()               { r.child.Hijack() }

@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"github.com/cloudfoundry/dns-release/src/dns/server/aliases"
+	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal"
 	"github.com/miekg/dns"
 )
 
@@ -23,6 +24,10 @@ func NewAliasResolvingHandler(child dns.Handler, config aliases.Config) (AliasRe
 }
 
 func (h AliasResolvingHandler) ServeDNS(resp dns.ResponseWriter, msg *dns.Msg) {
+	originalQuestion := msg.Question
+	respWriter := internal.WrapWriterWithIntercept(resp, func(m *dns.Msg) {
+		m.Question = originalQuestion
+	})
 
 	resolvedQuestions := []dns.Question{}
 
@@ -42,5 +47,5 @@ func (h AliasResolvingHandler) ServeDNS(resp dns.ResponseWriter, msg *dns.Msg) {
 		Question: resolvedQuestions,
 	}
 
-	h.child.ServeDNS(resp, &resolvedMsg)
+	h.child.ServeDNS(respWriter, &resolvedMsg)
 }

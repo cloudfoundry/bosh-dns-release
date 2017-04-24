@@ -20,6 +20,8 @@ instance_groups:
   jobs:
   - name: dns
     release: dns
+  - name: needs-alias
+    release: alias-providing
   properties:
     address: 0.0.0.0
     recursors:
@@ -28,6 +30,9 @@ instance_groups:
 releases:
 - name: dns
   url: file://((dns_release_path))
+  version: create
+- name: alias-providing
+  url: file://((alias_release_path))
   version: create
 
 stemcells:

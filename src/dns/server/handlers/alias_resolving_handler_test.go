@@ -62,7 +62,14 @@ var _ = Describe("AliasResolvingHandler", func() {
 		Context("when the message contains an alias", func() {
 			It("resolves the alias before delegating", func() {
 				m := dns.Msg{}
-				m.SetQuestion("alias2", dns.TypeAAAA)
+				originalQuestions := []dns.Question{
+					{
+						Name:   "alias2",
+						Qtype:  dns.TypeAAAA,
+						Qclass: 1,
+					},
+				}
+				m.Question = originalQuestions
 
 				handler.ServeDNS(fakeWriter, &m)
 
@@ -81,6 +88,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
 				Expect(message.Authoritative).To(Equal(true))
 				Expect(message.RecursionAvailable).To(Equal(false))
+				Expect(message.Question).To(Equal(originalQuestions))
 			})
 
 			Context("when the alias refers to multiple resolvable addresses", func() {
