@@ -43,7 +43,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 				fakeClock.NowReturns(now.Add(time.Duration(time.Nanosecond * 3)))
 
-				Expect(resp.WriteMsg(m)).ToNot(HaveOccurred())
+				Expect(resp.WriteMsg(m)).To(Succeed())
 			})
 		}
 

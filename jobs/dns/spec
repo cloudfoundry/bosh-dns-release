@@ -29,3 +29,6 @@ properties:
   records_file:
     description: "Path to the file containing information that the DNS server will use to create DNS records"
     default: /var/vcap/instance/dns/records.json
+  alias_files_glob:
+    description: "Glob for any files to look for DNS alias information"
+    default: /var/vcap/jobs/*/dns/aliases.json

@@ -4,25 +4,23 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net"
-	"os"
-
-	"os/signal"
-	"time"
-
-	"github.com/cloudfoundry/bosh-utils/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/system"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"github.com/cloudfoundry/dns-release/src/dns/clock"
 	"github.com/cloudfoundry/dns-release/src/dns/config"
 	"github.com/cloudfoundry/dns-release/src/dns/server"
+	"github.com/cloudfoundry/dns-release/src/dns/server/aliases"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
-	"github.com/miekg/dns"
-
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	bosherr "github.com/cloudfoundry/bosh-utils/errors"
-	"github.com/cloudfoundry/bosh-utils/system"
 	"github.com/cloudfoundry/dns-release/src/dns/shuffle"
+	"github.com/miekg/dns"
+	"net"
+	"os"
+	"os/signal"
 	"syscall"
+	"time"
 )
 
 func parseFlags() (string, error) {
@@ -46,7 +44,7 @@ func main() {
 }
 
 func mainExitCode() int {
-	logger := boshlog.NewAsyncWriterLogger(logger.LevelDebug, os.Stdout, os.Stderr)
+	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout, os.Stderr)
 	logTag := "main"
 	defer logger.FlushTimeout(5 * time.Second)
 
@@ -62,6 +60,17 @@ func mainExitCode() int {
 		return 1
 	}
 
+	fs := boshsys.NewOsFileSystem(logger)
+	aliasConfiguration, err := aliases.ConfigFromGlob(
+		fs,
+		aliases.NewFSLoader(fs),
+		c.AliasFilesGlob,
+	)
+	if err != nil {
+		logger.Error(logTag, fmt.Sprintf("loading alias configuration: %s", err.Error()))
+		return 1
+	}
+
 	mux := dns.NewServeMux()
 
 	addHandler(mux, "bosh.", handlers.NewDiscoveryHandler(logger, shuffle.New(), records.NewRepo(c.RecordsFile, system.NewOsFileSystem(logger), logger)), logger)
@@ -69,12 +78,18 @@ func mainExitCode() int {
 	addHandler(mux, "healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger), logger)
 	addHandler(mux, ".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout)), logger), logger)
 
+	aliasResolver, err := handlers.NewAliasResolvingHandler(mux, aliasConfiguration)
+	if err != nil {
+		logger.Error(logTag, fmt.Sprintf("could not initiate alias resolving handler: %s", err.Error()))
+		return 1
+	}
+
 	bindAddress := fmt.Sprintf("%s:%d", c.Address, c.Port)
 	shutdown := make(chan struct{})
 	dnsServer := server.New(
 		[]server.DNSServer{
-			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: mux},
-			&dns.Server{Addr: bindAddress, Net: "udp", Handler: mux},
+			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: aliasResolver},
+			&dns.Server{Addr: bindAddress, Net: "udp", Handler: aliasResolver},
 		},
 		[]server.HealthCheck{
 			server.NewUDPHealthCheck(net.Dial, bindAddress),
@@ -100,6 +115,6 @@ func mainExitCode() int {
 	return 0
 }
 
-func addHandler(mux *dns.ServeMux, pattern string, handler dns.Handler, logger logger.Logger) {
+func addHandler(mux *dns.ServeMux, pattern string, handler dns.Handler, logger boshlog.Logger) {
 	mux.Handle(pattern, handlers.NewRequestLoggerHandler(handler, clock.Real, logger))
 }

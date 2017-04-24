@@ -22,6 +22,8 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/onsi/gomega/gbytes"
+	"os"
+	"path"
 )
 
 func getFreePort() (int, error) {
@@ -90,8 +92,9 @@ var _ = Describe("main", func() {
 
 	Context("when the server starts successfully", func() {
 		var (
-			cmd     *exec.Cmd
-			session *gexec.Session
+			cmd        *exec.Cmd
+			session    *gexec.Session
+			aliasesDir string
 		)
 
 		BeforeEach(func() {
@@ -103,15 +106,35 @@ var _ = Describe("main", func() {
 			_, err = recordsFile.Write([]byte(fmt.Sprint(`{
 				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
 				"record_infos": [
-					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"]
+					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
+					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "123.456.789.000"]
 				]
 			}`)))
+			Expect(err).NotTo(HaveOccurred())
+
+			aliasesDir, err = ioutil.TempDir("", "aliases")
+			Expect(err).NotTo(HaveOccurred())
+
+			aliasesFile1, err := ioutil.TempFile(aliasesDir, "aliasesjson1")
+			Expect(err).NotTo(HaveOccurred())
+			_, err = aliasesFile1.Write([]byte(fmt.Sprint(`{
+				"hc.alias.": ["healthcheck.bosh-dns."]
+			}`)))
+			Expect(err).NotTo(HaveOccurred())
+
+			aliasesFile2, err := ioutil.TempFile(aliasesDir, "aliasesjson2")
+			Expect(err).NotTo(HaveOccurred())
+			_, err = aliasesFile2.Write([]byte(fmt.Sprint(`{
+				"internal.alias.": ["my-instance-2.my-group.my-network.my-deployment-2.bosh.","my-instance.my-group.my-network.my-deployment.bosh."]
+			}`)))
+			Expect(err).NotTo(HaveOccurred())
 
 			cmd = newCommandWithConfig(fmt.Sprintf(`{
 				"address": %q,
 				"port": %d,
-				"records_file": %q
-			}`, listenAddress, listenPort, recordsFile.Name()))
+				"records_file": %q,
+				"alias_files_glob": %q
+			}`, listenAddress, listenPort, recordsFile.Name(), path.Join(aliasesDir, "*")))
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -124,6 +147,8 @@ var _ = Describe("main", func() {
 				session.Kill()
 				session.Wait()
 			}
+
+			Expect(os.RemoveAll(aliasesDir)).To(Succeed())
 		})
 
 		DescribeTable("it responds to DNS requests",
@@ -153,6 +178,36 @@ var _ = Describe("main", func() {
 			BeforeEach(func() {
 				c = &dns.Client{}
 				m = &dns.Msg{}
+			})
+
+			Describe("alias resolution", func() {
+				Context("with only one resolving address", func() {
+					BeforeEach(func() {
+						m.SetQuestion("hc.alias.", dns.TypeA)
+					})
+
+					It("resolves to the appropriate domain before deferring to mux", func() {
+						_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
+
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.HealthCheckHandler Request \[1\] \[healthcheck\.bosh-dns\.\] 0 \d+ns`))
+					})
+				})
+
+				Context("with multiple resolving addresses", func() {
+					BeforeEach(func() {
+						m.Question = []dns.Question{
+							{Name: "internal.alias.", Qtype: dns.TypeA},
+						}
+					})
+
+					It("resolves all domains before deferring to mux", func() {
+						_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
+
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request \[1,1\] \[my-instance-2\.my-group\.my-network\.my-deployment-2\.bosh\.,my-instance\.my-group\.my-network\.my-deployment\.bosh\.\] 0 \d+ns`))
+					})
+				})
 			})
 
 			Context("healthcheck.bosh-dns.", func() {
@@ -299,15 +354,25 @@ var _ = Describe("main", func() {
 
 	Context("failure cases", func() {
 		var (
-			cmd *exec.Cmd
+			cmd        *exec.Cmd
+			aliasesDir string
 		)
 
 		BeforeEach(func() {
+			var err error
+			aliasesDir, err = ioutil.TempDir("", "aliases")
+			Expect(err).NotTo(HaveOccurred())
+
 			cmd = newCommandWithConfig(fmt.Sprintf(`{
 				"address": "%s",
 				"port": %d,
-				"recursors": ["8.8.8.8"]
-			}`, listenAddress, listenPort))
+				"recursors": ["8.8.8.8"],
+				"alias_files_glob": %q
+			}`, listenAddress, listenPort, path.Join(aliasesDir, "*")))
+		})
+
+		AfterEach(func() {
+			Expect(os.RemoveAll(aliasesDir)).To(Succeed())
 		})
 
 		It("exits 1 when fails to bind to the tcp port", func() {
@@ -342,6 +407,26 @@ var _ = Describe("main", func() {
 
 			Eventually(session).Should(gexec.Exit(1))
 			Eventually(session.Err).Should(gbytes.Say("[main].*ERROR - timed out waiting for server to bind"))
+		})
+
+		It("exits 1 and logs a message when the globbed config files contain a broken alias config", func() {
+			aliasesFile1, err := ioutil.TempFile(aliasesDir, "aliasesjson1")
+			Expect(err).NotTo(HaveOccurred())
+			_, err = aliasesFile1.Write([]byte(fmt.Sprint(`{
+				"hc.alias.": ["healthcheck.bosh-dns."]
+			}`)))
+			Expect(err).NotTo(HaveOccurred())
+
+			aliasesFile2, err := ioutil.TempFile(aliasesDir, "aliasesjson2")
+			Expect(err).NotTo(HaveOccurred())
+			_, err = aliasesFile2.Write([]byte(`{"malformed":"aliasfile"}`))
+			Expect(err).NotTo(HaveOccurred())
+
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session.Err).Should(gbytes.Say("[main].*ERROR - loading alias configuration:.*alias config file malformed: %s", aliasesFile2.Name()))
 		})
 	})
 })
