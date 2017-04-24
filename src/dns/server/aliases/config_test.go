@@ -39,7 +39,7 @@ var _ = Describe("Config", func() {
 					"alias": {"domain", "domain2"},
 				}
 
-				Expect(c.Resolutions("alias")).To(Equal([]string{"domain", "domain2"}))
+				Expect(c.Resolutions("alias")).To(Equal([]QualifiedName{"domain", "domain2"}))
 			})
 		})
 
@@ -49,7 +49,7 @@ var _ = Describe("Config", func() {
 					"alias": {"domain"},
 				}
 
-				Expect(c.Resolutions("normal.domain")).To(Equal([]string{"normal.domain"}))
+				Expect(c.Resolutions("normal.domain")).To(Equal([]QualifiedName{"normal.domain"}))
 			})
 		})
 	})

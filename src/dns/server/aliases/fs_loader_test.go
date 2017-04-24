@@ -20,19 +20,28 @@ var _ = Describe("FSLoader", func() {
 	Describe("Load", func() {
 		Context("valid file", func() {
 			It("parses the file", func() {
-				fs.WriteFileString("/test/aliases.json", `{"test.tld":["othertest.tld"],"test1.tld":["test2.tld","test3.tld"]}`)
+				fs.WriteFileString("/test/aliases.json", `
+				{
+					"test.tld": [
+						"othertest.tld"
+					],
+					"test1.tld":[
+						"test2.tld",
+						"test3.tld"
+					]
+				}`)
 
 				aliases, err := parser.Load("/test/aliases.json")
 				Expect(err).ToNot(HaveOccurred())
-				Expect(aliases).To(Equal(Config{
-					"test.tld": []string{
-						"othertest.tld",
+				Expect(aliases).To(Equal(MustCastFromMap(map[string][]string{
+					"test.tld.": {
+						"othertest.tld.",
 					},
-					"test1.tld": []string{
-						"test2.tld",
-						"test3.tld",
+					"test1.tld.": {
+						"test2.tld.",
+						"test3.tld.",
 					},
-				}))
+				})))
 			})
 		})
 

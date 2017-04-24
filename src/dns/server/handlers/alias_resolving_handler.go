@@ -27,9 +27,9 @@ func (h AliasResolvingHandler) ServeDNS(resp dns.ResponseWriter, msg *dns.Msg) {
 	resolvedQuestions := []dns.Question{}
 
 	for _, question := range msg.Question {
-		for _, resolution := range h.config.Resolutions(question.Name) {
+		for _, resolution := range h.config.Resolutions(aliases.QualifiedName(question.Name)) {
 			resolvedQuestions = append(resolvedQuestions, dns.Question{
-				Name:   resolution,
+				Name:   string(resolution),
 				Qtype:  question.Qtype,
 				Qclass: question.Qclass,
 			})
