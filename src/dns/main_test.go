@@ -117,6 +117,7 @@ var _ = Describe("main", func() {
 
 			aliasesFile1, err := ioutil.TempFile(aliasesDir, "aliasesjson1")
 			Expect(err).NotTo(HaveOccurred())
+			defer aliasesFile1.Close()
 			_, err = aliasesFile1.Write([]byte(fmt.Sprint(`{
 				"hc.alias.": ["healthcheck.bosh-dns."]
 			}`)))
@@ -124,6 +125,7 @@ var _ = Describe("main", func() {
 
 			aliasesFile2, err := ioutil.TempFile(aliasesDir, "aliasesjson2")
 			Expect(err).NotTo(HaveOccurred())
+			defer aliasesFile2.Close()
 			_, err = aliasesFile2.Write([]byte(fmt.Sprint(`{
 				"internal.alias.": ["my-instance-2.my-group.my-network.my-deployment-2.bosh.","my-instance.my-group.my-network.my-deployment.bosh."]
 			}`)))
@@ -412,6 +414,7 @@ var _ = Describe("main", func() {
 		It("exits 1 and logs a message when the globbed config files contain a broken alias config", func() {
 			aliasesFile1, err := ioutil.TempFile(aliasesDir, "aliasesjson1")
 			Expect(err).NotTo(HaveOccurred())
+			defer aliasesFile1.Close()
 			_, err = aliasesFile1.Write([]byte(fmt.Sprint(`{
 				"hc.alias.": ["healthcheck.bosh-dns."]
 			}`)))
@@ -419,6 +422,7 @@ var _ = Describe("main", func() {
 
 			aliasesFile2, err := ioutil.TempFile(aliasesDir, "aliasesjson2")
 			Expect(err).NotTo(HaveOccurred())
+			defer aliasesFile2.Close()
 			_, err = aliasesFile2.Write([]byte(`{"malformed":"aliasfile"}`))
 			Expect(err).NotTo(HaveOccurred())
 
