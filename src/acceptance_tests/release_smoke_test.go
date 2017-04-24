@@ -75,7 +75,7 @@ var _ = Describe("Integration", func() {
 	It("returns records for bosh instances found with query for all records", func() {
 		Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
 
-		cmd := exec.Command(boshBinaryPath, "ssh", "-c", "dig -t A q-YWxs.dns.default.bosh-dns.bosh @169.254.0.2")
+		cmd := exec.Command(boshBinaryPath, "ssh", firstInstanceSlug, "-c", "dig -t A q-YWxs.dns.default.bosh-dns.bosh @169.254.0.2")
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -84,7 +84,7 @@ var _ = Describe("Integration", func() {
 		Expect(output).To(ContainSubstring("Got answer:"))
 		Expect(output).To(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
 		for _, info := range allDeployedInstances {
-			Expect(output).To(ContainSubstring("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
+			Expect(output).To(MatchRegexp("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
 		}
 		Expect(output).To(ContainSubstring("SERVER: 169.254.0.2#53"))
 	})
