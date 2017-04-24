@@ -2,22 +2,15 @@ package records
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"strings"
 )
 
 type RecordSet struct {
-	Keys            []string   `json:"record_keys"`
-	Infos           [][]string `json:"record_infos"`
-	idIndex         int
-	groupIndex      int
-	networkIndex    int
-	deploymentIndex int
-	ipIndex         int
+	Records []Record
 }
 
 func (r RecordSet) Resolve(fqdn string) ([]string, error) {
-	r.calculateIndicies()
-
 	var ips []string
 
 	if strings.HasPrefix(fqdn, "q-") {
@@ -29,18 +22,18 @@ func (r RecordSet) Resolve(fqdn string) ([]string, error) {
 		}
 
 		if string(decodedQuery) == "all" {
-			for _, i := range r.Infos {
-				record := strings.Join([]string{i[r.groupIndex], i[r.networkIndex], i[r.deploymentIndex], "bosh."}, ".")
-				if record == matcher[1] {
-					ips = append(ips, i[r.ipIndex])
+			for _, record := range r.Records {
+				recordName := record.Fqdn(false)
+				if recordName == matcher[1] {
+					ips = append(ips, record.Ip)
 				}
 			}
 		}
 	} else {
-		for _, i := range r.Infos {
-			compare := strings.Join([]string{i[r.idIndex], i[r.groupIndex], i[r.networkIndex], i[r.deploymentIndex], "bosh."}, ".")
+		for _, record := range r.Records {
+			compare := record.Fqdn(true)
 			if compare == fqdn {
-				ips = append(ips, i[r.ipIndex])
+				ips = append(ips, record.Ip)
 			}
 		}
 	}
@@ -48,21 +41,51 @@ func (r RecordSet) Resolve(fqdn string) ([]string, error) {
 	return ips, nil
 }
 
-func (r *RecordSet) calculateIndicies() {
-	for i, k := range r.Keys {
+func (s *RecordSet) UnmarshalJSON(j []byte) error {
+	swap := struct {
+		Keys  []string   `json:"record_keys"`
+		Infos [][]string `json:"record_infos"`
+	}{}
+
+	err := json.Unmarshal(j, &swap)
+	if err != nil {
+		return err
+	}
+
+	s.Records = make([]Record, len(swap.Infos))
+
+	var idIndex,
+	groupIndex,
+	networkIndex,
+	deploymentIndex,
+	ipIndex int
+
+	for i, k := range swap.Keys {
 		switch k {
 		case "id":
-			r.idIndex = i
+			idIndex = i
 		case "instance_group":
-			r.groupIndex = i
+			groupIndex = i
 		case "network":
-			r.networkIndex = i
+			networkIndex = i
 		case "deployment":
-			r.deploymentIndex = i
+			deploymentIndex = i
 		case "ip":
-			r.ipIndex = i
+			ipIndex = i
 		default:
 			continue
 		}
 	}
+
+	for index, info := range swap.Infos {
+		s.Records[index] = Record{
+			Id:         info[idIndex],
+			Group:      info[groupIndex],
+			Network:    info[networkIndex],
+			Deployment: info[deploymentIndex],
+			Ip:         info[ipIndex],
+		}
+	}
+
+	return nil
 }

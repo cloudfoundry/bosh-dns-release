@@ -85,8 +85,15 @@ var _ = Describe("DiscoveryHandler", func() {
 				DescribeTable("returns an A record based off of the records data",
 					func(queryType uint16) {
 						recordSet := records.RecordSet{
-							Keys:  []string{"id", "instance_group", "az", "network", "deployment", "ip"},
-							Infos: [][]string{{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"}},
+							Records: []records.Record{
+								{
+									Id:         "my-instance",
+									Group:      "my-group",
+									Network:    "my-network",
+									Deployment: "my-deployment",
+									Ip:         "123.123.123.123",
+								},
+							},
 						}
 						fakeRecordSetRepo.GetReturns(recordSet, nil)
 
@@ -121,10 +128,21 @@ var _ = Describe("DiscoveryHandler", func() {
 
 				It("logs a message if multiple records were found for the FQDN", func() {
 					recordSet := records.RecordSet{
-						Keys: []string{"id", "instance_group", "az", "network", "deployment", "ip"},
-						Infos: [][]string{
-							{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"},
-							{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1"},
+						Records: []records.Record{
+							{
+								Id:         "my-instance",
+								Group:      "my-group",
+								Network:    "my-network",
+								Deployment: "my-deployment",
+								Ip:         "123.123.123.123",
+							},
+							{
+								Id:         "my-instance",
+								Group:      "my-group",
+								Network:    "my-network",
+								Deployment: "my-deployment",
+								Ip:         "127.0.0.1",
+							},
 						},
 					}
 					fakeRecordSetRepo.GetReturns(recordSet, nil)
@@ -143,10 +161,21 @@ var _ = Describe("DiscoveryHandler", func() {
 
 				It("shuffles the records if multiple records were found", func() {
 					recordSet := records.RecordSet{
-						Keys: []string{"id", "instance_group", "az", "network", "deployment", "ip"},
-						Infos: [][]string{
-							{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"},
-							{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1"},
+						Records: []records.Record{
+							{
+								Id:         "my-instance",
+								Group:      "my-group",
+								Network:    "my-network",
+								Deployment: "my-deployment",
+								Ip:         "123.123.123.123",
+							},
+							{
+								Id:         "my-instance",
+								Group:      "my-group",
+								Network:    "my-network",
+								Deployment: "my-deployment",
+								Ip:         "127.0.0.1",
+							},
 						},
 					}
 					fakeRecordSetRepo.GetReturns(recordSet, nil)
@@ -173,15 +202,56 @@ var _ = Describe("DiscoveryHandler", func() {
 
 					BeforeEach(func() {
 						recordSet = records.RecordSet{
-							Keys: []string{"id", "instance_group", "az", "network", "deployment", "ip"},
-							Infos: [][]string{
-								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"},
-								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1"},
-								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.2"},
-								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.3"},
-								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.4"},
-								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.5"},
-								{"my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.6"},
+							Records: []records.Record{
+								{
+									Id:         "my-instance",
+									Group:      "my-group",
+									Network:    "my-network",
+									Deployment: "my-deployment",
+									Ip:         "123.123.123.123",
+								},
+								{
+									Id:         "my-instance",
+									Group:      "my-group",
+									Network:    "my-network",
+									Deployment: "my-deployment",
+									Ip:         "127.0.0.1",
+								},
+								{
+									Id:         "my-instance",
+									Group:      "my-group",
+									Network:    "my-network",
+									Deployment: "my-deployment",
+									Ip:         "127.0.0.2",
+								},
+								{
+									Id:         "my-instance",
+									Group:      "my-group",
+									Network:    "my-network",
+									Deployment: "my-deployment",
+									Ip:         "127.0.0.3",
+								},
+								{
+									Id:         "my-instance",
+									Group:      "my-group",
+									Network:    "my-network",
+									Deployment: "my-deployment",
+									Ip:         "127.0.0.4",
+								},
+								{
+									Id:         "my-instance",
+									Group:      "my-group",
+									Network:    "my-network",
+									Deployment: "my-deployment",
+									Ip:         "127.0.0.5",
+								},
+								{
+									Id:         "my-instance",
+									Group:      "my-group",
+									Network:    "my-network",
+									Deployment: "my-deployment",
+									Ip:         "127.0.0.6",
+								},
 							},
 						}
 

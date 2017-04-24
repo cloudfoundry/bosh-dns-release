@@ -4,6 +4,7 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"encoding/json"
 )
 
 var _ = Describe("RecordSet", func() {
@@ -11,17 +12,21 @@ var _ = Describe("RecordSet", func() {
 	Context("when there are records matching the query based fqdn", func() {
 
 		BeforeEach(func() {
-			recordSet = records.RecordSet{
-				Keys: []string{"id", "instance_group", "az", "network", "deployment", "ip"},
-				Infos: [][]string{
-					{"instance0", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"},
-					{"instance1", "my-group", "az2", "my-network", "my-deployment", "123.123.123.124"},
+			jsonBytes := []byte(`
+{
+	"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
+	"record_infos": [
+		["instance0", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
+		["instance1", "my-group", "az2", "my-network", "my-deployment", "123.123.123.124"],
+		["instance2", "my-group-2", "az1", "my-network", "my-deployment", "123.123.123.125"],
+		["instance4", "my-group", "az1", "another-network", "my-deployment", "123.123.123.127"],
+		["instance5", "my-group", "az1", "my-network", "deployment2", "123.123.123.128"]
+	]
+}
+			`)
+			err := json.Unmarshal(jsonBytes, &recordSet)
 
-					{"instance2", "my-group-2", "az1", "my-network", "my-deployment", "123.123.123.125"},
-					{"instance4", "my-group", "az1", "another-network", "my-deployment", "123.123.123.127"},
-					{"instance5", "my-group", "az1", "my-network", "deployment2", "123.123.123.128"},
-				},
-			}
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		Context("when the query is for 'all'", func() {
@@ -75,13 +80,18 @@ var _ = Describe("RecordSet", func() {
 
 	Context("when there are records matching the specified fqdn", func() {
 		BeforeEach(func() {
-			recordSet = records.RecordSet{
-				Keys: []string{"id", "instance_group", "az", "network", "deployment", "ip"},
-				Infos: [][]string{
-					{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"},
-					{"my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"},
-				},
-			}
+			jsonBytes := []byte(`
+{
+	"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
+	"record_infos": [
+		["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
+		["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"]
+	]
+}
+			`)
+			err := json.Unmarshal(jsonBytes, &recordSet)
+
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("returns all records for that name", func() {
