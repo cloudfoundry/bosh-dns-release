@@ -430,7 +430,8 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Eventually(session.Err).Should(gbytes.Say("[main].*ERROR - loading alias configuration:.*alias config file malformed: %s", aliasesFile2.Name()))
+			Eventually(session.Err).Should(gbytes.Say(`[main].*ERROR - loading alias configuration:.*alias config file malformed:`))
+			Expect(session.Err.Contents()).To(ContainSubstring(fmt.Sprintf(`alias config file malformed: %s`, aliasesFile2.Name())))
 		})
 	})
 })
