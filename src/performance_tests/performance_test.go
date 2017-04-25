@@ -172,13 +172,13 @@ var _ = Describe("Performance", func() {
 func printStatsForHistogram(hist metrics.Histogram, label string, unit string, scalingDivisor float64) {
 	fmt.Printf("\n~~~~~~~~~~~~~~~%s~~~~~~~~~~~~~~~\n", label)
 	printStatNamed("Std Deviation", hist.StdDev()/scalingDivisor, unit)
-	printStatNamed("Median", hist.Percentile(50)/scalingDivisor, unit)
+	printStatNamed("Median", hist.Percentile(0.5)/scalingDivisor, unit)
 	printStatNamed("Mean", hist.Mean()/scalingDivisor, unit)
 	printStatNamed("Max", float64(hist.Max())/scalingDivisor, unit)
 	printStatNamed("Min", float64(hist.Min())/scalingDivisor, unit)
-	printStatNamed("90th Percentile", hist.Percentile(90)/scalingDivisor, unit)
-	printStatNamed("95th Percentile", hist.Percentile(95)/scalingDivisor, unit)
-	printStatNamed("99th Percentile", hist.Percentile(99)/scalingDivisor, unit)
+	printStatNamed("90th Percentile", hist.Percentile(0.9)/scalingDivisor, unit)
+	printStatNamed("95th Percentile", hist.Percentile(0.95)/scalingDivisor, unit)
+	printStatNamed("99th Percentile", hist.Percentile(0.99)/scalingDivisor, unit)
 }
 
 func printStatNamed(label string, value float64, unit string) {
