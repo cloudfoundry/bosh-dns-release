@@ -49,6 +49,12 @@ memo = "26a7a4573f9e7a5507943051fa106d482ddf281e8ede45a714dd9bccc4282f31"
 
 [[projects]]
   branch = "master"
+  name = "github.com/rcrowley/go-metrics"
+  packages = ["."]
+  revision = "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "f3918c30c5c2cb527c0b071a27c35120a6c0719a"

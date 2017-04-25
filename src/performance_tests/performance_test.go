@@ -1,17 +1,17 @@
 package performance_test
 
 import (
+	zp "github.com/cloudfoundry/dns-release/src/performance_tests/zone_pickers"
 	"github.com/cloudfoundry/gosigar"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"sort"
+	"github.com/rcrowley/go-metrics"
 	"sync"
 	"time"
 
-	zp "github.com/cloudfoundry/dns-release/src/performance_tests/zone_pickers"
-
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	"io/ioutil"
@@ -54,16 +54,28 @@ var _ = Describe("Performance", func() {
 
 	TestDNSPerformance := func() {
 		startTime := time.Now()
-		memUsageValues := []float64{}
-		CPUUsageValues := []float64{}
+
+		timeSample := metrics.NewExpDecaySample(maxDnsRequestsPerMin, 0.015)
+		timeHistogram := metrics.NewHistogram(timeSample)
+		metrics.Register("DNS response time", timeHistogram)
+
+		cpuSample := metrics.NewExpDecaySample(maxDnsRequestsPerMin, 0.015)
+		cpuHistogram := metrics.NewHistogram(cpuSample)
+		metrics.Register("CPU Usage", cpuHistogram)
+
+		memSample := metrics.NewExpDecaySample(maxDnsRequestsPerMin, 0.015)
+		memHistogram := metrics.NewHistogram(memSample)
+		metrics.Register("Mem Usage", memHistogram)
 
 		var resultSummary map[int]DnsResult
 		for i := 0; i < maxDnsRequestsPerMin; i++ {
 			go MakeDnsRequestUntilSuccessful(picker, flowSignal, result, wg)
 			mem := sigar.ProcMem{}
 			if err := mem.Get(dnsServerPid); err == nil {
-				memUsageValues = append(memUsageValues, float64(mem.Resident)/1024/1024)
-				CPUUsageValues = append(CPUUsageValues, getProcessCPU(dnsServerPid))
+				memHistogram.Update(int64(mem.Resident))
+				cpuFloat := getProcessCPU(dnsServerPid)
+				cpuInt := cpuFloat * (1000 * 1000)
+				cpuHistogram.Update(int64(cpuInt))
 			}
 		}
 		<-finishedDnsRequestsSignal
@@ -71,34 +83,38 @@ var _ = Describe("Performance", func() {
 
 		resultSummary = buildResultSummarySync(result)
 
-		resultTimes := []int{}
 		for _, summary := range resultSummary {
-			resultTimes = append(resultTimes, int(summary.EndTime.Sub(summary.StartTime)))
+			timeHistogram.Update(int64(summary.EndTime.Sub(summary.StartTime)))
 		}
 
-		sort.Ints([]int(resultTimes))
-		median := (time.Duration(resultTimes[209]) + time.Duration(resultTimes[210])) / 2
-		max := time.Duration(resultTimes[len(resultTimes)-1])
+		medTime := timeHistogram.Percentile(0.5) / (1000 * 1000)
+		maxTime := timeHistogram.Max() / (1000 * 1000)
+		printStatsForHistogram(memHistogram, fmt.Sprintf("DNS handling latency for %s", label), "ms", 1000*1000)
 
-		sort.Float64s(memUsageValues)
-		maxMem := memUsageValues[len(memUsageValues)-1]
+		maxMem := float64(memHistogram.Max()) / (1024 * 1024)
+		printStatsForHistogram(memHistogram, fmt.Sprintf("DNS server mem usage for %s", label), "MB", 1024*1024)
 
-		sort.Float64s(CPUUsageValues)
-		maxCPU := CPUUsageValues[len(CPUUsageValues)-1]
+		maxCPU := float64(cpuHistogram.Max()) / (1000 * 1000)
+		printStatsForHistogram(cpuHistogram, fmt.Sprintf("DNS server CPU usage for %s", label), "%", 1000*1000)
 
-		Expect(endTime).Should(BeTemporally("<", startTime.Add(1*time.Minute)))
+		testFailures := []error{}
+		if medTime > 0.797 {
+			testFailures = append(testFailures, errors.New(fmt.Sprintf("Median DNS response time of %.3fms was greater than 0.797ms benchmark", medTime)))
+		}
+		if maxTime > 7540 {
+			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max DNS response time of %.3fms was greater than 7540ms benchmark", maxTime)))
+		}
+		if maxCPU > 5 {
+			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max DNS server CPU usage of %.2f%% was greater than 5%% ceiling", maxCPU)))
+		}
+		if maxMem > 15 {
+			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max DNS server memory usage of %.2fMB was greater than 15MB ceiling", maxMem)))
+		}
+		if endTime.After(startTime.Add(1 * time.Minute)) {
+			testFailures = append(testFailures, errors.New(fmt.Sprintf("DNS server took %s to serve 420 requests, which exceeds 1 minute benchmark", endTime.Sub(startTime).String())))
+		}
 
-		fmt.Printf("Median DNS response time for %s: %s\n", label, median.String())
-		Expect(median).To(BeNumerically("<", 797*time.Microsecond))
-
-		fmt.Printf("Max DNS response time for %s: %s\n", label, max.String())
-		Expect(max).To(BeNumerically("<", 7540190*time.Microsecond))
-
-		fmt.Printf("Max DNS server memory usage for %s: %f Mb\n", label, maxMem)
-		Expect(maxMem).To(BeNumerically("<", 15))
-
-		fmt.Printf("Max DNS server CPU usage for %s: %f %%\n", label, maxCPU)
-		Expect(maxCPU).To(BeNumerically("<", 5))
+		Expect(testFailures).To(BeEmpty())
 	}
 
 	Describe("using zones from file", func() {
@@ -152,6 +168,22 @@ var _ = Describe("Performance", func() {
 		})
 	})
 })
+
+func printStatsForHistogram(hist metrics.Histogram, label string, unit string, scalingDivisor float64) {
+	fmt.Printf("\n~~~~~~~~~~~~~~~%s~~~~~~~~~~~~~~~\n", label)
+	printStatNamed("Std Deviation", hist.StdDev()/scalingDivisor, unit)
+	printStatNamed("Median", hist.Percentile(50)/scalingDivisor, unit)
+	printStatNamed("Mean", hist.Mean()/scalingDivisor, unit)
+	printStatNamed("Max", float64(hist.Max())/scalingDivisor, unit)
+	printStatNamed("Min", float64(hist.Min())/scalingDivisor, unit)
+	printStatNamed("90th Percentile", hist.Percentile(90)/scalingDivisor, unit)
+	printStatNamed("95th Percentile", hist.Percentile(95)/scalingDivisor, unit)
+	printStatNamed("99th Percentile", hist.Percentile(99)/scalingDivisor, unit)
+}
+
+func printStatNamed(label string, value float64, unit string) {
+	fmt.Printf("%s: %3.3f%s\n", label, value, unit)
+}
 
 func getProcessCPU(pid int) float64 {
 	cmd := exec.Command("ps", []string{"-p", strconv.Itoa(pid), "-o", "%cpu"}...)

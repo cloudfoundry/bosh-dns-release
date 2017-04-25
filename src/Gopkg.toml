@@ -10,3 +10,7 @@
 [[dependencies]]
   name = "github.com/onsi/gomega"
   revision = "f4f1caefe95e396ea97b72dd6c52973ae4a6978c"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/rcrowley/go-metrics"
