@@ -1,0 +1,9 @@
+{
+  "processes": [
+    {
+      "name": "dns-windows",
+      "executable": "C:\\var\\vcap\\packages\\dns-windows\\bin\\dns.exe",
+      "args": ["-config", "/var/vcap/jobs/dns-windows/config/config.json"]
+    }
+  ]
+}

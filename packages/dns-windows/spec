@@ -1,0 +1,12 @@
+---
+name: dns-windows
+
+dependencies:
+- golang-windows
+
+files:
+- ./**/*
+- exiter.ps1
+
+excluded_files:
+- vendor/github.com/bmatcuk/doublestar/test/**/*
