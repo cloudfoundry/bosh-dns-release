@@ -98,13 +98,13 @@ type FakeFileSystem struct {
 type FakeFileStats struct {
 	FileType FakeFileType
 
-	FileMode os.FileMode
-	Flags    int
-	Username string
+	FileMode  os.FileMode
+	Flags     int
+	Username  string
 	Groupname string
 
 	ModTime time.Time
-	Open bool
+	Open    bool
 
 	SymlinkTarget string
 

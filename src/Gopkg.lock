@@ -1,4 +1,4 @@
-memo = "1d2e8e43227982ed1ecd5bd8a387218b6e4cc64e17d1f435e2fd186201f39eb8"
+memo = "26a7a4573f9e7a5507943051fa106d482ddf281e8ede45a714dd9bccc4282f31"
 
 [[projects]]
   name = "github.com/bmatcuk/doublestar"
@@ -16,7 +16,7 @@ memo = "1d2e8e43227982ed1ecd5bd8a387218b6e4cc64e17d1f435e2fd186201f39eb8"
   branch = "master"
   name = "github.com/cloudfoundry/bosh-utils"
   packages = ["errors","logger","logger/loggerfakes","system","system/fakes"]
-  revision = "62ddfdb5c45a464ed4f5334c7833f5bf6a8c2bbe"
+  revision = "1cf51df588feb265a3fb764dd3342ca46bf44ade"
 
 [[projects]]
   branch = "master"
