@@ -13,6 +13,7 @@ import (
 
 	"encoding/json"
 	"fmt"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	"io/ioutil"
 	"os/exec"
 	"strconv"
@@ -103,7 +104,7 @@ var _ = Describe("Performance", func() {
 	Describe("using zones from file", func() {
 		BeforeEach(func() {
 			var err error
-			picker, err = zp.NewJsonFileZonePicker("/tmp/zones.json")
+			picker, err = zp.NewZoneFilePickerFromFile("/tmp/zones.json")
 			Expect(err).ToNot(HaveOccurred())
 			label = "prod-like zones"
 		})
@@ -126,17 +127,23 @@ var _ = Describe("Performance", func() {
 
 	Describe("using local bosh dns records", func() {
 		BeforeEach(func() {
-			cmd := exec.Command(boshBinaryPath, []string{"ssh", "dns", "--json", "--results", "-c", "sudo cat /var/vcap/instance/dns/records.json"}...)
-			output, err := cmd.CombinedOutput()
+			cmd := exec.Command(boshBinaryPath, []string{"scp", "dns:/var/vcap/instance/dns/records.json", "records.json"}...)
+			err := cmd.Run()
 			if err != nil {
-				panic(fmt.Sprintf("Failed to BOSH SSH: %s\nOutput: %s", err.Error(), output))
+				panic(fmt.Sprintf("Failed to bosh scp: %s\nOutput: %s", err.Error()))
 			}
 
-			jsonResultsOutput := parseBoshSSHOutput(output)
-			records := getRecordsFromJSON(jsonResultsOutput)
-			file := writeTmpFileWithRecords(records)
+			recordsJsonBytes, err := ioutil.ReadFile("records.json")
+			Expect(err).ToNot(HaveOccurred())
+			recordSet := records.RecordSet{}
+			err = json.Unmarshal(recordsJsonBytes, &recordSet)
+			Expect(err).ToNot(HaveOccurred())
 
-			picker, _ = zp.NewJsonFileZonePicker(file)
+			records := []string{}
+			for _, record := range recordSet.Records {
+				records = append(records, record.Fqdn(true))
+			}
+			picker = &zp.ZoneFilePicker{Domains: records}
 			label = "local zones"
 		})
 
@@ -158,73 +165,6 @@ func getProcessCPU(pid int) float64 {
 	Expect(err).ToNot(HaveOccurred())
 
 	return percent
-}
-
-func writeTmpFileWithRecords(records []string) string {
-	file, err := ioutil.TempFile("/tmp", "local-dns-records")
-	if err != nil {
-		panic(fmt.Sprintf("Creating temp file: %s", err.Error()))
-	}
-
-	ZoneFile := ZoneFile{Zones: records}
-
-	bytes, err := json.Marshal(ZoneFile)
-	if err != nil {
-		panic(fmt.Sprintf("Marshalling records: %s", err.Error()))
-	}
-
-	_, err = file.Write(bytes)
-	if err != nil {
-		panic(fmt.Sprintf("Writing test records file: %s", err.Error()))
-	}
-
-	return file.Name()
-}
-
-type ZoneFile struct {
-	Zones []string `json:"zones"`
-}
-
-func getRecordsFromJSON(escapedJSONString string) []string {
-	recordsJSON := RecordsJSON{}
-	err := json.Unmarshal([]byte(escapedJSONString), &recordsJSON)
-	if err != nil {
-		panic(fmt.Sprintf("Unmarshalling JSON into struct: %s", err.Error()))
-	}
-
-	records := []string{}
-	for _, record := range recordsJSON.Records {
-		records = append(records, record[1])
-	}
-
-	return records
-}
-
-type RecordsJSON struct {
-	Records [][]string `json:"records"`
-}
-
-func parseBoshSSHOutput(output []byte) string {
-	catOutput := CatOutput{}
-
-	err := json.Unmarshal(output, &catOutput)
-	if err != nil {
-		panic(fmt.Sprintf("Reading BOSH output: %s", err.Error()))
-	}
-
-	return catOutput.Tables[0].Rows[0].Content
-}
-
-type CatOutput struct {
-	Tables []Table `json:"Tables"`
-}
-
-type Table struct {
-	Rows []Row `json:"Rows"`
-}
-
-type Row struct {
-	Content string `json:"stdout"`
 }
 
 func setupWaitGroupWithSignaler(maxDnsRequests int) (*sync.WaitGroup, chan struct{}) {

@@ -9,13 +9,13 @@ import (
 	"os"
 )
 
-var _ = Describe("JsonFileZonePicker", func() {
+var _ = Describe("ZoneFilePicker", func() {
 	var (
 		sourceFile string
-		picker     *JsonFileZonePicker
+		picker     *ZoneFilePicker
 	)
 
-	Describe("NewJsonFileZonePicker", func() {
+	Describe("NewZoneFilePickerFromFile", func() {
 		Context("when the given file is present", func() {
 			BeforeEach(func() {
 				file, err := ioutil.TempFile("/tmp", "dns_zone_data")
@@ -32,8 +32,8 @@ var _ = Describe("JsonFileZonePicker", func() {
 				os.Remove(sourceFile)
 			})
 
-			It("returns a pointer to a JsonFileZonePicker", func() {
-				picker, err := NewJsonFileZonePicker(sourceFile)
+			It("returns a pointer to a ZoneFilePicker", func() {
+				picker, err := NewZoneFilePickerFromFile(sourceFile)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(picker).ToNot(BeNil())
 			})
@@ -41,7 +41,7 @@ var _ = Describe("JsonFileZonePicker", func() {
 
 		Context("when the given file is NOT present", func() {
 			It("returns a nil pointer and an error", func() {
-				picker, err := NewJsonFileZonePicker(sourceFile)
+				picker, err := NewZoneFilePickerFromFile(sourceFile)
 				Expect(picker).To(BeNil())
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Creating zone picker"))
@@ -60,7 +60,7 @@ var _ = Describe("JsonFileZonePicker", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				sourceFile = file.Name()
-				picker, err = NewJsonFileZonePicker(sourceFile)
+				picker, err = NewZoneFilePickerFromFile(sourceFile)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -91,7 +91,7 @@ var _ = Describe("JsonFileZonePicker", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				sourceFile = file.Name()
-				picker, err = NewJsonFileZonePicker(sourceFile)
+				picker, err = NewZoneFilePickerFromFile(sourceFile)
 				Expect(err).ToNot(HaveOccurred())
 			})
 

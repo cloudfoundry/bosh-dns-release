@@ -8,18 +8,18 @@ import (
 	"sync/atomic"
 )
 
-type JsonFileZonePicker struct {
+type ZoneFilePicker struct {
 	Domains []string `json:"zones"`
 	head    uint32
 }
 
-func NewJsonFileZonePicker(source string) (*JsonFileZonePicker, error) {
+func NewZoneFilePickerFromFile(source string) (*ZoneFilePicker, error) {
 	jsonBytes, err := ioutil.ReadFile(source)
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Creating zone picker")
 	}
 
-	picker := JsonFileZonePicker{}
+	picker := ZoneFilePicker{}
 	err = json.Unmarshal(jsonBytes, &picker)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func NewJsonFileZonePicker(source string) (*JsonFileZonePicker, error) {
 	return &picker, nil
 }
 
-func (j *JsonFileZonePicker) NextZone() string {
+func (j *ZoneFilePicker) NextZone() string {
 	head_threadsafe := atomic.LoadUint32(&j.head)
 	idx := int(head_threadsafe) % len(j.Domains)
 	atomic.AddUint32(&j.head, 1)
