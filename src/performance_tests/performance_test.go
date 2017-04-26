@@ -141,6 +141,17 @@ var _ = Describe("Performance", func() {
 		})
 	})
 
+	Describe("using google zone", func() {
+		BeforeEach(func() {
+			picker = zp.NewStaticZonePicker("google.com.")
+			label = "google.com zone"
+		})
+
+		It("handles DNS responses quickly for google zone", func() {
+			TestDNSPerformance(12)
+		})
+	})
+
 	Describe("using local bosh dns records", func() {
 		BeforeEach(func() {
 			cmd := exec.Command(boshBinaryPath, []string{"scp", "dns:/var/vcap/instance/dns/records.json", "records.json"}...)
