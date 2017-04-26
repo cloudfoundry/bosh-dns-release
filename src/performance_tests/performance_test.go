@@ -52,7 +52,7 @@ var _ = Describe("Performance", func() {
 		result = make(chan DnsResult, maxDnsRequestsPerMin*2)
 	})
 
-	TestDNSPerformance := func() {
+	TestDNSPerformance := func(medianResponseBenchmark float64) {
 		startTime := time.Now()
 
 		timeSample := metrics.NewExpDecaySample(maxDnsRequestsPerMin, 0.015)
@@ -98,7 +98,7 @@ var _ = Describe("Performance", func() {
 		printStatsForHistogram(cpuHistogram, fmt.Sprintf("DNS server CPU usage for %s", label), "%", 1000*1000)
 
 		testFailures := []error{}
-		if medTime > 0.797 {
+		if medTime > medianResponseBenchmark {
 			testFailures = append(testFailures, errors.New(fmt.Sprintf("Median DNS response time of %.3fms was greater than 0.797ms benchmark", medTime)))
 		}
 		if maxTime > 7540 {
@@ -126,7 +126,7 @@ var _ = Describe("Performance", func() {
 		})
 
 		It("handles DNS responses quickly for prod like zones", func() {
-			TestDNSPerformance()
+			TestDNSPerformance(12)
 		})
 	})
 
@@ -137,7 +137,7 @@ var _ = Describe("Performance", func() {
 		})
 
 		It("handles DNS responses quickly for healthcheck zone", func() {
-			TestDNSPerformance()
+			TestDNSPerformance(1.5)
 		})
 	})
 
@@ -164,7 +164,7 @@ var _ = Describe("Performance", func() {
 		})
 
 		It("handles DNS responses quickly for local zones", func() {
-			TestDNSPerformance()
+			TestDNSPerformance(1.5)
 		})
 	})
 })
