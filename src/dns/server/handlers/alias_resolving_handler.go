@@ -41,11 +41,8 @@ func (h AliasResolvingHandler) ServeDNS(resp dns.ResponseWriter, msg *dns.Msg) {
 		}
 	}
 
-	resolvedMsg := dns.Msg{
-		MsgHdr:   msg.MsgHdr,
-		Compress: msg.Compress,
-		Question: resolvedQuestions,
-	}
+	resolvedRequestMsg := dns.Msg(*msg)
+	resolvedRequestMsg.Question = resolvedQuestions
 
-	h.child.ServeDNS(respWriter, &resolvedMsg)
+	h.child.ServeDNS(respWriter, &resolvedRequestMsg)
 }

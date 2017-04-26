@@ -48,6 +48,98 @@ var _ = Describe("recursor", func() {
 		})
 	})
 
+	It("forwards large UDP EDNS messages", func() {
+		By("ensuring the test recursor is returning messages", func() {
+			cmd := exec.Command("dig", strings.Split("+ignore +notcp +bufsize=65535 -p 9955 udp-9k-message.com. @127.0.0.1", " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring(";; flags: qr aa rd; QUERY: 1, ANSWER: 270, AUTHORITY: 0, ADDITIONAL: 0"))
+			Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 9156"))
+		})
+
+		By("ensuring the dns release returns a successful trucated recursed answer", func() {
+			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +ignore +notcp +bufsize=65535 udp-9k-message.com. @169.254.0.2"}...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring(";; flags: qr aa rd; QUERY: 1, ANSWER: 270, AUTHORITY: 0, ADDITIONAL: 0"))
+			Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 9156"))
+		})
+	})
+
+	It("it compresses message responses that are larger than requested UDPSize", func() {
+		By("ensuring the test recursor is returning messages", func() {
+			cmd := exec.Command("dig", strings.Split("+ignore +notcp +bufsize=16384 -p 9955 compressed-ip-truncated-recursor-large.com. @127.0.0.1", " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring(";; flags: qr aa rd; QUERY: 1, ANSWER: 512, AUTHORITY: 0, ADDITIONAL: 0"))
+			Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 7224"))
+		})
+
+		By("ensuring the dns release returns a successful compressed recursed answer", func() {
+			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +ignore +notcp +bufsize=16384 compressed-ip-truncated-recursor-large.com. @169.254.0.2"}...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring(";; flags: qr aa rd; QUERY: 1, ANSWER: 512, AUTHORITY: 0, ADDITIONAL: 0"))
+			Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 7224"))
+		})
+	})
+
+	It("forwards large dns answers even if udp response size is larger than 512", func() { // this test drove out the UDPSize on the client produced in the ClientExchangeFactory
+		By("ensuring the test recursor is returning messages", func() {
+			cmd := exec.Command("dig", strings.Split("+ignore +notcp -p 9955 ip-truncated-recursor-large.com. @127.0.0.1", " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring(";; flags: qr aa tc rd; QUERY: 1, ANSWER: 20, AUTHORITY: 0, ADDITIONAL: 0"))
+			Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 989"))
+		})
+
+		By("ensuring the dns release returns a successful trucated recursed answer", func() {
+			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +ignore +notcp ip-truncated-recursor-large.com. @169.254.0.2"}...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring(";; flags: qr aa tc rd; QUERY: 1, ANSWER: 20, AUTHORITY: 0, ADDITIONAL: 0"))
+			Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 989"))
+		})
+	})
+
+	It("does not bother to compress messages that are smaller than 512", func() {
+		By("ensuring the test recursor is returning messages", func() {
+			cmd := exec.Command("dig", strings.Split("+ignore +bufsize=1 +notcp -p 9955 recursor-small.com. @127.0.0.1", " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring(";; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0"))
+			Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 104"))
+		})
+
+		By("ensuring the dns release returns a successful trucated recursed answer", func() {
+			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +ignore +notcp recursor-small.com. @169.254.0.2"}...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring(";; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0"))
+			Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 104"))
+		})
+	})
+
 	It("fowards queries to the configured recursors", func() {
 		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig -t A example.com @169.254.0.2"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)

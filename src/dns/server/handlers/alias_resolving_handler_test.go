@@ -47,15 +47,18 @@ var _ = Describe("AliasResolvingHandler", func() {
 			It("passes the message through as-is", func() {
 				m := dns.Msg{}
 				m.SetQuestion("anything", dns.TypeA)
+				m.SetEdns0(2048, false)
 
 				handler.ServeDNS(fakeWriter, &m)
 
 				Expect(dispatchedRequest).To(Equal(m))
+				opt := dispatchedRequest.IsEdns0()
+				Expect(opt.UDPSize()).To(Equal(uint16(2048)))
 
-				message := fakeWriter.WriteMsgArgsForCall(0)
-				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
-				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(false))
+				response := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(response.Rcode).To(Equal(dns.RcodeServerFailure))
+				Expect(response.Authoritative).To(Equal(true))
+				Expect(response.RecursionAvailable).To(Equal(false))
 			})
 		})
 

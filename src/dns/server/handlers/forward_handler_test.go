@@ -11,6 +11,7 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal/internalfakes"
 	"github.com/miekg/dns"
 
+	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -148,12 +149,121 @@ var _ = Describe("ForwardHandler", func() {
 					tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
 					Expect(logMsg).To(Equal("attempting recursors"))
-
 				},
 				Entry("forwards query to recursor via udp for udp clients", "udp", nil, false),
 				Entry("forwards query to recursor via udp for udp clients when the response is truncated", "udp", nil, true),
 				Entry("forwards query to recursor via tcp for tcp clients", "tcp", &net.TCPAddr{}, false),
 			)
+
+			Context("compression", func() {
+				var (
+					requestMessage   *dns.Msg
+					recursorAnswer   *dns.Msg
+					recursionHandler dns.Handler
+				)
+
+				appendAnswersUntilSize := func(requestedResponseLen int) {
+					for i := 0; recursorAnswer.Len() < requestedResponseLen; i++ {
+						aRec := &dns.A{
+							Hdr: dns.RR_Header{
+								Name:   "foo.bar.",
+								Rrtype: dns.TypeA,
+								Class:  dns.ClassINET,
+								Ttl:    0,
+							},
+							A: net.ParseIP(fmt.Sprintf("127.0.0.%d", i+1)).To4(),
+						}
+						recursorAnswer.Answer = append(recursorAnswer.Answer, aRec)
+					}
+				}
+
+				BeforeEach(func() {
+					recursorAnswer = &dns.Msg{
+						Answer: []dns.RR{&dns.A{A: net.ParseIP("99.99.99.99")}},
+					}
+					fakeExchanger := &handlersfakes.FakeExchanger{}
+					fakeExchangerFactory := func(net string) handlers.Exchanger { return fakeExchanger }
+					recursionHandler = handlers.NewForwardHandler([]string{"127.0.0.1"}, fakeExchangerFactory, fakeLogger)
+					requestMessage = &dns.Msg{}
+					requestMessage.SetQuestion("example.com.", dns.TypeANY)
+					fakeExchanger.ExchangeReturns(recursorAnswer, 0, nil)
+				})
+
+				Context("when the request is tcp and is large", func() {
+					It("does not compress the response", func() {
+						appendAnswersUntilSize(1024)
+						fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
+						Expect(recursorAnswer.Len()).To(BeNumerically(">", 1024))
+
+						recursionHandler.ServeDNS(fakeWriter, requestMessage)
+						responseMessage := fakeWriter.WriteMsgArgsForCall(0)
+						Expect(responseMessage.Answer).To(HaveLen(len(recursorAnswer.Answer)))
+						Expect(responseMessage.Compress).To(BeFalse())
+						Expect(responseMessage.Len()).To(Equal(recursorAnswer.Len()))
+					})
+				})
+
+				Context("when the request is udp and the response is less than 512", func() {
+					It("does not compress the response", func() {
+						appendAnswersUntilSize(400)
+						fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
+						Expect(recursorAnswer.Len()).To(BeNumerically("<", 512))
+
+						recursionHandler.ServeDNS(fakeWriter, requestMessage)
+						responseMessage := fakeWriter.WriteMsgArgsForCall(0)
+						Expect(responseMessage.Compress).To(BeFalse())
+						Expect(responseMessage.Answer).To(HaveLen(len(recursorAnswer.Answer)))
+						Expect(responseMessage.Len()).To(Equal(recursorAnswer.Len()))
+					})
+				})
+
+				Context("when the request is udp and the response is greater than 512", func() {
+					It("compresses the response", func() {
+						appendAnswersUntilSize(512)
+						fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
+						Expect(recursorAnswer.Len()).To(BeNumerically(">", 512))
+
+						recursionHandler.ServeDNS(fakeWriter, requestMessage)
+						responseMessage := fakeWriter.WriteMsgArgsForCall(0)
+						Expect(responseMessage.Compress).To(BeTrue())
+						Expect(responseMessage.Answer).To(HaveLen(len(recursorAnswer.Answer)))
+						Expect(responseMessage.Len()).To(BeNumerically("<", recursorAnswer.Len()))
+					})
+
+					Context("when the request contains an Edns0 UDPSize that is greater than the response size", func() {
+						It("does not compress the response", func() {
+							appendAnswersUntilSize(512)
+							requestMessage.SetEdns0(1024, true)
+							fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
+
+							Expect(recursorAnswer.Len()).To(BeNumerically(">", 512))
+							Expect(recursorAnswer.Len()).To(BeNumerically("<", 1024))
+
+							recursionHandler.ServeDNS(fakeWriter, requestMessage)
+							responseMessage := fakeWriter.WriteMsgArgsForCall(0)
+							Expect(responseMessage.Compress).To(BeFalse())
+							Expect(responseMessage.Answer).To(HaveLen(len(recursorAnswer.Answer)))
+							Expect(responseMessage.Len()).To(Equal(recursorAnswer.Len()))
+						})
+					})
+
+					Context("when the request contains an Edns0 UDPSize that is smaller than the response size", func() {
+						It("compresses the response", func() {
+							appendAnswersUntilSize(1024)
+							fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
+							requestMessage.SetEdns0(1024, true)
+
+							Expect(recursorAnswer.Len()).To(BeNumerically(">", 1024))
+
+							recursionHandler.ServeDNS(fakeWriter, requestMessage)
+							responseMessage := fakeWriter.WriteMsgArgsForCall(0)
+							Expect(responseMessage.Compress).To(BeTrue())
+							Expect(responseMessage.Answer).To(HaveLen(len(recursorAnswer.Answer)))
+							Expect(responseMessage.Len()).To(BeNumerically("<", recursorAnswer.Len()))
+						})
+					})
+				})
+			})
 
 			Context("when a recursor fails", func() {
 				var (

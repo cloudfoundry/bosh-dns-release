@@ -10,6 +10,6 @@ type ExchangerFactory func(string) Exchanger
 
 func NewExchangerFactory(timeout time.Duration) ExchangerFactory {
 	return func(net string) Exchanger {
-		return &dns.Client{Net: net, Timeout: timeout}
+		return &dns.Client{Net: net, Timeout: timeout, UDPSize: 65535}
 	}
 }

@@ -2,15 +2,15 @@
 name: bosh-dns
 
 update:
-  canaries: 1
-  canary_watch_time: 30000-1200000
+  canaries: 2
+  canary_watch_time: 1000-60000
   max_in_flight: 5
   serial: false
-  update_watch_time: 5000-1200000
+  update_watch_time: 1000-60000
 
 instance_groups:
 - name: dns
-  azs: [z1,z2]
+  azs: [z1]
   instances: 1
   vm_type: default
   stemcell: default

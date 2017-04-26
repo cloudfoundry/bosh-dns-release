@@ -54,7 +54,7 @@ func mainExitCode() int {
 		return 1
 	}
 
-	c, err := config.LoadFromFile(configPath)
+	config, err := config.LoadFromFile(configPath)
 	if err != nil {
 		logger.Error(logTag, err.Error())
 		return 1
@@ -64,7 +64,7 @@ func mainExitCode() int {
 	aliasConfiguration, err := aliases.ConfigFromGlob(
 		fs,
 		aliases.NewFSLoader(fs),
-		c.AliasFilesGlob,
+		config.AliasFilesGlob,
 	)
 	if err != nil {
 		logger.Error(logTag, fmt.Sprintf("loading alias configuration: %s", err.Error()))
@@ -73,10 +73,14 @@ func mainExitCode() int {
 
 	mux := dns.NewServeMux()
 
-	addHandler(mux, "bosh.", handlers.NewDiscoveryHandler(logger, shuffle.New(), records.NewRepo(c.RecordsFile, system.NewOsFileSystem(logger), logger)), logger)
+	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), logger)
+	discoveryHandler := handlers.NewDiscoveryHandler(logger, shuffle.New(), recordsRepo)
+	addHandler(mux, "bosh.", discoveryHandler, logger)
 	addHandler(mux, "arpa.", handlers.NewArpaHandler(logger), logger)
 	addHandler(mux, "healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger), logger)
-	addHandler(mux, ".", handlers.NewForwardHandler(c.Recursors, handlers.NewExchangerFactory(time.Duration(c.RecursorTimeout)), logger), logger)
+
+	forwardHandler := handlers.NewForwardHandler(config.Recursors, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), logger)
+	addHandler(mux, ".", forwardHandler, logger)
 
 	aliasResolver, err := handlers.NewAliasResolvingHandler(mux, aliasConfiguration)
 	if err != nil {
@@ -84,18 +88,18 @@ func mainExitCode() int {
 		return 1
 	}
 
-	bindAddress := fmt.Sprintf("%s:%d", c.Address, c.Port)
+	bindAddress := fmt.Sprintf("%s:%d", config.Address, config.Port)
 	shutdown := make(chan struct{})
 	dnsServer := server.New(
 		[]server.DNSServer{
 			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: aliasResolver},
-			&dns.Server{Addr: bindAddress, Net: "udp", Handler: aliasResolver},
+			&dns.Server{Addr: bindAddress, Net: "udp", Handler: aliasResolver, UDPSize: 65535},
 		},
 		[]server.HealthCheck{
 			server.NewUDPHealthCheck(net.Dial, bindAddress),
 			server.NewTCPHealthCheck(net.Dial, bindAddress),
 		},
-		time.Duration(c.Timeout),
+		time.Duration(config.Timeout),
 		shutdown,
 	)
 
