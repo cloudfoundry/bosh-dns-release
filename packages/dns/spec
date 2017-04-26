@@ -5,7 +5,8 @@ dependencies:
 - golang
 
 files:
-- ./**/*
+- dns/**/*
+- vendor/**/*
 
 excluded_files:
 - vendor/github.com/bmatcuk/doublestar/test/**/*

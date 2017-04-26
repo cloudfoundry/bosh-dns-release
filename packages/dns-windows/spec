@@ -5,7 +5,8 @@ dependencies:
 - golang-windows
 
 files:
-- ./**/*
+- dns/**/*
+- vendor/**/*
 - exiter.ps1
 
 excluded_files:
