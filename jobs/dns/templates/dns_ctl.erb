@@ -46,6 +46,7 @@ function remove_network_alias() {
 
 function start_dns() {
   setcap cap_net_bind_service=+ep ${DNS_PACKAGE}/bin/dns
+  ulimit -n 65536
 
   chpst -u vcap:vcap \
     "${DNS_PACKAGE}/bin/dns" \
