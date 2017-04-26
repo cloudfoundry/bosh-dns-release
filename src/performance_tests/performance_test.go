@@ -89,7 +89,7 @@ var _ = Describe("Performance", func() {
 
 		medTime := timeHistogram.Percentile(0.5) / (1000 * 1000)
 		maxTime := timeHistogram.Max() / (1000 * 1000)
-		printStatsForHistogram(memHistogram, fmt.Sprintf("DNS handling latency for %s", label), "ms", 1000*1000)
+		printStatsForHistogram(timeHistogram, fmt.Sprintf("DNS handling latency for %s", label), "ms", 1000*1000)
 
 		maxMem := float64(memHistogram.Max()) / (1024 * 1024)
 		printStatsForHistogram(memHistogram, fmt.Sprintf("DNS server mem usage for %s", label), "MB", 1024*1024)
