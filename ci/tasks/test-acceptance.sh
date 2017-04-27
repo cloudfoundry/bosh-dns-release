@@ -26,7 +26,7 @@ bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
 bosh -n update-cloud-config /tmp/cloud-config.yml -v network=director_network
 
 bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
-bosh -n deploy  $ROOT_DIR/dns-release/ci/assets/manifest.yml \
+bosh -n deploy $ROOT_DIR/dns-release/ci/assets/manifest.yml \
     -v dns_release_path=$ROOT_DIR/dns-release \
     -v alias_release_path=$ROOT_DIR/dns-release/src/acceptance_tests/alias_providing_release \
     -o $ROOT_DIR/dns-release/ci/assets/two-instances-no-static-ips.yml \

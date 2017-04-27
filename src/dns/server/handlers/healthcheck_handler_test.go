@@ -10,6 +10,7 @@ import (
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"net"
 )
 
 var _ = Describe("HealthCheckHandler", func() {
@@ -35,6 +36,16 @@ var _ = Describe("HealthCheckHandler", func() {
 			Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
 			Expect(message.Authoritative).To(Equal(true))
 			Expect(message.RecursionAvailable).To(Equal(false))
+			Expect(len(message.Answer)).To(Equal(1))
+			Expect(message.Answer[0]).To(Equal(&dns.A{
+				Hdr: dns.RR_Header{
+					Name:   "healthcheck.bosh-dns.",
+					Rrtype: dns.TypeA,
+					Class:  dns.ClassINET,
+					Ttl:    0,
+				},
+				A: net.IPv4(127, 0, 0, 1),
+			}))
 		})
 
 		Context("when the message fails to write", func() {

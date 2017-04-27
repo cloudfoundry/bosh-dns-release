@@ -33,7 +33,7 @@ var _ = Describe("Integration", func() {
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 0"))
+		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 		Eventually(session.Out).Should(gbytes.Say(";healthcheck\\.bosh-dns\\.\\s+IN\\s+A"))
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
@@ -45,7 +45,7 @@ var _ = Describe("Integration", func() {
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 0"))
+		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 		Eventually(session.Out).Should(gbytes.Say(";healthcheck\\.bosh-dns\\.\\s+IN\\s+A"))
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
