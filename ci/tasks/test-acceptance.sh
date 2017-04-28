@@ -45,5 +45,5 @@ ln -s $PWD/dns-release/src/vendor/github.com/onsi/ginkgo $PWD/go/src/github.com/
 go install github.com/onsi/ginkgo/ginkgo
 
 pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/acceptance_tests
-    ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
+    ginkgo -randomizeAllSpecs -randomizeSuites -race . linux
 popd
