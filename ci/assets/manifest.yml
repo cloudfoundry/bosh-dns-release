@@ -21,7 +21,7 @@ instance_groups:
   - name: dns
     release: dns
   - name: needs-alias
-    release: alias-providing
+    release: dns-acceptance
   properties:
     address: 0.0.0.0
     recursors:
@@ -31,8 +31,8 @@ releases:
 - name: dns
   url: file://((dns_release_path))
   version: create
-- name: alias-providing
-  url: file://((alias_release_path))
+- name: dns-acceptance
+  url: file://((acceptance_release_path))
   version: create
 
 stemcells:

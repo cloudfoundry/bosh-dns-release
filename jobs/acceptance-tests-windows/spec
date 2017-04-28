@@ -1,0 +1,11 @@
+---
+name: acceptance-tests-windows
+
+description: "errand to run the windows specific acceptance tests"
+
+templates:
+  run.ps1: bin/run.ps1
+
+packages:
+  - golang-windows
+  - acceptance-tests-windows

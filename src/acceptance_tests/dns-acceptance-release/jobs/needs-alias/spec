@@ -1,0 +1,9 @@
+---
+name: needs-alias
+
+templates:
+  aliases.json.erb: dns/aliases.json
+
+packages: []
+
+properties: {}

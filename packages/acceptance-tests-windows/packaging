@@ -1,0 +1,19 @@
+. ./exiter.ps1
+
+$ErrorActionPreference = "Stop";
+trap { $host.SetShouldExit(1) }
+
+$BOSH_INSTALL_TARGET = Resolve-Path "${env:BOSH_INSTALL_TARGET}"
+
+New-Item -ItemType "directory" -Force "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src"
+robocopy /E acceptance_tests "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\acceptance_tests"
+if ($LASTEXITCODE -ge 8) {
+    Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\acceptance_tests"
+}
+
+robocopy /E vendor "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\vendor"
+if ($LASTEXITCODE -ge 8) {
+    Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\vendor"
+}
+
+Exit 0
