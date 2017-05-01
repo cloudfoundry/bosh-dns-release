@@ -26,12 +26,14 @@ func main() {
 	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout, os.Stderr)
 	defer logger.FlushTimeout(5 * time.Second)
 
+	cmdRunner := boshsys.NewExecCmdRunner(logger)
+
 	shutdown := make(chan struct{})
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)
 
 	monitor := monitor.NewMonitor(
-		handler.NewResolvConfHandler(bindAddress, boshsys.NewOsFileSystem(logger)),
+		handler.NewResolvConfHandler(bindAddress, boshsys.NewOsFileSystem(logger), cmdRunner),
 		logger,
 		3*time.Second,
 	)

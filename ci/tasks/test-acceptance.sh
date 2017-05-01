@@ -48,6 +48,5 @@ pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/acceptance_tests
     ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race \
       . \
       linux \
-      linux/override_nameserver/disabled \
-      linux/override_nameserver/enabled
+      linux/override_nameserver/disabled
 popd
