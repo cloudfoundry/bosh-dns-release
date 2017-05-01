@@ -1,13 +1,15 @@
-set -e
+set -eu
 
-mkdir -p ${BOSH_INSTALL_TARGET}
+mkdir -p "${BOSH_INSTALL_TARGET}/bin"
 
-export GOROOT="$(readlink -nf /var/vcap/packages/golang)"
-export GOPATH="${BOSH_INSTALL_TARGET}"
+export GOROOT="/var/vcap/packages/golang"
+export GOPATH="${BOSH_COMPILE_TARGET}/.gopath"
 export PATH="${GOROOT}/bin:${PATH}"
 
-mkdir -p "${BOSH_INSTALL_TARGET}/src/github.com/cloudfoundry/dns-release/src"
-cp -a * "${BOSH_INSTALL_TARGET}/src/github.com/cloudfoundry/dns-release/src"
+mkdir -p "${GOPATH}/src/github.com/cloudfoundry/dns-release/src"
+mv * "${GOPATH}/src/github.com/cloudfoundry/dns-release/src"
 
 go install "github.com/cloudfoundry/dns-release/src/dns"
 go install "github.com/cloudfoundry/dns-release/src/dns/nameserverconfig"
+
+mv "${GOPATH}/bin/"* "${BOSH_INSTALL_TARGET}/bin"
