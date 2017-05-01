@@ -95,8 +95,9 @@ var _ = Describe("Monitor", func() {
 		})
 
 		It("should apply changes", func() {
-			go applier.Run(shutdown)
 			checker.IsCorrectReturns(false, nil)
+
+			go applier.Run(shutdown)
 
 			time.Sleep(testInterval)
 			Expect(checker.ApplyCallCount()).To(BeNumerically(">", 0))
@@ -105,26 +106,17 @@ var _ = Describe("Monitor", func() {
 		})
 
 		It("continues to check and apply changes", func() {
-			go applier.Run(shutdown)
-			checker.IsCorrectReturns(false, nil)
-
-			time.Sleep(testInterval)
-			Expect(checker.ApplyCallCount()).To(BeNumerically(">", 0))
-
-			// the fs is in the "correct" state now.
 			checker.IsCorrectReturns(true, nil)
-			time.Sleep(testInterval)
-			initialApplyCallCount := checker.ApplyCallCount()
-			time.Sleep(testInterval)
+			checker.IsCorrectReturnsOnCall(1, false, nil)
+			checker.IsCorrectReturnsOnCall(3, false, nil)
 
-			Expect(checker.ApplyCallCount()).To(Equal(initialApplyCallCount))
+			go applier.Run(shutdown)
 
-			checker.IsCorrectReturns(false, nil)
-
-			time.Sleep(testInterval)
-			Expect(checker.ApplyCallCount()).To(BeNumerically(">", initialApplyCallCount))
-
+			time.Sleep(testInterval * 6)
 			close(shutdown)
+
+			Expect(checker.ApplyCallCount()).To(Equal(2))
+			Expect(checker.IsCorrectCallCount()).To(BeNumerically(">", 4))
 		})
 
 		It("does not apply changes when it is correct", func() {
