@@ -1,0 +1,78 @@
+// +build linux darwin
+
+package override_nameserver
+
+import (
+	"fmt"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/system"
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+func TestAcceptance(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "override_nameserver/disabled")
+}
+
+var (
+	boshBinaryPath string
+	boshDeployment string
+)
+
+var _ = BeforeSuite(func() {
+	boshBinaryPath = assertEnvExists("BOSH_BINARY_PATH")
+	assertEnvExists("BOSH_CLIENT")
+	assertEnvExists("BOSH_CLIENT_SECRET")
+	assertEnvExists("BOSH_CA_CERT")
+	assertEnvExists("BOSH_ENVIRONMENT")
+	boshDeployment = fmt.Sprintf("%s-override-nameserver", assertEnvExists("BOSH_DEPLOYMENT"))
+
+	cmdRunner := system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
+
+	manifestPath, err := filepath.Abs("../../../../../ci/assets/manifest.yml")
+	Expect(err).ToNot(HaveOccurred())
+	defaultBindOpsPath, err := filepath.Abs("../../../../../ci/assets/use-dns-release-default-bind-and-alias-addresses.yml")
+	Expect(err).ToNot(HaveOccurred())
+	disableOverridePath, err := filepath.Abs("disable-override-nameserver.yml")
+	Expect(err).ToNot(HaveOccurred())
+	dnsReleasePath, err := filepath.Abs("../../../../../")
+	Expect(err).ToNot(HaveOccurred())
+	aliasProvidingPath, err := filepath.Abs("../../../dns-acceptance-release")
+	Expect(err).ToNot(HaveOccurred())
+
+	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
+		"-n", "-d", boshDeployment, "deploy",
+		"-v", fmt.Sprintf("name=%s", boshDeployment),
+		"-v", fmt.Sprintf("dns_release_path=%s", dnsReleasePath),
+		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
+		"-o", defaultBindOpsPath,
+		"-o", disableOverridePath,
+		manifestPath,
+	)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+})
+
+var _ = AfterSuite(func() {
+	cmdRunner := system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
+
+	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
+		"-n", "-d", boshDeployment, "delete-deployment",
+	)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+})
+
+func assertEnvExists(envName string) string {
+	val, found := os.LookupEnv(envName)
+	if !found {
+		Fail(fmt.Sprintf("Expected %s", envName))
+	}
+	return val
+}

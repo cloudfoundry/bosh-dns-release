@@ -3,6 +3,7 @@ name: dns
 
 templates:
   dns_ctl.erb: bin/dns_ctl
+  dns_resolvconf_ctl.erb: bin/dns_resolvconf_ctl
   post-start.erb: bin/post-start
   config.json.erb: config/config.json
 
@@ -32,3 +33,6 @@ properties:
   alias_files_glob:
     description: "Glob for any files to look for DNS alias information"
     default: /var/vcap/jobs/*/dns/aliases.json
+  override_nameserver:
+    description: "Configure ourselves as the system nameserver (e.g. /etc/resolv.conf will be watched and overwritten)"
+    default: true

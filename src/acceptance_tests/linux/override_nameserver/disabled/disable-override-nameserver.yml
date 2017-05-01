@@ -1,0 +1,6 @@
+- path: /instance_groups/name=dns/properties/override_nameserver?
+  type: replace
+  value: false
+- path: /name
+  type: replace
+  value: ((name))
