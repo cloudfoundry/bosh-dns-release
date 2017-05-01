@@ -26,13 +26,6 @@ bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
 bosh -n update-cloud-config /tmp/cloud-config.yml -v network=director_network
 
 bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
-bosh -n deploy $ROOT_DIR/dns-release/ci/assets/manifest.yml \
-    -v dns_release_path=$ROOT_DIR/dns-release \
-    -v acceptance_release_path=$ROOT_DIR/dns-release/src/acceptance_tests/dns-acceptance-release \
-    -o $ROOT_DIR/dns-release/ci/assets/two-instances-no-static-ips.yml \
-    -o $ROOT_DIR/dns-release/ci/assets/use-dns-release-default-bind-and-alias-addresses.yml \
-    -o $ROOT_DIR/dns-release/ci/assets/configure-recursor.yml \
-    -v recursor_ip="172.17.0.1:9955" # docker's host ip (ie where tests are running)
 
 export GOPATH=${ROOT_DIR}/go
 export PATH="${GOPATH}/bin":$PATH
@@ -47,6 +40,7 @@ go install github.com/onsi/ginkgo/ginkgo
 pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/acceptance_tests
     ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race \
       . \
+      aliases \
       linux \
       linux/override_nameserver/disabled
 popd

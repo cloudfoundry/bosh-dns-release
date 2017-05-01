@@ -1,0 +1,8 @@
+- path: /instance_groups/name=dns/properties/aliases?
+  type: replace
+  value:
+    healthiness.example.com.:
+    - healthcheck.bosh-dns.
+- path: /name
+  type: replace
+  value: ((name))
