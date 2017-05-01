@@ -16,7 +16,7 @@ var _ = Describe("dns job: override_nameserver", func() {
 	Describe("disabled", func() {
 		Context("as the system-configured nameserver", func() {
 			It("resolves the bosh-dns healthcheck", func() {
-				cmd := exec.Command(boshBinaryPath, []string{"ssh", "-d", boshDeployment, "dns/0", "-c", "dig -t A healthcheck.bosh-dns."}...)
+				cmd := exec.Command(boshBinaryPath, []string{"ssh", "-d", boshDeployment, "dns/0", "-c", "dig +time=3 +tries=1 -t A healthcheck.bosh-dns."}...)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
