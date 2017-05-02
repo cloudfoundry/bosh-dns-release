@@ -50,6 +50,7 @@ jobs:
       passed: [test-unit-windows]
     - get: bosh-cli
     - get: bbl-cli
+    - get: bosh-deployment
     - get: bosh-candidate-stemcell-windows
     - get: bosh-candidate-release
     - task: test-acceptance
@@ -63,6 +64,12 @@ resources:
   type: git
   source:
     uri: https://github.com/cloudfoundry/dns-release
+    branch: master
+
+- name: bosh-deployment
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/bosh-deployment
     branch: master
 
 - name: bosh-candidate-stemcell
