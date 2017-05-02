@@ -1,0 +1,34 @@
+---
+name: bosh-dns-windows-acceptance
+
+update:
+  canaries: 5
+  canary_watch_time: 30000-1200000
+  max_in_flight: 5
+  serial: false
+  update_watch_time: 5000-1200000
+
+instance_groups:
+- name: acceptance-tests-windows
+  azs: [z1]
+  instances: 1
+  vm_type: m4.large
+  stemcell: default
+  lifecycle: errand
+  networks:
+  - name: private
+  jobs:
+  - name: acceptance-tests-windows
+    release: dns
+  - name: dns-windows
+    release: dns
+
+releases:
+- name: dns
+  url: file://((dns_release_path))
+  version: create
+
+stemcells:
+- alias: default
+  os: windows2012R2
+  version: latest

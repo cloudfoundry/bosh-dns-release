@@ -1,0 +1,3 @@
+- type: replace
+  path: /compilation/vm_type
+  value: c4.large

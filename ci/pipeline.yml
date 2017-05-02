@@ -42,6 +42,22 @@ jobs:
       privileged: true
       file: dns-release/ci/tasks/test-acceptance.yml
 
+- name: test-acceptance-windows
+  public: true
+  plan:
+    - get: dns-release
+      trigger: true
+      passed: [test-unit-windows]
+    - get: bosh-cli
+    - get: bbl-cli
+    - get: bosh-candidate-stemcell-windows
+    - get: bosh-candidate-release
+    - task: test-acceptance
+      file: dns-release/ci/tasks/test-acceptance-windows.yml
+      params:
+        BBL_AWS_ACCESS_KEY_ID: {{bbl_aws_access_key_id}}
+        BBL_AWS_SECRET_ACCESS_KEY: {{bbl_aws_secret_access_key}}
+
 resources:
 - name: dns-release
   type: git
@@ -55,8 +71,27 @@ resources:
     bucket: bosh-core-stemcells-candidate
     regexp: warden/bosh-stemcell-(.+)-warden-boshlite-ubuntu-trusty-go_agent.tgz
 
+- name: bosh-candidate-stemcell-windows
+  type: s3
+  source:
+    bucket: bosh-windows-stemcells-release-candidates
+    regexp: light-bosh-stemcell-(.+)-aws-xen-hvm-windows2012R2-go_agent.tgz
+
 - name: bosh-candidate-release
   type: s3
   source:
     bucket: bosh-candidate-release-tarballs
     versioned_file: bosh-dev-release.tgz
+
+- name: bosh-cli
+  type: s3
+  source:
+    regexp: bosh-cli-([0-9.]+)-linux-amd64
+    bucket: bosh-cli-artifacts
+    region_name: us-east-1
+
+- name: bbl-cli
+  type: github-release
+  source:
+    user: cloudfoundry
+    repository: bosh-bootloader

@@ -29,7 +29,7 @@ var _ = Describe("windows tests", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-		Expect(session.Out.Contents()).To(ContainSubstring("Address        : 127.0.0.1"))
-		Expect(session.Out.Contents()).To(ContainSubstring("Name           : healthcheck.bosh-dns"))
+		Expect(session.Out.Contents()).To(ContainSubstring("IPAddress  : 127.0.0.1"))
+		Expect(session.Out.Contents()).To(ContainSubstring("Name       : healthcheck.bosh-dns"))
 	})
 })
