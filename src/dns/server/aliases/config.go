@@ -135,6 +135,14 @@ func (c Config) Merge(other Config) Config {
 		c.aliases[alias] = targets
 	}
 
+	for alias, targets := range other.underscoreAliases {
+		if _, found := c.underscoreAliases[alias]; found {
+			continue
+		}
+
+		c.underscoreAliases[alias] = targets
+	}
+
 	return c
 }
 

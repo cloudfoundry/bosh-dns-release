@@ -98,13 +98,15 @@ var _ = Describe("Config", func() {
 		Context("when the target is an empty config", func() {
 			It("presents the original config", func() {
 				allConfigs := MustNewConfigFromMap(map[string][]string{
-					"alias1": {"domain1, domain2"},
-					"alias2": {"domain3"},
+					"alias1":        {"domain1, domain2"},
+					"alias2":        {"domain3"},
+					"_.underalias1": {"_.underdomain1"},
 				}).Merge(MustNewConfigFromMap(map[string][]string{}))
 
 				Expect(allConfigs).To(Equal(MustNewConfigFromMap(map[string][]string{
-					"alias1": {"domain1, domain2"},
-					"alias2": {"domain3"},
+					"alias1":        {"domain1, domain2"},
+					"alias2":        {"domain3"},
+					"_.underalias1": {"_.underdomain1"},
 				})))
 			})
 		})
@@ -113,17 +115,20 @@ var _ = Describe("Config", func() {
 			Context("when two or more of the configs share an alias entry", func() {
 				It("prefers the entry from the first config it loaded", func() {
 					allConfigs := MustNewConfigFromMap(map[string][]string{
-						"alias1": {"domain1, domain2"},
-						"alias2": {"domain3"},
+						"alias1":        {"domain1, domain2"},
+						"alias2":        {"domain3"},
+						"_.underalias1": {"_.underdomain1"},
 					}).Merge(MustNewConfigFromMap(map[string][]string{
-						"alias2": {"domain1, domain2"},
-						"alias3": {"domain3"},
+						"alias2":        {"domain1, domain2"},
+						"alias3":        {"domain3"},
+						"_.underalias1": {"_.underdomain2"},
 					}))
 
 					Expect(allConfigs).To(Equal(MustNewConfigFromMap(map[string][]string{
-						"alias1": {"domain1, domain2"},
-						"alias2": {"domain3"},
-						"alias3": {"domain3"},
+						"alias1":        {"domain1, domain2"},
+						"alias2":        {"domain3"},
+						"alias3":        {"domain3"},
+						"_.underalias1": {"_.underdomain1"},
 					})))
 				})
 			})
@@ -131,18 +136,22 @@ var _ = Describe("Config", func() {
 			Context("when the configs found have no conflicting entries", func() {
 				It("unions the configs", func() {
 					allConfigs := MustNewConfigFromMap(map[string][]string{
-						"alias1": {"domain1, domain2"},
-						"alias2": {"domain3"},
+						"alias1":        {"domain1, domain2"},
+						"alias2":        {"domain3"},
+						"_.underalias1": {"_.underdomain1"},
 					}).Merge(MustNewConfigFromMap(map[string][]string{
-						"alias3": {"domain1, domain2"},
-						"alias4": {"domain3"},
+						"alias3":        {"domain1, domain2"},
+						"alias4":        {"domain3"},
+						"_.underalias2": {"_.underdomain2"},
 					}))
 
 					Expect(allConfigs).To(Equal(MustNewConfigFromMap(map[string][]string{
-						"alias1": {"domain1, domain2"},
-						"alias2": {"domain3"},
-						"alias3": {"domain1, domain2"},
-						"alias4": {"domain3"},
+						"alias1":        {"domain1, domain2"},
+						"alias2":        {"domain3"},
+						"alias3":        {"domain1, domain2"},
+						"alias4":        {"domain3"},
+						"_.underalias1": {"_.underdomain1"},
+						"_.underalias2": {"_.underdomain2"},
 					})))
 				})
 			})
