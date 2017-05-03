@@ -12,7 +12,7 @@ instance_groups:
 - name: acceptance-tests-windows
   azs: [z1]
   instances: 1
-  vm_type: medium
+  vm_type: large
   vm_extensions:
   - 100GB_ephemeral_disk
   stemcell: default
