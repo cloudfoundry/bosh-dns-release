@@ -39,7 +39,7 @@ var _ = Describe("Config", func() {
 					"_.alias1": {"_.domain"},
 				})
 
-				Expect(c.Resolutions("x.alias1.")).To(Equal([]QualifiedName{"x.domain."}))
+				Expect(c.Resolutions("x.alias1.")).To(Equal([]string{"x.domain."}))
 			})
 		})
 
@@ -49,7 +49,7 @@ var _ = Describe("Config", func() {
 					"_.alias1": {"domain.com"},
 				})
 
-				Expect(c.Resolutions("x.alias1.")).To(Equal([]QualifiedName{"domain.com."}))
+				Expect(c.Resolutions("x.alias1.")).To(Equal([]string{"domain.com."}))
 			})
 		})
 
@@ -59,7 +59,7 @@ var _ = Describe("Config", func() {
 					"_.sub.alias1": {"_.deepsub.sub.domain"},
 				})
 
-				Expect(c.Resolutions("x.sub.alias1.")).To(Equal([]QualifiedName{"x.deepsub.sub.domain."}))
+				Expect(c.Resolutions("x.sub.alias1.")).To(Equal([]string{"x.deepsub.sub.domain."}))
 			})
 		})
 
@@ -67,7 +67,7 @@ var _ = Describe("Config", func() {
 			It("should ignore", func() {
 				c := MustNewConfigFromMap(map[string][]string{})
 
-				Expect(c.Resolutions("_.")).To(Equal([]QualifiedName{"_."}))
+				Expect(c.Resolutions("_.")).To(Equal([]string{"_."}))
 			})
 		})
 	})
@@ -79,7 +79,7 @@ var _ = Describe("Config", func() {
 					"alias": {"domain", "domain2"},
 				})
 
-				Expect(c.Resolutions("alias.")).To(Equal([]QualifiedName{"domain.", "domain2."}))
+				Expect(c.Resolutions("alias.")).To(Equal([]string{"domain.", "domain2."}))
 			})
 		})
 
@@ -89,7 +89,7 @@ var _ = Describe("Config", func() {
 					"alias": {"domain"},
 				})
 
-				Expect(c.Resolutions("normal.domain.")).To(Equal([]QualifiedName{"normal.domain."}))
+				Expect(c.Resolutions("normal.domain.")).To(Equal([]string{"normal.domain."}))
 			})
 		})
 
@@ -100,8 +100,8 @@ var _ = Describe("Config", func() {
 					"_.alias":         {"underdomain"},
 				})
 
-				Expect(c.Resolutions("something.alias.")).To(Equal([]QualifiedName{"domain."}))
-				Expect(c.Resolutions("other.alias.")).To(Equal([]QualifiedName{"underdomain."}))
+				Expect(c.Resolutions("something.alias.")).To(Equal([]string{"domain."}))
+				Expect(c.Resolutions("other.alias.")).To(Equal([]string{"underdomain."}))
 			})
 		})
 	})

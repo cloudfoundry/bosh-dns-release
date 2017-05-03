@@ -10,14 +10,14 @@ import (
 )
 
 type Config struct {
-	aliases           map[QualifiedName][]QualifiedName
-	underscoreAliases map[QualifiedName][]QualifiedName
+	aliases           map[string][]string
+	underscoreAliases map[string][]string
 }
 
 func NewConfig() Config {
 	return Config{
-		aliases:           map[QualifiedName][]QualifiedName{},
-		underscoreAliases: map[QualifiedName][]QualifiedName{},
+		aliases:           map[string][]string{},
+		underscoreAliases: map[string][]string{},
 	}
 }
 
@@ -64,17 +64,17 @@ func (c *Config) setAlias(alias string, domains []string) error {
 		return errors.New("bad alias format: empty alias qn")
 	}
 
-	qualifedDomains := []QualifiedName{}
+	qualifedDomains := []string{}
 	for _, domain := range domains {
-		qualifedDomains = append(qualifedDomains, QualifiedName(dns.Fqdn(domain)))
+		qualifedDomains = append(qualifedDomains, dns.Fqdn(domain))
 	}
 
 	if strings.HasPrefix(alias, "_.") {
 		splitAlias := strings.SplitN(alias, ".", 2)
-		c.underscoreAliases[QualifiedName(dns.Fqdn(splitAlias[1]))] = qualifedDomains
+		c.underscoreAliases[dns.Fqdn(splitAlias[1])] = qualifedDomains
 	} else {
 
-		c.aliases[QualifiedName(dns.Fqdn(alias))] = qualifedDomains
+		c.aliases[dns.Fqdn(alias)] = qualifedDomains
 	}
 
 	return nil
@@ -94,26 +94,26 @@ func (c Config) IsReduced() bool {
 	return true
 }
 
-func (c Config) Resolutions(maybeAlias QualifiedName) []QualifiedName {
+func (c Config) Resolutions(maybeAlias string) []string {
 	for alias, domains := range c.aliases {
 		if alias == maybeAlias {
 			return domains
 		}
 	}
 
-	splitMaybeAlias := strings.SplitN(string(maybeAlias), ".", 2)
+	splitMaybeAlias := strings.SplitN(maybeAlias, ".", 2)
 	if len(splitMaybeAlias) == 2 {
 		for underscoreAlias, domains := range c.underscoreAliases {
-			if string(underscoreAlias) != splitMaybeAlias[1] {
+			if underscoreAlias != splitMaybeAlias[1] {
 				continue
 			}
 
-			rewrittenDomains := []QualifiedName{}
+			rewrittenDomains := []string{}
 
 			for _, domain := range domains {
-				if strings.HasPrefix(string(domain), "_.") {
-					splitDomain := strings.SplitN(string(domain), ".", 2)
-					domain = QualifiedName(fmt.Sprintf("%s.%s", splitMaybeAlias[0], splitDomain[1]))
+				if strings.HasPrefix(domain, "_.") {
+					splitDomain := strings.SplitN(domain, ".", 2)
+					domain = fmt.Sprintf("%s.%s", splitMaybeAlias[0], splitDomain[1])
 				}
 
 				rewrittenDomains = append(rewrittenDomains, domain)
@@ -123,7 +123,7 @@ func (c Config) Resolutions(maybeAlias QualifiedName) []QualifiedName {
 		}
 	}
 
-	return []QualifiedName{maybeAlias}
+	return []string{maybeAlias}
 }
 
 func (c Config) Merge(other Config) Config {
@@ -149,34 +149,34 @@ func (c Config) Merge(other Config) Config {
 func (c Config) ReducedForm() (Config, error) {
 	aliases := []string{}
 	for alias, _ := range c.aliases {
-		aliases = append(aliases, string(alias))
+		aliases = append(aliases, alias)
 	}
 
 	sort.Strings(aliases)
 
 	for _, alias := range aliases {
-		resolvedAlias, err := c.reduce2(QualifiedName(alias), 0)
+		resolvedAlias, err := c.reduce2(alias, 0)
 		if err != nil {
 			return Config{}, fmt.Errorf("failed to resolve %s: %s", alias, err)
 		}
 
-		c.aliases[QualifiedName(alias)] = resolvedAlias
+		c.aliases[alias] = resolvedAlias
 	}
 
 	return c, nil
 }
 
-func (c Config) reduce2(alias QualifiedName, depth int) ([]QualifiedName, error) {
+func (c Config) reduce2(alias string, depth int) ([]string, error) {
 	if depth > len(c.aliases)+1 {
 		return nil, errors.New("recursion detected")
 	}
 
 	targets, found := c.aliases[alias]
 	if !found {
-		return []QualifiedName{alias}, nil
+		return []string{alias}, nil
 	}
 
-	resolved := []QualifiedName{}
+	resolved := []string{}
 
 	for _, target := range targets {
 		resolvedAlias, err := c.reduce2(target, depth+1)
