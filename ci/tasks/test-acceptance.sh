@@ -30,7 +30,6 @@ bosh -n deploy $ROOT_DIR/dns-release/ci/assets/manifest.yml \
     -v dns_release_path=$ROOT_DIR/dns-release \
     -v acceptance_release_path=$ROOT_DIR/dns-release/src/acceptance_tests/dns-acceptance-release \
     -o $ROOT_DIR/dns-release/ci/assets/two-instances-no-static-ips.yml \
-    -o $ROOT_DIR/dns-release/ci/assets/use-dns-release-default-bind-and-alias-addresses.yml \
     -o $ROOT_DIR/dns-release/ci/assets/configure-recursor.yml \
     -v recursor_ip="172.17.0.1:9955" # docker's host ip (ie where tests are running)
 
@@ -45,9 +44,17 @@ ln -s $PWD/dns-release/src/vendor/github.com/onsi/ginkgo $PWD/go/src/github.com/
 go install github.com/onsi/ginkgo/ginkgo
 
 pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/acceptance_tests
-    ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race \
-      . \
-      aliases \
-      linux \
-      linux/override_nameserver/disabled
+    ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
+popd
+
+bosh -n deploy $ROOT_DIR/dns-release/ci/assets/manifest.yml \
+   -v dns_release_path=$ROOT_DIR/dns-release \
+   -v acceptance_release_path=$ROOT_DIR/dns-release/src/acceptance_tests/dns-acceptance-release \
+   -o $ROOT_DIR/dns-release/ci/assets/two-instances-no-static-ips.yml \
+   -o $ROOT_DIR/dns-release/ci/assets/use-dns-release-default-bind-and-alias-addresses.yml \
+   -o $ROOT_DIR/dns-release/ci/assets/configure-recursor.yml \
+   -v recursor_ip="172.17.0.1:9955" # docker's host ip (ie where tests are running)
+
+pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/acceptance_tests/linux
+   ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race -r .
 popd

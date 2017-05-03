@@ -1,6 +1,7 @@
 package acceptance_test
 
 import (
+	"fmt"
 	"os/exec"
 	"time"
 
@@ -13,7 +14,8 @@ import (
 
 var _ = Describe("recursor", func() {
 	var (
-		session *gexec.Session
+		session       *gexec.Session
+		firstInstance instanceInfo
 	)
 
 	BeforeEach(func() {
@@ -21,6 +23,8 @@ var _ = Describe("recursor", func() {
 		cmd := exec.Command(pathToTestRecursorServer)
 		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
+
+		firstInstance = allDeployedInstances[0]
 	})
 
 	AfterEach(func() {
@@ -38,7 +42,7 @@ var _ = Describe("recursor", func() {
 		})
 
 		By("ensuring the dns release returns a successful trucated recursed answer", func() {
-			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +ignore +notcp -t A truncated-recursor.com. @169.254.0.2"}...)
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp -t A truncated-recursor.com. @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -60,7 +64,7 @@ var _ = Describe("recursor", func() {
 		})
 
 		By("ensuring the dns release returns a successful trucated recursed answer", func() {
-			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +ignore +notcp +bufsize=65535 udp-9k-message.com. @169.254.0.2"}...)
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp +bufsize=65535 udp-9k-message.com. @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -83,7 +87,7 @@ var _ = Describe("recursor", func() {
 		})
 
 		By("ensuring the dns release returns a successful compressed recursed answer", func() {
-			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +ignore +notcp +bufsize=16384 compressed-ip-truncated-recursor-large.com. @169.254.0.2"}...)
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp +bufsize=16384 compressed-ip-truncated-recursor-large.com. @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -106,7 +110,7 @@ var _ = Describe("recursor", func() {
 		})
 
 		By("ensuring the dns release returns a successful trucated recursed answer", func() {
-			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +ignore +notcp ip-truncated-recursor-large.com. @169.254.0.2"}...)
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp ip-truncated-recursor-large.com. @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -129,7 +133,7 @@ var _ = Describe("recursor", func() {
 		})
 
 		By("ensuring the dns release returns a successful trucated recursed answer", func() {
-			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +ignore +notcp recursor-small.com. @169.254.0.2"}...)
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp recursor-small.com. @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -141,7 +145,7 @@ var _ = Describe("recursor", func() {
 	})
 
 	It("fowards queries to the configured recursors", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig -t A example.com @169.254.0.2"}...)
+		cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A example.com @%s", firstInstance.IP), " ")...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -149,6 +153,6 @@ var _ = Describe("recursor", func() {
 		output := string(session.Out.Contents())
 		Expect(output).To(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 		Expect(output).To(MatchRegexp("example.com.\\s+0\\s+IN\\s+A\\s+10\\.10\\.10\\.10"))
-		Expect(output).To(ContainSubstring("SERVER: 169.254.0.2#53"))
+		Expect(output).To(ContainSubstring(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 	})
 })

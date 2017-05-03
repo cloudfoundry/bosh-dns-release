@@ -7,12 +7,13 @@ import (
 	. "github.com/onsi/gomega"
 
 	"encoding/json"
-	"github.com/onsi/gomega/gexec"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/onsi/gomega/gexec"
 )
 
 func TestAcceptance(t *testing.T) {

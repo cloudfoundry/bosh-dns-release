@@ -2,6 +2,7 @@ package acceptance_test
 
 import (
 	"fmt"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -15,15 +16,14 @@ import (
 )
 
 var _ = Describe("Integration", func() {
-	It("returns records for bosh instances", func() {
-		firstInstance := allDeployedInstances[0]
+	var firstInstance instanceInfo
 
-		cmd := exec.Command(
-			boshBinaryPath,
-			"ssh",
-			firstInstanceSlug,
-			"-c",
-			fmt.Sprintf("dig -t A %s.dns.default.bosh-dns.bosh @169.254.0.2", firstInstance.InstanceID))
+	BeforeEach(func() {
+		firstInstance = allDeployedInstances[0]
+	})
+
+	It("returns records for bosh instances", func() {
+		cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A %s.dns.default.bosh-dns.bosh @%s", firstInstance.InstanceID, firstInstance.IP), " ")...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -34,13 +34,13 @@ var _ = Describe("Integration", func() {
 			"%s\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s",
 			firstInstance.InstanceID,
 			firstInstance.IP))
-		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
+		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 	})
 
 	It("returns records for bosh instances found with query for all records", func() {
 		Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
 
-		cmd := exec.Command(boshBinaryPath, "ssh", firstInstanceSlug, "-c", "dig -t A q-YWxs.dns.default.bosh-dns.bosh @169.254.0.2")
+		cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-YWxs.dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -51,11 +51,11 @@ var _ = Describe("Integration", func() {
 		for _, info := range allDeployedInstances {
 			Expect(output).To(MatchRegexp("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
 		}
-		Expect(output).To(ContainSubstring("SERVER: 169.254.0.2#53"))
+		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 	})
 
 	It("finds and resolves aliases specified in other jobs on the same instance", func() {
-		cmd := exec.Command(boshBinaryPath, "ssh", "-c", "dig -t A internal.alias. @169.254.0.2")
+		cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A A internal.alias. @%s", firstInstance.IP), " ")...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -63,6 +63,6 @@ var _ = Describe("Integration", func() {
 		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
 		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
 
-		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
+		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 	})
 })
