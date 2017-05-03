@@ -82,7 +82,7 @@ resources:
   type: s3
   source:
     bucket: bosh-windows-stemcells-release-candidates
-    regexp: light-bosh-stemcell-(.+)-aws-xen-hvm-windows2012R2-go_agent.tgz
+    regexp: light-bosh-stemcell-(.+)-google-kvm-windows2012R2-go_agent.tgz
 
 - name: bosh-candidate-release
   type: s3
