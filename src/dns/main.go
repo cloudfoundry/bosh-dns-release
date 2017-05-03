@@ -21,6 +21,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
 )
 
 func parseFlags() (string, error) {
@@ -74,7 +75,8 @@ func mainExitCode() int {
 	mux := dns.NewServeMux()
 
 	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), logger)
-	discoveryHandler := handlers.NewDiscoveryHandler(logger, shuffle.New(), recordsRepo)
+	localDomain := dnsresolver.NewLocalDomain(logger, recordsRepo)
+	discoveryHandler := handlers.NewDiscoveryHandler(logger, shuffle.New(), localDomain)
 	addHandler(mux, "bosh.", discoveryHandler, logger)
 	addHandler(mux, "arpa.", handlers.NewArpaHandler(logger), logger)
 	addHandler(mux, "healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger), logger)

@@ -5,34 +5,35 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
+	"github.com/miekg/dns"
 )
 
-type FakeShuffler struct {
-	ShuffleStub        func(src []string) []string
+type FakeAnswerShuffler struct {
+	ShuffleStub        func(src []dns.RR) []dns.RR
 	shuffleMutex       sync.RWMutex
 	shuffleArgsForCall []struct {
-		src []string
+		src []dns.RR
 	}
 	shuffleReturns struct {
-		result1 []string
+		result1 []dns.RR
 	}
 	shuffleReturnsOnCall map[int]struct {
-		result1 []string
+		result1 []dns.RR
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeShuffler) Shuffle(src []string) []string {
-	var srcCopy []string
+func (fake *FakeAnswerShuffler) Shuffle(src []dns.RR) []dns.RR {
+	var srcCopy []dns.RR
 	if src != nil {
-		srcCopy = make([]string, len(src))
+		srcCopy = make([]dns.RR, len(src))
 		copy(srcCopy, src)
 	}
 	fake.shuffleMutex.Lock()
 	ret, specificReturn := fake.shuffleReturnsOnCall[len(fake.shuffleArgsForCall)]
 	fake.shuffleArgsForCall = append(fake.shuffleArgsForCall, struct {
-		src []string
+		src []dns.RR
 	}{srcCopy})
 	fake.recordInvocation("Shuffle", []interface{}{srcCopy})
 	fake.shuffleMutex.Unlock()
@@ -45,38 +46,38 @@ func (fake *FakeShuffler) Shuffle(src []string) []string {
 	return fake.shuffleReturns.result1
 }
 
-func (fake *FakeShuffler) ShuffleCallCount() int {
+func (fake *FakeAnswerShuffler) ShuffleCallCount() int {
 	fake.shuffleMutex.RLock()
 	defer fake.shuffleMutex.RUnlock()
 	return len(fake.shuffleArgsForCall)
 }
 
-func (fake *FakeShuffler) ShuffleArgsForCall(i int) []string {
+func (fake *FakeAnswerShuffler) ShuffleArgsForCall(i int) []dns.RR {
 	fake.shuffleMutex.RLock()
 	defer fake.shuffleMutex.RUnlock()
 	return fake.shuffleArgsForCall[i].src
 }
 
-func (fake *FakeShuffler) ShuffleReturns(result1 []string) {
+func (fake *FakeAnswerShuffler) ShuffleReturns(result1 []dns.RR) {
 	fake.ShuffleStub = nil
 	fake.shuffleReturns = struct {
-		result1 []string
+		result1 []dns.RR
 	}{result1}
 }
 
-func (fake *FakeShuffler) ShuffleReturnsOnCall(i int, result1 []string) {
+func (fake *FakeAnswerShuffler) ShuffleReturnsOnCall(i int, result1 []dns.RR) {
 	fake.ShuffleStub = nil
 	if fake.shuffleReturnsOnCall == nil {
 		fake.shuffleReturnsOnCall = make(map[int]struct {
-			result1 []string
+			result1 []dns.RR
 		})
 	}
 	fake.shuffleReturnsOnCall[i] = struct {
-		result1 []string
+		result1 []dns.RR
 	}{result1}
 }
 
-func (fake *FakeShuffler) Invocations() map[string][][]interface{} {
+func (fake *FakeAnswerShuffler) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.shuffleMutex.RLock()
@@ -84,7 +85,7 @@ func (fake *FakeShuffler) Invocations() map[string][][]interface{} {
 	return fake.invocations
 }
 
-func (fake *FakeShuffler) recordInvocation(key string, args []interface{}) {
+func (fake *FakeAnswerShuffler) recordInvocation(key string, args []interface{}) {
 	fake.invocationsMutex.Lock()
 	defer fake.invocationsMutex.Unlock()
 	if fake.invocations == nil {
@@ -96,4 +97,4 @@ func (fake *FakeShuffler) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ handlers.Shuffler = new(FakeShuffler)
+var _ handlers.AnswerShuffler = new(FakeAnswerShuffler)

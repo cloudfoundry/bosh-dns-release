@@ -9,6 +9,8 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/handlersfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal/internalfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver/dnsresolverfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -21,20 +23,20 @@ var _ = Describe("DiscoveryHandler", func() {
 			discoveryHandler  handlers.DiscoveryHandler
 			fakeWriter        *internalfakes.FakeResponseWriter
 			fakeLogger        *loggerfakes.FakeLogger
-			fakeRecordSetRepo *handlersfakes.FakeRecordSetRepo
-			fakeShuffler      *handlersfakes.FakeShuffler
+			fakeRecordSetRepo *dnsresolverfakes.FakeRecordSetRepo
+			fakeShuffler      *handlersfakes.FakeAnswerShuffler
 		)
 
 		BeforeEach(func() {
 			fakeWriter = &internalfakes.FakeResponseWriter{}
 			fakeLogger = &loggerfakes.FakeLogger{}
-			fakeRecordSetRepo = &handlersfakes.FakeRecordSetRepo{}
-			fakeShuffler = &handlersfakes.FakeShuffler{}
-			fakeShuffler.ShuffleStub = func(input []string) []string {
+			fakeRecordSetRepo = &dnsresolverfakes.FakeRecordSetRepo{}
+			fakeShuffler = &handlersfakes.FakeAnswerShuffler{}
+			fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
 				return input
 			}
 
-			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, fakeShuffler, fakeRecordSetRepo)
+			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, fakeShuffler, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSetRepo))
 		})
 
 		Context("when there are no questions", func() {
@@ -146,15 +148,15 @@ var _ = Describe("DiscoveryHandler", func() {
 						},
 					}
 					fakeRecordSetRepo.GetReturns(recordSet, nil)
-					fakeShuffler.ShuffleStub = nil
-					fakeShuffler.ShuffleReturns([]string{"127.0.0.1", "123.123.123.123"})
+					fakeShuffler.ShuffleStub = func(list []dns.RR) []dns.RR {
+						list[0], list[1] = list[1], list[0]
+
+						return list
+					}
 
 					m := &dns.Msg{}
 					m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 					discoveryHandler.ServeDNS(fakeWriter, m)
-
-					shuffleInput := fakeShuffler.ShuffleArgsForCall(0)
-					Expect(shuffleInput).To(Equal([]string{"123.123.123.123", "127.0.0.1"}))
 
 					responseMsg := fakeWriter.WriteMsgArgsForCall(0)
 					Expect(responseMsg.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
@@ -278,7 +280,7 @@ var _ = Describe("DiscoveryHandler", func() {
 
 					Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
 					tag, msg, args := fakeLogger.ErrorArgsForCall(0)
-					Expect(tag).To(Equal("DiscoveryHandler"))
+					Expect(tag).To(Equal("LocalDomain"))
 					Expect(msg).To(Equal("failed to get ip addresses: %v"))
 					Expect(args[0]).To(MatchError("i screwed up"))
 				})
@@ -310,7 +312,7 @@ var _ = Describe("DiscoveryHandler", func() {
 
 					Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
 					tag, msg, _ := fakeLogger.ErrorArgsForCall(0)
-					Expect(tag).To(Equal("DiscoveryHandler"))
+					Expect(tag).To(Equal("LocalDomain"))
 					Expect(msg).To(Equal("failed to decode query: %v"))
 				})
 			})
