@@ -10,6 +10,12 @@ type ConfigGlobber interface {
 	Glob(string) ([]string, error)
 }
 
+//go:generate counterfeiter . NamedConfigLoader
+
+type NamedConfigLoader interface {
+	Load(string) (Config, error)
+}
+
 func ConfigFromGlob(nameFinder ConfigGlobber, loader NamedConfigLoader, glob string) (Config, error) {
 	files, err := nameFinder.Glob(glob)
 	if err != nil {
