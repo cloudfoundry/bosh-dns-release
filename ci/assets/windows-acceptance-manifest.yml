@@ -12,7 +12,9 @@ instance_groups:
 - name: acceptance-tests-windows
   azs: [z1]
   instances: 1
-  vm_type: m4.large
+  vm_type: medium
+  vm_extensions:
+  - 100GB_ephemeral_disk
   stemcell: default
   lifecycle: errand
   networks:

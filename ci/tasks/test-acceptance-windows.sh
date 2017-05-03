@@ -9,11 +9,11 @@ source /usr/local/share/chruby/chruby.sh
 chruby ruby-2.3.1
 set -u
 
-set +x
-export AWS_ACCESS_KEY_ID=$BBL_AWS_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY=$BBL_AWS_SECRET_ACCESS_KEY
-export AWS_DEFAULT_REGION=$BBL_AWS_REGION
-set -x
+apt-get install -y zip
+wget https://releases.hashicorp.com/terraform/0.9.4/terraform_0.9.4_linux_amd64.zip
+unzip terraform_0.9.4_linux_amd64.zip
+mv terraform /usr/local/bin/
+chmod +x /usr/local/bin/terraform
 
 mv $(realpath $ROOT_DIR/bosh-cli/bosh-cli-*) /usr/local/bin/bosh
 chmod +x /usr/local/bin/bosh
@@ -41,8 +41,8 @@ bosh int $ROOT_DIR/bosh-deployment/bosh.yml \
   -l <(bbl bosh-deployment-vars) \
   -o $ROOT_DIR/bosh-deployment/local-bosh-release.yml \
   -o $ROOT_DIR/bosh-deployment/local-dns.yml \
-  -o $ROOT_DIR/bosh-deployment/aws/cpi.yml  \
-  -o $ROOT_DIR/bosh-deployment/external-ip-with-registry-not-recommended.yml \
+  -o $ROOT_DIR/bosh-deployment/gcp/cpi.yml  \
+  -o $ROOT_DIR/bosh-deployment/external-ip-not-recommended.yml \
   -v local_bosh_release=$ROOT_DIR/bosh-candidate-release/bosh-dev-release.tgz \
   > $ROOT_DIR/bosh-manifest.yml
 
@@ -58,8 +58,7 @@ export BOSH_CLIENT_SECRET=$(bosh int $ROOT_DIR/creds.yml --path /admin_password)
 export BOSH_ENVIRONMENT=$(bbl director-address)
 export BOSH_CA_CERT=$ROOT_DIR/ca.crt
 
-bosh -n update-cloud-config <(bosh int <(bbl cloud-config) -o $ROOT_DIR/dns-release/ci/assets/compilation-vm-type.yml)
-
+bosh -n update-cloud-config <(bbl cloud-config)
 bosh -n upload-stemcell $ROOT_DIR/bosh-candidate-stemcell-windows/*.tgz
 
 bosh -d bosh-dns-windows-acceptance -n deploy $ROOT_DIR/dns-release/ci/assets/windows-acceptance-manifest.yml \

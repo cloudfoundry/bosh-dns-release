@@ -44,6 +44,7 @@ jobs:
 
 - name: test-acceptance-windows
   public: true
+  serial: true
   plan:
     - get: dns-release
       trigger: true
@@ -56,8 +57,7 @@ jobs:
     - task: test-acceptance
       file: dns-release/ci/tasks/test-acceptance-windows.yml
       params:
-        BBL_AWS_ACCESS_KEY_ID: {{bbl_aws_access_key_id}}
-        BBL_AWS_SECRET_ACCESS_KEY: {{bbl_aws_secret_access_key}}
+        BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
 
 resources:
 - name: dns-release
