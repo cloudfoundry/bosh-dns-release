@@ -17,12 +17,17 @@ type FakeConfigGlobber struct {
 		result1 []string
 		result2 error
 	}
+	globReturnsOnCall map[int]struct {
+		result1 []string
+		result2 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
 func (fake *FakeConfigGlobber) Glob(arg1 string) ([]string, error) {
 	fake.globMutex.Lock()
+	ret, specificReturn := fake.globReturnsOnCall[len(fake.globArgsForCall)]
 	fake.globArgsForCall = append(fake.globArgsForCall, struct {
 		arg1 string
 	}{arg1})
@@ -30,9 +35,11 @@ func (fake *FakeConfigGlobber) Glob(arg1 string) ([]string, error) {
 	fake.globMutex.Unlock()
 	if fake.GlobStub != nil {
 		return fake.GlobStub(arg1)
-	} else {
-		return fake.globReturns.result1, fake.globReturns.result2
 	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fake.globReturns.result1, fake.globReturns.result2
 }
 
 func (fake *FakeConfigGlobber) GlobCallCount() int {
@@ -50,6 +57,20 @@ func (fake *FakeConfigGlobber) GlobArgsForCall(i int) string {
 func (fake *FakeConfigGlobber) GlobReturns(result1 []string, result2 error) {
 	fake.GlobStub = nil
 	fake.globReturns = struct {
+		result1 []string
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeConfigGlobber) GlobReturnsOnCall(i int, result1 []string, result2 error) {
+	fake.GlobStub = nil
+	if fake.globReturnsOnCall == nil {
+		fake.globReturnsOnCall = make(map[int]struct {
+			result1 []string
+			result2 error
+		})
+	}
+	fake.globReturnsOnCall[i] = struct {
 		result1 []string
 		result2 error
 	}{result1, result2}

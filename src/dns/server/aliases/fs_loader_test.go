@@ -33,7 +33,7 @@ var _ = Describe("FSLoader", func() {
 
 				aliases, err := parser.Load("/test/aliases.json")
 				Expect(err).ToNot(HaveOccurred())
-				Expect(aliases).To(Equal(MustCastFromMap(map[string][]string{
+				Expect(aliases).To(Equal(MustNewConfigFromMap(map[string][]string{
 					"test.tld.": {
 						"othertest.tld.",
 					},

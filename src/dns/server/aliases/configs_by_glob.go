@@ -19,16 +19,16 @@ type NamedConfigLoader interface {
 func ConfigFromGlob(nameFinder ConfigGlobber, loader NamedConfigLoader, glob string) (Config, error) {
 	files, err := nameFinder.Glob(glob)
 	if err != nil {
-		return nil, bosherr.WrapError(err, "glob pattern failed to compute")
+		return Config{}, bosherr.WrapError(err, "glob pattern failed to compute")
 	}
 
-	aliasConfig := Config{}
+	aliasConfig := NewConfig()
 
 	if files != nil {
 		for _, aliasFile := range files {
 			nextConfig, err := loader.Load(aliasFile)
 			if err != nil {
-				return nil, bosherr.WrapError(err, "could not load config")
+				return Config{}, bosherr.WrapError(err, "could not load config")
 			}
 			aliasConfig = aliasConfig.Merge(nextConfig)
 		}
@@ -36,7 +36,7 @@ func ConfigFromGlob(nameFinder ConfigGlobber, loader NamedConfigLoader, glob str
 
 	canonicalAliases, err := aliasConfig.ReducedForm()
 	if err != nil {
-		return nil, bosherr.WrapError(err, "could not produce valid alias config")
+		return Config{}, bosherr.WrapError(err, "could not produce valid alias config")
 	}
 
 	return canonicalAliases, nil

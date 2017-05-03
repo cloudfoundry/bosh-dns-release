@@ -13,16 +13,16 @@ type FSLoader struct {
 func (l FSLoader) Load(filename string) (Config, error) {
 	fileContents, err := l.fs.ReadFile(filename)
 	if err != nil {
-		return nil, bosherr.WrapError(err, "missing alias config file")
+		return Config{}, bosherr.WrapError(err, "missing alias config file")
 	}
 
-	config := Config{}
-	err = json.Unmarshal(fileContents, &config)
+	cfg := Config{}
+	err = json.Unmarshal(fileContents, &cfg)
 	if err != nil {
-		return nil, bosherr.WrapErrorf(err, "alias config file malformed: %s", filename)
+		return cfg, bosherr.WrapErrorf(err, "alias config file malformed: %s", filename)
 	}
 
-	return config, nil
+	return cfg, nil
 }
 
 func NewFSLoader(fs boshsys.FileSystem) NamedConfigLoader {

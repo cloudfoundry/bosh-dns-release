@@ -52,7 +52,7 @@ var _ = Describe("ConfigFromGlob", func() {
 
 		Context("when the loader is unable to load the config", func() {
 			BeforeEach(func() {
-				fakeLoader.LoadReturns(nil, errors.New("file-is-busted"))
+				fakeLoader.LoadReturns(Config{}, errors.New("file-is-busted"))
 			})
 			It("promotes the error", func() {
 				_, err := ConfigFromGlob(fakeGlobber, fakeLoader, "someglob")
@@ -67,25 +67,25 @@ var _ = Describe("ConfigFromGlob", func() {
 				fakeLoader.LoadStub = func(name string) (Config, error) {
 					switch name {
 					case "/some/file":
-						return Config{
+						return MustNewConfigFromMap(map[string][]string{
 							"alias1": {"alias2"},
-						}, nil
+						}), nil
 					case "/another/file":
-						return Config{
+						return MustNewConfigFromMap(map[string][]string{
 							"alias2": {"domain2"},
-						}, nil
+						}), nil
 					}
-					return nil, errors.New("wrong-name")
+					return Config{}, errors.New("wrong-name")
 				}
 			})
 
 			It("merges and reduces the files", func() {
 				c, err := ConfigFromGlob(fakeGlobber, fakeLoader, "someglob")
 				Expect(err).ToNot(HaveOccurred())
-				Expect(c).To(Equal(Config{
+				Expect(c).To(Equal(MustNewConfigFromMap(map[string][]string{
 					"alias1": {"domain2"},
 					"alias2": {"domain2"},
-				}))
+				})))
 			})
 
 			Context("when the reduction fails due to cyclic aliases", func() {
@@ -93,15 +93,15 @@ var _ = Describe("ConfigFromGlob", func() {
 					fakeLoader.LoadStub = func(name string) (Config, error) {
 						switch name {
 						case "/some/file":
-							return Config{
+							return MustNewConfigFromMap(map[string][]string{
 								"alias1": {"alias2"},
-							}, nil
+							}), nil
 						case "/another/file":
-							return Config{
+							return MustNewConfigFromMap(map[string][]string{
 								"alias2": {"alias1"},
-							}, nil
+							}), nil
 						}
-						return nil, errors.New("wrong-name")
+						return Config{}, errors.New("wrong-name")
 					}
 				})
 

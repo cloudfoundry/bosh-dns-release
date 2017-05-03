@@ -17,12 +17,17 @@ type FakeNamedConfigLoader struct {
 		result1 aliases.Config
 		result2 error
 	}
+	loadReturnsOnCall map[int]struct {
+		result1 aliases.Config
+		result2 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
 func (fake *FakeNamedConfigLoader) Load(arg1 string) (aliases.Config, error) {
 	fake.loadMutex.Lock()
+	ret, specificReturn := fake.loadReturnsOnCall[len(fake.loadArgsForCall)]
 	fake.loadArgsForCall = append(fake.loadArgsForCall, struct {
 		arg1 string
 	}{arg1})
@@ -30,9 +35,11 @@ func (fake *FakeNamedConfigLoader) Load(arg1 string) (aliases.Config, error) {
 	fake.loadMutex.Unlock()
 	if fake.LoadStub != nil {
 		return fake.LoadStub(arg1)
-	} else {
-		return fake.loadReturns.result1, fake.loadReturns.result2
 	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fake.loadReturns.result1, fake.loadReturns.result2
 }
 
 func (fake *FakeNamedConfigLoader) LoadCallCount() int {
@@ -50,6 +57,20 @@ func (fake *FakeNamedConfigLoader) LoadArgsForCall(i int) string {
 func (fake *FakeNamedConfigLoader) LoadReturns(result1 aliases.Config, result2 error) {
 	fake.LoadStub = nil
 	fake.loadReturns = struct {
+		result1 aliases.Config
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeNamedConfigLoader) LoadReturnsOnCall(i int, result1 aliases.Config, result2 error) {
+	fake.LoadStub = nil
+	if fake.loadReturnsOnCall == nil {
+		fake.loadReturnsOnCall = make(map[int]struct {
+			result1 aliases.Config
+			result2 error
+		})
+	}
+	fake.loadReturnsOnCall[i] = struct {
 		result1 aliases.Config
 		result2 error
 	}{result1, result2}
