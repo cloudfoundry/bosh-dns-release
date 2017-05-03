@@ -92,6 +92,18 @@ var _ = Describe("Config", func() {
 				Expect(c.Resolutions("normal.domain.")).To(Equal([]QualifiedName{"normal.domain."}))
 			})
 		})
+
+		Context("when both a static and underscore alias would match", func() {
+			It("resolves with the static alias", func() {
+				c := MustNewConfigFromMap(map[string][]string{
+					"something.alias": {"domain"},
+					"_.alias":         {"underdomain"},
+				})
+
+				Expect(c.Resolutions("something.alias.")).To(Equal([]QualifiedName{"domain."}))
+				Expect(c.Resolutions("other.alias.")).To(Equal([]QualifiedName{"underdomain."}))
+			})
+		})
 	})
 
 	Describe("Merge", func() {
