@@ -126,39 +126,6 @@ var _ = Describe("DiscoveryHandler", func() {
 					Entry("when the question is an ANY query", dns.TypeANY),
 				)
 
-				It("logs a message if multiple records were found for the FQDN", func() {
-					recordSet := records.RecordSet{
-						Records: []records.Record{
-							{
-								Id:         "my-instance",
-								Group:      "my-group",
-								Network:    "my-network",
-								Deployment: "my-deployment",
-								Ip:         "123.123.123.123",
-							},
-							{
-								Id:         "my-instance",
-								Group:      "my-group",
-								Network:    "my-network",
-								Deployment: "my-deployment",
-								Ip:         "127.0.0.1",
-							},
-						},
-					}
-					fakeRecordSetRepo.GetReturns(recordSet, nil)
-
-					m := &dns.Msg{}
-					m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
-					discoveryHandler.ServeDNS(fakeWriter, m)
-
-					Expect(fakeLogger.InfoCallCount()).To(Equal(1))
-					tag, msg, args := fakeLogger.InfoArgsForCall(0)
-					Expect(tag).To(Equal("DiscoveryHandler"))
-					Expect(msg).To(Equal("got multiple ip addresses for %s: %v"))
-					Expect(args[0]).To(Equal("my-instance.my-group.my-network.my-deployment.bosh."))
-					Expect(args[1]).To(Equal([]string{"123.123.123.123", "127.0.0.1"}))
-				})
-
 				It("shuffles the records if multiple records were found", func() {
 					recordSet := records.RecordSet{
 						Records: []records.Record{

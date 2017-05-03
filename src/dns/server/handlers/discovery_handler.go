@@ -34,33 +34,27 @@ func NewDiscoveryHandler(logger logger.Logger, shuffler Shuffler, recordSetRepo 
 }
 
 func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, req *dns.Msg) {
-	response := &dns.Msg{}
+	responseMsg := &dns.Msg{}
 
-	response.Authoritative = true
-	response.RecursionAvailable = false
+	responseMsg.Authoritative = true
+	responseMsg.RecursionAvailable = false
 
 	if len(req.Question) == 0 {
-		response.SetRcode(req, dns.RcodeSuccess)
+		responseMsg.SetRcode(req, dns.RcodeSuccess)
 	} else {
 		switch req.Question[0].Qtype {
 		case dns.TypeMX:
-			response.SetRcode(req, dns.RcodeSuccess)
+			responseMsg.SetRcode(req, dns.RcodeSuccess)
 		case dns.TypeAAAA:
-			response.SetRcode(req, dns.RcodeSuccess)
-		case dns.TypeA:
-			d.buildARecords(response, req)
-		case dns.TypeANY:
-			d.buildARecords(response, req)
+			responseMsg.SetRcode(req, dns.RcodeSuccess)
+		case dns.TypeA, dns.TypeANY:
+			d.buildARecords(responseWriter, responseMsg, req)
 		default:
-			response.SetRcode(req, dns.RcodeServerFailure)
+			responseMsg.SetRcode(req, dns.RcodeServerFailure)
 		}
 	}
 
-	if _, ok := responseWriter.RemoteAddr().(*net.TCPAddr); !ok {
-		d.trimIfNeeded(response)
-	}
-
-	if err := responseWriter.WriteMsg(response); err != nil {
+	if err := responseWriter.WriteMsg(responseMsg); err != nil {
 		d.logger.Error(d.logTag, err.Error())
 	}
 }
@@ -73,31 +67,27 @@ func (DiscoveryHandler) trimIfNeeded(resp *dns.Msg) {
 	resp.Truncated = len(resp.Answer) < numAnswers
 }
 
-func (d DiscoveryHandler) buildARecords(msg, req *dns.Msg) {
+func (d DiscoveryHandler) buildARecords(responseWriter dns.ResponseWriter, responseMsg, requestMsg *dns.Msg) {
 	recordSet, err := d.recordSetRepo.Get()
 	if err != nil {
 		d.logger.Error(d.logTag, "failed to get ip addresses: %v", err)
-		msg.SetRcode(req, dns.RcodeServerFailure)
+		responseMsg.SetRcode(requestMsg, dns.RcodeServerFailure)
 		return
 	}
 
-	ips, err := recordSet.Resolve(req.Question[0].Name)
+	ips, err := recordSet.Resolve(requestMsg.Question[0].Name)
 	if err != nil {
 		d.logger.Error(d.logTag, "failed to decode query: %v", err)
-		msg.SetRcode(req, dns.RcodeFormatError)
+		responseMsg.SetRcode(requestMsg, dns.RcodeFormatError)
 		return
 	}
 
 	ips = d.shuffler.Shuffle(ips)
 
-	if len(ips) > 1 {
-		d.logger.Info(d.logTag, "got multiple ip addresses for %s: %v", req.Question[0].Name, ips)
-	}
-
 	for _, ip := range ips {
-		msg.Answer = append(msg.Answer, &dns.A{
+		responseMsg.Answer = append(responseMsg.Answer, &dns.A{
 			Hdr: dns.RR_Header{
-				Name:   req.Question[0].Name,
+				Name:   requestMsg.Question[0].Name,
 				Rrtype: dns.TypeA,
 				Class:  dns.ClassINET,
 				Ttl:    0,
@@ -106,5 +96,9 @@ func (d DiscoveryHandler) buildARecords(msg, req *dns.Msg) {
 		})
 	}
 
-	msg.SetRcode(req, dns.RcodeSuccess)
+	responseMsg.SetRcode(requestMsg, dns.RcodeSuccess)
+
+	if _, ok := responseWriter.RemoteAddr().(*net.TCPAddr); !ok {
+		d.trimIfNeeded(responseMsg)
+	}
 }
