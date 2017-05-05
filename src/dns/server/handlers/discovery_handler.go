@@ -8,29 +8,21 @@ import (
 )
 
 type DiscoveryHandler struct {
-	logger   logger.Logger
-	logTag   string
-	shuffler AnswerShuffler
-	answerer dnsresolver.LocalDomain
+	logger      logger.Logger
+	logTag      string
+	localDomain dnsresolver.LocalDomain
 }
 
-//go:generate counterfeiter . AnswerShuffler
-type AnswerShuffler interface {
-	Shuffle(src []dns.RR) []dns.RR
-}
-
-func NewDiscoveryHandler(logger logger.Logger, shuffler AnswerShuffler, answerer dnsresolver.LocalDomain) DiscoveryHandler {
+func NewDiscoveryHandler(logger logger.Logger, localDomain dnsresolver.LocalDomain) DiscoveryHandler {
 	return DiscoveryHandler{
-		logger:   logger,
-		logTag:   "DiscoveryHandler",
-		shuffler: shuffler,
-		answerer: answerer,
+		logger:      logger,
+		logTag:      "DiscoveryHandler",
+		localDomain: localDomain,
 	}
 }
 
 func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, req *dns.Msg) {
 	responseMsg := &dns.Msg{}
-
 	responseMsg.Authoritative = true
 	responseMsg.RecursionAvailable = false
 
@@ -38,12 +30,10 @@ func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, req *dns.M
 		responseMsg.SetRcode(req, dns.RcodeSuccess)
 	} else {
 		switch req.Question[0].Qtype {
-		case dns.TypeMX:
-			responseMsg.SetRcode(req, dns.RcodeSuccess)
-		case dns.TypeAAAA:
+		case dns.TypeMX, dns.TypeAAAA:
 			responseMsg.SetRcode(req, dns.RcodeSuccess)
 		case dns.TypeA, dns.TypeANY:
-			d.buildARecords(responseWriter, responseMsg, req)
+			responseMsg = d.buildARecords(responseWriter, req)
 		default:
 			responseMsg.SetRcode(req, dns.RcodeServerFailure)
 		}
@@ -54,20 +44,23 @@ func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, req *dns.M
 	}
 }
 
-func (d DiscoveryHandler) buildARecords(responseWriter dns.ResponseWriter, responseMsg, requestMsg *dns.Msg) {
-	answer, rcode := d.answerer.Resolve(requestMsg.Question[0].Name, requestMsg.Question[0].Name)
-	responseMsg.SetRcode(requestMsg, rcode)
-	responseMsg.Answer = d.shuffler.Shuffle(answer)
-
-	if _, ok := responseWriter.RemoteAddr().(*net.TCPAddr); !ok {
-		d.trimIfNeeded(responseMsg)
+func (d DiscoveryHandler) buildARecords(responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
+	protocol := dnsresolver.UDP
+	if _, ok := responseWriter.RemoteAddr().(*net.TCPAddr); ok {
+		protocol = dnsresolver.TCP
 	}
+
+	resolvedAnswer := d.localDomain.ResolveAnswer(requestMsg.Question[0].Name, []string{requestMsg.Question[0].Name}, protocol,requestMsg)
+
+	return resolvedAnswer
 }
 
 func (DiscoveryHandler) trimIfNeeded(resp *dns.Msg) {
 	numAnswers := len(resp.Answer)
+
 	for len(resp.Answer) > 0 && resp.Len() > 512 {
 		resp.Answer = resp.Answer[:len(resp.Answer)-1]
 	}
+
 	resp.Truncated = len(resp.Answer) < numAnswers
 }

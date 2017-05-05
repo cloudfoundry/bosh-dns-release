@@ -189,8 +189,10 @@ var _ = Describe("main", func() {
 					})
 
 					It("resolves to the appropriate domain before deferring to mux", func() {
-						_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
+
+						Expect(response.Answer).To(Equal([]dns.RR{}))
 
 						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.HealthCheckHandler Request \[1\] \[healthcheck\.bosh-dns\.\] 0 \d+ns`))
 					})

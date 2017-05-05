@@ -6,15 +6,14 @@ import (
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/handlersfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal/internalfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver/dnsresolverfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver/dnsresolverfakes"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
 )
 
 var _ = Describe("DiscoveryHandler", func() {
@@ -24,19 +23,19 @@ var _ = Describe("DiscoveryHandler", func() {
 			fakeWriter        *internalfakes.FakeResponseWriter
 			fakeLogger        *loggerfakes.FakeLogger
 			fakeRecordSetRepo *dnsresolverfakes.FakeRecordSetRepo
-			fakeShuffler      *handlersfakes.FakeAnswerShuffler
+			fakeShuffler      *dnsresolverfakes.FakeAnswerShuffler
 		)
 
 		BeforeEach(func() {
 			fakeWriter = &internalfakes.FakeResponseWriter{}
 			fakeLogger = &loggerfakes.FakeLogger{}
 			fakeRecordSetRepo = &dnsresolverfakes.FakeRecordSetRepo{}
-			fakeShuffler = &handlersfakes.FakeAnswerShuffler{}
+			fakeShuffler = &dnsresolverfakes.FakeAnswerShuffler{}
 			fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
 				return input
 			}
 
-			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, fakeShuffler, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSetRepo))
+			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSetRepo, fakeShuffler))
 		})
 
 		Context("when there are no questions", func() {
@@ -127,41 +126,6 @@ var _ = Describe("DiscoveryHandler", func() {
 					Entry("when the question is an A query", dns.TypeA),
 					Entry("when the question is an ANY query", dns.TypeANY),
 				)
-
-				It("shuffles the records if multiple records were found", func() {
-					recordSet := records.RecordSet{
-						Records: []records.Record{
-							{
-								Id:         "my-instance",
-								Group:      "my-group",
-								Network:    "my-network",
-								Deployment: "my-deployment",
-								Ip:         "123.123.123.123",
-							},
-							{
-								Id:         "my-instance",
-								Group:      "my-group",
-								Network:    "my-network",
-								Deployment: "my-deployment",
-								Ip:         "127.0.0.1",
-							},
-						},
-					}
-					fakeRecordSetRepo.GetReturns(recordSet, nil)
-					fakeShuffler.ShuffleStub = func(list []dns.RR) []dns.RR {
-						list[0], list[1] = list[1], list[0]
-
-						return list
-					}
-
-					m := &dns.Msg{}
-					m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
-					discoveryHandler.ServeDNS(fakeWriter, m)
-
-					responseMsg := fakeWriter.WriteMsgArgsForCall(0)
-					Expect(responseMsg.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
-					Expect(responseMsg.Answer[1].(*dns.A).A.String()).To(Equal("123.123.123.123"))
-				})
 
 				Context("when there are too many records to fit into 512 bytes", func() {
 					var (

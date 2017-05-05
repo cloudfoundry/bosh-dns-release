@@ -123,7 +123,7 @@ func (c Config) Resolutions(maybeAlias string) []string {
 		}
 	}
 
-	return []string{maybeAlias}
+	return nil
 }
 
 func (c Config) Merge(other Config) Config {

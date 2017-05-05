@@ -2,47 +2,59 @@ package handlers
 
 import (
 	"errors"
+	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/dns-release/src/dns/server/aliases"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal"
+
 	"github.com/miekg/dns"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
+	"net"
 )
 
 type AliasResolvingHandler struct {
-	child  dns.Handler
-	config aliases.Config
+	child          dns.Handler
+	config         aliases.Config
+	domainResolver DomainResolver
+	logger         logger.Logger
+	logTag         string
 }
 
-func NewAliasResolvingHandler(child dns.Handler, config aliases.Config) (AliasResolvingHandler, error) {
+//go:generate counterfeiter . DomainResolver
+type DomainResolver interface {
+	ResolveAnswer(answerDomain string, questionDomains []string, protocol dnsresolver.Protocol,requestMsg *dns.Msg) *dns.Msg
+}
+
+func NewAliasResolvingHandler(child dns.Handler, config aliases.Config, domainResolver DomainResolver, logger logger.Logger) (AliasResolvingHandler, error) {
 	if !config.IsReduced() {
 		return AliasResolvingHandler{}, errors.New("must configure with non-recursing alias config")
 	}
 
 	return AliasResolvingHandler{
-		child:  child,
-		config: config,
+		child:          child,
+		config:         config,
+		domainResolver: domainResolver,
+		logger:         logger,
+		logTag:         "AliasResolvingHandler",
 	}, nil
 }
 
-func (h AliasResolvingHandler) ServeDNS(resp dns.ResponseWriter, msg *dns.Msg) {
-	originalQuestion := msg.Question
-	respWriter := internal.WrapWriterWithIntercept(resp, func(m *dns.Msg) {
-		m.Question = originalQuestion
-	})
+func (h AliasResolvingHandler) ServeDNS(resp dns.ResponseWriter, requestMsg *dns.Msg) {
+	if aliasTargets := h.config.Resolutions(requestMsg.Question[0].Name); len(aliasTargets) > 0 {
 
-	resolvedQuestions := []dns.Question{}
+		protocol := dnsresolver.UDP
 
-	for _, question := range msg.Question {
-		for _, resolution := range h.config.Resolutions(question.Name) {
-			resolvedQuestions = append(resolvedQuestions, dns.Question{
-				Name:   string(resolution),
-				Qtype:  question.Qtype,
-				Qclass: question.Qclass,
-			})
+		if _, ok := resp.RemoteAddr().(*net.TCPAddr); ok {
+			protocol = dnsresolver.TCP
 		}
+
+		//add tests for protocol
+
+		responseMsg := h.domainResolver.ResolveAnswer(requestMsg.Question[0].Name, aliasTargets, protocol, requestMsg)
+
+		if err := resp.WriteMsg(responseMsg); err != nil {
+			h.logger.Error(h.logTag, "error writing response %s", err.Error())
+		}
+		return
 	}
 
-	resolvedRequestMsg := dns.Msg(*msg)
-	resolvedRequestMsg.Question = resolvedQuestions
-
-	h.child.ServeDNS(respWriter, &resolvedRequestMsg)
+	h.child.ServeDNS(resp, requestMsg)
 }

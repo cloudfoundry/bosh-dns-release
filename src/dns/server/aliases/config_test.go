@@ -67,7 +67,7 @@ var _ = Describe("Config", func() {
 			It("should ignore", func() {
 				c := MustNewConfigFromMap(map[string][]string{})
 
-				Expect(c.Resolutions("_.")).To(Equal([]string{"_."}))
+				Expect(c.Resolutions("_.")).To(BeNil())
 			})
 		})
 	})
@@ -84,12 +84,12 @@ var _ = Describe("Config", func() {
 		})
 
 		Context("when the resolving domain does not appear as an alias", func() {
-			It("reports the original domain", func() {
+			It("returns nil", func() {
 				c := MustNewConfigFromMap(map[string][]string{
 					"alias": {"domain"},
 				})
 
-				Expect(c.Resolutions("normal.domain.")).To(Equal([]string{"normal.domain."}))
+				Expect(c.Resolutions("normal.domain.")).To(BeNil())
 			})
 		})
 
