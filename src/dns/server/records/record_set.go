@@ -55,10 +55,10 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 	s.Records = make([]Record, len(swap.Infos))
 
 	var idIndex,
-	groupIndex,
-	networkIndex,
-	deploymentIndex,
-	ipIndex int
+		groupIndex,
+		networkIndex,
+		deploymentIndex,
+		ipIndex int
 
 	for i, k := range swap.Keys {
 		switch k {

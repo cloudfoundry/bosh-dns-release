@@ -3,14 +3,14 @@ package records_test
 import (
 	"fmt"
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
+	"github.com/cloudfoundry/bosh-utils/system/fakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"time"
-	"github.com/cloudfoundry/bosh-utils/system/fakes"
 
-	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 var _ = Describe("Repo", func() {
@@ -66,7 +66,7 @@ var _ = Describe("Repo", func() {
 			var nonExistentFilePath string
 
 			BeforeEach(func() {
-				nonExistentFilePath =  "/some/fake/path"
+				nonExistentFilePath = "/some/fake/path"
 				fakeFileSystem.RegisterOpenFile(nonExistentFilePath, &fakes.FakeFile{
 					StatErr: errors.New("NOPE"),
 				})

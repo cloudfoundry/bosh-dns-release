@@ -8,8 +8,7 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/clock/clockfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/aliases"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/handlersfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal/internalfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
+	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -91,7 +90,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 						},
 					},
 				}
-				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, protocol dnsresolver.Protocol, actualRequestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, responseWriter dns.ResponseWriter, actualRequestMsg *dns.Msg) *dns.Msg {
 					Expect(resolutionNames).To(ConsistOf("5.a2_domain1.", "5.b2_domain1."))
 					Expect(actualRequestMsg).To(Equal(requestMsg))
 					fakeResponse.SetRcode(requestMsg, dns.RcodeSuccess)
@@ -106,7 +105,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 
 			It("returns a non successful return code when a resoution fails", func() {
 				fakeResponse := &dns.Msg{}
-				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
 					Expect(resolutionNames).To(ConsistOf("5.a2_domain1.", "5.b2_domain1."))
 					fakeResponse.SetRcode(requestMsg, dns.RcodeServerFailure)
 					return fakeResponse
@@ -130,7 +129,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 
 			It("logs if the response cannot be written", func() {
 				fakeResponse := &dns.Msg{}
-				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
 					fakeResponse.SetRcode(requestMsg, dns.RcodeServerFailure)
 					return fakeResponse
 				}
@@ -158,7 +157,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 					},
 				}
 
-				fakeDomainResolver.ResolveAnswerStub = func(questionDomains []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveAnswerStub = func(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
 					fakeResponse.SetRcode(requestMsg, dns.RcodeSuccess)
 					return fakeResponse
 				}

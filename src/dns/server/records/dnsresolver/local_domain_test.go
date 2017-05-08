@@ -10,13 +10,16 @@ import (
 	. "github.com/onsi/gomega"
 
 	"errors"
+	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver/dnsresolverfakes"
+	"net"
 )
 
 var _ = Describe("LocalDomain", func() {
 	Describe("Resolve", func() {
 		var (
 			fakeLogger        *loggerfakes.FakeLogger
+			fakeWriter        *internalfakes.FakeResponseWriter
 			fakeRecordSetRepo *dnsresolverfakes.FakeRecordSetRepo
 			localDomain       LocalDomain
 			fakeShuffler      *dnsresolverfakes.FakeAnswerShuffler
@@ -24,11 +27,14 @@ var _ = Describe("LocalDomain", func() {
 
 		BeforeEach(func() {
 			fakeLogger = &loggerfakes.FakeLogger{}
+			fakeWriter = &internalfakes.FakeResponseWriter{}
 			fakeRecordSetRepo = &dnsresolverfakes.FakeRecordSetRepo{}
 			fakeShuffler = &dnsresolverfakes.FakeAnswerShuffler{}
 			fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
 				return input
 			}
+
+			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
 			localDomain = NewLocalDomain(fakeLogger, fakeRecordSetRepo, fakeShuffler)
 		})
 
@@ -60,7 +66,7 @@ var _ = Describe("LocalDomain", func() {
 					"instance-1.group-1.network-name.deployment-name.bosh.",
 					"instance-2.group-2.network-name.deployment-name.bosh.",
 				},
-				UDP,
+				fakeWriter,
 				req,
 			)
 
@@ -120,7 +126,7 @@ var _ = Describe("LocalDomain", func() {
 					"instance-1.group-1.network-name.deployment-name.bosh.",
 					"instance-2.group-1.network-name.deployment-name.bosh.",
 				},
-				UDP,
+				fakeWriter,
 				req,
 			)
 
@@ -201,7 +207,7 @@ var _ = Describe("LocalDomain", func() {
 				It("truncates the response", func() {
 					responseMsg := localDomain.ResolveAnswer(
 						[]string{"my-instance.my-group.my-network.my-deployment.bosh."},
-						UDP,
+						fakeWriter,
 						req,
 					)
 
@@ -214,9 +220,11 @@ var _ = Describe("LocalDomain", func() {
 
 			Context("when the request is tcp", func() {
 				It("does not truncate", func() {
+					fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
+
 					responseMsg := localDomain.ResolveAnswer(
 						[]string{"my-instance.my-group.my-network.my-deployment.bosh."},
-						TCP,
+						fakeWriter,
 						req,
 					)
 
@@ -253,7 +261,7 @@ var _ = Describe("LocalDomain", func() {
 			req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeA)
 			responseMsg := localDomain.ResolveAnswer(
 				[]string{"instance-id.group-1.network-name.deployment-name.bosh."},
-				UDP,
+				fakeWriter,
 				req,
 			)
 
@@ -292,7 +300,7 @@ var _ = Describe("LocalDomain", func() {
 				req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeA)
 				responseMsg := localDomain.ResolveAnswer(
 					[]string{"instance-id.group-1.network-name.deployment-name.bosh."},
-					UDP,
+					fakeWriter,
 					req,
 				)
 				dnsReturnCode = responseMsg.Rcode
@@ -322,7 +330,7 @@ var _ = Describe("LocalDomain", func() {
 				req.SetQuestion("q-&^$*^*#^.group-1.network-name.deployment-name.bosh.", dns.TypeA)
 				responseMsg := localDomain.ResolveAnswer(
 					[]string{"q-&^$*^*#^.group-1.network-name.deployment-name.bosh."},
-					UDP,
+					fakeWriter,
 					req,
 				)
 				dnsReturnCode = responseMsg.Rcode

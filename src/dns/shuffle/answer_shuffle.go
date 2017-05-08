@@ -1,9 +1,9 @@
 package shuffle
 
 import (
+	"github.com/miekg/dns"
 	mathrand "math/rand"
 	"time"
-	"github.com/miekg/dns"
 )
 
 func init() {

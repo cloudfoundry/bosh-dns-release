@@ -1,10 +1,10 @@
 package records_test
 
 import (
+	"encoding/json"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"encoding/json"
 )
 
 var _ = Describe("RecordSet", func() {

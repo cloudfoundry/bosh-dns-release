@@ -8,7 +8,7 @@ import (
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/handlersfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal/internalfakes"
+	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
 	"github.com/miekg/dns"
 
 	"fmt"

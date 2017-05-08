@@ -14,13 +14,6 @@ type LocalDomain struct {
 	shuffler      AnswerShuffler
 }
 
-type Protocol int
-
-const (
-	UDP Protocol = iota
-	TCP
-)
-
 //go:generate counterfeiter . RecordSetRepo
 type RecordSetRepo interface {
 	Get() (records.RecordSet, error)
@@ -40,8 +33,9 @@ func NewLocalDomain(logger logger.Logger, recordSetRepo RecordSetRepo, shuffler 
 	}
 }
 
-func (d LocalDomain) ResolveAnswer(questionDomains []string, protocol Protocol, requestMsg *dns.Msg) *dns.Msg {
+func (d LocalDomain) ResolveAnswer(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
 	//Test for empty questions
+
 	answers, rCode := d.resolve(requestMsg.Question[0].Name, questionDomains)
 	responseMsg := &dns.Msg{}
 	responseMsg.Answer = answers
@@ -49,7 +43,7 @@ func (d LocalDomain) ResolveAnswer(questionDomains []string, protocol Protocol, 
 	responseMsg.Authoritative = true
 	responseMsg.RecursionAvailable = false
 
-	d.trimIfNeeded(protocol, responseMsg)
+	d.trimIfNeeded(responseWriter, responseMsg)
 
 	return responseMsg
 }
@@ -86,11 +80,8 @@ func (d LocalDomain) resolve(answerDomain string, questionDomains []string) ([]d
 	return d.shuffler.Shuffle(answers), dns.RcodeSuccess
 }
 
-func (LocalDomain) trimIfNeeded(protocol Protocol, resp *dns.Msg) {
-		if protocol != UDP {
-			return
-		}
-
+func (LocalDomain) trimIfNeeded(responseWriter dns.ResponseWriter, resp *dns.Msg) {
+	if _, ok := responseWriter.RemoteAddr().(*net.UDPAddr); ok {
 		numAnswers := len(resp.Answer)
 
 		for len(resp.Answer) > 0 && resp.Len() > 512 {
@@ -98,4 +89,5 @@ func (LocalDomain) trimIfNeeded(protocol Protocol, resp *dns.Msg) {
 		}
 
 		resp.Truncated = len(resp.Answer) < numAnswers
+	}
 }

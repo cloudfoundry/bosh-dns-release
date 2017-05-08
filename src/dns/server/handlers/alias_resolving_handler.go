@@ -7,9 +7,7 @@ import (
 
 	"fmt"
 	"github.com/cloudfoundry/dns-release/src/dns/clock"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
 	"github.com/miekg/dns"
-	"net"
 	"strings"
 )
 
@@ -24,7 +22,7 @@ type AliasResolvingHandler struct {
 
 //go:generate counterfeiter . DomainResolver
 type DomainResolver interface {
-	ResolveAnswer(questionDomains []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg
+	ResolveAnswer(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg
 }
 
 func NewAliasResolvingHandler(child dns.Handler, config aliases.Config, domainResolver DomainResolver, clock clock.Clock, logger logger.Logger) (AliasResolvingHandler, error) {
@@ -53,15 +51,9 @@ func (h AliasResolvingHandler) ServeDNS(responseWriter dns.ResponseWriter, reque
 			return
 		}
 
-		//add tests for protocol
-		protocol := dnsresolver.UDP
-		if _, ok := responseWriter.RemoteAddr().(*net.TCPAddr); ok {
-			protocol = dnsresolver.TCP
-		}
-
 		before := h.clock.Now()
 
-		responseMsg := h.domainResolver.ResolveAnswer(aliasTargets, protocol, requestMsg)
+		responseMsg := h.domainResolver.ResolveAnswer(aliasTargets, responseWriter, requestMsg)
 		rcode := responseMsg.Rcode
 
 		if err := responseWriter.WriteMsg(responseMsg); err != nil {

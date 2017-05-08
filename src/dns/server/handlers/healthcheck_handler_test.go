@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal/internalfakes"
+	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
 	"github.com/miekg/dns"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"

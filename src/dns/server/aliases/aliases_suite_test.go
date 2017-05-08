@@ -11,4 +11,3 @@ func TestAliases(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "dns/server/aliases")
 }
-

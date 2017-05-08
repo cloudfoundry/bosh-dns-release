@@ -10,10 +10,10 @@ import (
 )
 
 type RequestLoggerHandler struct {
-	child      dns.Handler
-	clock      clock.Clock
-	logger     logger.Logger
-	logTag     string
+	child  dns.Handler
+	clock  clock.Clock
+	logger logger.Logger
+	logTag string
 }
 
 func NewRequestLoggerHandler(child dns.Handler, clock clock.Clock, logger logger.Logger) RequestLoggerHandler {
