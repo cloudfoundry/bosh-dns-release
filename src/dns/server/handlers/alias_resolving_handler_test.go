@@ -5,14 +5,15 @@ import (
 
 	"errors"
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
+	"github.com/cloudfoundry/dns-release/src/dns/clock/clockfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/aliases"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/handlersfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal/internalfakes"
+	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
 )
 
 var _ = Describe("AliasResolvingHandler", func() {
@@ -22,6 +23,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 		dispatchedRequest  dns.Msg
 		fakeWriter         *internalfakes.FakeResponseWriter
 		fakeDomainResolver *handlersfakes.FakeDomainResolver
+		fakeClock          *clockfakes.FakeClock
 		fakeLogger         *loggerfakes.FakeLogger
 	)
 
@@ -29,7 +31,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 		fakeDomainResolver = &handlersfakes.FakeDomainResolver{}
 		fakeWriter = &internalfakes.FakeResponseWriter{}
 		fakeLogger = &loggerfakes.FakeLogger{}
-
+		fakeClock = &clockfakes.FakeClock{}
 		childHandler = dns.HandlerFunc(func(resp dns.ResponseWriter, req *dns.Msg) {
 			dispatchedRequest = *req
 
@@ -48,7 +50,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 		})
 
 		var err error
-		handler, err = NewAliasResolvingHandler(childHandler, config, fakeDomainResolver, fakeLogger)
+		handler, err = NewAliasResolvingHandler(childHandler, config, fakeDomainResolver, fakeClock, fakeLogger)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -89,7 +91,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 						},
 					},
 				}
-				fakeDomainResolver.ResolveAnswerStub = func(answerName string, resolutionNames []string, protocol dnsresolver.Protocol, actualRequestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, protocol dnsresolver.Protocol, actualRequestMsg *dns.Msg) *dns.Msg {
 					Expect(resolutionNames).To(ConsistOf("5.a2_domain1.", "5.b2_domain1."))
 					Expect(actualRequestMsg).To(Equal(requestMsg))
 					fakeResponse.SetRcode(requestMsg, dns.RcodeSuccess)
@@ -104,7 +106,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 
 			It("returns a non successful return code when a resoution fails", func() {
 				fakeResponse := &dns.Msg{}
-				fakeDomainResolver.ResolveAnswerStub = func(answerName string, resolutionNames []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg {
 					Expect(resolutionNames).To(ConsistOf("5.a2_domain1.", "5.b2_domain1."))
 					fakeResponse.SetRcode(requestMsg, dns.RcodeServerFailure)
 					return fakeResponse
@@ -127,6 +129,12 @@ var _ = Describe("AliasResolvingHandler", func() {
 			})
 
 			It("logs if the response cannot be written", func() {
+				fakeResponse := &dns.Msg{}
+				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg {
+					fakeResponse.SetRcode(requestMsg, dns.RcodeServerFailure)
+					return fakeResponse
+				}
+
 				fakeWriter.WriteMsgReturns(errors.New("failed to write message"))
 
 				m := &dns.Msg{}
@@ -150,7 +158,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 					},
 				}
 
-				fakeDomainResolver.ResolveAnswerStub = func(answerDomain string, quetsionDomains []string, requestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveAnswerStub = func(questionDomains []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg {
 					fakeResponse.SetRcode(requestMsg, dns.RcodeSuccess)
 					return fakeResponse
 				}
@@ -180,7 +188,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 				"alias2": {"a2_domain1"},
 			})
 
-			_, err := NewAliasResolvingHandler(childHandler, config, fakeDomainResolver, fakeLogger)
+			_, err := NewAliasResolvingHandler(childHandler, config, fakeDomainResolver, fakeClock, fakeLogger)
 			Expect(err).To(HaveOccurred())
 		})
 	})

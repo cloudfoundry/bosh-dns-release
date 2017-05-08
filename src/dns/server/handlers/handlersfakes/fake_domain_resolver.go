@@ -10,10 +10,9 @@ import (
 )
 
 type FakeDomainResolver struct {
-	ResolveAnswerStub        func(answerDomain string, questionDomains []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg
+	ResolveAnswerStub        func(questionDomains []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg
 	resolveAnswerMutex       sync.RWMutex
 	resolveAnswerArgsForCall []struct {
-		answerDomain    string
 		questionDomains []string
 		protocol        dnsresolver.Protocol
 		requestMsg      *dns.Msg
@@ -28,7 +27,7 @@ type FakeDomainResolver struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeDomainResolver) ResolveAnswer(answerDomain string, questionDomains []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg {
+func (fake *FakeDomainResolver) ResolveAnswer(questionDomains []string, protocol dnsresolver.Protocol, requestMsg *dns.Msg) *dns.Msg {
 	var questionDomainsCopy []string
 	if questionDomains != nil {
 		questionDomainsCopy = make([]string, len(questionDomains))
@@ -37,15 +36,14 @@ func (fake *FakeDomainResolver) ResolveAnswer(answerDomain string, questionDomai
 	fake.resolveAnswerMutex.Lock()
 	ret, specificReturn := fake.resolveAnswerReturnsOnCall[len(fake.resolveAnswerArgsForCall)]
 	fake.resolveAnswerArgsForCall = append(fake.resolveAnswerArgsForCall, struct {
-		answerDomain    string
 		questionDomains []string
 		protocol        dnsresolver.Protocol
 		requestMsg      *dns.Msg
-	}{answerDomain, questionDomainsCopy, protocol, requestMsg})
-	fake.recordInvocation("ResolveAnswer", []interface{}{answerDomain, questionDomainsCopy, protocol, requestMsg})
+	}{questionDomainsCopy, protocol, requestMsg})
+	fake.recordInvocation("ResolveAnswer", []interface{}{questionDomainsCopy, protocol, requestMsg})
 	fake.resolveAnswerMutex.Unlock()
 	if fake.ResolveAnswerStub != nil {
-		return fake.ResolveAnswerStub(answerDomain, questionDomains, protocol, requestMsg)
+		return fake.ResolveAnswerStub(questionDomains, protocol, requestMsg)
 	}
 	if specificReturn {
 		return ret.result1
@@ -59,10 +57,10 @@ func (fake *FakeDomainResolver) ResolveAnswerCallCount() int {
 	return len(fake.resolveAnswerArgsForCall)
 }
 
-func (fake *FakeDomainResolver) ResolveAnswerArgsForCall(i int) (string, []string, dnsresolver.Protocol, *dns.Msg) {
+func (fake *FakeDomainResolver) ResolveAnswerArgsForCall(i int) ([]string, dnsresolver.Protocol, *dns.Msg) {
 	fake.resolveAnswerMutex.RLock()
 	defer fake.resolveAnswerMutex.RUnlock()
-	return fake.resolveAnswerArgsForCall[i].answerDomain, fake.resolveAnswerArgsForCall[i].questionDomains, fake.resolveAnswerArgsForCall[i].protocol, fake.resolveAnswerArgsForCall[i].requestMsg
+	return fake.resolveAnswerArgsForCall[i].questionDomains, fake.resolveAnswerArgsForCall[i].protocol, fake.resolveAnswerArgsForCall[i].requestMsg
 }
 
 func (fake *FakeDomainResolver) ResolveAnswerReturns(result1 *dns.Msg) {

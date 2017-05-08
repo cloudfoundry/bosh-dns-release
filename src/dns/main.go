@@ -84,7 +84,7 @@ func mainExitCode() int {
 	forwardHandler := handlers.NewForwardHandler(config.Recursors, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), logger)
 	addHandler(mux, ".", forwardHandler, logger)
 
-	aliasResolver, err := handlers.NewAliasResolvingHandler(mux, aliasConfiguration, localDomain, logger)
+	aliasResolver, err := handlers.NewAliasResolvingHandler(mux, aliasConfiguration, localDomain, clock.Real, logger)
 	if err != nil {
 		logger.Error(logTag, fmt.Sprintf("could not initiate alias resolving handler: %s", err.Error()))
 		return 1

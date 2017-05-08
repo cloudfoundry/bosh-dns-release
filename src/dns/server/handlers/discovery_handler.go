@@ -50,7 +50,7 @@ func (d DiscoveryHandler) buildARecords(responseWriter dns.ResponseWriter, reque
 		protocol = dnsresolver.TCP
 	}
 
-	resolvedAnswer := d.localDomain.ResolveAnswer(requestMsg.Question[0].Name, []string{requestMsg.Question[0].Name}, protocol,requestMsg)
+	resolvedAnswer := d.localDomain.ResolveAnswer([]string{requestMsg.Question[0].Name}, protocol, requestMsg)
 
 	return resolvedAnswer
 }

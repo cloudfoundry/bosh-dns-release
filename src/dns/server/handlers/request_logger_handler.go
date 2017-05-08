@@ -10,7 +10,6 @@ import (
 )
 
 type RequestLoggerHandler struct {
-	muxPattern string
 	child      dns.Handler
 	clock      clock.Clock
 	logger     logger.Logger
@@ -26,9 +25,9 @@ func NewRequestLoggerHandler(child dns.Handler, clock clock.Clock, logger logger
 	}
 }
 
-func (h RequestLoggerHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
+func (h RequestLoggerHandler) ServeDNS(responseWriter dns.ResponseWriter, req *dns.Msg) {
 	var respRcode int
-	respWriter := internal.WrapWriterWithIntercept(resp, func(msg *dns.Msg) {
+	respWriter := internal.WrapWriterWithIntercept(responseWriter, func(msg *dns.Msg) {
 		respRcode = msg.Rcode
 	})
 
