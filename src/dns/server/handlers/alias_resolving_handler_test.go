@@ -73,6 +73,16 @@ var _ = Describe("AliasResolvingHandler", func() {
 			})
 		})
 
+		Context("when the request contains no questions", func() {
+			It("passes the message through as-is", func() {
+				m := dns.Msg{}
+
+				handler.ServeDNS(fakeWriter, &m)
+
+				Expect(dispatchedRequest).To(Equal(m))
+			})
+		})
+
 		Context("when the message contains a underscore style alias", func() {
 			It("translates the question preserving the capture", func() {
 				fakeResponse := &dns.Msg{
@@ -90,7 +100,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 						},
 					},
 				}
-				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, responseWriter dns.ResponseWriter, actualRequestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveStub = func(resolutionNames []string, responseWriter dns.ResponseWriter, actualRequestMsg *dns.Msg) *dns.Msg {
 					Expect(resolutionNames).To(ConsistOf("5.a2_domain1.", "5.b2_domain1."))
 					Expect(actualRequestMsg).To(Equal(requestMsg))
 					fakeResponse.SetRcode(requestMsg, dns.RcodeSuccess)
@@ -105,7 +115,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 
 			It("returns a non successful return code when a resoution fails", func() {
 				fakeResponse := &dns.Msg{}
-				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveStub = func(resolutionNames []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
 					Expect(resolutionNames).To(ConsistOf("5.a2_domain1.", "5.b2_domain1."))
 					fakeResponse.SetRcode(requestMsg, dns.RcodeServerFailure)
 					return fakeResponse
@@ -129,7 +139,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 
 			It("logs if the response cannot be written", func() {
 				fakeResponse := &dns.Msg{}
-				fakeDomainResolver.ResolveAnswerStub = func(resolutionNames []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveStub = func(resolutionNames []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
 					fakeResponse.SetRcode(requestMsg, dns.RcodeServerFailure)
 					return fakeResponse
 				}
@@ -150,19 +160,24 @@ var _ = Describe("AliasResolvingHandler", func() {
 		})
 
 		Context("when the message contains an alias", func() {
-			It("resolves the alias before delegating", func() {
-				fakeResponse := &dns.Msg{
+			var (
+				fakeResponse *dns.Msg
+				m            dns.Msg
+			)
+
+			BeforeEach(func() {
+				fakeResponse = &dns.Msg{
 					Answer: []dns.RR{
 						&dns.A{A: net.IPv4(123, 123, 123, 123)},
 					},
 				}
 
-				fakeDomainResolver.ResolveAnswerStub = func(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
+				fakeDomainResolver.ResolveStub = func(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
 					fakeResponse.SetRcode(requestMsg, dns.RcodeSuccess)
 					return fakeResponse
 				}
 
-				m := dns.Msg{
+				m = dns.Msg{
 					Question: []dns.Question{
 						{
 							Name:   "alias2.",
@@ -171,11 +186,23 @@ var _ = Describe("AliasResolvingHandler", func() {
 						},
 					},
 				}
+			})
 
+			It("resolves the alias before delegating", func() {
 				handler.ServeDNS(fakeWriter, &m)
 
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message).To(Equal(fakeResponse))
+			})
+
+			It("logs the request", func() {
+				handler.ServeDNS(fakeWriter, &m)
+
+				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
+				tag, log, _ := fakeLogger.InfoArgsForCall(0)
+				Expect(tag).To(Equal("AliasResolvingHandler"))
+				Expect(log).To(Equal("*handlersfakes.FakeDomainResolver Request [1] [alias2.] 0 0ns"))
+				handler.ServeDNS(fakeWriter, &m)
 			})
 		})
 	})

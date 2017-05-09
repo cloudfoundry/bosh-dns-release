@@ -25,14 +25,12 @@ func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, requestMsg
 	responseMsg.Authoritative = true
 	responseMsg.RecursionAvailable = false
 
-	if len(requestMsg.Question) == 0 {
-		responseMsg.SetRcode(requestMsg, dns.RcodeSuccess)
-	} else {
+	if len(requestMsg.Question) > 0 {
 		switch requestMsg.Question[0].Qtype {
+		case dns.TypeA, dns.TypeANY:
+			responseMsg = d.localDomain.Resolve([]string{requestMsg.Question[0].Name}, responseWriter, requestMsg)
 		case dns.TypeMX, dns.TypeAAAA:
 			responseMsg.SetRcode(requestMsg, dns.RcodeSuccess)
-		case dns.TypeA, dns.TypeANY:
-			responseMsg = d.localDomain.ResolveAnswer([]string{requestMsg.Question[0].Name}, responseWriter, requestMsg)
 		default:
 			responseMsg.SetRcode(requestMsg, dns.RcodeServerFailure)
 		}

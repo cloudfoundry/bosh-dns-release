@@ -22,7 +22,7 @@ type AliasResolvingHandler struct {
 
 //go:generate counterfeiter . DomainResolver
 type DomainResolver interface {
-	ResolveAnswer(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg
+	Resolve(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg
 }
 
 func NewAliasResolvingHandler(child dns.Handler, config aliases.Config, domainResolver DomainResolver, clock clock.Clock, logger logger.Logger) (AliasResolvingHandler, error) {
@@ -41,10 +41,14 @@ func NewAliasResolvingHandler(child dns.Handler, config aliases.Config, domainRe
 }
 
 func (h AliasResolvingHandler) ServeDNS(responseWriter dns.ResponseWriter, requestMsg *dns.Msg) {
+	questionName := ""
+	if len(requestMsg.Question) > 0 {
+		questionName = requestMsg.Question[0].Name
+	}
 
-	//don't find aliases when empty questions
+	if aliasTargets := h.config.Resolutions(questionName); len(aliasTargets) > 0 {
 
-	if aliasTargets := h.config.Resolutions(requestMsg.Question[0].Name); len(aliasTargets) > 0 {
+		// This block can go away when healthcheck domains can be specified as job properties
 		if len(aliasTargets) == 1 && aliasTargets[0] == "healthcheck.bosh-dns." {
 			healthCheckHandler := NewHealthCheckHandler(h.logger)
 			NewRequestLoggerHandler(healthCheckHandler, clock.Real, h.logger).ServeDNS(responseWriter, requestMsg)
@@ -53,7 +57,7 @@ func (h AliasResolvingHandler) ServeDNS(responseWriter dns.ResponseWriter, reque
 
 		before := h.clock.Now()
 
-		responseMsg := h.domainResolver.ResolveAnswer(aliasTargets, responseWriter, requestMsg)
+		responseMsg := h.domainResolver.Resolve(aliasTargets, responseWriter, requestMsg)
 		rcode := responseMsg.Rcode
 
 		if err := responseWriter.WriteMsg(responseMsg); err != nil {
@@ -62,22 +66,28 @@ func (h AliasResolvingHandler) ServeDNS(responseWriter dns.ResponseWriter, reque
 
 		duration := h.clock.Now().Sub(before).Nanoseconds()
 
-		types := make([]string, len(requestMsg.Question))
-		domains := make([]string, len(requestMsg.Question))
-		for i, q := range requestMsg.Question {
-			types[i] = fmt.Sprintf("%d", q.Qtype)
-			domains[i] = q.Name
-		}
-		h.logger.Info(h.logTag, fmt.Sprintf("%T Request [%s] [%s] %d %dns",
-			h.domainResolver,
-			strings.Join(types, ","),
-			strings.Join(domains, ","),
-			rcode,
-			duration,
-		))
+		h.log(requestMsg, rcode, duration)
 
 		return
 	}
 
 	h.child.ServeDNS(responseWriter, requestMsg)
+}
+
+func (h AliasResolvingHandler) log(requestMsg *dns.Msg, rcode int, duration int64) {
+	types := make([]string, len(requestMsg.Question))
+	domains := make([]string, len(requestMsg.Question))
+
+	for i, q := range requestMsg.Question {
+		types[i] = fmt.Sprintf("%d", q.Qtype)
+		domains[i] = q.Name
+	}
+
+	h.logger.Info(h.logTag, fmt.Sprintf("%T Request [%s] [%s] %d %dns",
+		h.domainResolver,
+		strings.Join(types, ","),
+		strings.Join(domains, ","),
+		rcode,
+		duration,
+	))
 }

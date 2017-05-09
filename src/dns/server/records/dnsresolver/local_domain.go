@@ -33,7 +33,7 @@ func NewLocalDomain(logger logger.Logger, recordSetRepo RecordSetRepo, shuffler 
 	}
 }
 
-func (d LocalDomain) ResolveAnswer(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
+func (d LocalDomain) Resolve(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
 	//Test for empty questions
 
 	answers, rCode := d.resolve(requestMsg.Question[0].Name, questionDomains)
