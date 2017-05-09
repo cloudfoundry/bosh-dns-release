@@ -1,0 +1,13 @@
+$ErrorActionPreference = "Stop"
+
+try
+{
+    Resolve-DnsName -DnsOnly -Name healthcheck.bosh-dns. -Server <%= p('address') %>
+    Resolve-DnsName -TcpOnly -DnsOnly -Name healthcheck.bosh-dns. -Server <%= p('address') %>
+}
+catch
+{
+    $Host.UI.WriteErrorLine($_.Exception.Message)
+    Exit 1
+}
+Exit 0

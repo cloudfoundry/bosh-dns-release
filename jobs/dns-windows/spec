@@ -5,6 +5,7 @@ templates:
   aliases.json.erb: dns/aliases.json
   config.json.erb: config/config.json
   dns_ctl.ps1.erb: bin/dns_ctl.ps1
+  post-start.ps1.erb: bin/post-start.ps1
 
 packages:
   - dns-windows
@@ -20,9 +21,6 @@ properties:
   aliased_address:
     description: "Address that will be added by default"
     default: 169.254.0.2
-  port:
-    description: "Port that the DNS server will bind to"
-    default: 53
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"
     default: []
