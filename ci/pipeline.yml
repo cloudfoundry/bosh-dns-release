@@ -107,4 +107,4 @@ resources:
 - name: gcp-linux-stemcell
   type: bosh-io-stemcell
   source:
-    name: google-kvm-ubuntu-trusty-go_agent
+    name: bosh-google-kvm-ubuntu-trusty-go_agent
