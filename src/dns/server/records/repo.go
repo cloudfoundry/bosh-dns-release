@@ -7,6 +7,7 @@ import (
 	"github.com/cloudfoundry/bosh-utils/system"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"sync"
 	"time"
 )
 
@@ -18,6 +19,7 @@ type Repo struct {
 	cachedRecordSetError error
 	cachedRecordSet      *RecordSet
 	lastReadTime         time.Time
+	mutex                sync.Mutex
 }
 
 func NewRepo(recordsFilePath string, fileSys system.FileSystem, logger logger.Logger) *Repo {
@@ -34,6 +36,8 @@ func NewRepo(recordsFilePath string, fileSys system.FileSystem, logger logger.Lo
 }
 
 func (r *Repo) Get() (RecordSet, error) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	if r.shouldUseCachedValues() {
 		return *r.cachedRecordSet, r.cachedRecordSetError
 	}
