@@ -25,6 +25,12 @@ func NewUDPHealthCheck(dial Dialer, target string) UDPHealthCheck {
 }
 
 func (hc UDPHealthCheck) IsHealthy() error {
+	var err error
+	hc.target, err = determineHost(hc.target)
+	if err != nil {
+		return err
+	}
+
 	conn, err := hc.dial("udp", hc.target)
 	if err != nil {
 		return err
@@ -65,6 +71,12 @@ func NewTCPHealthCheck(dial Dialer, target string) TCPHealthCheck {
 }
 
 func (hc TCPHealthCheck) IsHealthy() error {
+	var err error
+	hc.target, err = determineHost(hc.target)
+	if err != nil {
+		return err
+	}
+
 	conn, err := hc.dial("tcp", hc.target)
 	if err != nil {
 		return err
@@ -73,4 +85,17 @@ func (hc TCPHealthCheck) IsHealthy() error {
 	conn.Close()
 
 	return nil
+}
+
+func determineHost(target string) (string, error) {
+	host, port, err := net.SplitHostPort(target)
+	if err != nil {
+		return "", err
+	}
+
+	if host == "0.0.0.0" {
+		return net.JoinHostPort("127.0.0.1", port), nil
+	}
+
+	return target, nil
 }

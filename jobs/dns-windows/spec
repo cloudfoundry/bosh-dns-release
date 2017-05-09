@@ -2,6 +2,7 @@
 name: dns-windows
 
 templates:
+  aliases.json.erb: dns/aliases.json
   config.json.erb: config/config.json
   dns_ctl.ps1.erb: bin/dns_ctl.ps1
 
@@ -28,3 +29,11 @@ properties:
   records_file:
     description: "Path to the file containing information that the DNS server will use to create DNS records"
     default: C:\var\vcap\instance\dns\records.json
+  alias_files_glob:
+    description: "Glob for any files to look for DNS alias information"
+    default: C:\var\vcap\jobs\*\dns\aliases.json
+  aliases:
+    description: "Hash of domain key to target domains array for aliased DNS lookups"
+    example:
+      cc.cf.consul: [ one, two, ... ]
+      third.internal: [ four ]

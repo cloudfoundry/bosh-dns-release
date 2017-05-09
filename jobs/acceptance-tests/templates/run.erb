@@ -1,0 +1,21 @@
+#!/bin/bash -exu
+
+# this export is required by the bosh cli; if HOME is unset then "~" will expand to the literal "~"
+export HOME=~
+
+export BOSH_BINARY_PATH=/var/vcap/packages/acceptance-tests/bin/bosh
+export BOSH_CLIENT=<%= p('bosh_client') %>
+export BOSH_CLIENT_SECRET=<%= p('bosh_client_secret') %>
+export BOSH_CA_CERT=$(readlink -m /var/vcap/jobs/acceptance-tests/ca.crt)
+export BOSH_ENVIRONMENT=<%= p('bosh_environment') %>
+export BOSH_DEPLOYMENT=<%= p('bosh_deployment') %>
+
+export GOROOT="/var/vcap/packages/golang"
+export GOPATH="/var/vcap/packages/acceptance-tests"
+export PATH="$GOROOT/bin:${GOPATH}/bin:${PATH}"
+
+go install github.com/cloudfoundry/dns-release/src/vendor/github.com/onsi/ginkgo/ginkgo
+
+pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/acceptance_tests
+   ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
+popd

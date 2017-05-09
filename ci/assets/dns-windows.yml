@@ -1,0 +1,43 @@
+---
+name: bosh-dns
+
+update:
+  canaries: 2
+  canary_watch_time: 1000-60000
+  max_in_flight: 5
+  serial: false
+  update_watch_time: 1000-60000
+
+instance_groups:
+- name: dns
+  azs: [z1]
+  instances: 2
+  vm_type: large
+  vm_extensions:
+  - 100GB_ephemeral_disk
+  stemcell: default
+  networks:
+  - name: default
+  jobs:
+  - name: dns-windows
+    release: dns
+    properties:
+      address: 0.0.0.0
+      recursors: ["10.0.31.191:9955"]
+  - name: needs-alias
+    release: dns-acceptance
+  - name: windows-firewall-rules
+    release: dns-acceptance
+
+releases:
+- name: dns
+  url: file://((dns_release_path))
+  version: create
+- name: dns-acceptance
+  url: file://((acceptance_release_path))
+  version: create
+
+stemcells:
+- alias: default
+  os: windows2012R2
+  version: latest

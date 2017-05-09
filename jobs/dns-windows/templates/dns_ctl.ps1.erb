@@ -1,10 +1,10 @@
-Get-NetIPAddress -IPAddress <%= p('address') %>
+Get-NetIPAddress -IPAddress <%= p('aliased_address') %>
 
 if ($? -eq $False) {
   $loopbackInterfaceIndex = Get-NetIPInterface -InterfaceAlias *loopback* | Select-Object -First 1 ifi* | foreach {$_.ifIndex}
 
   Write-host "Found loopback interface at InterfaceIndex ${loopbackInterfaceIndex}"
-  New-NetIPAddress -InterfaceIndex $loopbackInterfaceIndex -IPAddress <%= p('address') %>
+  New-NetIPAddress -InterfaceIndex $loopbackInterfaceIndex -IPAddress <%= p('aliased_address') %>
 }
 
 \var\vcap\packages\dns-windows\bin\dns.exe -config \var\vcap\jobs\dns-windows\config\config.json

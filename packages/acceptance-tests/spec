@@ -1,0 +1,12 @@
+---
+name: acceptance-tests
+
+dependencies: []
+
+files:
+- acceptance_tests/**/*
+- vendor/**/*
+- bosh-cli/bosh-cli-2.0.16-linux-amd64
+
+excluded_files:
+- vendor/github.com/bmatcuk/doublestar/test/**/*

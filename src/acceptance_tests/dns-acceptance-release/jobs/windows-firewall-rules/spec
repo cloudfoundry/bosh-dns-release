@@ -1,0 +1,7 @@
+---
+name: windows-firewall-rules
+description: "This job enables Windows firewall rules so that the DNS server can be reached externally via port 53"
+templates:
+  pre-start.ps1: bin/pre-start.ps1
+
+packages:

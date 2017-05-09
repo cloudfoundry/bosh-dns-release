@@ -2,14 +2,17 @@ package server_test
 
 import (
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/cloudfoundry/dns-release/src/dns/server"
 	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
 
+	"math/rand"
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 )
 
 var _ = Describe("Healthcheck", func() {
@@ -20,10 +23,50 @@ var _ = Describe("Healthcheck", func() {
 
 		BeforeEach(func() {
 			fakeConn = &internalfakes.FakeConn{}
+			rand.Seed(time.Now().Unix())
 		})
 
 		JustBeforeEach(func() {
 			subject = server.NewUDPHealthCheck(fakeDialer, "127.0.0.1:53")
+		})
+
+		Context("when the target address is 0.0.0.0", func() {
+			It("checks on 127.0.0.1", func() {
+				port := rand.Int()
+
+				fakeDialer = func(protocol, address string) (net.Conn, error) {
+					Expect(address).To(Equal(fmt.Sprintf("127.0.0.1:%d", port)))
+					return fakeConn, nil
+				}
+				subject = server.NewUDPHealthCheck(fakeDialer, fmt.Sprintf("0.0.0.0:%d", port))
+
+				err := subject.IsHealthy()
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
+		Context("when the target address is not 0.0.0.0", func() {
+			It("does not modify the health check target", func() {
+				port := rand.Int()
+
+				fakeDialer = func(protocol, address string) (net.Conn, error) {
+					Expect(address).To(Equal(fmt.Sprintf("9.9.9.9:%d", port)))
+					return fakeConn, nil
+				}
+				subject = server.NewUDPHealthCheck(fakeDialer, fmt.Sprintf("9.9.9.9:%d", port))
+
+				err := subject.IsHealthy()
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
+		Context("when the health check target is a malformed address", func() {
+			It("returns an error", func() {
+				subject = server.NewUDPHealthCheck(fakeDialer, "%%%%%%%%%")
+
+				err := subject.IsHealthy()
+				Expect(err).To(MatchError("missing port in address %%%%%%%%%"))
+			})
 		})
 
 		Context("when the udp health checking fails", func() {
@@ -103,10 +146,50 @@ var _ = Describe("Healthcheck", func() {
 
 		BeforeEach(func() {
 			fakeConn = &internalfakes.FakeConn{}
+			rand.Seed(time.Now().Unix())
 		})
 
 		JustBeforeEach(func() {
 			subject = server.NewTCPHealthCheck(fakeDialer, "127.0.0.1:53")
+		})
+
+		Context("when the target address is 0.0.0.0", func() {
+			It("checks on 127.0.0.1", func() {
+				port := rand.Int()
+
+				fakeDialer = func(protocol, address string) (net.Conn, error) {
+					Expect(address).To(Equal(fmt.Sprintf("127.0.0.1:%d", port)))
+					return fakeConn, nil
+				}
+				subject = server.NewTCPHealthCheck(fakeDialer, fmt.Sprintf("0.0.0.0:%d", port))
+
+				err := subject.IsHealthy()
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
+		Context("when the target address is not 0.0.0.0", func() {
+			It("does not modify the health check target", func() {
+				port := rand.Int()
+
+				fakeDialer = func(protocol, address string) (net.Conn, error) {
+					Expect(address).To(Equal(fmt.Sprintf("9.9.9.9:%d", port)))
+					return fakeConn, nil
+				}
+				subject = server.NewTCPHealthCheck(fakeDialer, fmt.Sprintf("9.9.9.9:%d", port))
+
+				err := subject.IsHealthy()
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
+		Context("when the health check target is a malformed address", func() {
+			It("returns an error", func() {
+				subject = server.NewTCPHealthCheck(fakeDialer, "%%%%%%%%%")
+
+				err := subject.IsHealthy()
+				Expect(err).To(MatchError("missing port in address %%%%%%%%%"))
+			})
 		})
 
 		Context("when the tcp health checking fails", func() {
