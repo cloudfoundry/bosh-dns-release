@@ -12,7 +12,7 @@ inputs:
   - name: bosh-cli
   - name: bosh-deployment
   - name: bosh-candidate-stemcell-windows
-  - name: bosh-candidate-stemcell
+  - name: gcp-linux-stemcell
   - name: bosh-candidate-release
 
 params:

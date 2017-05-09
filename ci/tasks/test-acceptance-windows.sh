@@ -76,7 +76,7 @@ bosh -d bosh-dns -n deploy $ROOT_DIR/dns-release/ci/assets/dns-windows.yml \
 
 export BOSH_DEPLOYMENT=bosh-dns
 
-bosh -n upload-stemcell $ROOT_DIR/bosh-candidate-stemcell/*.tgz
+bosh -n upload-stemcell $ROOT_DIR/gcp-linux-stemcell/*.tgz
 
 bosh -d bosh-dns-shared-acceptance -n deploy $ROOT_DIR/dns-release/ci/assets/shared-acceptance-manifest.yml \
     -v dns_release_path=$ROOT_DIR/dns-release \
