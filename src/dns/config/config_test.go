@@ -35,8 +35,9 @@ var _ = Describe("Config", func() {
 		  "address": "%s",
 		  "port": %d,
 		  "timeout": "%s",
-		  "recursor_timeout": "%s"
-		}`, listenAddress, listenPort, timeout, recursorTimeout))
+		  "recursor_timeout": "%s",
+		  "healthcheck_domains": %s
+		}`, listenAddress, listenPort, timeout, recursorTimeout, `["healthcheck.domain.","health2.bosh."]`))
 
 		timeoutDuration, err := time.ParseDuration(timeout)
 		Expect(err).ToNot(HaveOccurred())
@@ -47,10 +48,11 @@ var _ = Describe("Config", func() {
 		dnsConfig, err := config.LoadFromFile(configFilePath)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dnsConfig).To(Equal(config.Config{
-			Address:         listenAddress,
-			Port:            listenPort,
-			Timeout:         config.Timeout(timeoutDuration),
-			RecursorTimeout: config.Timeout(recursorTimeoutDuration),
+			Address:            listenAddress,
+			Port:               listenPort,
+			Timeout:            config.Timeout(timeoutDuration),
+			RecursorTimeout:    config.Timeout(recursorTimeoutDuration),
+			HealthcheckDomains: []string{"healthcheck.domain.", "health2.bosh."},
 		}))
 	})
 
