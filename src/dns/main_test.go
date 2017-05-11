@@ -107,7 +107,8 @@ var _ = Describe("main", func() {
 				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
 				"record_infos": [
 					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
-					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "123.456.789.000"]
+					["my-instance-1", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"],
+					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "124.124.124.124"]
 				]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
@@ -127,7 +128,8 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile2.Close()
 			_, err = aliasesFile2.Write([]byte(fmt.Sprint(`{
-				"internal.alias.": ["my-instance-2.my-group.my-network.my-deployment-2.bosh.","my-instance.my-group.my-network.my-deployment.bosh."]
+				"internal.alias.": ["my-instance-2.my-group.my-network.my-deployment-2.bosh.","my-instance.my-group.my-network.my-deployment.bosh."],
+				"group.internal.alias.": ["*.my-group.my-network.my-deployment.bosh."]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -204,17 +206,53 @@ var _ = Describe("main", func() {
 				})
 
 				Context("with multiple resolving addresses", func() {
-					BeforeEach(func() {
-						m.Question = []dns.Question{
-							{Name: "internal.alias.", Qtype: dns.TypeA},
-						}
-					})
-
 					It("resolves all domains before deferring to mux", func() {
-						_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						m.Question = []dns.Question{{Name: "internal.alias.", Qtype: dns.TypeA}}
+						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
 
+						Expect(response.Answer).To(HaveLen(2))
+						Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(response.Answer[0].Header().Name).To(Equal("internal.alias."))
+						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
+						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
+						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
+
+						Expect(response.Answer[1].Header().Name).To(Equal("internal.alias."))
+						Expect(response.Answer[1].Header().Rrtype).To(Equal(dns.TypeA))
+						Expect(response.Answer[1].Header().Class).To(Equal(uint16(dns.ClassINET)))
+						Expect(response.Answer[1].Header().Ttl).To(Equal(uint32(0)))
+
+						ips := []string{response.Answer[0].(*dns.A).A.String(), response.Answer[1].(*dns.A).A.String()}
+						Expect(ips).To(ConsistOf("123.123.123.123", "124.124.124.124"))
+
 						Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[internal\.alias\.\] 0 \d+ns`))
+					})
+
+					Context("with a group alias", func() {
+						It("returns all records belonging to the correct group", func() {
+							m.Question = []dns.Question{{Name: "group.internal.alias.", Qtype: dns.TypeA} }
+
+							response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+							Expect(err).NotTo(HaveOccurred())
+
+							Expect(response.Answer).To(HaveLen(2))
+							Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
+							Expect(response.Answer[0].Header().Name).To(Equal("group.internal.alias."))
+							Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
+							Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
+							Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
+
+							Expect(response.Answer[1].Header().Name).To(Equal("group.internal.alias."))
+							Expect(response.Answer[1].Header().Rrtype).To(Equal(dns.TypeA))
+							Expect(response.Answer[1].Header().Class).To(Equal(uint16(dns.ClassINET)))
+							Expect(response.Answer[1].Header().Ttl).To(Equal(uint32(0)))
+
+							ips := []string{response.Answer[0].(*dns.A).A.String(), response.Answer[1].(*dns.A).A.String()}
+							Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.124"))
+
+							Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[group\.internal\.alias\.\] 0 \d+ns`))
+						})
 					})
 				})
 			})

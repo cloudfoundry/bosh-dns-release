@@ -71,6 +71,47 @@ var _ = Describe("Config", func() {
 			})
 		})
 	})
+	Describe("group alias", func() {
+		Context("single level aliases", func() {
+			It("resolves", func() {
+				c := MustNewConfigFromMap(map[string][]string{
+					"alias1": {"*.domain"},
+				})
+
+				Expect(c.Resolutions("alias1.")).To(Equal([]string{"q-YWxs.domain."}))
+			})
+		})
+
+		Context("alias resolutions with no substitutions", func() {
+			It("resolves", func() {
+				c := MustNewConfigFromMap(map[string][]string{
+					"alias1": {"*.domain.com"},
+				})
+
+				Expect(c.Resolutions("alias1.")).To(Equal([]string{"q-YWxs.domain.com."}))
+			})
+		})
+
+		Context("multi-level alias", func() {
+			It("resolves", func() {
+				c := MustNewConfigFromMap(map[string][]string{
+					"sub.alias1": {"*.deepsub.sub.domain"},
+				})
+
+				Expect(c.Resolutions("sub.alias1.")).To(Equal([]string{"q-YWxs.deepsub.sub.domain."}))
+			})
+		})
+
+		Context("invalid glob", func() {
+			It("resolves as is", func() {
+				c := MustNewConfigFromMap(map[string][]string{
+					"sub.alias1": {"*unsupported.deepsub.sub.domain"},
+				})
+
+				Expect(c.Resolutions("sub.alias1.")).To(Equal([]string{"*unsupported.deepsub.sub.domain."}))
+			})
+		})
+	})
 
 	Describe("Resolutions", func() {
 		Context("when the resolving domain is aliased away", func() {

@@ -66,14 +66,17 @@ func (c *Config) setAlias(alias string, domains []string) error {
 
 	qualifedDomains := []string{}
 	for _, domain := range domains {
-		qualifedDomains = append(qualifedDomains, dns.Fqdn(domain))
+		if strings.HasPrefix(domain, "*.") {
+			qualifedDomains = append(qualifedDomains, dns.Fqdn(strings.Replace(dns.Fqdn(domain), "*", "q-YWxs", 1)))
+		} else {
+			qualifedDomains = append(qualifedDomains, dns.Fqdn(domain))
+		}
 	}
 
 	if strings.HasPrefix(alias, "_.") {
 		splitAlias := strings.SplitN(alias, ".", 2)
 		c.underscoreAliases[dns.Fqdn(splitAlias[1])] = qualifedDomains
 	} else {
-
 		c.aliases[dns.Fqdn(alias)] = qualifedDomains
 	}
 
