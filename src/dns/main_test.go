@@ -128,7 +128,6 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile2.Close()
 			_, err = aliasesFile2.Write([]byte(fmt.Sprint(`{
-				"one.alias.": ["my-instance.my-group.my-network.my-deployment.bosh."],
 				"internal.alias.": ["my-instance-2.my-group.my-network.my-deployment-2.bosh.","my-instance.my-group.my-network.my-deployment.bosh."],
 				"group.internal.alias.": ["*.my-group.my-network.my-deployment.bosh."]
 			}`)))
@@ -138,8 +137,7 @@ var _ = Describe("main", func() {
 				"address": %q,
 				"port": %d,
 				"records_file": %q,
-				"alias_files_glob": %q,
-				"healthcheck_domains": ["health.check.bosh.","health.check.ca."]
+				"alias_files_glob": %q
 			}`, listenAddress, listenPort, recordsFile.Name(), path.Join(aliasesDir, "*")))
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
@@ -165,7 +163,7 @@ var _ = Describe("main", func() {
 
 				m := &dns.Msg{}
 
-				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+				m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
 				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 				Expect(err).NotTo(HaveOccurred())
@@ -189,7 +187,7 @@ var _ = Describe("main", func() {
 			Describe("alias resolution", func() {
 				Context("with only one resolving address", func() {
 					BeforeEach(func() {
-						m.SetQuestion("one.alias.", dns.TypeA)
+						m.SetQuestion("hc.alias.", dns.TypeA)
 					})
 
 					It("resolves to the appropriate domain before deferring to mux", func() {
@@ -197,14 +195,13 @@ var _ = Describe("main", func() {
 						Expect(err).NotTo(HaveOccurred())
 
 						Expect(response.Answer).To(HaveLen(1))
-						Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
-						Expect(response.Answer[0].Header().Name).To(Equal("one.alias."))
+						Expect(response.Answer[0].Header().Name).To(Equal("healthcheck.bosh-dns."))
 						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
 						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
-						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("123.123.123.123"))
+						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[one\.alias\.\] 0 \d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.HealthCheckHandler Request \[1\] \[hc\.alias\.\] 0 \d+ns`))
 					})
 				})
 
@@ -234,7 +231,7 @@ var _ = Describe("main", func() {
 
 					Context("with a group alias", func() {
 						It("returns all records belonging to the correct group", func() {
-							m.Question = []dns.Question{{Name: "group.internal.alias.", Qtype: dns.TypeA}}
+							m.Question = []dns.Question{{Name: "group.internal.alias.", Qtype: dns.TypeA} }
 
 							response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 							Expect(err).NotTo(HaveOccurred())
@@ -260,9 +257,9 @@ var _ = Describe("main", func() {
 				})
 			})
 
-			Context("healthcheck domains", func() {
+			Context("healthcheck.bosh-dns.", func() {
 				BeforeEach(func() {
-					m.SetQuestion("health.check.bosh.", dns.TypeA)
+					m.SetQuestion("healthcheck.bosh-dns.", dns.TypeA)
 				})
 
 				It("responds with a success rcode", func() {
@@ -270,24 +267,13 @@ var _ = Describe("main", func() {
 
 					Expect(err).NotTo(HaveOccurred())
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(r.Answer).To(HaveLen(1))
-					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal("health.check.bosh."))
-					Expect(r.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
-
-					m.SetQuestion("health.check.ca.", dns.TypeA)
-					r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-					Expect(err).NotTo(HaveOccurred())
-					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(r.Answer).To(HaveLen(1))
-					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal("health.check.ca."))
-					Expect(r.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 				})
 
 				It("logs handler time", func() {
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.HealthCheckHandler Request \[1\] \[health\.check\.bosh\.\] 0 \d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.HealthCheckHandler Request \[1\] \[healthcheck\.bosh-dns\.\] 0 \d+ns`))
 				})
 			})
 

@@ -10,14 +10,13 @@ import (
 )
 
 type Config struct {
-	Address            string
-	Port               int
-	Timeout            Timeout
-	RecursorTimeout    Timeout `json:"recursor_timeout"`
-	Recursors          []string
-	RecordsFile        string   `json:"records_file"`
-	AliasFilesGlob     string   `json:"alias_files_glob"`
-	HealthcheckDomains []string `json:"healthcheck_domains"`
+	Address         string
+	Port            int
+	Timeout         Timeout
+	RecursorTimeout Timeout `json:"recursor_timeout"`
+	Recursors       []string
+	RecordsFile     string `json:"records_file"`
+	AliasFilesGlob  string `json:"alias_files_glob"`
 }
 
 type Timeout time.Duration

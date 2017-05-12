@@ -65,16 +65,4 @@ var _ = Describe("Integration", func() {
 
 		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 	})
-
-	It("should resolve specified healthcheck", func() {
-		cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A A healthcheck.bosh-dns. @%s", firstInstance.IP), " ")...)
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-
-		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-
-		Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
-	})
 })

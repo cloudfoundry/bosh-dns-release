@@ -47,6 +47,14 @@ func (h AliasResolvingHandler) ServeDNS(responseWriter dns.ResponseWriter, reque
 	}
 
 	if aliasTargets := h.config.Resolutions(questionName); len(aliasTargets) > 0 {
+
+		// This block can go away when healthcheck domains can be specified as job properties
+		if len(aliasTargets) == 1 && aliasTargets[0] == "healthcheck.bosh-dns." {
+			healthCheckHandler := NewHealthCheckHandler(h.logger)
+			NewRequestLoggerHandler(healthCheckHandler, clock.Real, h.logger).ServeDNS(responseWriter, requestMsg)
+			return
+		}
+
 		before := h.clock.Now()
 
 		responseMsg := h.domainResolver.Resolve(aliasTargets, responseWriter, requestMsg)

@@ -42,8 +42,3 @@ properties:
   override_nameserver:
     description: "Configure ourselves as the system nameserver (e.g. /etc/resolv.conf will be watched and overwritten)"
     default: true
-  healthcheck_domains:
-    description: "Domain names that the dns server should respond to with successful answers. Answer ip will always be 127.0.0.1"
-    default:
-      - healthcheck.bosh-dns.
-      - consul.service.cf.internal.
