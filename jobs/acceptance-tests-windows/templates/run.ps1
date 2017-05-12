@@ -6,7 +6,7 @@ go.exe install github.com/cloudfoundry/dns-release/src/vendor/github.com/onsi/gi
 
 Push-Location "C:\var\vcap\packages\acceptance-tests-windows\src\github.com\cloudfoundry\dns-release\src\acceptance_tests\windows"
 
-ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
+ginkgo -randomizeAllSpecs -randomizeSuites -race <%= p('suites') %>
 
 Pop-Location
 

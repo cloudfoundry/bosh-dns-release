@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("windows tests", func() {
 	It("should bind to tcp and udp", func() {
-		cmd := exec.Command("powershell.exe", "assets/netstat.ps1")
+		cmd := exec.Command("powershell.exe", "-Command", "netstat -na | findstr :53")
 
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
@@ -24,7 +24,7 @@ var _ = Describe("windows tests", func() {
 	})
 
 	It("should respond to dns queries", func() {
-		cmd := exec.Command("powershell.exe", "assets/resolve-dnsname-alias.ps1")
+		cmd := exec.Command("powershell.exe", "-Command", "Resolve-DnsName -DnsOnly -Name healthcheck.bosh-dns. -Server 169.254.0.2 | Format-list")
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -35,7 +35,7 @@ var _ = Describe("windows tests", func() {
 
 	Context("as the system-configured nameserver", func() {
 		It("should respond to dns queries", func() {
-			cmd := exec.Command("powershell.exe", "assets/resolve-dnsname.ps1")
+			cmd := exec.Command("powershell.exe", "-Command", "Resolve-DnsName -DnsOnly -Name healthcheck.bosh-dns. | Format-list")
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 

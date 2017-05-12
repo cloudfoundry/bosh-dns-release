@@ -9,3 +9,8 @@ templates:
 packages:
   - golang-windows
   - acceptance-tests-windows
+
+properties:
+  suites:
+    default: .
+    description: "Suites to execute within acceptance_tests/windows"

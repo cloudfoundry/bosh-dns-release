@@ -67,9 +67,16 @@ bosh -n upload-stemcell $ROOT_DIR/bosh-candidate-stemcell-windows/*.tgz
 bosh -d bosh-dns-windows-acceptance -n deploy $ROOT_DIR/dns-release/ci/assets/windows-acceptance-manifest.yml \
     -v dns_release_path=$ROOT_DIR/dns-release
 
-bosh -d bosh-dns-windows-acceptance run-errand acceptance-tests-windows --keep-alive
+bosh -d bosh-dns-windows-acceptance run-errand acceptance-tests-windows
 
-## Deploy and run tests that check windows can serve DNS
+# Deploy and run tests that check the dns resolver on windows locally
+bosh -d bosh-dns-windows-acceptance -n deploy --recreate $ROOT_DIR/dns-release/ci/assets/windows-acceptance-manifest.yml \
+    -o $ROOT_DIR/dns-release/src/acceptance_tests/windows/disable_nameserver_override/manifest-ops.yml \
+    -v dns_release_path=$ROOT_DIR/dns-release
+
+bosh -d bosh-dns-windows-acceptance run-errand acceptance-tests-windows
+
+# Deploy and run tests that check windows can serve DNS
 bosh -d bosh-dns -n deploy $ROOT_DIR/dns-release/ci/assets/dns-windows.yml \
     -v dns_release_path=$ROOT_DIR/dns-release \
     -v acceptance_release_path=$ROOT_DIR/dns-release/src/acceptance_tests/dns-acceptance-release

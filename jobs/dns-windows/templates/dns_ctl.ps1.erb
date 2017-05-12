@@ -7,4 +7,24 @@ if ($? -eq $False) {
   New-NetIPAddress -InterfaceIndex $loopbackInterfaceIndex -IPAddress <%= p('aliased_address') %>
 }
 
-\var\vcap\packages\dns-windows\bin\dns.exe -config \var\vcap\jobs\dns-windows\config\config.json
+$ErrorActionPreference = "Stop"
+try {
+  $RegistryPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters"
+  $ExpectedValue = 0
+  $Value = Get-ItemProperty -Path $RegistryPath
+  if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
+    Set-ItemProperty -Path $RegistryPath -Name MaxNegativeCacheTtl -Value $ExpectedValue -Type DWord
+    $Value = Get-ItemProperty -Path $RegistryPath
+    if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
+      Write-Error "Error: Expected MaxNegativeCacheTtl to be '${ExpectedValue}', got '${Value.MaxNegativeCacheTtl}'"
+    }
+  }
+
+  Clear-DnsClientCache
+
+  \var\vcap\packages\dns-windows\bin\dns.exe -config \var\vcap\jobs\dns-windows\config\config.json
+} catch {
+  $Host.UI.WriteErrorLine($_.Exception.Message)
+  Exit 1
+}
+Exit 0
