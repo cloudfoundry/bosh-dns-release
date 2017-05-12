@@ -35,3 +35,8 @@ properties:
     example:
       cc.cf.consul: [ one, two, ... ]
       third.internal: [ four ]
+  healthcheck_domains:
+    description: "Domain names that the dns server should respond to with successful answers. Answer ip will always be 127.0.0.1"
+    default:
+      - healthcheck.bosh-dns.
+      - consul.service.cf.internal.
