@@ -40,3 +40,6 @@ properties:
     default:
       - healthcheck.bosh-dns.
       - consul.service.cf.internal.
+  override_nameserver:
+    description: "Configure ourselves as the system nameserver (e.g. network server addresses will be watched and overwritten)"
+    default: true

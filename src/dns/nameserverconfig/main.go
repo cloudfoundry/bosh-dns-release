@@ -4,7 +4,6 @@ import (
 	"flag"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"github.com/cloudfoundry/dns-release/src/dns/nameserverconfig/handler"
 	"github.com/cloudfoundry/dns-release/src/dns/nameserverconfig/monitor"
 	"log"
 	"net"
@@ -33,7 +32,7 @@ func main() {
 	signal.Notify(sigterm, syscall.SIGTERM)
 
 	monitor := monitor.NewMonitor(
-		handler.NewResolvConfHandler(bindAddress, boshsys.NewOsFileSystem(logger), cmdRunner),
+		HandlerFactory(bindAddress, logger, cmdRunner),
 		logger,
 		3*time.Second,
 	)

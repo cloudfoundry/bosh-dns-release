@@ -21,14 +21,25 @@ if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: ${pkg_path}"
 }
 
+go.exe install "${pkg_path}\nameserverconfig"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Error compiling: ${pkg_path}\nameserverconfig"
+}
+
 New-Item -ItemType "directory" -Force "emptyfolder"
 robocopy /PURGE "emptyfolder" "${BOSH_INSTALL_TARGET}/src"
 if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /PURGE emptyfolder ${BOSH_INSTALL_TARGET}/src"
 }
+
 robocopy /PURGE "emptyfolder" "${BOSH_INSTALL_TARGET}/pkg"
 if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /PURGE emptyfolder ${BOSH_INSTALL_TARGET}/pkg"
+}
+
+robocopy "dns\nameserverconfig\assets" "${BOSH_INSTALL_TARGET}/bin" "*.ps1"
+if ($LASTEXITCODE -ge 8) {
+    Write-Error "robocopy dns\nameserverconfig\assets\*.ps1 ${BOSH_INSTALL_TARGET}/bin"
 }
 
 Remove-Item -Force -Recurse "${BOSH_INSTALL_TARGET}/src"

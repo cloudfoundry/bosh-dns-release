@@ -1,9 +1,21 @@
-{
-  "processes": [
-    {
-      "name": "dns-windows",
-      "executable": "powershell",
-      "args": [ "/var/vcap/jobs/dns-windows/bin/dns_ctl.ps1" ]
-    }
-  ]
+<%=
+
+monit = {
+  processes: [{
+    name: "dns-windows",
+    executable: "powershell",
+    args: ["/var/vcap/jobs/dns-windows/bin/dns_ctl.ps1"]
+  }]
 }
+
+if p('override_nameserver')
+  monit[:processes] << {
+    name: "dns-nameserverconfig-windows",
+    executable: "/var/vcap/packages/dns-windows/bin/nameserverconfig.exe",
+    args: ["--bindAddress", p('address').to_s == "0.0.0.0" ? "127.0.0.1" : p('address')]
+  }
+end
+
+JSON.dump(monit)
+
+%>
