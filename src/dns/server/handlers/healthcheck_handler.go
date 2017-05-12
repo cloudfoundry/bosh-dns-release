@@ -25,7 +25,7 @@ func (h HealthCheckHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 
 	msg.Answer = append(msg.Answer, &dns.A{
 		Hdr: dns.RR_Header{
-			Name:   "healthcheck.bosh-dns.",
+			Name:   req.Question[0].Name,
 			Rrtype: dns.TypeA,
 			Class:  dns.ClassINET,
 			Ttl:    0,

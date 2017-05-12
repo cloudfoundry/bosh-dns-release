@@ -77,9 +77,13 @@ func mainExitCode() int {
 	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), logger)
 	localDomain := dnsresolver.NewLocalDomain(logger, recordsRepo, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
+
 	addHandler(mux, "bosh.", discoveryHandler, logger)
 	addHandler(mux, "arpa.", handlers.NewArpaHandler(logger), logger)
-	addHandler(mux, "healthcheck.bosh-dns.", handlers.NewHealthCheckHandler(logger), logger)
+
+	for _, healthCheckDomain := range config.HealthcheckDomains {
+		addHandler(mux, healthCheckDomain, handlers.NewHealthCheckHandler(logger), logger)
+	}
 
 	forwardHandler := handlers.NewForwardHandler(config.Recursors, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), logger)
 	addHandler(mux, ".", forwardHandler, logger)

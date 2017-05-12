@@ -53,6 +53,7 @@ var _ = Describe("HealthCheckHandler", func() {
 				fakeWriter.WriteMsgReturns(errors.New("failed to write message"))
 
 				m := &dns.Msg{}
+				m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
 				healthCheckHandler.ServeDNS(fakeWriter, m)
 
 				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
