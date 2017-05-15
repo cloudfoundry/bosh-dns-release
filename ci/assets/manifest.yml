@@ -26,6 +26,7 @@ instance_groups:
     address: 0.0.0.0
     recursors:
     - 8.8.8.8
+    recursor_timeout: 1s
 
 releases:
 - name: dns

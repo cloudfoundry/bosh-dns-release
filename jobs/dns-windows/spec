@@ -43,3 +43,6 @@ properties:
   override_nameserver:
     description: "Configure ourselves as the system nameserver (e.g. network server addresses will be watched and overwritten)"
     default: true
+  recursor_timeout:
+    description: "A timeout value for when dialing, writing and reading from the configured recursors"
+    default: 2s

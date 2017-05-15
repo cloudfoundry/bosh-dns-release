@@ -52,6 +52,27 @@ var _ = Describe("recursor", func() {
 		})
 	})
 
+	It("timeouts when recursor takes longer than configured recursor_timeout", func() {
+		By("ensuring the test recursor is working", func() {
+			cmd := exec.Command("dig", strings.Split("+ignore +notcp -p 9955 -t A slow-recursor.com. @127.0.0.1", " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring(";; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+		})
+
+		By("ensuring the dns release returns a error due to recursor timing out", func() {
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp -t A slow-recursor.com. @%s", firstInstance.IP), " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring("status: SERVFAIL"))
+		})
+	})
+
 	It("forwards large UDP EDNS messages", func() {
 		By("ensuring the test recursor is returning messages", func() {
 			cmd := exec.Command("dig", strings.Split("+ignore +notcp +bufsize=65535 -p 9955 udp-9k-message.com. @127.0.0.1", " ")...)
@@ -75,7 +96,7 @@ var _ = Describe("recursor", func() {
 		})
 	})
 
-	It("it compresses message responses that are larger than requested UDPSize", func() {
+	It("compresses message responses that are larger than requested UDPSize", func() {
 		By("ensuring the test recursor is returning messages", func() {
 			cmd := exec.Command("dig", strings.Split("+ignore +notcp +bufsize=16384 -p 9955 compressed-ip-truncated-recursor-large.com. @127.0.0.1", " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)

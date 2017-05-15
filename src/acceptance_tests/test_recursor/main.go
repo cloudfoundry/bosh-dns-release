@@ -6,6 +6,7 @@ import (
 
 	"fmt"
 	"github.com/miekg/dns"
+	"time"
 )
 
 func main() {
@@ -127,6 +128,29 @@ func main() {
 
 		msg.Truncated = false
 
+		err := resp.WriteMsg(msg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+
+	dns.HandleFunc("slow-recursor.com.", func(resp dns.ResponseWriter, req *dns.Msg) {
+		msg := new(dns.Msg)
+		msg.SetReply(req)
+		msg.SetRcode(req, dns.RcodeSuccess)
+		msg.Authoritative = true
+		aRec := &dns.A{
+			Hdr: dns.RR_Header{
+				Name:   req.Question[0].Name,
+				Rrtype: dns.TypeA,
+				Class:  dns.ClassINET,
+				Ttl:    0,
+			},
+			A: net.ParseIP("127.0.0.1").To4(),
+		}
+		msg.Answer = append(msg.Answer, aRec)
+
+		time.Sleep(2 * time.Second)
 		err := resp.WriteMsg(msg)
 		if err != nil {
 			fmt.Println(err)
