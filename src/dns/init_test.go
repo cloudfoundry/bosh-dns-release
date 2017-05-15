@@ -6,6 +6,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 
 	"testing"
+	"time"
 )
 
 func TestDNS(t *testing.T) {
@@ -22,6 +23,7 @@ var _ = BeforeSuite(func() {
 
 	pathToServer, err = gexec.Build("github.com/cloudfoundry/dns-release/src/dns")
 	Expect(err).NotTo(HaveOccurred())
+	SetDefaultEventuallyTimeout(2 * time.Second)
 })
 
 var _ = AfterSuite(func() {
