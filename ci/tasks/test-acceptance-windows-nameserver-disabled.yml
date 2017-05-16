@@ -12,4 +12,4 @@ inputs:
   - name: bosh-candidate-stemcell-windows
 
 run:
-  path: dns-release/ci/tasks/test-acceptance-windows.sh
+  path: dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.sh

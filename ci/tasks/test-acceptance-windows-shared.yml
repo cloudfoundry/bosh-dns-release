@@ -10,6 +10,7 @@ inputs:
   - name: dns-release
   - name: bbl-state
   - name: bosh-candidate-stemcell-windows
+  - name: gcp-linux-stemcell
 
 run:
-  path: dns-release/ci/tasks/test-acceptance-windows.sh
+  path: dns-release/ci/tasks/test-acceptance-windows-shared.sh

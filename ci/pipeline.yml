@@ -56,9 +56,20 @@ jobs:
     - get: bosh-candidate-stemcell-windows
     - get: bosh-candidate-release
     - task: test-acceptance
-      file: dns-release/ci/tasks/test-acceptance-windows.yml
+      file: dns-release/ci/tasks/bbl-up.yml
       params:
         BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
+      on_success:
+        do:
+          - task: windows
+            file: dns-release/ci/tasks/test-acceptance-windows.yml
+          - task: windows-nameserver-disabled
+            file: dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
+          - task: windows-shared
+            file: dns-release/ci/tasks/test-acceptance-windows-shared.yml
+      ensure:
+        task: teardown
+        file: dns-release/ci/tasks/bbl-destroy.yml
 
 resources:
 - name: dns-release

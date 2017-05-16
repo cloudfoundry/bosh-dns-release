@@ -1,0 +1,27 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: bosh/main-ruby-go
+
+inputs:
+  - name: dns-release
+  - name: bbl-cli
+  - name: bosh-cli
+  - name: bosh-deployment
+  - name: bosh-candidate-release
+
+outputs:
+  - name: bbl-state
+
+params:
+  BBL_GCP_SERVICE_ACCOUNT_KEY:
+  BBL_GCP_PROJECT_ID: cf-bosh-core
+  BBL_GCP_ZONE: us-central1-a
+  BBL_GCP_REGION: us-central1
+  BBL_IAAS: gcp
+
+run:
+  path: dns-release/ci/tasks/bbl-up.sh
