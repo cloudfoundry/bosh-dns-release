@@ -10,10 +10,6 @@ templates:
 packages:
   - dns-windows
 
-provides: []
-
-consumes: []
-
 properties:
   address:
     description: "Address in which the DNS server will bind"
@@ -21,28 +17,33 @@ properties:
   aliased_address:
     description: "Address that will be added by default"
     default: 169.254.0.2
-  recursors:
-    description: "Addresses of upstream DNS servers used for recursively resolving queries"
-    default: []
+
   records_file:
     description: "Path to the file containing information that the DNS server will use to create DNS records"
     default: C:\var\vcap\instance\dns\records.json
-  alias_files_glob:
-    description: "Glob for any files to look for DNS alias information"
-    default: C:\var\vcap\jobs\*\dns\aliases.json
+
   aliases:
     description: "Hash of domain key to target domains array for aliased DNS lookups"
     example:
       cc.cf.consul: [ one, two, ... ]
       third.internal: [ four ]
+  alias_files_glob:
+    description: "Glob for any files to look for DNS alias information"
+    default: C:\var\vcap\jobs\*\dns\aliases.json
+
+  override_nameserver:
+    description: "Configure ourselves as the system nameserver (e.g. network server addresses will be watched and overwritten)"
+    default: true
+
+  recursors:
+    description: "Addresses of upstream DNS servers used for recursively resolving queries"
+    default: []
+  recursor_timeout:
+    description: "A timeout value for when dialing, writing and reading from the configured recursors"
+    default: 2s
+
   healthcheck_domains:
     description: "Domain names that the dns server should respond to with successful answers. Answer ip will always be 127.0.0.1"
     default:
       - healthcheck.bosh-dns.
       - consul.service.cf.internal.
-  override_nameserver:
-    description: "Configure ourselves as the system nameserver (e.g. network server addresses will be watched and overwritten)"
-    default: true
-  recursor_timeout:
-    description: "A timeout value for when dialing, writing and reading from the configured recursors"
-    default: 2s
