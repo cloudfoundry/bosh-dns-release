@@ -1,7 +1,0 @@
----
-name: winrm
-description: "This job enables Windows Remote Management so that remote powershell is available"
-templates:
-  pre-start.ps1: bin/pre-start.ps1
-
-packages:
