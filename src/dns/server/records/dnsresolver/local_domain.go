@@ -81,13 +81,18 @@ func (d LocalDomain) resolve(answerDomain string, questionDomains []string) ([]d
 }
 
 func (LocalDomain) trimIfNeeded(responseWriter dns.ResponseWriter, resp *dns.Msg) {
-	if _, ok := responseWriter.RemoteAddr().(*net.UDPAddr); ok {
-		numAnswers := len(resp.Answer)
+	maxLength := dns.MaxMsgSize
+	_, isUDP := responseWriter.RemoteAddr().(*net.UDPAddr)
 
-		for len(resp.Answer) > 0 && resp.Len() > 512 {
-			resp.Answer = resp.Answer[:len(resp.Answer)-1]
-		}
-
-		resp.Truncated = len(resp.Answer) < numAnswers
+	if isUDP {
+		maxLength = 512
 	}
+
+	numAnswers := len(resp.Answer)
+
+	for len(resp.Answer) > 0 && resp.Len() > maxLength {
+		resp.Answer = resp.Answer[:len(resp.Answer)-1]
+	}
+
+	resp.Truncated = isUDP && len(resp.Answer) < numAnswers
 }

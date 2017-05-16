@@ -219,6 +219,42 @@ var _ = Describe("LocalDomain", func() {
 			})
 
 			Context("when the request is tcp", func() {
+				Context("and the message is longer than MaxMsgSize", func() {
+					BeforeEach(func() {
+						recordSet = records.RecordSet{
+							Records: []records.Record{},
+						}
+
+						for i := 0; i < 1000; i += 1 {
+							recordSet.Records = append(recordSet.Records, records.Record{
+								Id:         "my-instance",
+								Group:      "my-group",
+								Network:    "my-network",
+								Deployment: "my-deployment",
+								Ip:         "123.123.123.123",
+							})
+						}
+
+						fakeRecordSetRepo.GetReturns(recordSet, nil)
+					})
+
+					It("truncates the answers", func() {
+						fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
+
+						responseMsg := localDomain.Resolve(
+							[]string{"my-instance.my-group.my-network.my-deployment.bosh."},
+							fakeWriter,
+							req,
+						)
+
+						Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+						// https://tools.ietf.org/html/rfc2181#page-11
+						// should not be marked as truncated because we don't want clients to ignore this response
+						Expect(responseMsg.Truncated).To(Equal(false))
+						Expect(responseMsg.Len()).To(BeNumerically("<", dns.MaxMsgSize))
+					})
+				})
+
 				It("does not truncate", func() {
 					fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
 
