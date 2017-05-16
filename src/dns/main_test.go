@@ -92,9 +92,10 @@ var _ = Describe("main", func() {
 
 	Context("when the server starts successfully", func() {
 		var (
-			cmd        *exec.Cmd
-			session    *gexec.Session
-			aliasesDir string
+			cmd             *exec.Cmd
+			session         *gexec.Session
+			aliasesDir      string
+			recordsFilePath string
 		)
 
 		BeforeEach(func() {
@@ -112,6 +113,8 @@ var _ = Describe("main", func() {
 				]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
+
+			recordsFilePath = recordsFile.Name()
 
 			aliasesDir, err = ioutil.TempDir("", "aliases")
 			Expect(err).NotTo(HaveOccurred())
@@ -140,7 +143,7 @@ var _ = Describe("main", func() {
 				"records_file": %q,
 				"alias_files_glob": %q,
 				"healthcheck_domains": ["health.check.bosh.","health.check.ca."]
-			}`, listenAddress, listenPort, recordsFile.Name(), path.Join(aliasesDir, "*")))
+			}`, listenAddress, listenPort, recordsFilePath, path.Join(aliasesDir, "*")))
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -344,6 +347,35 @@ var _ = Describe("main", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request \[1\] \[my-instance\.my-group\.my-network\.my-deployment\.bosh\.\] 0 \d+ns`))
+				})
+			})
+
+			Context("changing records.json", func() {
+				BeforeEach(func() {
+					var err error
+
+					err = ioutil.WriteFile(recordsFilePath, []byte(fmt.Sprint(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
+				"record_infos": [
+					["my-instance", "my-group", "az1", "my-network", "my-deployment", "124.124.124.124"]
+				]
+			}`)), 0644)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				It("picks up the changes", func() {
+					Eventually(func() string {
+						m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer := r.Answer[0]
+						Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+
+						return answer.(*dns.A).A.String()
+					}).Should(Equal("124.124.124.124"))
 				})
 			})
 		})
