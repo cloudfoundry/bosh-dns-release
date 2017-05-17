@@ -3,11 +3,13 @@ package handler
 import (
 	"errors"
 	"fmt"
-	bosherr "github.com/cloudfoundry/bosh-utils/errors"
-	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"regexp"
 	"strings"
 	"time"
+
+	"code.cloudfoundry.org/clock"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 var warningLine = "# This file was automatically updated by bosh-dns"
@@ -16,13 +18,15 @@ var nameserverLineRegex = regexp.MustCompile("^nameserver (.+)")
 
 type ResolvConfHandler struct {
 	address   string
+	clock     clock.Clock
 	fs        boshsys.FileSystem
 	cmdRunner boshsys.CmdRunner
 }
 
-func NewResolvConfHandler(address string, fileSys boshsys.FileSystem, cmdRunner boshsys.CmdRunner) ResolvConfHandler {
+func NewResolvConfHandler(address string, clock clock.Clock, fileSys boshsys.FileSystem, cmdRunner boshsys.CmdRunner) ResolvConfHandler {
 	return ResolvConfHandler{
 		address:   address,
+		clock:     clock,
 		fs:        fileSys,
 		cmdRunner: cmdRunner,
 	}
@@ -61,7 +65,7 @@ nameserver %s
 
 		// seems like `resolvconf -u` may not immediately update /etc/resolv.conf, so
 		// block here briefly to try and ensure it was successful before we error
-		time.Sleep(2 * time.Second)
+		c.clock.Sleep(2 * time.Second)
 	}
 
 	return errors.New("Failed to confirm nameserver in /etc/resolv.conf")

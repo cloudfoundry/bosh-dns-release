@@ -1,10 +1,14 @@
 package handler_test
 
 import (
+	"time"
+
+	"code.cloudfoundry.org/clock/fakeclock"
 	. "github.com/cloudfoundry/dns-release/src/dns/nameserverconfig/handler"
 
 	"errors"
 	"fmt"
+
 	boshsysfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,6 +16,7 @@ import (
 
 var _ = Describe("ResolvConfCheck", func() {
 	var (
+		clock            *fakeclock.FakeClock
 		resolvConfCheck  ResolvConfHandler
 		fakeFileSystem   *boshsysfakes.FakeFileSystem
 		fakeCmdRunner    *boshsysfakes.FakeCmdRunner
@@ -20,9 +25,16 @@ var _ = Describe("ResolvConfCheck", func() {
 	)
 
 	BeforeEach(func() {
+		clock = fakeclock.NewFakeClock(time.Now())
 		fakeFileSystem = boshsysfakes.NewFakeFileSystem()
 		fakeCmdRunner = boshsysfakes.NewFakeCmdRunner()
-		resolvConfCheck = NewResolvConfHandler(correctAddress, fakeFileSystem, fakeCmdRunner)
+		resolvConfCheck = NewResolvConfHandler(correctAddress, clock, fakeFileSystem, fakeCmdRunner)
+
+		go func() {
+			for {
+				clock.WaitForWatcherAndIncrement(2 * time.Second)
+			}
+		}()
 	})
 
 	Describe("Apply", func() {
@@ -141,7 +153,7 @@ nameserver %s
 		})
 
 		It("detects when resolv.conf is invalid", func() {
-			resolvConfCheck = NewResolvConfHandler(incorrectAddress, fakeFileSystem, fakeCmdRunner)
+			resolvConfCheck = NewResolvConfHandler(incorrectAddress, clock, fakeFileSystem, fakeCmdRunner)
 
 			res, err := resolvConfCheck.IsCorrect()
 			Expect(err).ToNot(HaveOccurred())
