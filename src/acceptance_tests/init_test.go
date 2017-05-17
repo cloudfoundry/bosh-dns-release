@@ -66,7 +66,7 @@ func getInstanceInfos(boshBinary string) []instanceInfo {
 	cmd := exec.Command(boshBinary, "instances", "--json")
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
-	Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+	Eventually(session, 20*time.Second).Should(gexec.Exit(0))
 
 	var response struct {
 		Tables []struct {
