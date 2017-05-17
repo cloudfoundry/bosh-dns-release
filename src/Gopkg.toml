@@ -14,3 +14,7 @@
 [[dependencies]]
   branch = "master"
   name = "github.com/rcrowley/go-metrics"
+
+[[dependencies]]
+  branch = "master"
+  name = "code.cloudfoundry.org/clock"
