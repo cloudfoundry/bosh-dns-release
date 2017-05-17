@@ -20,10 +20,11 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/miekg/dns"
-	"github.com/onsi/gomega/gbytes"
 	"os"
 	"path"
+
+	"github.com/miekg/dns"
+	"github.com/onsi/gomega/gbytes"
 )
 
 func getFreePort() (int, error) {
@@ -105,11 +106,13 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = recordsFile.Write([]byte(fmt.Sprint(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
 				"record_infos": [
-					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
-					["my-instance-1", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"],
-					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "124.124.124.124"]
+					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "bosh"],
+					["my-instance-1", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "bosh"],
+					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "124.124.124.124", "bosh"],
+					["my-instance-1", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "foo"],
+					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "124.124.124.124", "foo"]
 				]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
@@ -149,6 +152,16 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(waitForServer(listenPort)).To(Succeed())
+
+			Eventually(func() int {
+				c := &dns.Client{}
+				m := &dns.Msg{}
+				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+				Expect(err).NotTo(HaveOccurred())
+				return r.Rcode
+			}).Should(Equal(dns.RcodeSuccess))
 		})
 
 		AfterEach(func() {
@@ -316,12 +329,12 @@ var _ = Describe("main", func() {
 				})
 			})
 
-			Context("bosh.", func() {
+			Context("domains from records.json", func() {
 				BeforeEach(func() {
-					m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+					m.SetQuestion("my-instance-1.my-group.my-network.my-deployment.foo.", dns.TypeA)
 				})
 
-				It("responds to A queries for bosh. with content from the record API", func() {
+				It("responds to A queries for foo. with content from the record API", func() {
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
@@ -339,14 +352,14 @@ var _ = Describe("main", func() {
 					Expect(header.Ttl).To(Equal(uint32(0)))
 
 					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
-					Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.123"))
+					Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.124"))
 				})
 
 				It("logs handler time", func() {
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request \[1\] \[my-instance\.my-group\.my-network\.my-deployment\.bosh\.\] 0 \d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request \[1\] \[my-instance-1\.my-group\.my-network\.my-deployment\.foo\.\] 0 \d+ns`))
 				})
 			})
 
@@ -355,11 +368,11 @@ var _ = Describe("main", func() {
 					var err error
 
 					err = ioutil.WriteFile(recordsFilePath, []byte(fmt.Sprint(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
-				"record_infos": [
-					["my-instance", "my-group", "az1", "my-network", "my-deployment", "124.124.124.124"]
-				]
-			}`)), 0644)
+						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+						"record_infos": [
+							["my-instance", "my-group", "az1", "my-network", "my-deployment", "124.124.124.124", "bosh"]
+						]
+					}`)), 0644)
 					Expect(err).NotTo(HaveOccurred())
 				})
 

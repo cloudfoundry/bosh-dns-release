@@ -51,10 +51,10 @@ var _ = Describe("Repo", func() {
 			recordsFile = fakes.NewFakeFile("/fake/file", fakeFileSystem)
 
 			err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(fmt.Sprint(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
 				"record_infos": [
-					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
-					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"]
+					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
 				]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
@@ -70,7 +70,6 @@ var _ = Describe("Repo", func() {
 				fakeFileSystem.RegisterOpenFile(nonExistentFilePath, &fakes.FakeFile{
 					StatErr: errors.New("NOPE"),
 				})
-
 			})
 
 			It("returns an error when the file does not exist", func() {
@@ -94,7 +93,7 @@ var _ = Describe("Repo", func() {
 				recordSet, err := repo.Get()
 				Expect(err).NotTo(HaveOccurred())
 
-				records, err := recordSet.Resolve("my-instance.my-group.my-network.my-deployment.bosh.")
+				records, err := recordSet.Resolve("my-instance.my-group.my-network.my-deployment.my-domain.")
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(records).To(ContainElement("123.123.123.123"))
@@ -106,7 +105,7 @@ var _ = Describe("Repo", func() {
 			It("returns an empty set of records", func() {
 				recordSet, err := repo.Get()
 				Expect(err).NotTo(HaveOccurred())
-				records, err := recordSet.Resolve("some.garbage.fqdn.deploy.bosh")
+				records, err := recordSet.Resolve("some.garbage.fqdn.deploy.my-domain")
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(records).To(HaveLen(0))
@@ -120,10 +119,10 @@ var _ = Describe("Repo", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					err = fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "my-domain"],
 				"record_infos": [
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"]
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"""],
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"""]
 				]
 			}`))
 					Expect(err).NotTo(HaveOccurred())
@@ -139,7 +138,7 @@ var _ = Describe("Repo", func() {
 					recordSet, err := repo.Get()
 					Expect(err).NotTo(HaveOccurred())
 
-					records, err := recordSet.Resolve("my-instance.my-group.my-network.my-deployment.bosh.")
+					records, err := recordSet.Resolve("my-instance.my-group.my-network.my-deployment.my-domain.")
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(records).To(ContainElement("123.123.123.123"))
@@ -162,7 +161,7 @@ var _ = Describe("Repo", func() {
 					recordSet, err := repo.Get()
 					Expect(err).NotTo(HaveOccurred())
 
-					records, err := recordSet.Resolve("my-instance.my-group.my-network.my-deployment.bosh.")
+					records, err := recordSet.Resolve("my-instance.my-group.my-network.my-deployment.my-domain.")
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(records).To(ContainElement("123.123.123.123"))
@@ -172,10 +171,10 @@ var _ = Describe("Repo", func() {
 				Context("when records json file has been re-added with different contents", func() {
 					BeforeEach(func() {
 						err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip"],
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
 				"record_infos": [
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123"],
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124"]
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
 				]
 			}`))
 
@@ -192,7 +191,7 @@ var _ = Describe("Repo", func() {
 						recordSet, err := repo.Get()
 						Expect(err).NotTo(HaveOccurred())
 
-						records, err := recordSet.Resolve("my-instance2.my-group.my-network.my-deployment.bosh.")
+						records, err := recordSet.Resolve("my-instance2.my-group.my-network.my-deployment.my-domain.")
 						Expect(err).NotTo(HaveOccurred())
 
 						Expect(records).To(ContainElement("123.123.123.123"))

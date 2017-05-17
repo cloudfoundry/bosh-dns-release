@@ -94,6 +94,7 @@ var _ = Describe("DiscoveryHandler", func() {
 									Network:    "my-network",
 									Deployment: "my-deployment",
 									Ip:         "123.123.123.123",
+									Domain:     "bosh.",
 								},
 							},
 						}
@@ -143,6 +144,7 @@ var _ = Describe("DiscoveryHandler", func() {
 									Network:    "my-network",
 									Deployment: "my-deployment",
 									Ip:         "123.123.123.123",
+									Domain:     "bosh.",
 								},
 								{
 									Id:         "my-instance",
@@ -150,6 +152,7 @@ var _ = Describe("DiscoveryHandler", func() {
 									Network:    "my-network",
 									Deployment: "my-deployment",
 									Ip:         "127.0.0.1",
+									Domain:     "bosh.",
 								},
 								{
 									Id:         "my-instance",
@@ -157,6 +160,7 @@ var _ = Describe("DiscoveryHandler", func() {
 									Network:    "my-network",
 									Deployment: "my-deployment",
 									Ip:         "127.0.0.2",
+									Domain:     "bosh.",
 								},
 								{
 									Id:         "my-instance",
@@ -164,6 +168,7 @@ var _ = Describe("DiscoveryHandler", func() {
 									Network:    "my-network",
 									Deployment: "my-deployment",
 									Ip:         "127.0.0.3",
+									Domain:     "bosh.",
 								},
 								{
 									Id:         "my-instance",
@@ -171,6 +176,7 @@ var _ = Describe("DiscoveryHandler", func() {
 									Network:    "my-network",
 									Deployment: "my-deployment",
 									Ip:         "127.0.0.4",
+									Domain:     "bosh.",
 								},
 								{
 									Id:         "my-instance",
@@ -178,6 +184,7 @@ var _ = Describe("DiscoveryHandler", func() {
 									Network:    "my-network",
 									Deployment: "my-deployment",
 									Ip:         "127.0.0.5",
+									Domain:     "bosh.",
 								},
 								{
 									Id:         "my-instance",
@@ -185,6 +192,7 @@ var _ = Describe("DiscoveryHandler", func() {
 									Network:    "my-network",
 									Deployment: "my-deployment",
 									Ip:         "127.0.0.6",
+									Domain:     "bosh.",
 								},
 							},
 						}

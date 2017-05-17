@@ -10,9 +10,10 @@ import (
 	. "github.com/onsi/gomega"
 
 	"errors"
+	"net"
+
 	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver/dnsresolverfakes"
-	"net"
 )
 
 var _ = Describe("LocalDomain", func() {
@@ -47,6 +48,7 @@ var _ = Describe("LocalDomain", func() {
 						Network:    "network-name",
 						Deployment: "deployment-name",
 						Ip:         "123.123.123.123",
+						Domain:     "bosh.",
 					},
 					{
 						Id:         "instance-2",
@@ -54,6 +56,7 @@ var _ = Describe("LocalDomain", func() {
 						Network:    "network-name",
 						Deployment: "deployment-name",
 						Ip:         "123.123.123.246",
+						Domain:     "bosh.",
 					},
 				},
 			}
@@ -103,6 +106,7 @@ var _ = Describe("LocalDomain", func() {
 						Network:    "network-name",
 						Deployment: "deployment-name",
 						Ip:         "123.123.123.123",
+						Domain:     "bosh.",
 					},
 					{
 						Id:         "instance-2",
@@ -110,6 +114,7 @@ var _ = Describe("LocalDomain", func() {
 						Network:    "network-name",
 						Deployment: "deployment-name",
 						Ip:         "123.123.123.124",
+						Domain:     "bosh.",
 					},
 				},
 			}
@@ -152,6 +157,7 @@ var _ = Describe("LocalDomain", func() {
 							Network:    "my-network",
 							Deployment: "my-deployment",
 							Ip:         "123.123.123.123",
+							Domain:     "bosh.",
 						},
 						{
 							Id:         "my-instance",
@@ -159,6 +165,7 @@ var _ = Describe("LocalDomain", func() {
 							Network:    "my-network",
 							Deployment: "my-deployment",
 							Ip:         "127.0.0.1",
+							Domain:     "bosh.",
 						},
 						{
 							Id:         "my-instance",
@@ -166,6 +173,7 @@ var _ = Describe("LocalDomain", func() {
 							Network:    "my-network",
 							Deployment: "my-deployment",
 							Ip:         "127.0.0.2",
+							Domain:     "bosh.",
 						},
 						{
 							Id:         "my-instance",
@@ -173,6 +181,7 @@ var _ = Describe("LocalDomain", func() {
 							Network:    "my-network",
 							Deployment: "my-deployment",
 							Ip:         "127.0.0.3",
+							Domain:     "bosh.",
 						},
 						{
 							Id:         "my-instance",
@@ -180,6 +189,7 @@ var _ = Describe("LocalDomain", func() {
 							Network:    "my-network",
 							Deployment: "my-deployment",
 							Ip:         "127.0.0.4",
+							Domain:     "bosh.",
 						},
 						{
 							Id:         "my-instance",
@@ -187,6 +197,7 @@ var _ = Describe("LocalDomain", func() {
 							Network:    "my-network",
 							Deployment: "my-deployment",
 							Ip:         "127.0.0.5",
+							Domain:     "bosh.",
 						},
 						{
 							Id:         "my-instance",
@@ -194,6 +205,7 @@ var _ = Describe("LocalDomain", func() {
 							Network:    "my-network",
 							Deployment: "my-deployment",
 							Ip:         "127.0.0.6",
+							Domain:     "bosh.",
 						},
 					},
 				}
@@ -232,6 +244,7 @@ var _ = Describe("LocalDomain", func() {
 								Network:    "my-network",
 								Deployment: "my-deployment",
 								Ip:         "123.123.123.123",
+								Domain:     "bosh.",
 							})
 						}
 
@@ -281,6 +294,7 @@ var _ = Describe("LocalDomain", func() {
 						Network:    "network-name",
 						Deployment: "deployment-name",
 						Ip:         "123.123.123.123",
+						Domain:     "bosh.",
 					},
 					{
 						Id:         "instance-id",
@@ -288,6 +302,7 @@ var _ = Describe("LocalDomain", func() {
 						Network:    "network-name",
 						Deployment: "deployment-name",
 						Ip:         "123.123.123.246",
+						Domain:     "bosh.",
 					},
 				},
 			}

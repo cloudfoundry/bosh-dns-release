@@ -2,26 +2,27 @@ package handlers
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/dns-release/src/dns/clock"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal"
 	"github.com/miekg/dns"
-	"strings"
 )
 
 type RequestLoggerHandler struct {
-	child  dns.Handler
-	clock  clock.Clock
-	logger logger.Logger
-	logTag string
+	Handler dns.Handler
+	clock   clock.Clock
+	logger  logger.Logger
+	logTag  string
 }
 
 func NewRequestLoggerHandler(child dns.Handler, clock clock.Clock, logger logger.Logger) RequestLoggerHandler {
 	return RequestLoggerHandler{
-		child:  child,
-		clock:  clock,
-		logger: logger,
-		logTag: "RequestLoggerHandler",
+		Handler: child,
+		clock:   clock,
+		logger:  logger,
+		logTag:  "RequestLoggerHandler",
 	}
 }
 
@@ -33,7 +34,7 @@ func (h RequestLoggerHandler) ServeDNS(responseWriter dns.ResponseWriter, req *d
 
 	before := h.clock.Now()
 
-	h.child.ServeDNS(respWriter, req)
+	h.Handler.ServeDNS(respWriter, req)
 
 	duration := h.clock.Now().Sub(before).Nanoseconds()
 
@@ -45,7 +46,7 @@ func (h RequestLoggerHandler) ServeDNS(responseWriter dns.ResponseWriter, req *d
 		domains[i] = q.Name
 	}
 	h.logger.Info(h.logTag, fmt.Sprintf("%T Request [%s] [%s] %d %dns",
-		h.child,
+		h.Handler,
 		strings.Join(types, ","),
 		strings.Join(domains, ","),
 		respRcode,

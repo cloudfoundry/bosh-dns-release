@@ -3,10 +3,12 @@ package records
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/miekg/dns"
 	"strings"
 )
 
 type RecordSet struct {
+	Domains []string
 	Records []Record
 }
 
@@ -53,12 +55,14 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 	}
 
 	s.Records = make([]Record, len(swap.Infos))
+	s.Domains = []string{}
 
 	var idIndex,
 		groupIndex,
 		networkIndex,
 		deploymentIndex,
-		ipIndex int
+		ipIndex,
+		domainIndex int
 
 	for i, k := range swap.Keys {
 		switch k {
@@ -72,19 +76,31 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 			deploymentIndex = i
 		case "ip":
 			ipIndex = i
+		case "domain":
+			domainIndex = i
 		default:
 			continue
 		}
 	}
 
+	domains := map[string]struct{}{}
+
 	for index, info := range swap.Infos {
+		domain := dns.Fqdn(info[domainIndex])
+		domains[domain] = struct{}{}
+
 		s.Records[index] = Record{
 			Id:         info[idIndex],
 			Group:      info[groupIndex],
 			Network:    info[networkIndex],
 			Deployment: info[deploymentIndex],
 			Ip:         info[ipIndex],
+			Domain:     domain,
 		}
+	}
+
+	for domain := range domains {
+		s.Domains = append(s.Domains, domain)
 	}
 
 	return nil

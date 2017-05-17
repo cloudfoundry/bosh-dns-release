@@ -4,6 +4,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	cfclock "code.cloudfoundry.org/clock"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
@@ -17,11 +24,6 @@ import (
 	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
 	"github.com/cloudfoundry/dns-release/src/dns/shuffle"
 	"github.com/miekg/dns"
-	"net"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 func parseFlags() (string, error) {
@@ -85,15 +87,16 @@ func mainExitCode() int {
 	localDomain := dnsresolver.NewLocalDomain(logger, recordsRepo, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
-	addHandler(mux, "bosh.", discoveryHandler, logger)
-	addHandler(mux, "arpa.", handlers.NewArpaHandler(logger), logger)
+	handlerRegistrar := handlers.NewHandlerRegistrar(logger, cfclock.NewClock(), recordsRepo, mux, discoveryHandler)
+
+	handlers.AddHandler(mux, "arpa.", handlers.NewArpaHandler(logger), logger)
 
 	for _, healthCheckDomain := range config.HealthcheckDomains {
-		addHandler(mux, healthCheckDomain, handlers.NewHealthCheckHandler(logger), logger)
+		handlers.AddHandler(mux, healthCheckDomain, handlers.NewHealthCheckHandler(logger), logger)
 	}
 
 	forwardHandler := handlers.NewForwardHandler(config.Recursors, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), logger)
-	addHandler(mux, ".", forwardHandler, logger)
+	handlers.AddHandler(mux, ".", forwardHandler, logger)
 
 	aliasResolver, err := handlers.NewAliasResolvingHandler(mux, aliasConfiguration, localDomain, clock.Real, logger)
 	if err != nil {
@@ -116,6 +119,8 @@ func mainExitCode() int {
 		shutdown,
 	)
 
+	go handlerRegistrar.Run(shutdown)
+
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)
 
@@ -130,8 +135,4 @@ func mainExitCode() int {
 	}
 
 	return 0
-}
-
-func addHandler(mux *dns.ServeMux, pattern string, handler dns.Handler, logger boshlog.Logger) {
-	mux.Handle(pattern, handlers.NewRequestLoggerHandler(handler, clock.Real, logger))
 }
