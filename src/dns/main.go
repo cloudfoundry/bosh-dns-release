@@ -10,12 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	cfclock "code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/clock"
+
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"github.com/cloudfoundry/dns-release/src/dns/clock"
 	dnsconfig "github.com/cloudfoundry/dns-release/src/dns/config"
 	"github.com/cloudfoundry/dns-release/src/dns/server"
 	"github.com/cloudfoundry/dns-release/src/dns/server/aliases"
@@ -82,23 +82,24 @@ func mainExitCode() int {
 	}
 
 	mux := dns.NewServeMux()
+	clock := clock.NewClock()
 
 	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), logger)
 	localDomain := dnsresolver.NewLocalDomain(logger, recordsRepo, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
-	handlerRegistrar := handlers.NewHandlerRegistrar(logger, cfclock.NewClock(), recordsRepo, mux, discoveryHandler)
+	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordsRepo, mux, discoveryHandler)
 
-	handlers.AddHandler(mux, "arpa.", handlers.NewArpaHandler(logger), logger)
+	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
 
 	for _, healthCheckDomain := range config.HealthcheckDomains {
-		handlers.AddHandler(mux, healthCheckDomain, handlers.NewHealthCheckHandler(logger), logger)
+		handlers.AddHandler(mux, clock, healthCheckDomain, handlers.NewHealthCheckHandler(logger), logger)
 	}
 
 	forwardHandler := handlers.NewForwardHandler(config.Recursors, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), logger)
-	handlers.AddHandler(mux, ".", forwardHandler, logger)
+	handlers.AddHandler(mux, clock, ".", forwardHandler, logger)
 
-	aliasResolver, err := handlers.NewAliasResolvingHandler(mux, aliasConfiguration, localDomain, clock.Real, logger)
+	aliasResolver, err := handlers.NewAliasResolvingHandler(mux, aliasConfiguration, localDomain, clock, logger)
 	if err != nil {
 		logger.Error(logTag, fmt.Sprintf("could not initiate alias resolving handler: %s", err.Error()))
 		return 1

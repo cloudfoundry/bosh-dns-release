@@ -1,15 +1,16 @@
 package handlers_test
 
 import (
+	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
 	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
 	"github.com/miekg/dns"
 
+	"time"
+
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/clock/clockfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 )
 
 var _ = Describe("RequestLoggerHandler", func() {
@@ -19,7 +20,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 		child             dns.Handler
 		dispatchedRequest dns.Msg
 		fakeWriter        *internalfakes.FakeResponseWriter
-		fakeClock         *clockfakes.FakeClock
+		fakeClock         *fakeclock.FakeClock
 
 		makeHandler func(int) dns.Handler
 	)
@@ -27,10 +28,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 	BeforeEach(func() {
 		fakeLogger = &loggerfakes.FakeLogger{}
 		fakeWriter = &internalfakes.FakeResponseWriter{}
-		fakeClock = &clockfakes.FakeClock{}
-
-		now := time.Now()
-		fakeClock.NowReturns(now)
+		fakeClock = fakeclock.NewFakeClock(time.Now())
 
 		makeHandler = func(rcode int) dns.Handler {
 			return dns.HandlerFunc(func(resp dns.ResponseWriter, req *dns.Msg) {
@@ -41,7 +39,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 				m.RecursionAvailable = false
 				m.SetRcode(req, rcode)
 
-				fakeClock.NowReturns(now.Add(time.Duration(time.Nanosecond * 3)))
+				fakeClock.Increment(time.Nanosecond * 3)
 
 				Expect(resp.WriteMsg(m)).To(Succeed())
 			})

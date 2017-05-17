@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"code.cloudfoundry.org/clock"
+
 	"github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/dns-release/src/dns/clock"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/internal"
 	"github.com/miekg/dns"
 )

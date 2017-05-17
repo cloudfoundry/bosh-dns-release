@@ -2,13 +2,15 @@ package handlers
 
 import (
 	"errors"
+
+	"code.cloudfoundry.org/clock"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/dns-release/src/dns/server/aliases"
 
 	"fmt"
-	"github.com/cloudfoundry/dns-release/src/dns/clock"
-	"github.com/miekg/dns"
 	"strings"
+
+	"github.com/miekg/dns"
 )
 
 type AliasResolvingHandler struct {

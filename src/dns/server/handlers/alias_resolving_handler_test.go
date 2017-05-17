@@ -1,18 +1,21 @@
 package handlers_test
 
 import (
+	"time"
+
+	"code.cloudfoundry.org/clock/fakeclock"
 	. "github.com/cloudfoundry/dns-release/src/dns/server/handlers"
 
 	"errors"
+	"net"
+
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/clock/clockfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/aliases"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/handlersfakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"net"
 )
 
 var _ = Describe("AliasResolvingHandler", func() {
@@ -22,7 +25,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 		dispatchedRequest  dns.Msg
 		fakeWriter         *internalfakes.FakeResponseWriter
 		fakeDomainResolver *handlersfakes.FakeDomainResolver
-		fakeClock          *clockfakes.FakeClock
+		fakeClock          *fakeclock.FakeClock
 		fakeLogger         *loggerfakes.FakeLogger
 	)
 
@@ -30,7 +33,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 		fakeDomainResolver = &handlersfakes.FakeDomainResolver{}
 		fakeWriter = &internalfakes.FakeResponseWriter{}
 		fakeLogger = &loggerfakes.FakeLogger{}
-		fakeClock = &clockfakes.FakeClock{}
+		fakeClock = fakeclock.NewFakeClock(time.Now())
 		childHandler = dns.HandlerFunc(func(resp dns.ResponseWriter, req *dns.Msg) {
 			dispatchedRequest = *req
 
