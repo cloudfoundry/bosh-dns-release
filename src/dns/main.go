@@ -9,7 +9,7 @@ import (
 	"github.com/cloudfoundry/bosh-utils/system"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"github.com/cloudfoundry/dns-release/src/dns/clock"
-	"github.com/cloudfoundry/dns-release/src/dns/config"
+	dnsconfig "github.com/cloudfoundry/dns-release/src/dns/config"
 	"github.com/cloudfoundry/dns-release/src/dns/server"
 	"github.com/cloudfoundry/dns-release/src/dns/server/aliases"
 	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
@@ -55,7 +55,7 @@ func mainExitCode() int {
 		return 1
 	}
 
-	config, err := config.LoadFromFile(configPath)
+	config, err := dnsconfig.LoadFromFile(configPath)
 	if err != nil {
 		logger.Error(logTag, err.Error())
 		return 1
@@ -69,6 +69,13 @@ func mainExitCode() int {
 	)
 	if err != nil {
 		logger.Error(logTag, fmt.Sprintf("loading alias configuration: %s", err.Error()))
+		return 1
+	}
+
+	recursorReader := dnsconfig.NewResolvConfRecursorReader(fs, config.Address)
+	err = dnsconfig.ConfigureRecursors(recursorReader, &config)
+	if err != nil {
+		logger.Error(logTag, fmt.Sprintf("Unable to configure recursor addresses from os: %s", err.Error()))
 		return 1
 	}
 
