@@ -20,7 +20,7 @@ var _ = Describe("dns job: recursors", func() {
 		)
 		BeforeEach(func() {
 			var err error
-			cmd := exec.Command(pathToTestRecursorServer)
+			cmd := exec.Command(pathToTestRecursorServer, "53")
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 

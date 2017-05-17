@@ -6,11 +6,13 @@ import (
 
 	"fmt"
 	"github.com/miekg/dns"
+	"strconv"
 	"time"
 )
 
 func main() {
-	server := &dns.Server{Addr: "0.0.0.0:9955", Net: "udp", UDPSize: 65535}
+	server := &dns.Server{Addr: fmt.Sprintf("0.0.0.0:%d", getRecursorPort()), Net: "udp", UDPSize: 65535}
+
 	dns.HandleFunc("truncated-recursor.com.", func(resp dns.ResponseWriter, req *dns.Msg) {
 		msg := new(dns.Msg)
 
@@ -215,6 +217,19 @@ func main() {
 	})
 
 	if err := server.ListenAndServe(); err != nil {
+		fmt.Printf("Unable to start server: error: +%v", err)
 		os.Exit(1)
 	}
+}
+func getRecursorPort() int {
+	port := 9955
+	if len(os.Args) >= 2 {
+		var err error
+		port, err = strconv.Atoi(os.Args[1])
+		if err != nil {
+			fmt.Printf("Could not determine server port: error: +%v", err)
+			os.Exit(1)
+		}
+	}
+	return port
 }
