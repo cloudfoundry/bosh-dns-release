@@ -146,6 +146,9 @@ var _ = Describe("Server", func() {
 		tcpHealthCheck = healthyCheck()
 		udpHealthCheck = healthyCheck()
 
+		SetDefaultEventuallyTimeout(timeout + 2*time.Second)
+		SetDefaultConsistentlyDuration(timeout + 2*time.Second)
+
 		fakeDialer = net.Dial
 	})
 
@@ -179,8 +182,7 @@ var _ = Describe("Server", func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
 
-					err := errors.New("timed out waiting for server to bind")
-					Eventually(dnsServerFinished, timeout+(2*time.Second)).Should(Receive(&err))
+					Eventually(dnsServerFinished).Should(Receive(Equal(errors.New("timed out waiting for server to bind"))))
 				})
 			})
 		})
@@ -245,7 +247,7 @@ var _ = Describe("Server", func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
 
-					Consistently(dnsServerFinished, timeout+(2*time.Second)).ShouldNot(Receive())
+					Consistently(dnsServerFinished).ShouldNot(Receive())
 
 					Expect(fakeProtocolConn["tcp"].CloseCallCount()).To(Equal(fakeProtocolDialConn["tcp"]))
 					Expect(fakeProtocolConn["udp"].CloseCallCount()).To(Equal(fakeProtocolDialConn["udp"]))
@@ -265,8 +267,7 @@ var _ = Describe("Server", func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
 
-					err := errors.New("timed out waiting for server to bind")
-					Eventually(dnsServerFinished, timeout+(2*time.Second)).Should(Receive(&err))
+					Eventually(dnsServerFinished).Should(Receive(Equal(errors.New("timed out waiting for server to bind"))))
 				})
 			})
 
@@ -283,8 +284,7 @@ var _ = Describe("Server", func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
 
-					err := errors.New("timed out waiting for server to bind")
-					Eventually(dnsServerFinished, timeout+(2*time.Second)).Should(Receive(&err))
+					Eventually(dnsServerFinished).Should(Receive(Equal(errors.New("timed out waiting for server to bind"))))
 				})
 			})
 
@@ -295,7 +295,7 @@ var _ = Describe("Server", func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
 
-					Consistently(dnsServerFinished, timeout+(2*time.Second)).ShouldNot(Receive())
+					Consistently(dnsServerFinished).ShouldNot(Receive())
 
 					close(shutdownChannel)
 					Eventually(dnsServerFinished).Should(Receive(nil))
@@ -305,17 +305,17 @@ var _ = Describe("Server", func() {
 				})
 
 				It("returns an error if the servers were unable to shutdown cleanly", func() {
-					fakeTCPServer.ShutdownReturns(errors.New("failed to shutdown tcp server"))
+					err := errors.New("failed to shutdown tcp server")
+					fakeTCPServer.ShutdownReturns(err)
 					dnsServerFinished := make(chan error)
 					go func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
 
-					Consistently(dnsServerFinished, timeout+(2*time.Second)).ShouldNot(Receive())
+					Consistently(dnsServerFinished).ShouldNot(Receive())
 
 					close(shutdownChannel)
-					err := errors.New("failed to shutdown tcp server")
-					Eventually(dnsServerFinished).Should(Receive(&err))
+					Eventually(dnsServerFinished).Should(Receive(Equal(err)))
 
 					Expect(fakeTCPServer.ShutdownCallCount()).To(Equal(1))
 					Expect(fakeUDPServer.ShutdownCallCount()).To(Equal(1))
