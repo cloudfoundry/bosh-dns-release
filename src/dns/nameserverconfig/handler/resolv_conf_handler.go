@@ -16,6 +16,8 @@ var warningLine = "# This file was automatically updated by bosh-dns"
 
 var nameserverLineRegex = regexp.MustCompile("^nameserver (.+)")
 
+const MaxResolvConfRetries = 8
+
 type ResolvConfHandler struct {
 	address   string
 	clock     clock.Clock
@@ -58,7 +60,7 @@ nameserver %s
 		return bosherr.WrapError(err, "Executing resolvconf")
 	}
 
-	for i := 0; i < 8; i++ {
+	for i := 0; i < MaxResolvConfRetries; i++ {
 		if correct, _ := c.IsCorrect(); correct {
 			return nil
 		}

@@ -29,12 +29,6 @@ var _ = Describe("ResolvConfCheck", func() {
 		fakeFileSystem = boshsysfakes.NewFakeFileSystem()
 		fakeCmdRunner = boshsysfakes.NewFakeCmdRunner()
 		resolvConfCheck = NewResolvConfHandler(correctAddress, clock, fakeFileSystem, fakeCmdRunner)
-
-		go func() {
-			for {
-				clock.WaitForWatcherAndIncrement(2 * time.Second)
-			}
-		}()
 	})
 
 	Describe("Apply", func() {
@@ -43,6 +37,7 @@ var _ = Describe("ResolvConfCheck", func() {
 				fakeCmdRunner.AddCmdResult("resolvconf -u", boshsysfakes.FakeCmdResult{})
 				fakeFileSystem.WriteFileError = errors.New("fake-err1")
 
+				go clock.WaitForWatcherAndIncrement(time.Second * 2)
 				err := resolvConfCheck.Apply()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Writing "))
@@ -54,6 +49,7 @@ var _ = Describe("ResolvConfCheck", func() {
 			It("errors", func() {
 				fakeCmdRunner.AddCmdResult("resolvconf -u", boshsysfakes.FakeCmdResult{ExitStatus: 1, Error: errors.New("fake-err1")})
 
+				go clock.WaitForWatcherAndIncrement(time.Second * 2)
 				err := resolvConfCheck.Apply()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Executing "))
@@ -65,6 +61,11 @@ var _ = Describe("ResolvConfCheck", func() {
 			It("errors if resolvconf update fails", func() {
 				fakeCmdRunner.AddCmdResult("resolvconf -u", boshsysfakes.FakeCmdResult{})
 
+				go func() {
+					for i := 0; i < MaxResolvConfRetries; i++ {
+						clock.WaitForWatcherAndIncrement(time.Second * 2)
+					}
+				}()
 				err := resolvConfCheck.Apply()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Failed to confirm nameserver "))
@@ -77,6 +78,7 @@ var _ = Describe("ResolvConfCheck", func() {
 			// theoretically `resolvconf -u` rewrites this file externally
 			fakeFileSystem.WriteFileString("/etc/resolv.conf", `nameserver 192.0.2.100`)
 
+			go clock.WaitForWatcherAndIncrement(time.Second * 2)
 			err := resolvConfCheck.Apply()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -99,6 +101,7 @@ nameserver 8.8.8.8
 `)
 			Expect(err).NotTo(HaveOccurred())
 
+			go clock.WaitForWatcherAndIncrement(time.Second * 2)
 			err = resolvConfCheck.Apply()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -118,6 +121,7 @@ nameserver 192.0.3.2
 			// theoretically `resolvconf -u` rewrites this file externally
 			fakeFileSystem.WriteFileString("/etc/resolv.conf", `nameserver 192.0.2.100`)
 
+			go clock.WaitForWatcherAndIncrement(time.Second * 2)
 			err := resolvConfCheck.Apply()
 			Expect(err).NotTo(HaveOccurred())
 
