@@ -3,9 +3,6 @@ package manager_test
 import (
 	"errors"
 	"fmt"
-	"time"
-
-	"code.cloudfoundry.org/clock/fakeclock"
 
 	boshsysfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
 	"github.com/cloudfoundry/dns-release/src/dns/manager"
@@ -16,16 +13,12 @@ import (
 var _ = Describe("WindowsManager", func() {
 	var (
 		dnsManager    manager.DNSManager
-		fs            *boshsysfakes.FakeFileSystem
-		clock         *fakeclock.FakeClock
 		fakeCmdRunner *boshsysfakes.FakeCmdRunner
 	)
 
 	BeforeEach(func() {
-		clock = fakeclock.NewFakeClock(time.Now())
 		fakeCmdRunner = boshsysfakes.NewFakeCmdRunner()
-		fs = boshsysfakes.NewFakeFileSystem()
-		dnsManager = manager.NewWindowsManager(clock, fs, fakeCmdRunner)
+		dnsManager = manager.NewWindowsManager(fakeCmdRunner)
 	})
 
 	Describe("SetPrimary", func() {
