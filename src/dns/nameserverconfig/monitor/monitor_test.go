@@ -84,7 +84,7 @@ var _ = Describe("Monitor", func() {
 		It("continues to check and apply changes", func() {
 			go applier.Run(shutdown)
 
-			time.Sleep(testInterval * 3)
+			time.Sleep(testInterval * 4)
 			close(shutdown)
 
 			Expect(dnsManager.SetPrimaryCallCount()).To(BeNumerically(">=", 3))
