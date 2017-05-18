@@ -1,6 +1,7 @@
 package config
 
 //go:generate counterfeiter . RecursorReader
+
 type RecursorReader interface {
 	Get() ([]string, error)
 }

@@ -1,38 +1,33 @@
 package monitor
 
 import (
+	"time"
+
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/dns-release/src/dns/nameserverconfig/handler"
-	"time"
+	"github.com/cloudfoundry/dns-release/src/dns/manager"
 )
 
 type Monitor struct {
-	checker  handler.Handler
-	logger   boshlog.Logger
-	interval time.Duration
+	logger     boshlog.Logger
+	address    string
+	dnsManager manager.DNSManager
+	interval   time.Duration
 }
 
-func NewMonitor(checker handler.Handler, logger boshlog.Logger, interval time.Duration) Monitor {
+func NewMonitor(logger boshlog.Logger, address string, dnsManager manager.DNSManager, interval time.Duration) Monitor {
 	return Monitor{
-		checker:  checker,
-		logger:   logger,
-		interval: interval,
+		logger:     logger,
+		address:    address,
+		dnsManager: dnsManager,
+		interval:   interval,
 	}
 }
 
 func (c Monitor) RunOnce() error {
-	good, err := c.checker.IsCorrect()
+	err := c.dnsManager.SetPrimary(c.address)
 	if err != nil {
-		return bosherr.WrapError(err, "Checking nameserver configs")
-	}
-
-	if !good {
-		c.logger.Info("NameserverConfigMonitor", "Updating nameserver configs because of change")
-		err = c.checker.Apply()
-		if err != nil {
-			return bosherr.WrapError(err, "Updating nameserver configs")
-		}
+		return bosherr.WrapError(err, "Updating nameserver configs")
 	}
 
 	return nil

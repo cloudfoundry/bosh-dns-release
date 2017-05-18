@@ -74,15 +74,16 @@ func mainExitCode() int {
 		return 1
 	}
 
-	recursorReader := dnsconfig.NewResolvConfRecursorReader(fs, config.Address)
+	mux := dns.NewServeMux()
+	clock := clock.NewClock()
+
+	dnsManager := newDNSManager(logger, clock, fs)
+	recursorReader := dnsconfig.NewRecursorReader(dnsManager, config.Address)
 	err = dnsconfig.ConfigureRecursors(recursorReader, &config)
 	if err != nil {
 		logger.Error(logTag, fmt.Sprintf("Unable to configure recursor addresses from os: %s", err.Error()))
 		return 1
 	}
-
-	mux := dns.NewServeMux()
-	clock := clock.NewClock()
 
 	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), logger)
 	localDomain := dnsresolver.NewLocalDomain(logger, recordsRepo, shuffle.New())
@@ -120,7 +121,12 @@ func mainExitCode() int {
 		shutdown,
 	)
 
-	go handlerRegistrar.Run(shutdown)
+	go func() {
+		err := handlerRegistrar.Run(shutdown)
+		if err != nil {
+			logger.Error(logTag, fmt.Sprintf("could not start handler registrar: %s", err.Error()))
+		}
+	}()
 
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)

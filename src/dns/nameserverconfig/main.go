@@ -2,15 +2,16 @@ package main
 
 import (
 	"flag"
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"github.com/cloudfoundry/dns-release/src/dns/nameserverconfig/monitor"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
+	"github.com/cloudfoundry/dns-release/src/dns/nameserverconfig/monitor"
 )
 
 func main() {
@@ -32,7 +33,7 @@ func main() {
 	signal.Notify(sigterm, syscall.SIGTERM)
 
 	monitor := monitor.NewMonitor(
-		HandlerFactory(bindAddress, logger, cmdRunner),
+		dnsManager,
 		logger,
 		3*time.Second,
 	)

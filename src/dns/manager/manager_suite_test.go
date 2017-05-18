@@ -1,4 +1,4 @@
-package handler_test
+package manager_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestHandler(t *testing.T) {
+func TestManager(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "dns/nameserverconfig/handler")
+	RunSpecs(t, "dns/manager")
 }
