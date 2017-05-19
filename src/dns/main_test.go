@@ -54,6 +54,12 @@ var _ = Describe("main", func() {
 		listenAddress = "127.0.0.1"
 		listenPort, err = getFreePort()
 		Expect(err).NotTo(HaveOccurred())
+
+		if runtime.GOOS == "windows" {
+			err := os.MkdirAll("/var/vcap/packages/dns-windows/bin", os.ModePerm)
+			Expect(err).ToNot(HaveOccurred())
+			ioutil.WriteFile("/var/vcap/packages/dns-windows/bin/list-server-addresses.ps1", []byte(""), os.ModePerm)
+		}
 	})
 
 	Describe("flags", func() {
