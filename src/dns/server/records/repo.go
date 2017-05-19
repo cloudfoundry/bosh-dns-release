@@ -7,8 +7,9 @@ import (
 	"github.com/cloudfoundry/bosh-utils/system"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"os"
+	"reflect"
 	"sync"
-	"time"
 )
 
 const logTag string = "RecordsRepo"
@@ -17,19 +18,22 @@ type Repo struct {
 	fileSystem           system.FileSystem
 	recordsFilePath      string
 	cachedRecordSetError error
-	cachedRecordSet      *RecordSet
-	lastReadTime         time.Time
-	mutex                sync.Mutex
+	cachedRecordSet      RecordSet
+	stat                 os.FileInfo
+	mutex                *sync.Mutex
+	logger               logger.Logger
 }
 
 func NewRepo(recordsFilePath string, fileSys system.FileSystem, logger logger.Logger) *Repo {
 	repo := Repo{
 		recordsFilePath: recordsFilePath,
 		fileSystem:      fileSys,
+		mutex:           &sync.Mutex{},
+		logger:          logger,
 	}
 
-	_, err := repo.Get()
-	if err != nil {
+	repo.cachedRecordSet, repo.cachedRecordSetError = repo.createFromFileSystem()
+	if repo.cachedRecordSetError != nil {
 		logger.Error(logTag, fmt.Sprintf("Unable to open records file at: %s", recordsFilePath))
 	}
 	return &repo
@@ -38,48 +42,50 @@ func NewRepo(recordsFilePath string, fileSys system.FileSystem, logger logger.Lo
 func (r *Repo) Get() (RecordSet, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
+
 	if r.shouldUseCachedValues() {
-		return *r.cachedRecordSet, r.cachedRecordSetError
+		return r.cachedRecordSet, r.cachedRecordSetError
+	}
+	newRecordSet, err := r.createFromFileSystem()
+	if err == nil {
+		r.cachedRecordSet = newRecordSet
+		r.cachedRecordSetError = err
 	}
 
-	r.cachedRecordSet, r.cachedRecordSetError = r.createFromFileSystem()
-
-	return *r.cachedRecordSet, r.cachedRecordSetError
+	return r.cachedRecordSet, r.cachedRecordSetError
 }
 
-func (r Repo) shouldUseCachedValues() bool {
-	if r.cachedRecordSet == nil {
+func (r *Repo) shouldUseCachedValues() bool {
+	if r.cachedRecordSetError != nil {
 		return false
 	}
 
-	info, err := r.fileSystem.Stat(r.recordsFilePath)
+	newStat, err := r.fileSystem.Stat(r.recordsFilePath)
 	if err != nil {
 		return true
 	}
 
-	if r.lastReadTime.Sub(info.ModTime()) < time.Second {
-		return false
-	}
-
-	return true
+	unchanged := reflect.DeepEqual(r.stat, newStat)
+	return unchanged
 }
 
-func (r *Repo) createFromFileSystem() (*RecordSet, error) {
-	found := r.fileSystem.FileExists(r.recordsFilePath)
-	if !found {
-		return &RecordSet{}, bosherr.Errorf("Records file '%s' not found", r.recordsFilePath)
+func (r *Repo) createFromFileSystem() (RecordSet, error) {
+	info, err := r.fileSystem.Stat(r.recordsFilePath)
+	if err != nil {
+		return RecordSet{}, bosherr.Errorf("Error stating records file '%s':%s", r.recordsFilePath, err.Error())
 	}
-	r.lastReadTime = time.Now()
 
 	buf, err := r.fileSystem.ReadFile(r.recordsFilePath)
 	if err != nil {
-		return &RecordSet{}, err
+		return RecordSet{}, err
 	}
 
-	var records RecordSet
-	if err := json.Unmarshal(buf, &records); err != nil {
-		return &RecordSet{}, err
+	r.stat = info
+
+	var newRecordSet RecordSet
+	if err := json.Unmarshal(buf, &newRecordSet); err != nil {
+		return RecordSet{}, err
 	}
 
-	return &records, nil
+	return newRecordSet, nil
 }

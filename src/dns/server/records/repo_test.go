@@ -16,24 +16,28 @@ import (
 var _ = Describe("Repo", func() {
 	Describe("NewRepo", func() {
 		var (
-			repo           *records.Repo
-			fakeLogger     = &loggerfakes.FakeLogger{}
-			fakeFileSystem *fakes.FakeFileSystem
+			repo                *records.Repo
+			fakeLogger          = &loggerfakes.FakeLogger{}
+			fakeFileSystem      *fakes.FakeFileSystem
+			nonExistentFilePath string
 		)
 
 		BeforeEach(func() {
 			fakeFileSystem = fakes.NewFakeFileSystem()
+			nonExistentFilePath = "/some/fake/path"
+			fakeFileSystem.RegisterOpenFile(nonExistentFilePath, &fakes.FakeFile{
+				StatErr: errors.New("NOPE"),
+			})
 		})
 
 		Context("initial failure cases", func() {
 			It("logs an error when the file does not exist", func() {
-
-				repo = records.NewRepo("file-does-not-exist", fakeFileSystem, fakeLogger)
+				repo = records.NewRepo("/some/fake/path", fakeFileSystem, fakeLogger)
 				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
 
 				tag, message, _ := fakeLogger.ErrorArgsForCall(0)
 				Expect(tag).To(Equal("RecordsRepo"))
-				Expect(message).To(Equal("Unable to open records file at: file-does-not-exist"))
+				Expect(message).To(Equal("Unable to open records file at: /some/fake/path"))
 			})
 		})
 	})
@@ -63,19 +67,23 @@ var _ = Describe("Repo", func() {
 		})
 
 		Context("initial failure cases", func() {
-			var nonExistentFilePath string
-
-			BeforeEach(func() {
-				nonExistentFilePath = "/some/fake/path"
+			It("returns an error when the file does not exist", func() {
+				nonExistentFilePath := "/some/fake/path"
 				fakeFileSystem.RegisterOpenFile(nonExistentFilePath, &fakes.FakeFile{
 					StatErr: errors.New("NOPE"),
 				})
-			})
 
-			It("returns an error when the file does not exist", func() {
 				repo := records.NewRepo(nonExistentFilePath, fakeFileSystem, fakeLogger)
 				_, err := repo.Get()
-				Expect(err).To(MatchError("Records file '/some/fake/path' not found"))
+				Expect(err).To(MatchError("Error stating records file '/some/fake/path':NOPE"))
+			})
+
+			It("returns an error when a file read error occurs", func() {
+				fakeFileSystem.RegisterReadFileError(recordsFile.Name(), errors.New("can not read file"))
+
+				repo := records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeLogger)
+				_, err := repo.Get()
+				Expect(err).To(MatchError("can not read file"))
 			})
 
 			It("returns an error when the file is malformed json", func() {
@@ -119,10 +127,10 @@ var _ = Describe("Repo", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					err = fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "my-domain"],
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
 				"record_infos": [
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"""],
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"""]
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.128", "my-domain"],
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.129", "my-domain"]
 				]
 			}`))
 					Expect(err).NotTo(HaveOccurred())
@@ -138,11 +146,161 @@ var _ = Describe("Repo", func() {
 					recordSet, err := repo.Get()
 					Expect(err).NotTo(HaveOccurred())
 
-					records, err := recordSet.Resolve("my-instance.my-group.my-network.my-deployment.my-domain.")
+					records, err := recordSet.Resolve("my-instance2.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(records).To(ContainElement("123.123.123.128"))
+					Expect(records).To(ContainElement("123.123.123.129"))
+				})
+			})
+
+			Context("when the file becomes unreadable", func() {
+				var initialTime time.Time
+
+				BeforeEach(func() {
+					initialTime := time.Now()
+
+					err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_infos": [
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
+				]
+			}`))
+					Expect(err).NotTo(HaveOccurred())
+
+					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+						Stats: &fakes.FakeFileStats{
+							ModTime: initialTime.Add(-3 * time.Second),
+						},
+					})
+
+					_, err = repo.Get()
+					Expect(err).NotTo(HaveOccurred())
+
+					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+						Stats: &fakes.FakeFileStats{
+							ModTime: initialTime.Add(-2 * time.Second),
+						},
+					})
+
+					fakeFileSystem.RegisterReadFileError(recordsFile.Name(), errors.New("some read file error"))
+				})
+
+				It("should return the cached content", func() {
+					recordSet, err := repo.Get()
+					Expect(err).NotTo(HaveOccurred())
+
+					records, err := recordSet.Resolve("my-instance2.my-group.my-network.my-deployment.my-domain.")
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(records).To(ContainElement("123.123.123.123"))
 					Expect(records).To(ContainElement("123.123.123.124"))
+				})
+
+				Context("when the file becomes readable again", func() {
+					BeforeEach(func() {
+						fakeFileSystem.UnregisterReadFileError(recordsFile.Name())
+
+						err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_infos": [
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.4", "my-domain"],
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.5", "my-domain"]
+				]
+			}`))
+
+						Expect(err).NotTo(HaveOccurred())
+
+						fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+							Stats: &fakes.FakeFileStats{
+								ModTime: initialTime.Add(-1 * time.Second),
+							},
+						})
+					})
+
+					It("should return all records from new file contents", func() {
+						recordSet, err := repo.Get()
+						Expect(err).NotTo(HaveOccurred())
+
+						records, err := recordSet.Resolve("my-instance2.my-group.my-network.my-deployment.my-domain.")
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(records).To(ContainElement("1.2.3.4"))
+						Expect(records).To(ContainElement("1.2.3.5"))
+					})
+				})
+			})
+
+			Context("when the file becomes un stat able", func() {
+				var initialTime time.Time
+
+				BeforeEach(func() {
+					initialTime := time.Now()
+
+					err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_infos": [
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
+				]
+			}`))
+					Expect(err).NotTo(HaveOccurred())
+
+					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+						Stats: &fakes.FakeFileStats{
+							ModTime: initialTime.Add(-3 * time.Second),
+						},
+					})
+
+					_, err = repo.Get()
+					Expect(err).NotTo(HaveOccurred())
+
+					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+						StatErr: errors.New("stat err"),
+					})
+				})
+
+				It("should return the cached content", func() {
+					recordSet, err := repo.Get()
+					Expect(err).NotTo(HaveOccurred())
+
+					records, err := recordSet.Resolve("my-instance2.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(records).To(ContainElement("123.123.123.123"))
+					Expect(records).To(ContainElement("123.123.123.124"))
+				})
+
+				Context("when the file becomes stat able again", func() {
+					BeforeEach(func() {
+						err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_infos": [
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.4", "my-domain"],
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.5", "my-domain"]
+				]
+			}`))
+
+						Expect(err).NotTo(HaveOccurred())
+
+						fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+							Stats: &fakes.FakeFileStats{
+								ModTime: initialTime.Add(-1 * time.Second),
+							},
+						})
+					})
+
+					It("should return all records from new file contents", func() {
+						recordSet, err := repo.Get()
+						Expect(err).NotTo(HaveOccurred())
+
+						records, err := recordSet.Resolve("my-instance2.my-group.my-network.my-deployment.my-domain.")
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(records).To(ContainElement("1.2.3.4"))
+						Expect(records).To(ContainElement("1.2.3.5"))
+					})
 				})
 			})
 
@@ -154,7 +312,6 @@ var _ = Describe("Repo", func() {
 					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
 						StatErr: errors.New("file does not exist"),
 					})
-
 				})
 
 				It("should return all records from original file contents", func() {

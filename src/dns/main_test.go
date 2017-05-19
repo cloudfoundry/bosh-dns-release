@@ -372,7 +372,6 @@ var _ = Describe("main", func() {
 			Context("changing records.json", func() {
 				BeforeEach(func() {
 					var err error
-
 					err = ioutil.WriteFile(recordsFilePath, []byte(fmt.Sprint(`{
 						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
 						"record_infos": [
