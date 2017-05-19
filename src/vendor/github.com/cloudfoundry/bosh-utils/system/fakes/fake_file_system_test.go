@@ -274,6 +274,40 @@ var _ = Describe("FakeFileSystem", func() {
 		})
 	})
 
+	Describe("RegisterReadFileError", func() {
+		It("errors when specified path is read", func() {
+			fs.WriteFileString("/some/path", "asdfasdf")
+
+			fs.RegisterReadFileError("/some/path", errors.New("read error"))
+
+			_, err := fs.ReadFile("/some/path")
+			Expect(err).To(MatchError("read error"))
+		})
+	})
+
+	Describe("UnregisterReadFileError", func() {
+		It("does not throw an error", func() {
+			fs.WriteFileString("/some/path", "asdfasdf")
+
+			fs.RegisterReadFileError("/some/path", errors.New("read error"))
+			fs.UnregisterReadFileError("/some/path")
+
+			_, err := fs.ReadFile("/some/path")
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		Context("When UnregisterReadFileError is called without registering an error", func() {
+			It("should not panic or throw an error", func() {
+				fs.WriteFileString("/some/path", "asdfasdf")
+
+				fs.UnregisterReadFileError("/some/path")
+
+				_, err := fs.ReadFile("/some/path")
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+	})
+
 	Describe("Stat", func() {
 		It("errors when symlink targets do not exist", func() {
 			err := fs.Symlink("foobarbaz", "foobar")

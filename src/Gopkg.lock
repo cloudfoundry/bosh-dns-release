@@ -21,8 +21,8 @@ memo = "7985697c9cb898237a638739a1ea0c908a9a2d36bcf67140d231543f53bfcc62"
 [[projects]]
   branch = "master"
   name = "github.com/cloudfoundry/bosh-utils"
-  packages = ["errors","logger","logger/loggerfakes","system","system/fakes"]
-  revision = "1cf51df588feb265a3fb764dd3342ca46bf44ade"
+  packages = ["errors","logger","logger/fakes","logger/loggerfakes","system","system/fakes"]
+  revision = "6ac91ad913653992a71ff7a2326ea974e7fd9933"
 
 [[projects]]
   branch = "master"
