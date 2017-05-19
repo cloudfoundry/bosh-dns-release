@@ -33,6 +33,7 @@ var _ = Describe("ResolvConfManager", func() {
 			BeforeEach(func() {
 				_ = fs.WriteFile("/etc/resolv.conf", []byte(""))
 			})
+
 			It("returns an empty array", func() {
 				nameservers, err := dnsManager.Read()
 
