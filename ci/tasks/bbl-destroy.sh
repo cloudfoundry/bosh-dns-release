@@ -15,6 +15,8 @@ set -u
 
 bosh deployments | awk '{ print $1 }' | xargs -I name bosh -n -d name delete-deployment
 
+bosh -n clean-up --all
+
 bosh -n delete-env $BBL_STATE_DIR/bosh-manifest.yml \
   --vars-store $BBL_STATE_DIR/creds.yml  \
   --state $BBL_STATE_DIR/state.json \
