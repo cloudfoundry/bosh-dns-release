@@ -11,22 +11,21 @@ update:
 instance_groups:
 - name: dns
   azs: [z1]
-  instances: 1
+  instances: 2
   vm_type: default
   stemcell: default
   networks:
   - name: default
-    static_ips: [10.245.0.34]
   jobs:
   - name: dns
     release: dns
+    properties:
+      address: 0.0.0.0
+      recursors:
+      - "172.17.0.1:9955"
+      recursor_timeout: 1s
   - name: needs-alias
     release: dns-acceptance
-  properties:
-    address: 0.0.0.0
-    recursors:
-    - 8.8.8.8
-    recursor_timeout: 1s
 
 releases:
 - name: dns

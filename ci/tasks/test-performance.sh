@@ -29,6 +29,9 @@ bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
 bosh -n deploy \
     -v dns_release_path=$ROOT_DIR/dns-release \
     -v acceptance_release_path=$ROOT_DIR/dns-release/src/acceptance_tests/dns-acceptance-release \
+    -o $ROOT_DIR/dns-release/ci/assets/one-instance-with-static-ips.yml \
+    -o $ROOT_DIR/dns-release/ci/assets/configure-recursor.yml \
+    -v recursor_ip="8.8.8.8" \
     $ROOT_DIR/dns-release/ci/assets/manifest.yml
 
 
