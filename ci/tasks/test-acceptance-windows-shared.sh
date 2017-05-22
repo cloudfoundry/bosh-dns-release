@@ -11,12 +11,6 @@ source $BBL_STATE_DIR/bosh.sh
 bosh -n upload-stemcell $ROOT_DIR/bosh-candidate-stemcell-windows/*.tgz
 bosh -n upload-stemcell $ROOT_DIR/gcp-linux-stemcell/*.tgz
 
-bosh -d bosh-dns -n deploy $ROOT_DIR/dns-release/ci/assets/dns-windows.yml \
-    -v dns_release_path=$ROOT_DIR/dns-release \
-    -v acceptance_release_path=$ROOT_DIR/dns-release/src/acceptance_tests/dns-acceptance-release
-
-export BOSH_DEPLOYMENT=bosh-dns-shared-acceptance
-
 bosh -n deploy $ROOT_DIR/dns-release/ci/assets/shared-acceptance-manifest.yml \
     -v dns_release_path=$ROOT_DIR/dns-release \
     --var-file bosh_ca_cert=<(echo "$BOSH_CA_CERT") \

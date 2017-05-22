@@ -19,16 +19,15 @@ export BOSH_GW_USER="jumpbox"
 export BOSH_DIRECTOR_IP="10.245.0.3"
 export BOSH_BINARY_PATH=$(which bosh)
 export BOSH_DEPLOYMENT="bosh-dns"
+export TEST_CLOUD_CONFIG_PATH="/tmp/cloud-config.yml"
+export TEST_MANIFEST_NAME="manifest"
 
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
-    -o $ROOT_DIR/dns-release/ci/assets/add-static-ips-to-cloud-config.yml > /tmp/cloud-config.yml
+    -o $ROOT_DIR/dns-release/ci/assets/add-static-ips-to-cloud-config.yml > ${TEST_CLOUD_CONFIG_PATH}
 
-bosh -n update-cloud-config /tmp/cloud-config.yml -v network=director_network
+bosh -n update-cloud-config ${TEST_CLOUD_CONFIG_PATH} -v network=director_network
 
 bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
-bosh -n deploy $ROOT_DIR/dns-release/ci/assets/manifest.yml \
-    -v dns_release_path=$ROOT_DIR/dns-release \
-    -v acceptance_release_path=$ROOT_DIR/dns-release/src/acceptance_tests/dns-acceptance-release
 
 export GOPATH=${ROOT_DIR}/go
 export PATH="${GOPATH}/bin":$PATH

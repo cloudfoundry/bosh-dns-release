@@ -19,6 +19,7 @@ var _ = Describe("Integration", func() {
 	var firstInstance instanceInfo
 
 	BeforeEach(func() {
+		ensureRecursorIsDefinedByDnsRelease()
 		firstInstance = allDeployedInstances[0]
 	})
 

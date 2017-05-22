@@ -1,0 +1,6 @@
+- path: /name
+  type: replace
+  value: ((name))
+- path: /instance_groups/name=dns/jobs/name=dns/properties/recursors?
+  type: remove
+

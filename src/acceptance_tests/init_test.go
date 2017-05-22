@@ -3,6 +3,7 @@ package acceptance_test
 import (
 	"fmt"
 
+	"github.com/cloudfoundry/bosh-utils/system"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -25,7 +26,10 @@ var (
 	pathToTestRecursorServer string
 	boshBinaryPath           string
 	allDeployedInstances     []instanceInfo
-	firstInstanceSlug        string
+	manifestName             string
+	boshDeployment           string
+	cmdRunner                system.CmdRunner
+	cloudConfigTempFileName  string
 )
 
 var _ = BeforeSuite(func() {
@@ -34,10 +38,9 @@ var _ = BeforeSuite(func() {
 	assertEnvExists("BOSH_CLIENT_SECRET")
 	assertEnvExists("BOSH_CA_CERT")
 	assertEnvExists("BOSH_ENVIRONMENT")
-	assertEnvExists("BOSH_DEPLOYMENT")
-
-	allDeployedInstances = getInstanceInfos(boshBinaryPath)
-	firstInstanceSlug = fmt.Sprintf("%s/%s", allDeployedInstances[0].InstanceGroup, allDeployedInstances[0].InstanceID)
+	boshDeployment = assertEnvExists("BOSH_DEPLOYMENT")
+	manifestName = assertEnvExists("TEST_MANIFEST_NAME")
+	cloudConfigTempFileName = assertEnvExists("TEST_CLOUD_CONFIG_PATH")
 
 	var err error
 	pathToTestRecursorServer, err = gexec.Build("github.com/cloudfoundry/dns-release/src/acceptance_tests/test_recursor")
