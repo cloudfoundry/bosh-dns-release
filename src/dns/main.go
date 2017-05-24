@@ -118,6 +118,7 @@ func mainExitCode() int {
 			server.NewTCPHealthCheck(net.Dial, bindAddress),
 		},
 		time.Duration(config.Timeout),
+		time.Duration(5*time.Second),
 		shutdown,
 	)
 

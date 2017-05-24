@@ -13,18 +13,20 @@ type DNSServer interface {
 }
 
 type Server struct {
-	servers      []DNSServer
-	healthchecks []HealthCheck
-	timeout      time.Duration
-	shutdownChan chan struct{}
+	servers             []DNSServer
+	healthchecks        []HealthCheck
+	timeout             time.Duration
+	healthcheckInterval time.Duration
+	shutdownChan        chan struct{}
 }
 
-func New(servers []DNSServer, healthchecks []HealthCheck, timeout time.Duration, shutdownChan chan struct{}) Server {
+func New(servers []DNSServer, healthchecks []HealthCheck, timeout, healthcheckInterval time.Duration, shutdownChan chan struct{}) Server {
 	return Server{
-		servers:      servers,
-		healthchecks: healthchecks,
-		timeout:      timeout,
-		shutdownChan: shutdownChan,
+		servers:             servers,
+		healthchecks:        healthchecks,
+		timeout:             timeout,
+		shutdownChan:        shutdownChan,
+		healthcheckInterval: healthcheckInterval,
 	}
 }
 
@@ -43,9 +45,33 @@ func (s Server) Run() error {
 	case <-done:
 	}
 
+	s.monitorHealthChecks()
+
 	select {
 	case <-s.shutdownChan:
 		return s.shutdown()
+	}
+}
+
+func (s Server) monitorHealthChecks() {
+	for _, healthcheck := range s.healthchecks {
+		go func(h HealthCheck, limit int) {
+			danger := 0
+			for {
+				if err := h.IsHealthy(); err != nil {
+					danger += 1
+					if danger >= limit && s.shutdownChan != nil {
+						close(s.shutdownChan)
+						s.shutdownChan = nil
+						return
+					}
+				} else {
+					danger = 0
+				}
+
+				time.Sleep(s.healthcheckInterval)
+			}
+		}(healthcheck, 5)
 	}
 }
 

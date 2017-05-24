@@ -88,7 +88,14 @@ func notListeningStub(stop chan struct{}) func() error {
 
 		return nil
 	}
+}
 
+func passthroughCheck(reactiveAnswerChan chan error) *serverfakes.FakeHealthCheck {
+	return &serverfakes.FakeHealthCheck{
+		IsHealthyStub: func() error {
+			return <-reactiveAnswerChan
+		},
+	}
 }
 
 func healthyCheck() *serverfakes.FakeHealthCheck {
@@ -115,17 +122,18 @@ func shutdownStub(err error) func() error {
 
 var _ = Describe("Server", func() {
 	var (
-		dnsServer       server.Server
-		fakeTCPServer   *serverfakes.FakeDNSServer
-		fakeUDPServer   *serverfakes.FakeDNSServer
-		tcpHealthCheck  *serverfakes.FakeHealthCheck
-		udpHealthCheck  *serverfakes.FakeHealthCheck
-		fakeDialer      server.Dialer
-		timeout         time.Duration
-		bindAddress     string
-		lock            sync.Mutex
-		shutdownChannel chan struct{}
-		stopFakeServer  chan struct{}
+		dnsServer             server.Server
+		fakeTCPServer         *serverfakes.FakeDNSServer
+		fakeUDPServer         *serverfakes.FakeDNSServer
+		tcpHealthCheck        *serverfakes.FakeHealthCheck
+		udpHealthCheck        *serverfakes.FakeHealthCheck
+		fakeDialer            server.Dialer
+		timeout               time.Duration
+		bindAddress           string
+		lock                  sync.Mutex
+		healthPollingInterval time.Duration
+		shutdownChannel       chan struct{}
+		stopFakeServer        chan struct{}
 	)
 
 	BeforeEach(func() {
@@ -149,6 +157,8 @@ var _ = Describe("Server", func() {
 		SetDefaultEventuallyTimeout(timeout + 2*time.Second)
 		SetDefaultConsistentlyDuration(timeout + 2*time.Second)
 
+		healthPollingInterval = 5 * time.Second
+
 		fakeDialer = net.Dial
 	})
 
@@ -157,6 +167,7 @@ var _ = Describe("Server", func() {
 			[]server.DNSServer{fakeTCPServer, fakeUDPServer},
 			[]server.HealthCheck{tcpHealthCheck, udpHealthCheck},
 			timeout,
+			healthPollingInterval,
 			shutdownChannel,
 		)
 	})
@@ -173,7 +184,6 @@ var _ = Describe("Server", func() {
 					udpHealthCheck = unhealthyCheck()
 				})
 				It("returns an error", func() {
-
 					fakeTCPServer.ListenAndServeStub = notListeningStub(stopFakeServer)
 					fakeUDPServer.ListenAndServeStub = notListeningStub(stopFakeServer)
 
@@ -187,7 +197,7 @@ var _ = Describe("Server", func() {
 			})
 		})
 
-		Context("when a provided tcp server cannot listen and serve", func() {
+		Context("when a provided healthcheck server cannot listen and serve", func() {
 			BeforeEach(func() {
 				tcpHealthCheck = unhealthyCheck()
 				udpHealthCheck = unhealthyCheck()
@@ -229,9 +239,7 @@ var _ = Describe("Server", func() {
 						"tcp": 0,
 						"udp": 0,
 					}
-				})
 
-				BeforeEach(func() {
 					fakeDialer = func(protocol, address string) (net.Conn, error) {
 						lock.Lock()
 						fakeProtocolDialConn[protocol]++
@@ -251,6 +259,112 @@ var _ = Describe("Server", func() {
 
 					Expect(fakeProtocolConn["tcp"].CloseCallCount()).To(Equal(fakeProtocolDialConn["tcp"]))
 					Expect(fakeProtocolConn["udp"].CloseCallCount()).To(Equal(fakeProtocolDialConn["udp"]))
+				})
+			})
+
+			Describe("self-correcting runtime health checks", func() {
+				triggerNFailures := func(out chan error, N chan int, notifyDone chan int) {
+					for {
+						select {
+						case numFailures := <-N:
+							var i int
+							for i = 0; i < numFailures; i++ {
+								out <- errors.New("deadbeef")
+							}
+							notifyDone <- i
+						default:
+							out <- nil
+						}
+					}
+				}
+
+				var (
+					startFailing    chan int
+					numFailuresSent chan int
+					healthChan      chan error
+				)
+
+				BeforeEach(func() {
+					healthPollingInterval = 50 * time.Millisecond
+					startFailing = make(chan int)
+					numFailuresSent = make(chan int)
+					healthChan = make(chan error)
+				})
+
+				Context("when the TCP server suddenly stops working", func() {
+					BeforeEach(func() {
+						udpHealthCheck = healthyCheck()
+						tcpHealthCheck = passthroughCheck(healthChan)
+					})
+
+					It("kills itself after five failures in a row", func() {
+						go triggerNFailures(healthChan, startFailing, numFailuresSent)
+
+						dnsServerFinished := make(chan error)
+						go func() {
+							dnsServerFinished <- dnsServer.Run()
+						}()
+
+						Consistently(dnsServerFinished).ShouldNot(Receive())
+						startFailing <- 5
+						Expect(<-numFailuresSent).To(Equal(5))
+						Eventually(dnsServerFinished).Should(Receive())
+					})
+
+					It("recovers if the failures are not consistent", func() {
+						go triggerNFailures(healthChan, startFailing, numFailuresSent)
+
+						dnsServerFinished := make(chan error)
+						go func() {
+							dnsServerFinished <- dnsServer.Run()
+						}()
+
+						Consistently(dnsServerFinished).ShouldNot(Receive())
+						startFailing <- 3
+						Expect(<-numFailuresSent).To(Equal(3))
+						Consistently(dnsServerFinished).ShouldNot(Receive())
+						startFailing <- 3
+						Expect(<-numFailuresSent).To(Equal(3))
+						Consistently(dnsServerFinished).ShouldNot(Receive())
+					})
+				})
+
+				Context("when the UDP server suddenly stops working", func() {
+					BeforeEach(func() {
+						udpHealthCheck = passthroughCheck(healthChan)
+						tcpHealthCheck = healthyCheck()
+					})
+
+					It("kills itself after five failures in a row", func() {
+						go triggerNFailures(healthChan, startFailing, numFailuresSent)
+
+						dnsServerFinished := make(chan error)
+						go func() {
+							dnsServerFinished <- dnsServer.Run()
+						}()
+
+						Consistently(dnsServerFinished).ShouldNot(Receive())
+						startFailing <- 5
+						Expect(<-numFailuresSent).To(Equal(5))
+						Eventually(dnsServerFinished).Should(Receive())
+					})
+
+					It("recovers if the failures are not consistent", func() {
+						go triggerNFailures(healthChan, startFailing, numFailuresSent)
+
+						dnsServerFinished := make(chan error)
+						go func() {
+							dnsServerFinished <- dnsServer.Run()
+						}()
+
+						Consistently(dnsServerFinished).ShouldNot(Receive())
+						startFailing <- 3
+						Expect(<-numFailuresSent).To(Equal(3))
+						Consistently(dnsServerFinished).ShouldNot(Receive())
+						startFailing <- 3
+						Expect(<-numFailuresSent).To(Equal(3))
+						Consistently(dnsServerFinished).ShouldNot(Receive())
+					})
 				})
 			})
 
