@@ -51,47 +51,56 @@ var _ = Describe("Alias address binding", func() {
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
 
-	It("should kill itself if its healthcheck becomes unreachable", func() {
-		serverPidRegex := regexp.MustCompile(`dns\S*\s+(\d+).*TCP .*:domain`)
-
-		getServerPid := func() (int, error) {
-			lsofCmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "sudo lsof -n -i :53"}...)
-			session, err := gexec.Start(lsofCmd, GinkgoWriter, GinkgoWriter)
+	Context("when the healtcheck becomes unreachable", func() {
+		AfterEach(func() {
+			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "sudo /sbin/iptables -D INPUT -p udp -j DROP"}...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session, 10*time.Second).Should(gexec.Exit())
+		})
 
-			out := string(session.Out.Contents())
-			match := serverPidRegex.FindStringSubmatch(out)
+		It("should kill itself if its healthcheck becomes unreachable", func() {
+			serverPidRegex := regexp.MustCompile(`dns\S*\s+(\d+).*TCP .*:domain`)
 
-			if len(match) < 2 {
-				return -1, errors.New("no matches found")
+			getServerPid := func() (int, error) {
+				lsofCmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "sudo lsof -n -i :53"}...)
+				session, err := gexec.Start(lsofCmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10*time.Second).Should(gexec.Exit())
+
+				out := string(session.Out.Contents())
+				match := serverPidRegex.FindStringSubmatch(out)
+
+				if len(match) < 2 {
+					return -1, errors.New("no matches found")
+				}
+
+				return strconv.Atoi(match[1])
 			}
+			originalServerPid, err := getServerPid()
+			Expect(err).NotTo(HaveOccurred())
 
-			return strconv.Atoi(match[1])
-		}
-		originalServerPid, err := getServerPid()
-		Expect(err).NotTo(HaveOccurred())
+			cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "sudo /sbin/iptables -A INPUT -p udp -j DROP"}...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "sudo /sbin/iptables -A INPUT -p udp -j DROP"}...)
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			time.Sleep(time.Second * 40)
 
-		time.Sleep(time.Second * 40)
+			_, err = getServerPid()
+			Expect(err).To(HaveOccurred())
 
-		_, err = getServerPid()
-		Expect(err).To(HaveOccurred())
+			cmd = exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "sudo /sbin/iptables -D INPUT -p udp -j DROP"}...)
+			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
-		cmd = exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "sudo /sbin/iptables -D INPUT -p udp -j DROP"}...)
-		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			time.Sleep(time.Second * 9)
 
-		time.Sleep(time.Second * 9)
-
-		pid, err := getServerPid()
-		Expect(err).NotTo(HaveOccurred())
-		Expect(pid).NotTo(Equal(originalServerPid))
+			pid, err := getServerPid()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(pid).NotTo(Equal(originalServerPid))
+		})
 	})
 
 	Context("as the system-configured nameserver", func() {
