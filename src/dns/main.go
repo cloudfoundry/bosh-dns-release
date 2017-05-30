@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -92,11 +93,8 @@ func mainExitCode() int {
 
 	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
 
-	healthchecks := []server.HealthCheck{}
 	for _, healthCheckDomain := range config.HealthcheckDomains {
 		handlers.AddHandler(mux, clock, healthCheckDomain, handlers.NewHealthCheckHandler(logger), logger)
-		healthchecks = append(healthchecks, server.NewAnswerValidatingHealthCheck(fmt.Sprintf("%s:%d", config.Address, config.Port), healthCheckDomain, "udp"))
-		healthchecks = append(healthchecks, server.NewAnswerValidatingHealthCheck(fmt.Sprintf("%s:%d", config.Address, config.Port), healthCheckDomain, "tcp"))
 	}
 
 	forwardHandler := handlers.NewForwardHandler(config.Recursors, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), logger)
@@ -115,11 +113,13 @@ func mainExitCode() int {
 			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: aliasResolver},
 			&dns.Server{Addr: bindAddress, Net: "udp", Handler: aliasResolver, UDPSize: 65535},
 		},
-		healthchecks,
+		[]server.HealthCheck{
+			server.NewUDPHealthCheck(net.Dial, bindAddress),
+			server.NewTCPHealthCheck(net.Dial, bindAddress),
+		},
 		time.Duration(config.Timeout),
 		time.Duration(5*time.Second),
 		shutdown,
-		logger,
 	)
 
 	go func() {
