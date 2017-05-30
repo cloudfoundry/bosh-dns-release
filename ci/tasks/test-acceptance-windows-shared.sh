@@ -19,4 +19,4 @@ bosh -n -d bosh-dns-shared-acceptance deploy $ROOT_DIR/dns-release/ci/assets/sha
     -v bosh_environment="$BOSH_ENVIRONMENT" \
     -v bosh_deployment=bosh-dns
 
-bosh run-errand acceptance-tests
+bosh -d bosh-dns-shared-acceptance run-errand acceptance-tests
