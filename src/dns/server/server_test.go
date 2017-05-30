@@ -3,6 +3,7 @@ package server_test
 import (
 	"fmt"
 
+	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server"
 
 	"errors"
@@ -134,6 +135,7 @@ var _ = Describe("Server", func() {
 		healthPollingInterval time.Duration
 		shutdownChannel       chan struct{}
 		stopFakeServer        chan struct{}
+		logger                *fakes.FakeLogger
 	)
 
 	BeforeEach(func() {
@@ -150,6 +152,8 @@ var _ = Describe("Server", func() {
 		fakeUDPServer = &serverfakes.FakeDNSServer{}
 		fakeTCPServer.ListenAndServeStub = tcpServerStub(bindAddress, stopFakeServer)
 		fakeUDPServer.ListenAndServeStub = udpServerStub(bindAddress, timeout, stopFakeServer)
+
+		logger = &fakes.FakeLogger{}
 
 		tcpHealthCheck = healthyCheck()
 		udpHealthCheck = healthyCheck()
@@ -169,6 +173,7 @@ var _ = Describe("Server", func() {
 			timeout,
 			healthPollingInterval,
 			shutdownChannel,
+			logger,
 		)
 	})
 
@@ -259,6 +264,10 @@ var _ = Describe("Server", func() {
 
 					Expect(fakeProtocolConn["tcp"].CloseCallCount()).To(Equal(fakeProtocolDialConn["tcp"]))
 					Expect(fakeProtocolConn["udp"].CloseCallCount()).To(Equal(fakeProtocolDialConn["udp"]))
+					Expect(logger.DebugCallCount()).To(BeNumerically(">", 0))
+					tag, msg, _ := logger.DebugArgsForCall(0)
+					Expect(tag).To(Equal("server"))
+					Expect(msg).To(Equal("done with health checks"))
 				})
 			})
 
@@ -368,6 +377,33 @@ var _ = Describe("Server", func() {
 				})
 			})
 
+			Context("when no healthchecks are configured", func() {
+				JustBeforeEach(func() {
+					dnsServer = server.New(
+						[]server.DNSServer{fakeTCPServer, fakeUDPServer},
+						[]server.HealthCheck{},
+						timeout,
+						healthPollingInterval,
+						shutdownChannel,
+						logger,
+					)
+				})
+
+				It("logs a message to that effect", func() {
+					dnsServerFinished := make(chan error)
+					go func() {
+						dnsServerFinished <- dnsServer.Run()
+					}()
+
+					Consistently(dnsServerFinished).ShouldNot(Receive())
+
+					Expect(logger.WarnCallCount()).To(Equal(1))
+					tag, msg, _ := logger.WarnArgsForCall(0)
+					Expect(tag).To(Equal("server"))
+					Expect(msg).To(Equal("proceeding immediately: no healthchecks configured"))
+				})
+			})
+
 			Context("when the udp server never binds to a port", func() {
 				BeforeEach(func() {
 					udpHealthCheck = unhealthyCheck()
@@ -382,6 +418,10 @@ var _ = Describe("Server", func() {
 					}()
 
 					Eventually(dnsServerFinished).Should(Receive(Equal(errors.New("timed out waiting for server to bind"))))
+					Expect(logger.DebugCallCount()).To(BeNumerically(">", 1))
+					Expect(logger.DebugCallCount()).To(BeNumerically("<", 100))
+					_, msg, _ := logger.DebugArgsForCall(1)
+					Expect(msg).To(ContainSubstring("waiting for server to come up"))
 				})
 			})
 
@@ -399,6 +439,8 @@ var _ = Describe("Server", func() {
 					}()
 
 					Eventually(dnsServerFinished).Should(Receive(Equal(errors.New("timed out waiting for server to bind"))))
+					Expect(logger.DebugCallCount()).To(BeNumerically(">", 1))
+					Expect(logger.DebugCallCount()).To(BeNumerically("<", 100))
 				})
 			})
 

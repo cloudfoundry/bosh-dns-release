@@ -1,11 +1,11 @@
 package config_test
 
 import (
+	"errors"
 	"github.com/cloudfoundry/dns-release/src/dns/config"
 	"github.com/cloudfoundry/dns-release/src/dns/config/configfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"errors"
 )
 
 var _ = Describe("Recursor", func() {
@@ -30,8 +30,7 @@ var _ = Describe("Recursor", func() {
 			Expect(resolvConfReader.GetCallCount()).To(Equal(1))
 		})
 
-
-		Context("when unable to Get fails on RecursorReader", func(){
+		Context("when unable to Get fails on RecursorReader", func() {
 			BeforeEach(func() {
 				resolvConfReader.GetReturns([]string{"some-recursor-1"}, errors.New("some-error"))
 			})

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	"github.com/cloudfoundry/bosh-utils/logger"
 )
 
 //go:generate counterfeiter . DNSServer
@@ -18,15 +20,17 @@ type Server struct {
 	timeout             time.Duration
 	healthcheckInterval time.Duration
 	shutdownChan        chan struct{}
+	logger              logger.Logger
 }
 
-func New(servers []DNSServer, healthchecks []HealthCheck, timeout, healthcheckInterval time.Duration, shutdownChan chan struct{}) Server {
+func New(servers []DNSServer, healthchecks []HealthCheck, timeout, healthcheckInterval time.Duration, shutdownChan chan struct{}, logger logger.Logger) Server {
 	return Server{
 		servers:             servers,
 		healthchecks:        healthchecks,
 		timeout:             timeout,
 		shutdownChan:        shutdownChan,
 		healthcheckInterval: healthcheckInterval,
+		logger:              logger,
 	}
 }
 
@@ -43,6 +47,7 @@ func (s Server) Run() error {
 	case <-time.After(s.timeout):
 		return errors.New("timed out waiting for server to bind")
 	case <-done:
+		s.logger.Debug("server", "done with health checks")
 	}
 
 	s.monitorHealthChecks()
@@ -79,6 +84,12 @@ func (s Server) doHealthChecks(done chan struct{}) {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(s.healthchecks))
 
+	if len(s.healthchecks) == 0 {
+		s.logger.Warn("server", "proceeding immediately: no healthchecks configured")
+		close(done)
+		return
+	}
+
 	go func() {
 		wg.Wait()
 		close(done)
@@ -87,9 +98,13 @@ func (s Server) doHealthChecks(done chan struct{}) {
 	for _, healthcheck := range s.healthchecks {
 		go func(healthcheck HealthCheck) {
 			for {
-				if err := healthcheck.IsHealthy(); err == nil {
+				var err error
+				if err = healthcheck.IsHealthy(); err == nil {
 					break
 				}
+				s.logger.Debug("healthcheck", "waiting for server to come up", err)
+
+				time.Sleep(50 * time.Millisecond)
 			}
 
 			wg.Done()

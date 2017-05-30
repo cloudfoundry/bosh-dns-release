@@ -1,8 +1,11 @@
 package server
 
 import (
+	"errors"
 	"net"
-	"time"
+
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"github.com/miekg/dns"
 )
 
 type Dialer func(string, string) (net.Conn, error)
@@ -12,77 +15,54 @@ type HealthCheck interface {
 	IsHealthy() error
 }
 
-type UDPHealthCheck struct {
-	dial   Dialer
-	target string
+type AnswerValidatingHealthCheck struct {
+	target            string
+	healthCheckDomain string
+	network           string
 }
 
-func NewUDPHealthCheck(dial Dialer, target string) UDPHealthCheck {
-	return UDPHealthCheck{
-		dial:   dial,
-		target: target,
+func NewAnswerValidatingHealthCheck(target string, healthcheckDomain string, network string) HealthCheck {
+	return AnswerValidatingHealthCheck{
+		target:            target,
+		healthCheckDomain: healthcheckDomain,
+		network:           network,
 	}
 }
 
-func (hc UDPHealthCheck) IsHealthy() error {
+func (hc AnswerValidatingHealthCheck) IsHealthy() error {
 	var err error
 	hc.target, err = determineHost(hc.target)
 	if err != nil {
-		return err
+		return hc.wrapError(err)
 	}
 
-	conn, err := hc.dial("udp", hc.target)
+	dnsClient := dns.Client{Net: hc.network}
+	request := dns.Msg{
+		Question: []dns.Question{
+			{Name: hc.healthCheckDomain},
+		},
+	}
+	msg, _, err := dnsClient.Exchange(&request, hc.target)
+
 	if err != nil {
-		return err
+		return hc.wrapError(err)
+	}
+	if msg.Rcode != dns.RcodeSuccess {
+		return hc.wrapError(errors.New("DNS reolve failed"))
 	}
 
-	defer conn.Close()
-
-	if _, err := conn.Write([]byte{0x00}); err != nil {
-		return err
+	if len(msg.Answer) == 0 {
+		return hc.wrapError(errors.New("DNS healthcheck found no answers"))
 	}
 
-	conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
-
-	// This value needs to have a length of at least 12, otherwise Windows will fail with an error like:
-	//
-	// A message sent on a datagram socket was larger than the internal message buffer or some other network
-	// limit, or the buffer used to receive a datagram into was smaller than the datagram itself.
-	//
-	// This is likely due to the fact that Windows requires a buffer that is large enough to at least hold
-	// a UDP header
-	if _, err := conn.Read(make([]byte, 12)); err != nil {
-		return err
+	aRecord, ok := msg.Answer[0].(*dns.A)
+	if !ok {
+		return hc.wrapError(errors.New("health check must return A record"))
 	}
 
-	return nil
-}
-
-type TCPHealthCheck struct {
-	dial   Dialer
-	target string
-}
-
-func NewTCPHealthCheck(dial Dialer, target string) TCPHealthCheck {
-	return TCPHealthCheck{
-		dial:   dial,
-		target: target,
+	if !aRecord.A.Equal(net.ParseIP("127.0.0.1")) {
+		return hc.wrapError(errors.New("DNS healthcheck does not return the correct answer"))
 	}
-}
-
-func (hc TCPHealthCheck) IsHealthy() error {
-	var err error
-	hc.target, err = determineHost(hc.target)
-	if err != nil {
-		return err
-	}
-
-	conn, err := hc.dial("tcp", hc.target)
-	if err != nil {
-		return err
-	}
-
-	conn.Close()
 
 	return nil
 }
@@ -98,4 +78,8 @@ func determineHost(target string) (string, error) {
 	}
 
 	return target, nil
+}
+
+func (h AnswerValidatingHealthCheck) wrapError(err error) error {
+	return bosherr.WrapErrorf(err, "on %s", h.network)
 }

@@ -478,6 +478,7 @@ var _ = Describe("main", func() {
 				"address": "%s",
 				"port": %d,
 				"recursors": ["8.8.8.8"],
+				"healthcheck_domains":["healthcheck.bosh-dns."],
 				"alias_files_glob": %q
 			}`, listenAddress, listenPort, path.Join(aliasesDir, "*")))
 		})
@@ -510,6 +511,7 @@ var _ = Describe("main", func() {
 			cmd := newCommandWithConfig(fmt.Sprintf(`{
 				"address": "%s",
 				"port": %d,
+				"healthcheck_domains":["healthcheck.bosh-dns."],
 				"timeout": "0s"
 			}`, listenAddress, listenPort))
 
