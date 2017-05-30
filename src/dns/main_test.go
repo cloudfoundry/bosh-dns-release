@@ -405,7 +405,7 @@ var _ = Describe("main", func() {
 
 			session.Signal(syscall.SIGTERM)
 
-			Eventually(session).Should(gexec.Exit(0))
+			Eventually(session, 10).Should(gexec.Exit(0))
 		})
 	})
 
@@ -478,6 +478,7 @@ var _ = Describe("main", func() {
 				"address": "%s",
 				"port": %d,
 				"recursors": ["8.8.8.8"],
+				"healthcheck_domains":["healthcheck.bosh-dns."],
 				"alias_files_glob": %q
 			}`, listenAddress, listenPort, path.Join(aliasesDir, "*")))
 		})

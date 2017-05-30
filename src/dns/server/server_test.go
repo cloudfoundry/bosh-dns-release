@@ -3,6 +3,7 @@ package server_test
 import (
 	"fmt"
 
+	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server"
 
 	"errors"
@@ -134,6 +135,7 @@ var _ = Describe("Server", func() {
 		healthPollingInterval time.Duration
 		shutdownChannel       chan struct{}
 		stopFakeServer        chan struct{}
+		logger                *fakes.FakeLogger
 	)
 
 	BeforeEach(func() {
@@ -150,6 +152,8 @@ var _ = Describe("Server", func() {
 		fakeUDPServer = &serverfakes.FakeDNSServer{}
 		fakeTCPServer.ListenAndServeStub = tcpServerStub(bindAddress, stopFakeServer)
 		fakeUDPServer.ListenAndServeStub = udpServerStub(bindAddress, timeout, stopFakeServer)
+
+		logger = &fakes.FakeLogger{}
 
 		tcpHealthCheck = healthyCheck()
 		udpHealthCheck = healthyCheck()
@@ -169,6 +173,7 @@ var _ = Describe("Server", func() {
 			timeout,
 			healthPollingInterval,
 			shutdownChannel,
+			logger,
 		)
 	})
 
@@ -382,6 +387,10 @@ var _ = Describe("Server", func() {
 					}()
 
 					Eventually(dnsServerFinished).Should(Receive(Equal(errors.New("timed out waiting for server to bind"))))
+					Expect(logger.DebugCallCount()).To(BeNumerically(">", 1))
+					Expect(logger.DebugCallCount()).To(BeNumerically("<", 100))
+					_, msg, _ := logger.DebugArgsForCall(1)
+					Expect(msg).To(ContainSubstring("waiting for server to come up"))
 				})
 			})
 
@@ -399,6 +408,8 @@ var _ = Describe("Server", func() {
 					}()
 
 					Eventually(dnsServerFinished).Should(Receive(Equal(errors.New("timed out waiting for server to bind"))))
+					Expect(logger.DebugCallCount()).To(BeNumerically(">", 1))
+					Expect(logger.DebugCallCount()).To(BeNumerically("<", 100))
 				})
 			})
 
