@@ -87,8 +87,12 @@ var _ = Describe("Alias address binding", func() {
 
 			time.Sleep(time.Second * 40)
 
-			_, err = getServerPid()
-			Expect(err).To(HaveOccurred())
+			newServerPid, err := getServerPid()
+			if err == nil {
+				// the DNS server flaps in this condition, so it is possible
+				//   our lsof occurred during its brief uptime and thus exited 0
+				Expect(newServerPid).NotTo(Equal(originalServerPid))
+			}
 
 			cmd = exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "sudo /sbin/iptables -D INPUT -p udp -j DROP"}...)
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
