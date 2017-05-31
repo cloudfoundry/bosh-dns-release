@@ -21,18 +21,22 @@ export BOSH_BINARY_PATH=$(which bosh)
 export BOSH_DEPLOYMENT="bosh-dns"
 
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
-    -o $ROOT_DIR/dns-release/ci/assets/add-static-ips-to-cloud-config.yml > /tmp/cloud-config.yml
+    -o $ROOT_DIR/dns-release/src/test_yml_assets/add-static-ips-to-cloud-config.yml > /tmp/cloud-config.yml
 
 bosh -n update-cloud-config /tmp/cloud-config.yml -v network=director_network
 
 bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
+
+pushd $ROOT_DIR/dns-release
+   bosh create-release --force && bosh upload-release
+popd
+
 bosh -n deploy \
-    -v dns_release_path=$ROOT_DIR/dns-release \
     -v acceptance_release_path=$ROOT_DIR/dns-release/src/acceptance_tests/dns-acceptance-release \
-    -o $ROOT_DIR/dns-release/ci/assets/one-instance-with-static-ips.yml \
-    -o $ROOT_DIR/dns-release/ci/assets/configure-recursor.yml \
+    -o $ROOT_DIR/dns-release/src/test_yml_assets/one-instance-with-static-ips.yml \
+    -o $ROOT_DIR/dns-release/src/test_yml_assets/configure-recursor.yml \
     -v recursor_ip="8.8.8.8" \
-    $ROOT_DIR/dns-release/ci/assets/manifest.yml
+    $ROOT_DIR/dns-release/src/test_yml_assets/manifest.yml
 
 
 export GOPATH=${ROOT_DIR}/go

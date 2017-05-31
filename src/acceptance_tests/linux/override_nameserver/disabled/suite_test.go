@@ -8,11 +8,12 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
 	"os"
 	"path/filepath"
 	"testing"
+
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/system"
 )
 
 func TestAcceptance(t *testing.T) {
@@ -35,13 +36,11 @@ var _ = BeforeSuite(func() {
 
 	cmdRunner := system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-	manifestPath, err := filepath.Abs("../../../../../ci/assets/manifest.yml")
+	manifestPath, err := filepath.Abs("../../../../test_yml_assets/manifest.yml")
 	Expect(err).ToNot(HaveOccurred())
-	defaultBindOpsPath, err := filepath.Abs("../../../../../ci/assets/use-dns-release-default-bind-and-alias-addresses.yml")
+	defaultBindOpsPath, err := filepath.Abs("../../../../test_yml_assets/use-dns-release-default-bind-and-alias-addresses.yml")
 	Expect(err).ToNot(HaveOccurred())
 	disableOverridePath, err := filepath.Abs("disable-override-nameserver.yml")
-	Expect(err).ToNot(HaveOccurred())
-	dnsReleasePath, err := filepath.Abs("../../../../../")
 	Expect(err).ToNot(HaveOccurred())
 	aliasProvidingPath, err := filepath.Abs("../../../dns-acceptance-release")
 	Expect(err).ToNot(HaveOccurred())
@@ -49,7 +48,6 @@ var _ = BeforeSuite(func() {
 	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
 		"-n", "-d", boshDeployment, "deploy",
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
-		"-v", fmt.Sprintf("dns_release_path=%s", dnsReleasePath),
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 		"-o", defaultBindOpsPath,
 		"-o", disableOverridePath,

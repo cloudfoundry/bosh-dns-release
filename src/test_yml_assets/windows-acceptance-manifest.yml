@@ -27,8 +27,7 @@ instance_groups:
 
 releases:
 - name: dns
-  url: file://((dns_release_path))
-  version: create
+  version: latest
 
 stemcells:
 - alias: default

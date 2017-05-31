@@ -12,7 +12,10 @@ bosh -n upload-stemcell $ROOT_DIR/bosh-candidate-stemcell-windows/*.tgz
 
 export BOSH_DEPLOYMENT=bosh-dns-windows-acceptance
 
-bosh -n deploy $ROOT_DIR/dns-release/ci/assets/windows-acceptance-manifest.yml \
-    -v dns_release_path=$ROOT_DIR/dns-release
+pushd $ROOT_DIR/dns-release
+   bosh create-release --force && bosh upload-release
+popd
+
+bosh -n deploy $ROOT_DIR/dns-release/src/test_yml_assets/windows-acceptance-manifest.yml
 
 bosh run-errand acceptance-tests-windows
