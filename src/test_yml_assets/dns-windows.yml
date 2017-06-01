@@ -33,8 +33,7 @@ releases:
 - name: dns
   version: latest
 - name: dns-acceptance
-  url: file://((acceptance_release_path))
-  version: create
+  version: latest
 
 stemcells:
 - alias: default

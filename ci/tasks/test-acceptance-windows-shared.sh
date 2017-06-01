@@ -18,4 +18,8 @@ bosh -n -d bosh-dns-shared-acceptance deploy $ROOT_DIR/dns-release/src/test_yml_
     -v bosh_environment="$BOSH_ENVIRONMENT" \
     -v bosh_deployment=bosh-dns
 
+pushd $ROOT_DIR/dns-release/src/acceptance_tests/dns-acceptance-release
+   bosh create-release --force && bosh upload-release
+popd
+
 bosh -d bosh-dns-shared-acceptance run-errand acceptance-tests
