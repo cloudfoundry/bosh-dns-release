@@ -16,6 +16,6 @@ bosh -n -d bosh-dns-shared-acceptance deploy $ROOT_DIR/dns-release/src/test_yml_
     -v bosh_client_secret="$BOSH_CLIENT_SECRET" \
     -v bosh_client="$BOSH_CLIENT" \
     -v bosh_environment="$BOSH_ENVIRONMENT" \
-    -v bosh_deployment=bosh-dns
+    -v bosh_deployment=bosh-dns-windows-acceptance
 
 bosh -d bosh-dns-shared-acceptance run-errand acceptance-tests
