@@ -5,9 +5,10 @@ import (
 	"os"
 
 	"fmt"
-	"github.com/miekg/dns"
 	"strconv"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 func main() {
@@ -152,7 +153,7 @@ func main() {
 		}
 		msg.Answer = append(msg.Answer, aRec)
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(3 * time.Second)
 		err := resp.WriteMsg(msg)
 		if err != nil {
 			fmt.Println(err)
