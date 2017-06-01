@@ -1,23 +1,25 @@
 package performance_test
 
 import (
+	"sync"
+	"time"
+
 	zp "github.com/cloudfoundry/dns-release/src/performance_tests/zone_pickers"
 	"github.com/cloudfoundry/gosigar"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/rcrowley/go-metrics"
-	"sync"
-	"time"
 
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	"io/ioutil"
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 )
 
 type PerformanceTestInfo struct {
@@ -99,7 +101,7 @@ var _ = Describe("Performance", func() {
 
 		testFailures := []error{}
 		if medTime > medianResponseBenchmark {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Median DNS response time of %.3fms was greater than 0.797ms benchmark", medTime)))
+			testFailures = append(testFailures, errors.New(fmt.Sprintf("Median DNS response time of %.3fms was greater than %.3fms benchmark", medTime, medianResponseBenchmark)))
 		}
 		if maxTime > 7540 {
 			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max DNS response time of %.3fms was greater than 7540ms benchmark", maxTime)))
