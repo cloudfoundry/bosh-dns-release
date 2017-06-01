@@ -10,7 +10,7 @@ export BOSH_CA_CERT=$(readlink -m /var/vcap/jobs/acceptance-tests/ca.crt)
 export BOSH_ENVIRONMENT=<%= p('bosh_environment') %>
 export BOSH_DEPLOYMENT=<%= p('bosh_deployment') %>
 
-export TEST_MANIFEST_NAME="windows-acceptance-manifest"
+export TEST_MANIFEST_NAME="dns-windows"
 export TEST_CLOUD_CONFIG_PATH="/tmp/cloud-config.yml"
 ${BOSH_BINARY_PATH} cloud-config > ${TEST_CLOUD_CONFIG_PATH}
 
