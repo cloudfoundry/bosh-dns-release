@@ -21,6 +21,7 @@ export BOSH_BINARY_PATH=$(which bosh)
 export BOSH_DEPLOYMENT="bosh-dns"
 export TEST_CLOUD_CONFIG_PATH="/tmp/cloud-config.yml"
 export TEST_MANIFEST_NAME="manifest"
+export NO_RECURSORS_OPS_FILE="no-recursors-configured"
 
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
     -o $ROOT_DIR/dns-release/src/test_yml_assets/add-static-ips-to-cloud-config.yml > ${TEST_CLOUD_CONFIG_PATH}

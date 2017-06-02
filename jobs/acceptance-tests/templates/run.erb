@@ -11,6 +11,8 @@ export BOSH_ENVIRONMENT=<%= p('bosh_environment') %>
 export BOSH_DEPLOYMENT=<%= p('bosh_deployment') %>
 
 export TEST_MANIFEST_NAME="dns-windows"
+export NO_RECURSORS_OPS_FILE="no-recursors-configured-windows"
+
 export TEST_CLOUD_CONFIG_PATH="/tmp/cloud-config.yml"
 ${BOSH_BINARY_PATH} cloud-config > ${TEST_CLOUD_CONFIG_PATH}
 

@@ -27,6 +27,7 @@ var (
 	boshBinaryPath           string
 	allDeployedInstances     []instanceInfo
 	manifestName             string
+	noRecursorsOpsFile       string
 	boshDeployment           string
 	cmdRunner                system.CmdRunner
 	cloudConfigTempFileName  string
@@ -40,6 +41,7 @@ var _ = BeforeSuite(func() {
 	assertEnvExists("BOSH_ENVIRONMENT")
 	boshDeployment = assertEnvExists("BOSH_DEPLOYMENT")
 	manifestName = assertEnvExists("TEST_MANIFEST_NAME")
+	noRecursorsOpsFile = assertEnvExists("NO_RECURSORS_OPS_FILE")
 	cloudConfigTempFileName = assertEnvExists("TEST_CLOUD_CONFIG_PATH")
 
 	var err error

@@ -216,7 +216,7 @@ func ensureRecursorIsDefinedByBoshAgent() {
 
 	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", manifestName))
 	Expect(err).ToNot(HaveOccurred())
-	disableOverridePath, err := filepath.Abs("../test_yml_assets/no-recursors-configured.yml")
+	disableOverridePath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", noRecursorsOpsFile))
 	Expect(err).ToNot(HaveOccurred())
 	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
 	Expect(err).ToNot(HaveOccurred())
