@@ -257,7 +257,7 @@ func ensureRecursorIsDefinedByDnsRelease() {
 }
 
 func updateCloudConfigWithOurLocalRecursor() {
-	removeRecursorAddressesOpsFile, err := filepath.Abs("../test_yml_assets/add-test-dns-nameservers.yml")
+	removeRecursorAddressesOpsFile, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", setupLocalRecursorOpsFile))
 	Expect(err).ToNot(HaveOccurred())
 	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "update-cloud-config", "-o", removeRecursorAddressesOpsFile, "-v", "network=director_network", cloudConfigTempFileName)
 	Expect(err).ToNot(HaveOccurred())
