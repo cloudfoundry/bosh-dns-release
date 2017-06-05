@@ -84,7 +84,7 @@ func mainExitCode() int {
 		return 1
 	}
 
-	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), logger)
+	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger)
 	localDomain := dnsresolver.NewLocalDomain(logger, recordsRepo, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 

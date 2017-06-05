@@ -3,89 +3,121 @@ package records
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
+	"code.cloudfoundry.org/clock"
+
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
 
-	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	"os"
 	"reflect"
 	"sync"
+
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 const logTag string = "RecordsRepo"
 
-type Repo struct {
-	fileSystem           system.FileSystem
-	recordsFilePath      string
-	cachedRecordSetError error
-	cachedRecordSet      RecordSet
-	stat                 os.FileInfo
-	mutex                *sync.Mutex
-	logger               logger.Logger
+type RecordSetProvider interface {
+	Get() (RecordSet, error)
 }
 
-func NewRepo(recordsFilePath string, fileSys system.FileSystem, logger logger.Logger) *Repo {
-	repo := Repo{
+type autoUpdatingRepo struct {
+	// updateImmediately chan struct{}
+	recordsFilePath string
+	fileSystem      system.FileSystem
+	clock           clock.Clock
+	logger          logger.Logger
+	rwlock          *sync.RWMutex
+	cacheStat       os.FileInfo
+	cache           *RecordSet
+	cacheErr        error
+}
+
+func NewRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Clock, logger logger.Logger) RecordSetProvider {
+	return NewAutoUpdatingRepo(recordsFilePath, fileSys, clock, logger)
+}
+
+func NewAutoUpdatingRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Clock, logger logger.Logger) RecordSetProvider {
+	repo := &autoUpdatingRepo{
 		recordsFilePath: recordsFilePath,
 		fileSystem:      fileSys,
-		mutex:           &sync.Mutex{},
+		clock:           clock,
 		logger:          logger,
+		rwlock:          &sync.RWMutex{},
 	}
 
-	repo.cachedRecordSet, repo.cachedRecordSetError = repo.createFromFileSystem()
-	if repo.cachedRecordSetError != nil {
+	_, records, err := repo.needNewFromDisk()
+	repo.atomicallyUpdateCache(&records, err)
+
+	if repo.cacheErr != nil {
 		logger.Error(logTag, fmt.Sprintf("Unable to open records file at: %s", recordsFilePath))
 	}
-	return &repo
+
+	go func() {
+		for {
+			clock.Sleep(time.Second)
+
+			newData, data, err := repo.needNewFromDisk()
+			if newData && err == nil {
+				repo.atomicallyUpdateCache(&data, err)
+			}
+		}
+	}()
+
+	return repo
 }
 
-func (r *Repo) Get() (RecordSet, error) {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+func (r *autoUpdatingRepo) needNewFromDisk() (needsNew bool, set RecordSet, err error) {
+	needsNew = false
 
-	if r.shouldUseCachedValues() {
-		return r.cachedRecordSet, r.cachedRecordSetError
-	}
-	newRecordSet, err := r.createFromFileSystem()
-	if err == nil {
-		r.cachedRecordSet = newRecordSet
-		r.cachedRecordSetError = err
+	var newStat os.FileInfo
+	newStat, err = r.fileSystem.Stat(r.recordsFilePath)
+	if err != nil {
+		err = bosherr.Errorf("Error stating records file '%s': %s", r.recordsFilePath, err.Error())
+		return
 	}
 
-	return r.cachedRecordSet, r.cachedRecordSetError
+	if reflect.DeepEqual(r.cacheStat, newStat) {
+		return
+	} else {
+		needsNew = true
+	}
+
+	var buf []byte
+	buf, err = r.fileSystem.ReadFile(r.recordsFilePath)
+	if err != nil {
+		return
+	}
+
+	r.cacheStat = newStat
+
+	err = json.Unmarshal(buf, &set)
+
+	return
 }
 
-func (r *Repo) shouldUseCachedValues() bool {
-	if r.cachedRecordSetError != nil {
-		return false
-	}
-
-	newStat, err := r.fileSystem.Stat(r.recordsFilePath)
-	if err != nil {
-		return true
-	}
-
-	unchanged := reflect.DeepEqual(r.stat, newStat)
-	return unchanged
-}
-
-func (r *Repo) createFromFileSystem() (RecordSet, error) {
-	info, err := r.fileSystem.Stat(r.recordsFilePath)
-	if err != nil {
-		return RecordSet{}, bosherr.Errorf("Error stating records file '%s':%s", r.recordsFilePath, err.Error())
-	}
-
-	buf, err := r.fileSystem.ReadFile(r.recordsFilePath)
-	if err != nil {
+func (r *autoUpdatingRepo) Get() (RecordSet, error) {
+	setPtr, err := r.atomicallyFetchCache()
+	if setPtr == nil || err != nil {
 		return RecordSet{}, err
 	}
 
-	r.stat = info
+	return *setPtr, nil
+}
 
-	var newRecordSet RecordSet
-	if err := json.Unmarshal(buf, &newRecordSet); err != nil {
-		return RecordSet{}, err
-	}
+func (r *autoUpdatingRepo) atomicallyUpdateCache(set *RecordSet, err error) {
+	r.rwlock.Lock()
+	r.cache = set
+	r.cacheErr = err
+	r.rwlock.Unlock()
+}
 
-	return newRecordSet, nil
+func (r *autoUpdatingRepo) atomicallyFetchCache() (set *RecordSet, err error) {
+	r.rwlock.RLock()
+	set = r.cache
+	err = r.cacheErr
+	r.rwlock.RUnlock()
+	return
 }

@@ -2,22 +2,27 @@ package records_test
 
 import (
 	"fmt"
+	"time"
+
+	"code.cloudfoundry.org/clock/fakeclock"
+
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/cloudfoundry/bosh-utils/system/fakes"
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 
 	"errors"
+
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 var _ = Describe("Repo", func() {
 	Describe("NewRepo", func() {
 		var (
-			repo                *records.Repo
+			repo                records.RecordSetProvider
 			fakeLogger          = &loggerfakes.FakeLogger{}
+			fakeClock           = fakeclock.NewFakeClock(time.Now())
 			fakeFileSystem      *fakes.FakeFileSystem
 			nonExistentFilePath string
 		)
@@ -32,7 +37,7 @@ var _ = Describe("Repo", func() {
 
 		Context("initial failure cases", func() {
 			It("logs an error when the file does not exist", func() {
-				repo = records.NewRepo("/some/fake/path", fakeFileSystem, fakeLogger)
+				repo = records.NewRepo("/some/fake/path", fakeFileSystem, fakeClock, fakeLogger)
 				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
 
 				tag, message, _ := fakeLogger.ErrorArgsForCall(0)
@@ -45,13 +50,15 @@ var _ = Describe("Repo", func() {
 	Describe("Get", func() {
 		var (
 			recordsFile    boshsys.File
-			repo           *records.Repo
+			repo           records.RecordSetProvider
+			fakeClock      *fakeclock.FakeClock
 			fakeLogger     = &loggerfakes.FakeLogger{}
 			fakeFileSystem *fakes.FakeFileSystem
 		)
 
 		BeforeEach(func() {
 			fakeFileSystem = fakes.NewFakeFileSystem()
+			fakeClock = fakeclock.NewFakeClock(time.Now())
 			recordsFile = fakes.NewFakeFile("/fake/file", fakeFileSystem)
 
 			err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(fmt.Sprint(`{
@@ -63,7 +70,7 @@ var _ = Describe("Repo", func() {
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
-			repo = records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeLogger)
+			repo = records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger)
 		})
 
 		Context("initial failure cases", func() {
@@ -73,15 +80,15 @@ var _ = Describe("Repo", func() {
 					StatErr: errors.New("NOPE"),
 				})
 
-				repo := records.NewRepo(nonExistentFilePath, fakeFileSystem, fakeLogger)
+				repo := records.NewRepo(nonExistentFilePath, fakeFileSystem, fakeClock, fakeLogger)
 				_, err := repo.Get()
-				Expect(err).To(MatchError("Error stating records file '/some/fake/path':NOPE"))
+				Expect(err).To(MatchError("Error stating records file '/some/fake/path': NOPE"))
 			})
 
 			It("returns an error when a file read error occurs", func() {
 				fakeFileSystem.RegisterReadFileError(recordsFile.Name(), errors.New("can not read file"))
 
-				repo := records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeLogger)
+				repo := records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger)
 				_, err := repo.Get()
 				Expect(err).To(MatchError("can not read file"))
 			})
@@ -90,7 +97,7 @@ var _ = Describe("Repo", func() {
 				err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte("invalid json"))
 				Expect(err).NotTo(HaveOccurred())
 
-				repo := records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeLogger)
+				repo := records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger)
 				_, err = repo.Get()
 				Expect(err).To(MatchError("invalid character 'i' looking for beginning of value"))
 			})
@@ -137,9 +144,16 @@ var _ = Describe("Repo", func() {
 
 					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
 						Stats: &fakes.FakeFileStats{
-							ModTime: time.Time{},
+							ModTime: fakeClock.Now(),
 						},
 					})
+
+					// Waiting the first time will trigger the clock.Sleep in the
+					// cache auto-update thread. Waiting the second time will
+					// ensure that the auto-update thread has finished its previous
+					// iteration.
+					fakeClock.WaitForWatcherAndIncrement(time.Second)
+					fakeClock.WaitForWatcherAndIncrement(0)
 				})
 
 				It("should return all records from new file contents", func() {
@@ -174,6 +188,9 @@ var _ = Describe("Repo", func() {
 							ModTime: initialTime.Add(-3 * time.Second),
 						},
 					})
+
+					fakeClock.WaitForWatcherAndIncrement(time.Second)
+					fakeClock.WaitForWatcherAndIncrement(0)
 
 					_, err = repo.Get()
 					Expect(err).NotTo(HaveOccurred())
@@ -211,6 +228,9 @@ var _ = Describe("Repo", func() {
 			}`))
 
 						Expect(err).NotTo(HaveOccurred())
+
+						fakeClock.WaitForWatcherAndIncrement(time.Second)
+						fakeClock.WaitForWatcherAndIncrement(0)
 
 						fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
 							Stats: &fakes.FakeFileStats{
@@ -253,6 +273,9 @@ var _ = Describe("Repo", func() {
 						},
 					})
 
+					fakeClock.WaitForWatcherAndIncrement(time.Second)
+					fakeClock.WaitForWatcherAndIncrement(0)
+
 					_, err = repo.Get()
 					Expect(err).NotTo(HaveOccurred())
 
@@ -289,6 +312,9 @@ var _ = Describe("Repo", func() {
 								ModTime: initialTime.Add(-1 * time.Second),
 							},
 						})
+
+						fakeClock.WaitForWatcherAndIncrement(time.Second)
+						fakeClock.WaitForWatcherAndIncrement(0)
 					})
 
 					It("should return all records from new file contents", func() {
@@ -342,6 +368,9 @@ var _ = Describe("Repo", func() {
 								ModTime: time.Now(),
 							},
 						})
+
+						fakeClock.WaitForWatcherAndIncrement(time.Second)
+						fakeClock.WaitForWatcherAndIncrement(0)
 					})
 
 					It("should return all records from new file contents", func() {
