@@ -20,6 +20,7 @@ import (
 var _ = Describe("Repo", func() {
 	Describe("NewRepo", func() {
 		var (
+			shutdownChan        chan struct{}
 			repo                records.RecordSetProvider
 			fakeLogger          = &loggerfakes.FakeLogger{}
 			fakeClock           = fakeclock.NewFakeClock(time.Now())
@@ -28,6 +29,7 @@ var _ = Describe("Repo", func() {
 		)
 
 		BeforeEach(func() {
+			shutdownChan = make(chan struct{})
 			fakeFileSystem = fakes.NewFakeFileSystem()
 			nonExistentFilePath = "/some/fake/path"
 			fakeFileSystem.RegisterOpenFile(nonExistentFilePath, &fakes.FakeFile{
@@ -35,9 +37,13 @@ var _ = Describe("Repo", func() {
 			})
 		})
 
+		AfterEach(func() {
+			close(shutdownChan)
+		})
+
 		Context("initial failure cases", func() {
 			It("logs an error when the file does not exist", func() {
-				repo = records.NewRepo("/some/fake/path", fakeFileSystem, fakeClock, fakeLogger)
+				repo = records.NewRepo("/some/fake/path", fakeFileSystem, fakeClock, fakeLogger, shutdownChan)
 				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
 
 				tag, message, _ := fakeLogger.ErrorArgsForCall(0)
@@ -49,6 +55,7 @@ var _ = Describe("Repo", func() {
 
 	Describe("Get", func() {
 		var (
+			shutdownChan   chan struct{}
 			recordsFile    boshsys.File
 			repo           records.RecordSetProvider
 			fakeClock      *fakeclock.FakeClock
@@ -57,6 +64,7 @@ var _ = Describe("Repo", func() {
 		)
 
 		BeforeEach(func() {
+			shutdownChan = make(chan struct{})
 			fakeFileSystem = fakes.NewFakeFileSystem()
 			fakeClock = fakeclock.NewFakeClock(time.Now())
 			recordsFile = fakes.NewFakeFile("/fake/file", fakeFileSystem)
@@ -70,7 +78,11 @@ var _ = Describe("Repo", func() {
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
-			repo = records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger)
+			repo = records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger, shutdownChan)
+		})
+
+		AfterEach(func() {
+			close(shutdownChan)
 		})
 
 		Context("initial failure cases", func() {
@@ -80,7 +92,7 @@ var _ = Describe("Repo", func() {
 					StatErr: errors.New("NOPE"),
 				})
 
-				repo := records.NewRepo(nonExistentFilePath, fakeFileSystem, fakeClock, fakeLogger)
+				repo := records.NewRepo(nonExistentFilePath, fakeFileSystem, fakeClock, fakeLogger, shutdownChan)
 				_, err := repo.Get()
 				Expect(err).To(MatchError("Error stating records file '/some/fake/path': NOPE"))
 			})
@@ -88,7 +100,7 @@ var _ = Describe("Repo", func() {
 			It("returns an error when a file read error occurs", func() {
 				fakeFileSystem.RegisterReadFileError(recordsFile.Name(), errors.New("can not read file"))
 
-				repo := records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger)
+				repo := records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger, shutdownChan)
 				_, err := repo.Get()
 				Expect(err).To(MatchError("can not read file"))
 			})
@@ -97,7 +109,7 @@ var _ = Describe("Repo", func() {
 				err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte("invalid json"))
 				Expect(err).NotTo(HaveOccurred())
 
-				repo := records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger)
+				repo := records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger, shutdownChan)
 				_, err = repo.Get()
 				Expect(err).To(MatchError("invalid character 'i' looking for beginning of value"))
 			})

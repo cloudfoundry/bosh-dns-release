@@ -75,6 +75,7 @@ func mainExitCode() int {
 
 	mux := dns.NewServeMux()
 	clock := clock.NewClock()
+	repoUpdate := make(chan struct{})
 
 	dnsManager := newDNSManager(logger, clock, fs)
 	recursorReader := dnsconfig.NewRecursorReader(dnsManager, config.Address)
@@ -84,7 +85,7 @@ func mainExitCode() int {
 		return 1
 	}
 
-	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger)
+	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
 	localDomain := dnsresolver.NewLocalDomain(logger, recordsRepo, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
@@ -134,6 +135,7 @@ func mainExitCode() int {
 
 	go func() {
 		<-sigterm
+		close(repoUpdate)
 		close(shutdown)
 	}()
 

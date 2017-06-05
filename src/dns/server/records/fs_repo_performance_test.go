@@ -43,7 +43,7 @@ var _ = Describe("FsRepoPerformance", func() {
 
 	Context("using mutex locks", func() {
 		BeforeEach(func() {
-			repo = NewRepo(recordsFilePath, fileSys, clock, logger)
+			repo = NewRepo(recordsFilePath, fileSys, clock, logger, done)
 		})
 
 		It("should have a median response time less than 0.01 ms with no writes", func() {

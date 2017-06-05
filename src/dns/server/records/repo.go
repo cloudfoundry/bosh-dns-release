@@ -35,11 +35,7 @@ type autoUpdatingRepo struct {
 	cacheErr        error
 }
 
-func NewRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Clock, logger logger.Logger) RecordSetProvider {
-	return NewAutoUpdatingRepo(recordsFilePath, fileSys, clock, logger)
-}
-
-func NewAutoUpdatingRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Clock, logger logger.Logger) RecordSetProvider {
+func NewRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Clock, logger logger.Logger, shutdownChan chan struct{}) RecordSetProvider {
 	repo := &autoUpdatingRepo{
 		recordsFilePath: recordsFilePath,
 		fileSystem:      fileSys,
@@ -57,11 +53,16 @@ func NewAutoUpdatingRepo(recordsFilePath string, fileSys system.FileSystem, cloc
 
 	go func() {
 		for {
-			clock.Sleep(time.Second)
+			select {
+			case <-shutdownChan:
+				break
+			default:
+				clock.Sleep(time.Second)
 
-			newData, data, err := repo.needNewFromDisk()
-			if newData && err == nil {
-				repo.atomicallyUpdateCache(&data, err)
+				newData, data, err := repo.needNewFromDisk()
+				if newData && err == nil {
+					repo.atomicallyUpdateCache(&data, err)
+				}
 			}
 		}
 	}()
