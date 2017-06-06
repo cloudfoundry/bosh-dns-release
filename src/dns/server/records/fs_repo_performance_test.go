@@ -59,7 +59,7 @@ var _ = Describe("FsRepoPerformance", func() {
 			close(done)
 			sort.Float64s(values)
 			median := values[len(values)/2]
-		  Expect(median).To(BeNumerically("<", 0.001))
+		  Expect(median).To(BeNumerically("<", 0.005))
 		})
 
 		It("should have a median response time less than 0.01 ms with periodic writes", func() {
@@ -88,7 +88,7 @@ var _ = Describe("FsRepoPerformance", func() {
 			}
 			sort.Float64s(values)
 			median := values[len(values)/2]
-			Expect(median).To(BeNumerically("<", 0.001))
+			Expect(median).To(BeNumerically("<", 0.005))
 		})
 	})
 })
