@@ -15,6 +15,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"code.cloudfoundry.org/clock"
 )
 
 var _ = Describe("FsRepoPerformance", func() {
@@ -23,15 +24,20 @@ var _ = Describe("FsRepoPerformance", func() {
 		recordsFilePath string
 		repo            RecordSetProvider
 		fileSys         boshsys.FileSystem
-		clock= fakeclock.NewFakeClock(time.Now())
+		clock 					clock.Clock
 		logger          *blogfakes.FakeLogger
+		mutex           *sync.Mutex
 	)
 
 	BeforeEach(func() {
+		mutex = &sync.Mutex{}
+
 		start = make(chan struct{})
 		done = make(chan struct{})
 
-		recordsFile, err := ioutil.TempFile("/tmp", "records")
+		clock = fakeclock.NewFakeClock(time.Now())
+
+		recordsFile, err := ioutil.TempFile("", "records")
 		Expect(err).NotTo(HaveOccurred())
 		recordsFilePath = recordsFile.Name()
 
@@ -48,7 +54,7 @@ var _ = Describe("FsRepoPerformance", func() {
 
 		It("should have a median response time less than 0.01 ms with no writes", func() {
 			values := []float64{}
-			hammerGet(repo, start, done, func(f float64) {
+			hammerGet(repo, start, done, mutex, func(f float64) {
 				values = append(values, f)
 			})
 
@@ -57,14 +63,18 @@ var _ = Describe("FsRepoPerformance", func() {
 			time.Sleep(2 * time.Second)
 
 			close(done)
+
+			mutex.Lock()
 			sort.Float64s(values)
 			median := values[len(values)/2]
-		  Expect(median).To(BeNumerically("<", 0.005))
+			mutex.Unlock()
+
+			Expect(median).To(BeNumerically("<", 0.005))
 		})
 
 		It("should have a median response time less than 0.01 ms with periodic writes", func() {
 			values := []float64{}
-			hammerGet(repo, start, done, func(f float64) {
+			hammerGet(repo, start, done, mutex, func(f float64) {
 				values = append(values, f)
 			})
 
@@ -86,15 +96,18 @@ var _ = Describe("FsRepoPerformance", func() {
 					Expect(fileSys.WriteFileString(recordsFilePath, `{"zones":["my.domain.","your.domain.","example.com."]}`)).To(Succeed())
 				}
 			}
+
+			mutex.Lock()
 			sort.Float64s(values)
 			median := values[len(values)/2]
+			mutex.Unlock()
+
 			Expect(median).To(BeNumerically("<", 0.005))
 		})
 	})
 })
 
-func hammerGet(repo RecordSetProvider, start, done chan struct{}, benchmark func(float64)) {
-	mutex := &sync.Mutex{}
+func hammerGet(repo RecordSetProvider, start, done chan struct{}, mutex *sync.Mutex, benchmark func(float64)) {
 	for i := 0; i < 1000; i++ {
 		go func(s chan struct{}, r RecordSetProvider, d chan struct{}) {
 			defer GinkgoRecover()
