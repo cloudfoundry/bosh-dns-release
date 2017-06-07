@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"runtime"
 )
 
 var _ = Describe("recursor", func() {
@@ -37,6 +38,10 @@ var _ = Describe("recursor", func() {
 		})
 
 		It("fowards queries to the configured recursors on port 53", func() {
+			if runtime.GOOS == "windows" {
+				Skip("Windows agent does not properly configure DNS nameservers from cloud config")
+			}
+
 			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A example.com @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
