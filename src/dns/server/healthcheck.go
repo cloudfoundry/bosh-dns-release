@@ -48,7 +48,7 @@ func (hc AnswerValidatingHealthCheck) IsHealthy() error {
 		return hc.wrapError(err)
 	}
 	if msg.Rcode != dns.RcodeSuccess {
-		return hc.wrapError(errors.New("DNS reolve failed"))
+		return hc.wrapError(errors.New("DNS resolve failed"))
 	}
 
 	if len(msg.Answer) == 0 {

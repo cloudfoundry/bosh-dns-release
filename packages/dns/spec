@@ -5,6 +5,7 @@ dependencies:
 - golang
 
 files:
+- healthcheck/**/*
 - dns/**/*
 - vendor/**/*
 

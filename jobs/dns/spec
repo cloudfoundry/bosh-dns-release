@@ -5,6 +5,7 @@ templates:
   aliases.json.erb: dns/aliases.json
   dns_ctl.erb: bin/dns_ctl
   dns_resolvconf_ctl.erb: bin/dns_resolvconf_ctl
+  dns_healthcheck_ctl.erb: bin/dns_healthcheck_ctl
   post-start.erb: bin/post-start
   config.json.erb: config/config.json
 
@@ -51,3 +52,7 @@ properties:
     default:
       - healthcheck.bosh-dns.
       - consul.service.cf.internal.
+
+  health.enabled:
+    description: "Enable healthchecks for DNS resolution"
+    default: false

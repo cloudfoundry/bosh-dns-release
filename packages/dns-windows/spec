@@ -5,6 +5,7 @@ dependencies:
 - golang-windows
 
 files:
+- healthcheck/**/*
 - dns/**/*
 - vendor/**/*
 - exiter.ps1

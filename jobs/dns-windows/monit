@@ -16,6 +16,13 @@ if p('override_nameserver')
   }
 end
 
+if p('health.enabled')
+  monit[:processes] << {
+    name: "dns-healthcheck-windows",
+    executable: "/var/vcap/packages/dns-windows/bin/healthcheck.exe"
+  }
+end
+
 JSON.dump(monit)
 
 %>

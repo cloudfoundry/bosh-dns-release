@@ -11,5 +11,6 @@ mv * "${GOPATH}/src/github.com/cloudfoundry/dns-release/src"
 
 go install "github.com/cloudfoundry/dns-release/src/dns"
 go install "github.com/cloudfoundry/dns-release/src/dns/nameserverconfig"
+go install "github.com/cloudfoundry/dns-release/src/healthcheck"
 
 mv "${GOPATH}/bin/"* "${BOSH_INSTALL_TARGET}/bin"

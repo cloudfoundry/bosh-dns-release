@@ -47,3 +47,7 @@ properties:
     default:
       - healthcheck.bosh-dns.
       - consul.service.cf.internal.
+
+  health.enabled:
+    description: "Enable healthchecks for DNS resolution"
+    default: false

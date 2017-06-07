@@ -1,0 +1,87 @@
+#!/bin/bash -exu
+
+set -o pipefail
+
+RUN_DIR=/var/vcap/sys/run/dns
+PIDFILE=$RUN_DIR/dns_healthcheck.pid
+LOG_DIR=/var/vcap/sys/log/dns
+DNS_PACKAGE=/var/vcap/packages/dns
+SCRIPT_NAME=dns_healthcheck_ctl
+
+function start_logging() {
+  exec > >(prepend_datetime >> $LOG_DIR/${SCRIPT_NAME}.stdout.log)
+  exec 2> >(prepend_datetime >> $LOG_DIR/${SCRIPT_NAME}.stderr.log)
+}
+
+function prepend_datetime() {
+  awk -W interactive '{ system("echo -n [$(date +\"%Y-%m-%d %H:%M:%S%z\")]"); print " " $0 }'
+}
+
+function pid_exists() {
+  ps -p $1 &> /dev/null
+}
+
+function create_directories_and_chown_to_vcap() {
+  mkdir -p "${LOG_DIR}"
+  chown -R vcap:vcap "${LOG_DIR}"
+
+  mkdir -p "${RUN_DIR}"
+  chown -R vcap:vcap "${RUN_DIR}"
+}
+
+function start_process() {
+  "${DNS_PACKAGE}/bin/healthcheck" \
+    --bindAddress "<%= p('address') %>" \
+    1>> ${LOG_DIR}/dns_healthcheck.stdout.log \
+    2>> ${LOG_DIR}/dns_healthcheck.stderr.log &
+
+   echo $! > $PIDFILE
+}
+
+function stop_process() {
+  local pid
+
+  if [ -e $PIDFILE ]
+  then
+    pid=$(head -1 $PIDFILE)
+  else
+    exit 0
+  fi
+
+  if [ ! -z $pid ] && pid_exists $pid
+  then
+    set +e
+    kill -15 $pid
+    set -e
+  fi
+
+  if [ -e /proc/$pid ]
+  then
+    set +e
+    kill -9 $pid
+    set -e
+  fi
+
+  rm -f $PIDFILE
+}
+
+function main() {
+  create_directories_and_chown_to_vcap
+  start_logging
+
+  case ${1} in
+    start)
+      start_process
+      ;;
+
+    stop)
+      stop_process
+      ;;
+
+    *)
+      echo "Usage: ${0} {start|stop}"
+      ;;
+  esac
+}
+
+main $@

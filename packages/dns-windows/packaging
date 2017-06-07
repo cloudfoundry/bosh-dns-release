@@ -8,7 +8,7 @@ $BOSH_INSTALL_TARGET = Resolve-Path "${env:BOSH_INSTALL_TARGET}"
 $env:GOROOT="C:\var\vcap\packages\golang-windows\go"
 $env:GOPATH="${BOSH_INSTALL_TARGET}"
 $env:PATH="${env:GOROOT}\bin;${env:PATH}"
-$pkg_path="github.com\cloudfoundry\dns-release\src\dns"
+$pkg_path="github.com\cloudfoundry\dns-release\src"
 
 New-Item -ItemType "directory" -Force "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src"
 robocopy /E . "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\"
@@ -16,14 +16,19 @@ if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\"
 }
 
-go.exe install "${pkg_path}"
+go.exe install "${pkg_path}\dns"
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Error compiling: ${pkg_path}"
+    Write-Error "Error compiling: ${pkg_path}\dns"
 }
 
-go.exe install "${pkg_path}\nameserverconfig"
+go.exe install "${pkg_path}\dns\nameserverconfig"
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Error compiling: ${pkg_path}\nameserverconfig"
+    Write-Error "Error compiling: ${pkg_path}\dns\nameserverconfig"
+}
+
+go.exe install "${pkg_path}\healthcheck"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Error compiling: ${pkg_path}\healthcheck"
 }
 
 New-Item -ItemType "directory" -Force "emptyfolder"
