@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -19,12 +20,14 @@ func main() {
 }
 
 func mainExitCode() int {
+	listenPort := os.Args[1]
+
 	logger = boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout, os.Stderr)
 	logTag = "main"
 	defer logger.FlushTimeout(5 * time.Second)
 
 	http.HandleFunc("/health", healthEntryPoint)
-	logger.Error(logTag, "http healthcheck ending with %s", http.ListenAndServe(":8080", nil))
+	logger.Error(logTag, "http healthcheck ending with %s", http.ListenAndServe(fmt.Sprintf(":%s", listenPort), nil))
 
 	return 0
 }

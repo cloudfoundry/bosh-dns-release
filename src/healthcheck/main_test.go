@@ -26,8 +26,8 @@ var _ = Describe("HealthCheck server", func() {
 		var err error
 
 		// run the server
-		listenPort = 8080
-		cmd = exec.Command(pathToServer)
+		listenPort = 1234
+		cmd = exec.Command(pathToServer, strconv.Itoa(listenPort))
 		sess, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -56,10 +56,6 @@ var _ = Describe("HealthCheck server", func() {
 			Expect(respJson).To(Equal(map[string]string{
 				"state": "running",
 			}))
-		})
-
-		It("listens on all configured addresses", func() {
-
 		})
 	})
 })

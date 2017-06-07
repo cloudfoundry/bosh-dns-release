@@ -56,3 +56,7 @@ properties:
   health.enabled:
     description: "Enable healthchecks for DNS resolution"
     default: false
+
+  health.server_port:
+    description: "Port to run healthchecks server on"
+    default: 8080
