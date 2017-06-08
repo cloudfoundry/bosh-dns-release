@@ -23,15 +23,13 @@ func TestAcceptance(t *testing.T) {
 }
 
 var (
-	pathToTestRecursorServer  string
-	boshBinaryPath            string
-	allDeployedInstances      []instanceInfo
-	manifestName              string
-	noRecursorsOpsFile        string
-	setupLocalRecursorOpsFile string
-	boshDeployment            string
-	cmdRunner                 system.CmdRunner
-	cloudConfigTempFileName   string
+	pathToTestRecursorServer string
+	boshBinaryPath           string
+	allDeployedInstances     []instanceInfo
+	boshDeployment           string
+	cmdRunner                system.CmdRunner
+	cloudConfigTempFileName  string
+	testTargetOS             string
 )
 
 var _ = BeforeSuite(func() {
@@ -41,10 +39,8 @@ var _ = BeforeSuite(func() {
 	assertEnvExists("BOSH_CA_CERT")
 	assertEnvExists("BOSH_ENVIRONMENT")
 	boshDeployment = assertEnvExists("BOSH_DEPLOYMENT")
-	manifestName = assertEnvExists("TEST_MANIFEST_NAME")
-	noRecursorsOpsFile = assertEnvExists("NO_RECURSORS_OPS_FILE")
-	setupLocalRecursorOpsFile = assertEnvExists("LOCAL_RECURSOR_OPS_FILE")
 	cloudConfigTempFileName = assertEnvExists("TEST_CLOUD_CONFIG_PATH")
+	testTargetOS = assertEnvExists("TEST_TARGET_OS")
 
 	var err error
 	pathToTestRecursorServer, err = gexec.Build("github.com/cloudfoundry/dns-release/src/acceptance_tests/test_recursor")
@@ -61,6 +57,30 @@ func assertEnvExists(envName string) string {
 		Fail(fmt.Sprintf("Expected %s", envName))
 	}
 	return val
+}
+
+func testManifestName() string {
+	if testTargetOS == "windows" {
+		return "dns-windows"
+	} else {
+		return "manifest"
+	}
+}
+
+func noRecursorsOpsFile() string {
+	if testTargetOS == "windows" {
+		return "no-recursors-configured-windows"
+	} else {
+		return "no-recursors-configured"
+	}
+}
+
+func setupLocalRecursorOpsFile() string {
+	if testTargetOS == "windows" {
+		return "add-test-dns-nameservers-windows"
+	} else {
+		return "add-test-dns-nameservers"
+	}
 }
 
 type instanceInfo struct {

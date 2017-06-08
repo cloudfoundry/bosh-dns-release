@@ -13,7 +13,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
-	"runtime"
 )
 
 var _ = Describe("recursor", func() {
@@ -38,7 +37,7 @@ var _ = Describe("recursor", func() {
 		})
 
 		It("fowards queries to the configured recursors on port 53", func() {
-			if runtime.GOOS == "windows" {
+			if testTargetOS == "windows" {
 				Skip("Windows agent does not properly configure DNS nameservers from cloud config")
 			}
 
@@ -219,9 +218,9 @@ var _ = Describe("recursor", func() {
 func ensureRecursorIsDefinedByBoshAgent() {
 	cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", manifestName))
+	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", testManifestName()))
 	Expect(err).ToNot(HaveOccurred())
-	disableOverridePath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", noRecursorsOpsFile))
+	disableOverridePath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", noRecursorsOpsFile()))
 	Expect(err).ToNot(HaveOccurred())
 	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
 	Expect(err).ToNot(HaveOccurred())
@@ -243,7 +242,7 @@ func ensureRecursorIsDefinedByBoshAgent() {
 func ensureRecursorIsDefinedByDnsRelease() {
 	cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", manifestName))
+	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", testManifestName()))
 	Expect(err).ToNot(HaveOccurred())
 	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
 	Expect(err).ToNot(HaveOccurred())
@@ -262,7 +261,7 @@ func ensureRecursorIsDefinedByDnsRelease() {
 }
 
 func updateCloudConfigWithOurLocalRecursor() {
-	removeRecursorAddressesOpsFile, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", setupLocalRecursorOpsFile))
+	removeRecursorAddressesOpsFile, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", setupLocalRecursorOpsFile()))
 	Expect(err).ToNot(HaveOccurred())
 	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "update-cloud-config", "-o", removeRecursorAddressesOpsFile, "-v", "network=director_network", cloudConfigTempFileName)
 	Expect(err).ToNot(HaveOccurred())
