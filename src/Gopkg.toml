@@ -18,3 +18,7 @@
 [[dependencies]]
   branch = "master"
   name = "code.cloudfoundry.org/clock"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/pivotal-cf/paraphernalia"

@@ -1,0 +1,8 @@
+<%=
+{
+  Port:     p('health.server_port'),
+  CertFile: 'config/certs/server.pem',
+  KeyFile:  'config/certs/server.key',
+  CaFile:   'config/certs/ca.pem'
+}.to_json
+%>

@@ -8,6 +8,10 @@ templates:
   dns_healthcheck_ctl.erb: bin/dns_healthcheck_ctl
   post-start.erb: bin/post-start
   config.json.erb: config/config.json
+  healthcheck_server_config.json.erb: config/healthcheck_server_config.json
+  server.key.erb: config/certs/server.key
+  server.pem.erb: config/certs/server.pem
+  ca.pem.erb:     config/certs/ca.pem
 
 packages:
   - dns
@@ -60,3 +64,12 @@ properties:
   health.server_port:
     description: "Port to run healthchecks server on"
     default: 8080
+
+  health.server_tls_key:
+    description: "Private key for the health daemon's TLS cert."
+
+  health.server_tls_cert:
+    description: "The health daemon's TLS cert."
+
+  health.ca_tls_cert:
+    description: "Root CA for the health service."

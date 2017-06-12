@@ -5,7 +5,12 @@ templates:
   aliases.json.erb: dns/aliases.json
   config.json.erb: config/config.json
   dns_ctl.ps1.erb: bin/dns_ctl.ps1
+  healthcheck_ctl.ps1.erb: bin/healthcheck_ctl.ps1
   post-start.ps1.erb: bin/post-start.ps1
+  healthcheck_server_config.json.erb: config/healthcheck_server_config.json
+  server.key.erb: config/certs/server.key
+  server.pem.erb: config/certs/server.pem
+  ca.pem.erb:     config/certs/ca.pem
 
 packages:
   - dns-windows
@@ -55,3 +60,12 @@ properties:
   health.server_port:
     description: "Port to run healthchecks server on"
     default: 8080
+
+  health.server_tls_key:
+    description: "Private key for the health daemon's TLS cert."
+
+  health.server_tls_cert:
+    description: "The health daemon's TLS cert."
+
+  health.ca_tls_cert:
+    description: "Root CA for the health service."

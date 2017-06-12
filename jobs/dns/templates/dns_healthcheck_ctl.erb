@@ -5,6 +5,7 @@ set -o pipefail
 RUN_DIR=/var/vcap/sys/run/dns
 PIDFILE=$RUN_DIR/dns_healthcheck.pid
 LOG_DIR=/var/vcap/sys/log/dns
+JOB_DIR=/var/vcap/jobs/dns
 DNS_PACKAGE=/var/vcap/packages/dns
 SCRIPT_NAME=dns_healthcheck_ctl
 
@@ -30,12 +31,14 @@ function create_directories_and_chown_to_vcap() {
 }
 
 function start_process() {
+  pushd ${JOB_DIR}
   "${DNS_PACKAGE}/bin/healthcheck" \
-    "<%= p('health.server_port') %>" \
+    config/healthcheck_server_config.json \
     1>> ${LOG_DIR}/dns_healthcheck.stdout.log \
     2>> ${LOG_DIR}/dns_healthcheck.stderr.log &
+  popd
 
-   echo $! > $PIDFILE
+  echo $! > $PIDFILE
 }
 
 function stop_process() {

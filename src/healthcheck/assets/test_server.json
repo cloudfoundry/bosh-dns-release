@@ -1,0 +1,6 @@
+{
+  "port": 1234,
+  "certFile": "assets/test_certs/test_server.pem",
+  "keyFile": "assets/test_certs/test_server.key",
+  "caFile": "assets/test_certs/test_ca.pem"
+}
