@@ -34,3 +34,7 @@ go install github.com/onsi/ginkgo/ginkgo
 pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/dns
     ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
 popd
+
+pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/healthcheck
+    ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
+popd

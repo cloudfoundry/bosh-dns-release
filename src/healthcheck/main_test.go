@@ -4,10 +4,10 @@ import (
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
+
 	"net"
 	"net/http"
-	"os/exec"
+
 	"strconv"
 	"time"
 	//"errors"
@@ -15,44 +15,18 @@ import (
 
 	"crypto/tls"
 	"crypto/x509"
-	. "github.com/cloudfoundry/dns-release/src/healthcheck"
+	// . "github.com/cloudfoundry/dns-release/src/healthcheck"
 	pivTls "github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 	"io/ioutil"
 	"log"
 )
 
 var (
-	sess   *gexec.Session
-	cmd    *exec.Cmd
-	config *HealthCheckConfig
+	// config *HealthCheckConfig
 )
 
 var _ = Describe("HealthCheck server", func() {
-	BeforeEach(func() {
-		var err error
 
-		// run the server
-		configFile := "assets/test_server.json"
-		cmd = exec.Command(pathToServer, configFile)
-		sess, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).ToNot(HaveOccurred())
-
-		configRaw, err := ioutil.ReadFile(configFile)
-		Expect(err).ToNot(HaveOccurred())
-
-		config = &HealthCheckConfig{}
-		err = json.Unmarshal(configRaw, config)
-		Expect(err).ToNot(HaveOccurred())
-
-		Expect(waitForServer(config.Port)).To(Succeed())
-	})
-
-	AfterEach(func() {
-		if cmd.Process != nil {
-			sess.Terminate()
-			sess.Wait()
-		}
-	})
 
 	Describe("/health", func() {
 		It("reject non-TLS connections", func() {

@@ -32,3 +32,11 @@ if ($LastExitCode -ne 0)
     Write-Error $_
     exit 1
 }
+
+cd $env:GOPATH/src/github.com/cloudfoundry/dns-release/src/healthcheck
+ginkgo.exe -r -race -keepGoing -randomizeAllSpecs -randomizeSuites
+if ($LastExitCode -ne 0)
+{
+    Write-Error $_
+    exit 1
+}
