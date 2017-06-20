@@ -61,6 +61,6 @@ var _ = AfterSuite(func() {
 			sess.Wait()
 		}
 	}
-	
+
 	gexec.CleanupBuildArtifacts()
 })

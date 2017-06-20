@@ -7,7 +7,8 @@ if ($? -eq $False) {
   New-NetIPAddress -InterfaceIndex $loopbackInterfaceIndex -IPAddress <%= p('aliased_address') %>
 }
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop";
+trap { $host.SetShouldExit(1) }
 try {
   $RegistryPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters"
   $ExpectedValue = 0

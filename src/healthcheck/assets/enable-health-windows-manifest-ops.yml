@@ -1,0 +1,8 @@
+- path: /instance_groups/0/jobs/name=dns-windows/properties?/health
+  type: replace
+  value:
+    enabled: true
+    server_port: ((health_server_port))
+    server_tls_cert: ((health_tls_cert))
+    server_tls_key: ((health_tls_key))
+    ca_tls_cert: ((health_ca))

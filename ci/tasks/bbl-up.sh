@@ -5,7 +5,7 @@ set -o pipefail
 ROOT_DIR=$PWD
 BBL_STATE_DIR=$ROOT_DIR/bbl-state
 
-mkdir $BBL_STATE_DIR/bin
+mkdir -p $BBL_STATE_DIR/bin
 export PATH=$BBL_STATE_DIR/bin:$PATH
 
 set +u
@@ -20,10 +20,10 @@ unzip terraform_0.9.4_linux_amd64.zip
 mv terraform $BBL_STATE_DIR/bin/
 chmod +x $BBL_STATE_DIR/bin/terraform
 
-mv $(realpath $ROOT_DIR/bosh-cli/bosh-cli-*) $BBL_STATE_DIR/bin/bosh
+cp $(realpath $ROOT_DIR/bosh-cli/bosh-cli-*) $BBL_STATE_DIR/bin/bosh
 chmod +x $BBL_STATE_DIR/bin/bosh
 
-mv $(realpath $ROOT_DIR/bbl-cli/bbl-*_linux_x86-64) $BBL_STATE_DIR/bin/bbl
+cp $(realpath $ROOT_DIR/bbl-cli/bbl-*_linux_x86-64) $BBL_STATE_DIR/bin/bbl
 chmod +x $BBL_STATE_DIR/bin/bbl
 
 bbl --state-dir=$BBL_STATE_DIR up --no-director

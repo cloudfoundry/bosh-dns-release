@@ -19,8 +19,8 @@ end
 if p('health.enabled')
   monit[:processes] << {
     name: "dns-healthcheck-windows",
-    executable: "powershell",
-    args: ["/var/vcap/jobs/dns-windows/bin/healthcheck_ctl.ps1"]
+    executable: "/var/vcap/packages/dns-windows/bin/healthcheck.exe",
+    args: ["/var/vcap/jobs/dns-windows/config/healthcheck_server_config.json"]
   }
 end
 

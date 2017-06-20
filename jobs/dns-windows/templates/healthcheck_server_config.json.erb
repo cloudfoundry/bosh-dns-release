@@ -1,8 +1,8 @@
 <%=
 {
   Port:     p('health.server_port'),
-  CertFile: 'config/certs/server.pem',
-  KeyFile:  'config/certs/server.key',
-  CaFile:   'config/certs/ca.pem'
+  CertFile: '/var/vcap/jobs/dns-windows/config/certs/server.pem',
+  KeyFile:  '/var/vcap/jobs/dns-windows/config/certs/server.key',
+  CaFile:   '/var/vcap/jobs/dns-windows/config/certs/ca.pem'
 }.to_json
 %>

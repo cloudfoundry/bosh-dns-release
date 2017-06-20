@@ -3,10 +3,10 @@ name: bosh-dns-windows-acceptance
 
 update:
   canaries: 5
-  canary_watch_time: 30000-1200000
+  canary_watch_time: 30000-120000
   max_in_flight: 5
   serial: false
-  update_watch_time: 5000-1200000
+  update_watch_time: 30000-120000
 
 instance_groups:
 - name: acceptance-tests-windows
