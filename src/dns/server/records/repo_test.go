@@ -146,12 +146,12 @@ var _ = Describe("Repo", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					err = fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
-				"record_infos": [
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.128", "my-domain"],
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.129", "my-domain"]
-				]
-			}`))
+						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+						"record_infos": [
+							["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.128", "my-domain"],
+							["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.129", "my-domain"]
+						]
+					}`))
 					Expect(err).NotTo(HaveOccurred())
 
 					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
@@ -180,19 +180,106 @@ var _ = Describe("Repo", func() {
 				})
 			})
 
+			Context("when the file changes", func() {
+				var initialTime time.Time
+				BeforeEach(func() {
+					initialTime = time.Now()
+
+					err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
+						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+						"record_infos": [
+							["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+							["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
+						]
+					}`))
+					Expect(err).NotTo(HaveOccurred())
+
+					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+						Stats: &fakes.FakeFileStats{
+							ModTime: initialTime.Add(-3 * time.Second),
+						},
+					})
+
+					fakeClock.WaitForWatcherAndIncrement(time.Second)
+					fakeClock.WaitForWatcherAndIncrement(0)
+
+					_, err = repo.Get()
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				Context("to json that represents an invalid list of records", func() {
+					BeforeEach(func() {
+						err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
+							"record_keys": ["id", "instance_group", "az", "network", "deployment", "domain", "ip"],
+							"record_infos": [
+							["instance2", "my-group", "az1", "my-network", "deployment2", "123.123.123.125"]
+							]
+						}`))
+						Expect(err).NotTo(HaveOccurred())
+
+						fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+							Stats: &fakes.FakeFileStats{
+								ModTime: initialTime.Add(-1 * time.Second),
+							},
+						})
+
+						fakeClock.WaitForWatcherAndIncrement(time.Second)
+						fakeClock.WaitForWatcherAndIncrement(time.Second)
+					})
+
+					It("returns the cached content", func() {
+						recordSet, err := repo.Get()
+						Expect(err).NotTo(HaveOccurred())
+
+						records, err := recordSet.Resolve("my-instance2.my-group.my-network.my-deployment.my-domain.")
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(records).To(ContainElement("123.123.123.123"))
+						Expect(records).To(ContainElement("123.123.123.124"))
+					})
+				})
+
+				Context("to badly formed json", func() {
+					BeforeEach(func() {
+						err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{{{{"nope", "not" ]]} "json"}`))
+						Expect(err).NotTo(HaveOccurred())
+
+						fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+							Stats: &fakes.FakeFileStats{
+								ModTime: initialTime.Add(-1 * time.Second),
+							},
+						})
+
+						fakeClock.WaitForWatcherAndIncrement(time.Second)
+						fakeClock.WaitForWatcherAndIncrement(time.Second)
+					})
+
+					It("returns the cached content", func() {
+						recordSet, err := repo.Get()
+						Expect(err).NotTo(HaveOccurred())
+
+						records, err := recordSet.Resolve("my-instance2.my-group.my-network.my-deployment.my-domain.")
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(records).To(ContainElement("123.123.123.123"))
+						Expect(records).To(ContainElement("123.123.123.124"))
+					})
+				})
+			})
+
 			Context("when the file becomes unreadable", func() {
 				var initialTime time.Time
 
 				BeforeEach(func() {
-					initialTime := time.Now()
+					initialTime = time.Now()
 
 					err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
-				"record_infos": [
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
-				]
-			}`))
+						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+						"record_infos": [
+							["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+							["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
+						]
+					}`))
 					Expect(err).NotTo(HaveOccurred())
 
 					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
@@ -232,12 +319,12 @@ var _ = Describe("Repo", func() {
 						fakeFileSystem.UnregisterReadFileError(recordsFile.Name())
 
 						err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
-				"record_infos": [
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.4", "my-domain"],
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.5", "my-domain"]
-				]
-			}`))
+							"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+							"record_infos": [
+								["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.4", "my-domain"],
+								["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.5", "my-domain"]
+							]
+						}`))
 
 						Expect(err).NotTo(HaveOccurred())
 
@@ -268,15 +355,15 @@ var _ = Describe("Repo", func() {
 				var initialTime time.Time
 
 				BeforeEach(func() {
-					initialTime := time.Now()
+					initialTime = time.Now()
 
 					err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
-				"record_infos": [
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
-				]
-			}`))
+						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+						"record_infos": [
+							["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+							["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
+						]
+					}`))
 					Expect(err).NotTo(HaveOccurred())
 
 					fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
@@ -310,12 +397,12 @@ var _ = Describe("Repo", func() {
 				Context("when the file becomes stat able again", func() {
 					BeforeEach(func() {
 						err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
-				"record_infos": [
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.4", "my-domain"],
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.5", "my-domain"]
-				]
-			}`))
+							"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+							"record_infos": [
+								["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.4", "my-domain"],
+								["my-instance2", "my-group", "az1", "my-network", "my-deployment", "1.2.3.5", "my-domain"]
+							]
+						}`))
 
 						Expect(err).NotTo(HaveOccurred())
 
@@ -366,12 +453,12 @@ var _ = Describe("Repo", func() {
 				Context("when records json file has been re-added with different contents", func() {
 					BeforeEach(func() {
 						err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
-				"record_infos": [
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
-					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
-				]
-			}`))
+							"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+							"record_infos": [
+								["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+								["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
+							]
+						}`))
 
 						Expect(err).NotTo(HaveOccurred())
 

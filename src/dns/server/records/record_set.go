@@ -3,8 +3,10 @@ package records
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/miekg/dns"
+	"fmt"
 	"strings"
+
+	"github.com/miekg/dns"
 )
 
 type RecordSet struct {
@@ -84,8 +86,14 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 	}
 
 	domains := map[string]struct{}{}
+	countKeys := len(swap.Keys)
 
 	for index, info := range swap.Infos {
+		countInfo := len(info)
+		if countInfo != countKeys {
+			return fmt.Errorf("Unbalanced records structure. Found %d fields of an expected %d at record #%d", countInfo, countKeys, index)
+		}
+
 		domain := dns.Fqdn(info[domainIndex])
 		domains[domain] = struct{}{}
 

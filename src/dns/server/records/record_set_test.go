@@ -2,6 +2,7 @@ package records_test
 
 import (
 	"encoding/json"
+
 	"github.com/cloudfoundry/dns-release/src/dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,15 +13,15 @@ var _ = Describe("RecordSet", func() {
 	Context("when there are records matching the query based fqdn", func() {
 		BeforeEach(func() {
 			jsonBytes := []byte(`
-{
-	"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
-	"record_infos": [
-		["instance0", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
-		["instance1", "my-group", "az2", "my-network", "my-deployment", "123.123.123.124", "my-domain"],
-		["instance2", "my-group-2", "az1", "my-network", "my-deployment", "123.123.123.125", "my-domain"],
-		["instance4", "my-group", "az1", "another-network", "my-deployment", "123.123.123.127", "my-domain"]
-	]
-}
+			{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_infos": [
+				["instance0", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+				["instance1", "my-group", "az2", "my-network", "my-deployment", "123.123.123.124", "my-domain"],
+				["instance2", "my-group-2", "az1", "my-network", "my-deployment", "123.123.123.125", "my-domain"],
+				["instance4", "my-group", "az1", "another-network", "my-deployment", "123.123.123.127", "my-domain"]
+				]
+			}
 			`)
 			err := json.Unmarshal(jsonBytes, &recordSet)
 
@@ -121,15 +122,13 @@ var _ = Describe("RecordSet", func() {
 
 	Describe("UnmarshalJSON", func() {
 		BeforeEach(func() {
-			jsonBytes := []byte(`
-{
-	"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
-	"record_infos": [
-		["instance0", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "withadot."],
-		["instance1", "my-group", "az2", "my-network", "my-deployment", "123.123.123.124", "nodot"]
-	]
-}
-			`)
+			jsonBytes := []byte(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_infos": [
+				["instance0", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "withadot."],
+				["instance1", "my-group", "az2", "my-network", "my-deployment", "123.123.123.124", "nodot"]
+				]
+			}`)
 			err := json.Unmarshal(jsonBytes, &recordSet)
 
 			Expect(err).ToNot(HaveOccurred())
