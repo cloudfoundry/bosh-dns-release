@@ -106,11 +106,11 @@ var _ = Describe("Healthcheck", func() {
 
 	Context("when the health check takes a long time", func() {
 		DescribeTable("times out with error", func(network string) {
-			subject = server.NewAnswerValidatingHealthCheck("10.10.10.10:30", healthCheckDomain, network)
+			subject = server.NewAnswerValidatingHealthCheck("203.0.113.1:30", healthCheckDomain, network)
 
 			err := subject.IsHealthy()
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(MatchRegexp(`on %s:.*%s.*10\.10\.10\.10.*i/o timeout`, network, network))
+			Expect(err.Error()).To(MatchRegexp(`on %s:.*%s.*203\.0\.113\.1.*i/o timeout`, network, network))
 		},
 			Entry("when networking is udp", "udp"),
 			Entry("when networking is tcp", "tcp"),
