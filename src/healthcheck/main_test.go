@@ -1,59 +1,96 @@
 package main_test
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"net"
-	"net/http"
-
-	"strconv"
-	"time"
-	//"errors"
-	"encoding/json"
-
-	"crypto/tls"
-	"crypto/x509"
-	// . "github.com/cloudfoundry/dns-release/src/healthcheck"
-	pivTls "github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 	"io/ioutil"
 	"log"
+	"net"
+	"net/http"
+	"strconv"
+	"time"
+
+	pivTls "github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
+type Health struct {
+	State string `json:"state"`
+}
+
 var (
-	// config *HealthCheckConfig
+	status        string
 )
 
 var _ = Describe("HealthCheck server", func() {
-
+	BeforeEach(func() {
+		status = "running"
+	})
 
 	Describe("/health", func() {
+		JustBeforeEach(func() {
+			healthRaw, err := json.Marshal(Health{State: status})
+			Expect(err).ToNot(HaveOccurred())
+
+			err = ioutil.WriteFile(healthFile.Name(), healthRaw, 0777)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
 		It("reject non-TLS connections", func() {
 			client := &http.Client{}
-			resp, err := client.Get(fmt.Sprintf("http://127.0.0.1:%d/health", config.Port))
+			resp, err := client.Get(fmt.Sprintf("http://127.0.0.1:%d/health", configPort))
 
 			Expect(err).To(HaveOccurred())
 			Expect(resp).To(BeNil())
 		})
 
-		It("returns healthy json output", func() {
-			client, err := setupSecureGet(
-				"assets/test_certs/test_ca.pem",
-				"assets/test_certs/test_client.pem",
-				"assets/test_certs/test_client.key")
-			Expect(err).ToNot(HaveOccurred())
+		Describe("When the vm is healthy", func() {
+			It("returns healthy json output", func() {
+				client, err := setupSecureGet(
+					"assets/test_certs/test_ca.pem",
+					"assets/test_certs/test_client.pem",
+					"assets/test_certs/test_client.key")
+				Expect(err).ToNot(HaveOccurred())
 
-			respData, err := secureGetRespBody(client, config.Port)
-			Expect(err).ToNot(HaveOccurred())
+				respData, err := secureGetRespBody(client, configPort)
+				Expect(err).ToNot(HaveOccurred())
 
-			var respJson map[string]string
-			err = json.Unmarshal(respData, &respJson)
-			Expect(err).ToNot(HaveOccurred())
+				var respJson map[string]string
+				err = json.Unmarshal(respData, &respJson)
+				Expect(err).ToNot(HaveOccurred())
 
-			Expect(respJson).To(Equal(map[string]string{
-				"state": "running",
-			}))
+				Expect(respJson).To(Equal(map[string]string{
+					"state": "running",
+				}))
+			})
+		})
+
+		Describe("When the vm is unhealthy", func() {
+			BeforeEach(func() {
+				status = "stopped"
+			})
+
+			It("returns unhealthy json output", func() {
+				client, err := setupSecureGet(
+					"assets/test_certs/test_ca.pem",
+					"assets/test_certs/test_client.pem",
+					"assets/test_certs/test_client.key")
+				Expect(err).ToNot(HaveOccurred())
+
+				respData, err := secureGetRespBody(client, configPort)
+				Expect(err).ToNot(HaveOccurred())
+
+				var respJson map[string]string
+				err = json.Unmarshal(respData, &respJson)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(respJson).To(Equal(map[string]string{
+					"state": "stopped",
+				}))
+			})
 		})
 
 		It("should reject a client cert with the wrong root CA", func() {
@@ -63,7 +100,7 @@ var _ = Describe("HealthCheck server", func() {
 				"assets/test_certs/test_client.key")
 			Expect(err).ToNot(HaveOccurred())
 
-			_, err = secureGetRespBody(client, config.Port)
+			_, err = secureGetRespBody(client, configPort)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("x509: certificate signed by unknown authority"))
 		})
@@ -75,7 +112,7 @@ var _ = Describe("HealthCheck server", func() {
 				"assets/test_certs/test_client.key")
 			Expect(err).ToNot(HaveOccurred())
 
-			resp, err := secureGet(client, config.Port)
+			resp, err := secureGet(client, configPort)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(resp.StatusCode).To(BeNumerically(">=", 400))

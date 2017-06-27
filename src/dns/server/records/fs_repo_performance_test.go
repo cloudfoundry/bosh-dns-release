@@ -13,9 +13,9 @@ import (
 	blogfakes "github.com/cloudfoundry/bosh-utils/logger/fakes"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
+	"code.cloudfoundry.org/clock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/clock"
 )
 
 var _ = Describe("FsRepoPerformance", func() {
@@ -24,7 +24,7 @@ var _ = Describe("FsRepoPerformance", func() {
 		recordsFilePath string
 		repo            RecordSetProvider
 		fileSys         boshsys.FileSystem
-		clock 					clock.Clock
+		clock           clock.Clock
 		logger          *blogfakes.FakeLogger
 		mutex           *sync.Mutex
 	)

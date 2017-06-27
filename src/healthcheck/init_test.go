@@ -5,11 +5,11 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"encoding/json"
-	. "github.com/cloudfoundry/dns-release/src/healthcheck"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -21,9 +21,11 @@ func TestHealthCheck(t *testing.T) {
 
 var (
 	pathToServer string
-	config       *HealthCheckConfig
 	sess         *gexec.Session
 	cmd          *exec.Cmd
+	healthFile   *os.File
+	configFile   *os.File
+	configPort   int
 )
 
 var _ = BeforeSuite(func() {
@@ -33,20 +35,31 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	SetDefaultEventuallyTimeout(2 * time.Second)
 
+	configFile, err = ioutil.TempFile("", "config.json")
+	Expect(err).ToNot(HaveOccurred())
+
+	healthFile, err = ioutil.TempFile("", "health.json")
+	Expect(err).ToNot(HaveOccurred())
+
+	configPort = 1234
+
+	configContents := `{
+	  "port": ` + strconv.Itoa(configPort) + `,
+	  "certFile": "assets/test_certs/test_server.pem",
+	  "keyFile": "assets/test_certs/test_server.key",
+	  "caFile": "assets/test_certs/test_ca.pem",
+	  "healthFileName": "` + healthFile.Name() + `"
+	}`
+
+	err = ioutil.WriteFile(configFile.Name(), []byte(configContents), 0666)
+	Expect(err).ToNot(HaveOccurred())
+
 	// run the server
-	configFile := "assets/test_server.json"
-	cmd = exec.Command(pathToServer, configFile)
+	cmd = exec.Command(pathToServer, configFile.Name())
 	sess, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
 
-	configRaw, err := ioutil.ReadFile(configFile)
-	Expect(err).ToNot(HaveOccurred())
-
-	config = &HealthCheckConfig{}
-	err = json.Unmarshal(configRaw, config)
-	Expect(err).ToNot(HaveOccurred())
-
-	Expect(waitForServer(config.Port)).To(Succeed())
+	Expect(waitForServer(configPort)).To(Succeed())
 })
 
 var _ = AfterSuite(func() {

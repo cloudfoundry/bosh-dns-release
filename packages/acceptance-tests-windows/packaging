@@ -11,6 +11,11 @@ if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\acceptance_tests"
 }
 
+robocopy /E healthcheck "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\healthcheck"
+if ($LASTEXITCODE -ge 8) {
+    Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\healthcheck"
+}
+
 robocopy /E vendor "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\vendor"
 if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\vendor"

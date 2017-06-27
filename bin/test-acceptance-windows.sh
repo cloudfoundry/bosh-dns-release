@@ -56,7 +56,7 @@ fi
 if [ ! -e ${BOSH_RELEASE_DIR}/bosh-dev-release.tgz ]; then
     pushd $BOSH_RELEASE_DIR
       # For latest 262.1, use: https://bosh.io/d/github.com/cloudfoundry/bosh?v=262.1
-      curl -L -J -o bosh-dev-release.tgz https://s3.amazonaws.com/bosh-compiled-release-tarballs/bosh-261.4-ubuntu-trusty-3363.25-20170530-233054-649382379-20170530233108.tgz
+      curl -L -J -o bosh-dev-release.tgz https://s3.amazonaws.com/bosh-compiled-release-tarballs/bosh-262.1-ubuntu-trusty-3421.9-20170621-055124-244370454-20170621055129.tgz?versionId=lxNGZVeHOlvxh4LyMgNxnHC8wczKDP70
     popd
 fi
 
@@ -66,9 +66,9 @@ if [ ! -d bosh-stemcell ]; then
 else
     BOSH_STEMCELL_DIR="${DIR}/../bosh-stemcell"
 fi
-if [ ! -e ${BOSH_STEMCELL_DIR}/bosh-stemcell-3362-warden-boshlite-ubuntu-trusty-go_agent.tgz ]; then
+if [ ! -e ${BOSH_STEMCELL_DIR}/bosh-warden-stemcell.tgz ]; then
     pushd $BOSH_STEMCELL_DIR
-      curl -L -J -o bosh-stemcell-3362-warden-boshlite-ubuntu-trusty-go_agent.tgz https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=3363.22
+      curl -L -J -o bosh-warden-stemcell.tgz https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=3421.9
     popd
 fi
 

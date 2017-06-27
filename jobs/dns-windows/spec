@@ -6,6 +6,7 @@ templates:
   config.json.erb: config/config.json
   dns_ctl.ps1.erb: bin/dns_ctl.ps1
   post-start.ps1.erb: bin/post-start.ps1
+  pre-start.ps1.erb: bin/pre-start.ps1
   healthcheck_server_config.json.erb: config/healthcheck_server_config.json
   server.key.erb: config/certs/server.key
   server.pem.erb: config/certs/server.pem

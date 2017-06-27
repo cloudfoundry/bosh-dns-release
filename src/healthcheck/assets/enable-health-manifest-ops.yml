@@ -1,4 +1,5 @@
-- path: /instance_groups/0/jobs/name=dns/properties?/health
+# we're using job 0 because the windows job is a different name.
+- path: /instance_groups/name=dns/jobs/0/properties?/health
   type: replace
   value:
     enabled: true

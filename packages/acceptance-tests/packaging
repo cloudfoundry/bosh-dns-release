@@ -4,6 +4,7 @@ mkdir -p "${BOSH_INSTALL_TARGET}/src/github.com/cloudfoundry/dns-release/src"
 mkdir -p "${BOSH_INSTALL_TARGET}/bin"
 
 mv acceptance_tests "${BOSH_INSTALL_TARGET}/src/github.com/cloudfoundry/dns-release/src/"
+mv healthcheck "${BOSH_INSTALL_TARGET}/src/github.com/cloudfoundry/dns-release/src/"
 mv test_yml_assets "${BOSH_INSTALL_TARGET}/src/github.com/cloudfoundry/dns-release/src/"
 mv vendor "${BOSH_INSTALL_TARGET}/src/github.com/cloudfoundry/dns-release/src/"
 

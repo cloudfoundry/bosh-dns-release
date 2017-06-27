@@ -5,6 +5,7 @@ dependencies: []
 
 files:
 - acceptance_tests/**/*
+- healthcheck/assets/**/*
 - vendor/**/*
 - exiter.ps1
 
