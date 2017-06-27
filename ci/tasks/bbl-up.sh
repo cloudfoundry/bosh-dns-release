@@ -35,6 +35,7 @@ bosh int $ROOT_DIR/bosh-deployment/bosh.yml \
   -o $ROOT_DIR/bosh-deployment/local-dns.yml \
   -o $ROOT_DIR/bosh-deployment/gcp/cpi.yml  \
   -o $ROOT_DIR/bosh-deployment/external-ip-not-recommended.yml \
+  -o $ROOT_DIR/bosh-deployment/jumpbox-user.yml \
   -v local_bosh_release=$ROOT_DIR/bosh-candidate-release/bosh-dev-release.tgz \
   > $BBL_STATE_DIR/bosh-manifest.yml
 

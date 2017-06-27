@@ -6,6 +6,7 @@ set -x
 function realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
+
 function cleanup() {
   rm -rf $temp_env_file
   rm -rf $BOSH_RELEASE_DIR
@@ -26,7 +27,7 @@ if [ ! -e bbl.env ]; then
     temp_env_file=$(mktemp bbl.env)
     chmod +x $temp_env_file
     cat <<EOF >$temp_env_file
-export BBL_GCP_SERVICE_ACCOUNT_KEY=$(lpass show 3654688481222762882 --notes | yq .bbl_gcp_service_account_key_id)
+export BBL_GCP_SERVICE_ACCOUNT_KEY='$(lpass show 3654688481222762882 --notes | gobosh int - --path /bbl_gcp_service_account_key_id)'
 export BBL_GCP_PROJECT_ID=cf-bosh-core
 export BBL_GCP_ZONE=us-central1-a
 export BBL_GCP_REGION=us-central1
@@ -46,7 +47,6 @@ if [ ! -e $BOSH_CLI_DIR/bosh-cli-linux ]; then
     popd
 fi
 
-
 # Download bosh-release if it doesn't exist
 if [ ! -d bosh-release ]; then
     BOSH_RELEASE_DIR=$(mktemp -d bosh-release)
@@ -55,7 +55,7 @@ else
 fi
 if [ ! -e ${BOSH_RELEASE_DIR}/bosh-dev-release.tgz ]; then
     pushd $BOSH_RELEASE_DIR
-      # For latest 261.4, use: https://bosh.io/d/github.com/cloudfoundry/bosh?v=261.4
+      # For latest 262.1, use: https://bosh.io/d/github.com/cloudfoundry/bosh?v=262.1
       curl -L -J -o bosh-dev-release.tgz https://s3.amazonaws.com/bosh-compiled-release-tarballs/bosh-261.4-ubuntu-trusty-3363.25-20170530-233054-649382379-20170530233108.tgz
     popd
 fi
@@ -88,6 +88,8 @@ fi
 BBL_STATE_DIR=`pwd`/bbl-state
 mkdir -p $BBL_STATE_DIR
 
+docker pull bosh/main-ruby-go
+
 docker run \
   -t -i \
   -v $BBL_STATE_DIR:'/bbl-state' \
@@ -96,7 +98,8 @@ docker run \
   -v `realpath $BBL_CLI_DIR`:/bbl-cli \
   -v `realpath $BOSH_CLI_DIR`:/bosh-cli \
   -v ~/workspace/bosh-deployment:/bosh-deployment \
-  -v $DIR/..:/dns-release bosh/main-ruby-go \
+  -v $DIR/..:/dns-release \
+  bosh/main-ruby-go \
   bash -c 'source /dns-release/bbl.env; /dns-release/ci/tasks/bbl-up.sh'
 
 fly -t production execute -x --privileged --config=./ci/tasks/test-acceptance-windows.yml --inputs-from=dns-release/test-acceptance-windows --input=dns-release=$DIR/../ --input=bbl-state=$BBL_STATE_DIR
