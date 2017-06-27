@@ -102,7 +102,16 @@ docker run \
   bosh/main-ruby-go \
   bash -c 'source /dns-release/bbl.env; /dns-release/ci/tasks/bbl-up.sh'
 
+# windows specfic
 fly -t production execute -x --privileged --config=./ci/tasks/test-acceptance-windows.yml --inputs-from=dns-release/test-acceptance-windows --input=dns-release=$DIR/../ --input=bbl-state=$BBL_STATE_DIR
+
+# shared
+fly -t production execute -x --privileged \
+    --inputs-from=dns-release/test-acceptance-windows \
+    --input=dns-release=$DIR/../ \
+    --input=bbl-state=$BBL_STATE_DIR \
+    --input=bosh-candidate-stemcell-windows=$DIR/../stemcell \
+    --config=./ci/tasks/test-acceptance-windows-shared.yml
 
 docker run \
   -t -i \
