@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"strconv"
 	"testing"
 	"time"
 )
@@ -46,7 +45,7 @@ var _ = BeforeSuite(func() {
 	configPort = 1234
 
 	configContents, err := json.Marshal(map[string]interface{}{
-		"port":           strconv.Itoa(configPort),
+		"port":           configPort,
 		"certFile":       "assets/test_certs/test_server.pem",
 		"keyFile":        "assets/test_certs/test_server.key",
 		"caFile":         "assets/test_certs/test_ca.pem",
