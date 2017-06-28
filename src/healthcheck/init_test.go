@@ -1,6 +1,8 @@
 package main_test
 
 import (
+	"encoding/json"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -43,13 +45,14 @@ var _ = BeforeSuite(func() {
 
 	configPort = 1234
 
-	configContents := `{
-	  "port": ` + strconv.Itoa(configPort) + `,
-	  "certFile": "assets/test_certs/test_server.pem",
-	  "keyFile": "assets/test_certs/test_server.key",
-	  "caFile": "assets/test_certs/test_ca.pem",
-	  "healthFileName": "` + healthFile.Name() + `"
-	}`
+	configContents, err := json.Marshal(map[string]interface{}{
+		"port":           strconv.Itoa(configPort),
+		"certFile":       "assets/test_certs/test_server.pem",
+		"keyFile":        "assets/test_certs/test_server.key",
+		"caFile":         "assets/test_certs/test_ca.pem",
+		"healthFileName": healthFile.Name(),
+	})
+	Expect(err).NotTo(HaveOccurred())
 
 	err = ioutil.WriteFile(configFile.Name(), []byte(configContents), 0666)
 	Expect(err).ToNot(HaveOccurred())
