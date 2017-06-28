@@ -5,8 +5,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"log"
 	"net"
@@ -14,7 +12,10 @@ import (
 	"strconv"
 	"time"
 
-	pivTls "github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 type Health struct {
@@ -22,7 +23,7 @@ type Health struct {
 }
 
 var (
-	status        string
+	status string
 )
 
 var _ = Describe("HealthCheck server", func() {
@@ -135,7 +136,7 @@ func waitForServer(port int) error {
 			continue
 		}
 
-		c.Close()
+		_ = c.Close()
 		return nil
 	}
 
@@ -159,15 +160,16 @@ func setupSecureGet(caFile, clientCertFile, clientKeyFile string) (*http.Client,
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	pConfig := pivTls.Build(
-		pivTls.WithIdentity(cert),
-		pivTls.WithPivotalDefaults(),
+	tlsConfig := tlsconfig.Build(
+		tlsconfig.WithIdentity(cert),
+		tlsconfig.WithPivotalDefaults(),
 	)
 
-	tlsConfig := pConfig.Client(pivTls.WithAuthority(caCertPool))
-	tlsConfig.BuildNameToCertificate()
+	clientConfig := tlsConfig.Client(tlsconfig.WithAuthority(caCertPool))
+	clientConfig.BuildNameToCertificate()
+	clientConfig.ServerName = "health.bosh-dns"
 
-	transport := &http.Transport{TLSClientConfig: tlsConfig}
+	transport := &http.Transport{TLSClientConfig: clientConfig}
 	return &http.Client{Transport: transport}, nil
 }
 
