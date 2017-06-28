@@ -71,7 +71,10 @@ var _ = Describe("Healthcheck", func() {
 			subject = server.NewAnswerValidatingHealthCheck("~~~~~~~~~~", healthCheckDomain, network)
 
 			err := subject.IsHealthy()
-			Expect(err.Error()).To(Equal(fmt.Sprintf("on %s: missing port in address ~~~~~~~~~~", network)))
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("on %s: ", network))
+			Expect(err.Error()).To(ContainSubstring("missing port in address"))
+			Expect(err.Error()).To(ContainSubstring("~~~~~~~~~~"))
 		},
 			Entry("when networking is udp", "udp"),
 			Entry("when networking is tcp", "tcp"),

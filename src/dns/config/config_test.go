@@ -148,7 +148,9 @@ var _ = Describe("Config", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursors": ["::::::::::::"]}`)
 
 			_, err := config.LoadFromFile(configFilePath)
-			Expect(err).To(MatchError("too many colons in address ::::::::::::"))
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("too many colons in address"))
+			Expect(err.Error()).To(ContainSubstring("::::::::::::"))
 		})
 	})
 })
