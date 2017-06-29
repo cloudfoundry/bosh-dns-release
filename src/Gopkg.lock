@@ -69,12 +69,6 @@ memo = "d5040a90d8ed50f6d403333b8ff2eca21655f348e261b8082ed463b9d00aafe0"
   revision = "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
 
 [[projects]]
-  name = "github.com/square/certstrap"
-  packages = ["pkix"]
-  revision = "c66ef6751a6e5a900c6d96cbdd0e3ee9b18792d8"
-  version = "v1.0.1"
-
-[[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["html","html/atom","html/charset"]
