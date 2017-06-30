@@ -1,9 +1,10 @@
 package config_test
 
 import (
+	"dns/config"
+	"dns/config/configfakes"
 	"errors"
-	"github.com/cloudfoundry/dns-release/src/dns/config"
-	"github.com/cloudfoundry/dns-release/src/dns/config/configfakes"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

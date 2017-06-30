@@ -2,6 +2,7 @@ package aliases
 
 import (
 	"encoding/json"
+
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )

@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/cloudfoundry/dns-release/src/dns/manager"
+	"dns/manager"
 )
 
 const loopbackAddress = "127.0.0.1"

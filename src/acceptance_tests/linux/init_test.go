@@ -8,12 +8,13 @@ import (
 
 	"encoding/json"
 	"fmt"
-	"github.com/onsi/gomega/gexec"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/onsi/gomega/gexec"
 )
 
 func TestLinux(t *testing.T) {

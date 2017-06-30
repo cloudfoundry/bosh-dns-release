@@ -4,9 +4,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry/dns-release/src/dns/shuffle"
-	"github.com/miekg/dns"
 	"net"
+
+	"dns/shuffle"
+
+	"github.com/miekg/dns"
 )
 
 var _ = Describe("Shuffle", func() {

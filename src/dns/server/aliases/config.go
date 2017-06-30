@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/miekg/dns"
 	"sort"
 	"strings"
+
+	"github.com/miekg/dns"
 )
 
 type Config struct {

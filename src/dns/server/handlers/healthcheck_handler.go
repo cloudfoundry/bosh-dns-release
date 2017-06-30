@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"net"
+
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
-	"net"
 )
 
 var localhostIP = net.ParseIP("127.0.0.1")

@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	"sync/atomic"
+
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 type ZoneFilePicker struct {

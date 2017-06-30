@@ -4,12 +4,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
-	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/system"
+	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 type HealthServer interface {

@@ -43,7 +43,7 @@ var _ = BeforeSuite(func() {
 	testTargetOS = assertEnvExists("TEST_TARGET_OS")
 
 	var err error
-	pathToTestRecursorServer, err = gexec.Build("github.com/cloudfoundry/dns-release/src/acceptance_tests/test_recursor")
+	pathToTestRecursorServer, err = gexec.Build("acceptance_tests/test_recursor")
 	Expect(err).NotTo(HaveOccurred())
 })
 

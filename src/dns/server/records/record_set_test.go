@@ -3,7 +3,7 @@ package records_test
 import (
 	"encoding/json"
 
-	"github.com/cloudfoundry/dns-release/src/dns/server/records"
+	"dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

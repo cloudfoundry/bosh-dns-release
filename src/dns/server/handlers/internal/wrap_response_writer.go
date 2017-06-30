@@ -1,8 +1,9 @@
 package internal
 
 import (
-	"github.com/miekg/dns"
 	"net"
+
+	"github.com/miekg/dns"
 )
 
 func WrapWriterWithIntercept(child dns.ResponseWriter, intercept func(m *dns.Msg)) dns.ResponseWriter {

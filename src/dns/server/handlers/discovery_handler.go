@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
+	"dns/server/records/dnsresolver"
 	"github.com/miekg/dns"
 )
 

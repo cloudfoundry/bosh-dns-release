@@ -8,8 +8,9 @@ import (
 
 	"os/exec"
 
-	"github.com/onsi/gomega/gexec"
 	"time"
+
+	"github.com/onsi/gomega/gexec"
 )
 
 var _ = Describe("dns job: override_nameserver", func() {

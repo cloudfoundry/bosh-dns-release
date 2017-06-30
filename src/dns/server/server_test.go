@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server"
+	"dns/server"
 
 	"errors"
 
@@ -13,8 +13,8 @@ import (
 
 	"sync"
 
-	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/serverfakes"
+	"dns/server/internal/internalfakes"
+	"dns/server/serverfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

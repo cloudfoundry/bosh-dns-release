@@ -21,20 +21,18 @@ pushd dns-release/
 popd
 
 export GOROOT=/usr/local/golang
-export GOPATH=$PWD/go
+export GOPATH=$PWD/dns-release
 export PATH=$GOPATH/bin:$BOSH_INSTALL_TARGET/bin:$PATH
 
 mkdir -p go/src/github.com/cloudfoundry
 mkdir -p go/src/github.com/onsi
-ln -s $PWD/dns-release $PWD/go/src/github.com/cloudfoundry/dns-release
-ln -s $PWD/dns-release/src/vendor/github.com/onsi/ginkgo $PWD/go/src/github.com/onsi/ginkgo
 
-go install github.com/onsi/ginkgo/ginkgo
+go install vendor/github.com/onsi/ginkgo/ginkgo
 
-pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/dns
+pushd $GOPATH/src/dns
     ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
 popd
 
-pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/healthcheck
+pushd $GOPATH/src/healthcheck
     ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
 popd

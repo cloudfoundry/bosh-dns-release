@@ -8,7 +8,7 @@ import (
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/cloudfoundry/bosh-utils/system/fakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records"
+	"dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 

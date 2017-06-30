@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
-	"github.com/cloudfoundry/dns-release/src/dns/manager/managerfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/nameserverconfig/monitor"
+	"dns/manager/managerfakes"
+	"dns/nameserverconfig/monitor"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -1,12 +1,13 @@
 package zone_pickers_test
 
 import (
-	. "github.com/cloudfoundry/dns-release/src/performance_tests/zone_pickers"
+	. "performance_tests/zone_pickers"
+
+	"io/ioutil"
+	"os"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"io/ioutil"
-	"os"
 )
 
 var _ = Describe("ZoneFilePicker", func() {

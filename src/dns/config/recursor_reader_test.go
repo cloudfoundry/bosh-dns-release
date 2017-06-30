@@ -1,8 +1,8 @@
 package config_test
 
 import (
-	. "github.com/cloudfoundry/dns-release/src/dns/config"
-	"github.com/cloudfoundry/dns-release/src/dns/manager/managerfakes"
+	. "dns/config"
+	"dns/manager/managerfakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

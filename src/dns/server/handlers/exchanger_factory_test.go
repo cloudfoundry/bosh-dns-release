@@ -9,7 +9,7 @@ import (
 
 	"time"
 
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
+	"dns/server/handlers"
 	"github.com/miekg/dns"
 )
 

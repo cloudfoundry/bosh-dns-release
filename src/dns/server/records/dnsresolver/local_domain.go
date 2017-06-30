@@ -1,10 +1,11 @@
 package dnsresolver
 
 import (
-	"github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records"
-	"github.com/miekg/dns"
 	"net"
+
+	"github.com/cloudfoundry/bosh-utils/logger"
+	"dns/server/records"
+	"github.com/miekg/dns"
 )
 
 type LocalDomain struct {

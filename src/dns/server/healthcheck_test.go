@@ -5,8 +5,8 @@ import (
 	"math/rand"
 
 	boshlogf "github.com/cloudfoundry/bosh-utils/logger/fakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
+	"dns/server"
+	"dns/server/handlers"
 	"github.com/miekg/dns"
 
 	. "github.com/onsi/ginkgo"

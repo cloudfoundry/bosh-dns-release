@@ -4,15 +4,15 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
-	. "github.com/cloudfoundry/dns-release/src/dns/server/handlers"
+	. "dns/server/handlers"
 
 	"errors"
 	"net"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/aliases"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/handlersfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
+	"dns/server/aliases"
+	"dns/server/handlers/handlersfakes"
+	"dns/server/internal/internalfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

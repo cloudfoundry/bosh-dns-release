@@ -5,10 +5,11 @@ import (
 	. "github.com/onsi/gomega"
 
 	"fmt"
-	"github.com/cloudfoundry/gosigar"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/cloudfoundry/gosigar"
 )
 
 func TestPerformance(t *testing.T) {

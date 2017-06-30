@@ -4,13 +4,15 @@ import (
 	"errors"
 	"net"
 
+	"dns/server/handlers"
+	"dns/server/internal/internalfakes"
+	"dns/server/records"
+	"dns/server/records/dnsresolver"
+	"dns/server/records/dnsresolver/dnsresolverfakes"
+
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
-	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver/dnsresolverfakes"
 	"github.com/miekg/dns"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"

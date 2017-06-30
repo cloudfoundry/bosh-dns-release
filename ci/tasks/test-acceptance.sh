@@ -33,17 +33,12 @@ pushd $ROOT_DIR/dns-release
    bosh create-release --force && bosh upload-release
 popd
 
-export GOPATH=${ROOT_DIR}/go
+export GOPATH=$PWD/dns-release
 export PATH="${GOPATH}/bin":$PATH
 
-mkdir -p go/src/github.com/cloudfoundry
-mkdir -p go/src/github.com/onsi
-ln -s $PWD/dns-release $PWD/go/src/github.com/cloudfoundry/dns-release
-ln -s $PWD/dns-release/src/vendor/github.com/onsi/ginkgo $PWD/go/src/github.com/onsi/ginkgo
+go install vendor/github.com/onsi/ginkgo/ginkgo
 
-go install github.com/onsi/ginkgo/ginkgo
-
-pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/acceptance_tests
+pushd $GOPATH/src/acceptance_tests
     ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
 popd
 
@@ -56,6 +51,6 @@ bosh -n deploy $ROOT_DIR/dns-release/src/test_yml_assets/manifest.yml \
    -o $ROOT_DIR/dns-release/src/test_yml_assets/use-dns-release-default-bind-and-alias-addresses.yml \
    -o $ROOT_DIR/dns-release/src/healthcheck/assets/enable-health-manifest-ops.yml
 
-pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/acceptance_tests/linux
+pushd $GOPATH/src/acceptance_tests/linux
    ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race -r .
 popd

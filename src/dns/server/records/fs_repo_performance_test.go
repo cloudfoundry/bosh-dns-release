@@ -8,7 +8,7 @@ import (
 
 	"code.cloudfoundry.org/clock/fakeclock"
 
-	. "github.com/cloudfoundry/dns-release/src/dns/server/records"
+	. "dns/server/records"
 
 	blogfakes "github.com/cloudfoundry/bosh-utils/logger/fakes"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"

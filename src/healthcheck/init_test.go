@@ -32,7 +32,7 @@ var (
 var _ = BeforeSuite(func() {
 	var err error
 
-	pathToServer, err = gexec.Build("github.com/cloudfoundry/dns-release/src/healthcheck")
+	pathToServer, err = gexec.Build("healthcheck")
 	Expect(err).NotTo(HaveOccurred())
 	SetDefaultEventuallyTimeout(2 * time.Second)
 

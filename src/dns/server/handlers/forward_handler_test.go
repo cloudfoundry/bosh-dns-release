@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers/handlersfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
+	"dns/server/handlers"
+	"dns/server/handlers/handlersfakes"
+	"dns/server/internal/internalfakes"
 	"github.com/miekg/dns"
 
 	"fmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"

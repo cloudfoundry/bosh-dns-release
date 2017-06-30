@@ -2,8 +2,8 @@ package handlers_test
 
 import (
 	"code.cloudfoundry.org/clock/fakeclock"
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
-	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
+	"dns/server/handlers"
+	"dns/server/internal/internalfakes"
 	"github.com/miekg/dns"
 
 	"time"

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	boshsysfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
-	"github.com/cloudfoundry/dns-release/src/dns/manager"
+	"dns/manager"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

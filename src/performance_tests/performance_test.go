@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	zp "github.com/cloudfoundry/dns-release/src/performance_tests/zone_pickers"
+	zp "performance_tests/zone_pickers"
 	"github.com/cloudfoundry/gosigar"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cloudfoundry/dns-release/src/dns/server/records"
+	"dns/server/records"
 )
 
 type PerformanceTestInfo struct {

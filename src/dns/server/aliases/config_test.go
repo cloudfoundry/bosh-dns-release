@@ -1,7 +1,7 @@
 package aliases_test
 
 import (
-	. "github.com/cloudfoundry/dns-release/src/dns/server/aliases"
+	. "dns/server/aliases"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

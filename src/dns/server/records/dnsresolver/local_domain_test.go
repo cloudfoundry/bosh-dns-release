@@ -1,10 +1,10 @@
 package dnsresolver_test
 
 import (
-	. "github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver"
+	. "dns/server/records/dnsresolver"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records"
+	"dns/server/records"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,8 +12,8 @@ import (
 	"errors"
 	"net"
 
-	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
-	"github.com/cloudfoundry/dns-release/src/dns/server/records/dnsresolver/dnsresolverfakes"
+	"dns/server/internal/internalfakes"
+	"dns/server/records/dnsresolver/dnsresolverfakes"
 )
 
 var _ = Describe("LocalDomain", func() {

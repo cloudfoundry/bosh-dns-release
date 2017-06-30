@@ -3,14 +3,15 @@ package handlers_test
 import (
 	"errors"
 
-	"github.com/cloudfoundry/dns-release/src/dns/server/handlers"
-	"github.com/cloudfoundry/dns-release/src/dns/server/internal/internalfakes"
+	"dns/server/handlers"
+	"dns/server/internal/internalfakes"
 	"github.com/miekg/dns"
+
+	"net"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"net"
 )
 
 var _ = Describe("HealthCheckHandler", func() {

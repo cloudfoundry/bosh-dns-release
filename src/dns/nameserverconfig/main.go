@@ -12,7 +12,7 @@ import (
 	"code.cloudfoundry.org/clock"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"github.com/cloudfoundry/dns-release/src/dns/nameserverconfig/monitor"
+	"dns/nameserverconfig/monitor"
 )
 
 func main() {

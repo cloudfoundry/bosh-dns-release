@@ -5,20 +5,20 @@ trap { $host.SetShouldExit(1) }
 
 $BOSH_INSTALL_TARGET = Resolve-Path "${env:BOSH_INSTALL_TARGET}"
 
-New-Item -ItemType "directory" -Force "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src"
-robocopy /E acceptance_tests "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\acceptance_tests"
+New-Item -ItemType "directory" -Force "${BOSH_INSTALL_TARGET}\"
+robocopy /E acceptance_tests "${BOSH_INSTALL_TARGET}\src\acceptance_tests"
 if ($LASTEXITCODE -ge 8) {
-    Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\acceptance_tests"
+    Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\acceptance_tests"
 }
 
-robocopy /E healthcheck "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\healthcheck"
+robocopy /E healthcheck "${BOSH_INSTALL_TARGET}\src\healthcheck"
 if ($LASTEXITCODE -ge 8) {
-    Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\healthcheck"
+    Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\healthcheck"
 }
 
-robocopy /E vendor "${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\vendor"
+robocopy /E vendor "${BOSH_INSTALL_TARGET}\src\vendor"
 if ($LASTEXITCODE -ge 8) {
-    Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\github.com\cloudfoundry\dns-release\src\vendor"
+    Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\vendor"
 }
 
 Exit 0

@@ -39,18 +39,13 @@ bosh -n deploy \
     $ROOT_DIR/dns-release/src/test_yml_assets/manifest.yml
 
 
-export GOPATH=${ROOT_DIR}/go
+export GOPATH=$PWD/dns-release
 export PATH="${GOPATH}/bin":$PATH
 
-mkdir -p go/src/github.com/cloudfoundry
-mkdir -p go/src/github.com/onsi
-ln -s $PWD/dns-release $PWD/go/src/github.com/cloudfoundry/dns-release
-ln -s $PWD/dns-release/src/vendor/github.com/onsi/ginkgo $PWD/go/src/github.com/onsi/ginkgo
-
-go install github.com/onsi/ginkgo/ginkgo
+go install vendor/github.com/onsi/ginkgo/ginkgo
 
 echo $ZONES_JSON_HASH > /tmp/zones.json
 
-pushd $GOPATH/src/github.com/cloudfoundry/dns-release/src/performance_tests
+pushd $GOPATH/src/performance_tests
     ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
 popd

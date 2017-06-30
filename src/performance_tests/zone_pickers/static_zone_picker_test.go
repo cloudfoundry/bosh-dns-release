@@ -1,7 +1,7 @@
 package zone_pickers_test
 
 import (
-	. "github.com/cloudfoundry/dns-release/src/performance_tests/zone_pickers"
+	. "performance_tests/zone_pickers"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

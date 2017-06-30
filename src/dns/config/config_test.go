@@ -8,7 +8,7 @@ import (
 
 	"os"
 
-	"github.com/cloudfoundry/dns-release/src/dns/config"
+	"dns/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
