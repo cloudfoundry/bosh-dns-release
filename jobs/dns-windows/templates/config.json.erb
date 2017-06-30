@@ -6,6 +6,14 @@
   records_file: p('records_file'),
   alias_files_glob: p('alias_files_glob'),
   healthcheck_domains: p('healthcheck_domains'),
-  recursor_timeout: p('recursor_timeout')
+  recursor_timeout: p('recursor_timeout'),
+  health: {
+    enabled: p('health.enabled'),
+    port: p('health.server_port'),
+    certificate_file: '/var/vcap/jobs/dns-windows/config/certs/client.pem',
+    private_key_file: '/var/vcap/jobs/dns-windows/config/certs/client.key',
+    ca_file: '/var/vcap/jobs/dns-windows/config/certs/ca.pem',
+    check_interval: "20s"
+  }
 }.to_json
 %>

@@ -1,9 +1,9 @@
 <%=
 {
-  Port:           p('health.server_port'),
-  CertFile:       'config/certs/server.pem',
-  KeyFile:        'config/certs/server.key',
-  CaFile:         'config/certs/ca.pem',
-  HealthFileName: '/var/vcap/instance/health.json'
+  port: p('health.server_port'),
+  certificate_file: 'config/certs/server.pem',
+  private_key_file: 'config/certs/server.key',
+  ca_file: 'config/certs/ca.pem',
+  health_file_name: '/var/vcap/instance/health.json'
 }.to_json
 %>

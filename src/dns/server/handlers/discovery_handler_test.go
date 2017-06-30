@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"dns/server/handlers"
+	"dns/server/healthiness"
 	"dns/server/internal/internalfakes"
 	"dns/server/records"
 	"dns/server/records/dnsresolver"
@@ -38,7 +39,7 @@ var _ = Describe("DiscoveryHandler", func() {
 			}
 
 			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
-			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSetRepo, fakeShuffler))
+			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSetRepo, fakeShuffler, healthiness.NewNopHealthWatcher()))
 		})
 
 		Context("when there are no questions", func() {

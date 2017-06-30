@@ -2,17 +2,19 @@ package main_test
 
 import (
 	"encoding/json"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
-
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
 	"testing"
 	"time"
+
+	"healthcheck/healthserver"
+
+	"github.com/onsi/gomega/gexec"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 func TestHealthCheck(t *testing.T) {
@@ -44,12 +46,12 @@ var _ = BeforeSuite(func() {
 
 	configPort = 1234
 
-	configContents, err := json.Marshal(map[string]interface{}{
-		"port":           configPort,
-		"certFile":       "assets/test_certs/test_server.pem",
-		"keyFile":        "assets/test_certs/test_server.key",
-		"caFile":         "assets/test_certs/test_ca.pem",
-		"healthFileName": healthFile.Name(),
+	configContents, err := json.Marshal(healthserver.HealthCheckConfig{
+		Port:            configPort,
+		CertificateFile: "assets/test_certs/test_server.pem",
+		PrivateKeyFile:  "assets/test_certs/test_server.key",
+		CAFile:          "assets/test_certs/test_ca.pem",
+		HealthFileName:  healthFile.Name(),
 	})
 	Expect(err).NotTo(HaveOccurred())
 

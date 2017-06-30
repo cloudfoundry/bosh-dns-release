@@ -1,24 +1,28 @@
 
-[[dependencies]]
+[[constraint]]
   branch = "master"
   name = "github.com/cloudfoundry/bosh-utils"
 
-[[dependencies]]
+[[constraint]]
   branch = "master"
   name = "github.com/onsi/ginkgo"
 
-[[dependencies]]
+[[constraint]]
   branch = "master"
   name = "github.com/onsi/gomega"
 
-[[dependencies]]
+[[constraint]]
   branch = "master"
   name = "github.com/rcrowley/go-metrics"
 
-[[dependencies]]
+[[constraint]]
   branch = "master"
   name = "code.cloudfoundry.org/clock"
 
-[[dependencies]]
+[[constraint]]
   branch = "master"
   name = "github.com/pivotal-cf/paraphernalia"
+
+[[constraint]]
+  branch = "master"
+  name = "code.cloudfoundry.org/workpool"

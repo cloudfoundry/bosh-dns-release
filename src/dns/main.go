@@ -12,18 +12,28 @@ import (
 
 	"code.cloudfoundry.org/clock"
 
-	bosherr "github.com/cloudfoundry/bosh-utils/errors"
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
-	boshsys "github.com/cloudfoundry/bosh-utils/system"
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
+	"log"
+	"net/http"
+
 	dnsconfig "dns/config"
 	"dns/server"
 	"dns/server/aliases"
 	"dns/server/handlers"
+	"dns/server/healthiness"
 	"dns/server/records"
 	"dns/server/records/dnsresolver"
 	"dns/shuffle"
+
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"github.com/cloudfoundry/bosh-utils/httpclient"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/system"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"github.com/miekg/dns"
+	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 func parseFlags() (string, error) {
@@ -86,8 +96,20 @@ func mainExitCode() int {
 		return 1
 	}
 
+	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
+	if config.Health.Enabled {
+		httpClient, err := setupSecureGet(config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile)
+		if err != nil {
+			logger.Error(logTag, fmt.Sprintf("Unable to configure health checker %s", err.Error()))
+			return 1
+		}
+		healthChecker := healthiness.NewHealthChecker(httpclient.NewHTTPClient(httpClient, logger), config.Health.Port)
+		checkInterval := time.Duration(config.Health.CheckInterval)
+		healthWatcher = healthiness.NewHealthWatcher(healthChecker, clock, checkInterval)
+	}
+
 	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
-	localDomain := dnsresolver.NewLocalDomain(logger, recordsRepo, shuffle.New())
+	localDomain := dnsresolver.NewLocalDomain(logger, recordsRepo, shuffle.New(), healthWatcher)
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordsRepo, mux, discoveryHandler)
@@ -131,6 +153,8 @@ func mainExitCode() int {
 		}
 	}()
 
+	go healthWatcher.Run(shutdown)
+
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)
 
@@ -146,4 +170,39 @@ func mainExitCode() int {
 	}
 
 	return 0
+}
+
+func setupSecureGet(caFile, clientCertFile, clientKeyFile string) (*http.Client, error) {
+	// Load client cert
+	cert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	// Load CA cert
+	caCert, err := ioutil.ReadFile(caFile)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	tlsConfig := tlsconfig.Build(
+		tlsconfig.WithIdentity(cert),
+		tlsconfig.WithPivotalDefaults(),
+	)
+
+	clientConfig := tlsConfig.Client(tlsconfig.WithAuthority(caCertPool))
+	clientConfig.BuildNameToCertificate()
+	clientConfig.ServerName = "health.bosh-dns"
+
+	dialer := &net.Dialer{
+		Timeout:   5 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+
+	transport := &http.Transport{TLSClientConfig: clientConfig, Dial: dialer.Dial}
+	return &http.Client{Transport: transport}, nil
 }

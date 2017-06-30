@@ -23,8 +23,14 @@ import (
 	"os"
 	"path"
 
+	"crypto/tls"
+	"crypto/x509"
+	"net/http"
+
 	"github.com/miekg/dns"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/onsi/gomega/ghttp"
+	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 func getFreePort() (int, error) {
@@ -114,11 +120,12 @@ var _ = Describe("main", func() {
 			_, err = recordsFile.Write([]byte(fmt.Sprint(`{
 				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
 				"record_infos": [
-					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "bosh"],
-					["my-instance-1", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "bosh"],
-					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "124.124.124.124", "bosh"],
-					["my-instance-1", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "foo"],
-					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "124.124.124.124", "foo"]
+					["my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
+					["my-instance-1", "my-group", "az1", "my-network", "my-deployment", "127.0.0.2", "bosh"],
+					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "127.0.0.3", "bosh"],
+					["my-instance-1", "my-group", "az1", "my-network", "my-deployment", "127.0.0.2", "foo"],
+					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "127.0.0.3", "foo"],
+					["primer-instance", "primer-group", "az1", "primer-network", "primer-deployment", "127.0.0.254", "primer"]
 				]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
@@ -151,7 +158,15 @@ var _ = Describe("main", func() {
 				"port": %d,
 				"records_file": %q,
 				"alias_files_glob": %q,
-				"healthcheck_domains": ["health.check.bosh.","health.check.ca."]
+				"healthcheck_domains": ["health.check.bosh.","health.check.ca."],
+				"health": {
+					"enabled": true,
+					"port": 2345,
+					"ca_file": "../healthcheck/assets/test_certs/test_ca.pem",
+					"certificate_file": "../healthcheck/assets/test_certs/test_client.pem",
+					"private_key_file": "../healthcheck/assets/test_certs/test_client.key",
+					"check_interval": "1s"
+				}
 			}`, listenAddress, listenPort, recordsFilePath, path.Join(aliasesDir, "*")))
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
@@ -162,7 +177,7 @@ var _ = Describe("main", func() {
 			Eventually(func() int {
 				c := &dns.Client{}
 				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+				m.SetQuestion("primer-instance.primer-group.primer-network.primer-deployment.primer.", dns.TypeANY)
 				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 				Expect(err).NotTo(HaveOccurred())
@@ -224,7 +239,7 @@ var _ = Describe("main", func() {
 						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
 						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
-						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("123.123.123.123"))
+						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
 						Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[one\.alias\.\] 0 \d+ns`))
 					})
@@ -249,7 +264,7 @@ var _ = Describe("main", func() {
 						Expect(response.Answer[1].Header().Ttl).To(Equal(uint32(0)))
 
 						ips := []string{response.Answer[0].(*dns.A).A.String(), response.Answer[1].(*dns.A).A.String()}
-						Expect(ips).To(ConsistOf("123.123.123.123", "124.124.124.124"))
+						Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.3"))
 
 						Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[internal\.alias\.\] 0 \d+ns`))
 					})
@@ -274,7 +289,7 @@ var _ = Describe("main", func() {
 							Expect(response.Answer[1].Header().Ttl).To(Equal(uint32(0)))
 
 							ips := []string{response.Answer[0].(*dns.A).A.String(), response.Answer[1].(*dns.A).A.String()}
-							Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.124"))
+							Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.2"))
 
 							Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[group\.internal\.alias\.\] 0 \d+ns`))
 						})
@@ -358,7 +373,7 @@ var _ = Describe("main", func() {
 					Expect(header.Ttl).To(Equal(uint32(0)))
 
 					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
-					Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.124"))
+					Expect(answer.(*dns.A).A.String()).To(Equal("127.0.0.2"))
 				})
 
 				It("logs handler time", func() {
@@ -375,7 +390,7 @@ var _ = Describe("main", func() {
 					err = ioutil.WriteFile(recordsFilePath, []byte(fmt.Sprint(`{
 						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
 						"record_infos": [
-							["my-instance", "my-group", "az1", "my-network", "my-deployment", "124.124.124.124", "bosh"]
+							["my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.3", "bosh"]
 						]
 					}`)), 0644)
 					Expect(err).NotTo(HaveOccurred())
@@ -393,7 +408,7 @@ var _ = Describe("main", func() {
 						Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
 
 						return answer.(*dns.A).A.String()
-					}).Should(Equal("124.124.124.124"))
+					}).Should(Equal("127.0.0.3"))
 				})
 			})
 		})
@@ -406,6 +421,57 @@ var _ = Describe("main", func() {
 			session.Signal(syscall.SIGTERM)
 
 			Eventually(session).Should(gexec.Exit(0))
+		})
+
+		Context("health checking", func() {
+			var healthServers []*ghttp.Server
+
+			BeforeEach(func() {
+				healthServers = []*ghttp.Server{
+					newFakeHealthServer("127.0.0.1", "running"),
+					// sudo ifconfig lo0 alias 127.0.0.2 up # on osx
+					newFakeHealthServer("127.0.0.2", "stopped"),
+				}
+			})
+
+			AfterEach(func() {
+				for _, server := range healthServers {
+					server.Close()
+				}
+			})
+
+			It("checks healthiness of results", func() {
+				c := &dns.Client{Net: "udp"}
+
+				m := &dns.Msg{}
+				m.SetQuestion("q-YWxs.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+
+				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(r.Answer).To(HaveLen(2))
+
+				ips := []string{r.Answer[0].(*dns.A).A.String(), r.Answer[1].(*dns.A).A.String()}
+				Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.2"))
+
+				serverRequestLen := func(server *ghttp.Server) func() int {
+					return func() int {
+						return len(server.ReceivedRequests())
+					}
+				}
+				Eventually(serverRequestLen(healthServers[0]), 5*time.Second).Should(BeNumerically(">", 2))
+				Eventually(serverRequestLen(healthServers[1]), 5*time.Second).Should(BeNumerically(">", 2))
+
+				r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(r.Answer).To(HaveLen(1))
+
+				ips = []string{r.Answer[0].(*dns.A).A.String()}
+				Expect(ips).To(ConsistOf("127.0.0.1"))
+			})
 		})
 	})
 
@@ -576,4 +642,35 @@ func waitForServer(port int) error {
 	}
 
 	return errors.New("dns server failed to start")
+}
+
+func newFakeHealthServer(ip, state string) *ghttp.Server {
+	caCert, err := ioutil.ReadFile("../healthcheck/assets/test_certs/test_ca.pem")
+	Expect(err).ToNot(HaveOccurred())
+
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	cert, err := tls.LoadX509KeyPair("../healthcheck/assets/test_certs/test_server.pem", "../healthcheck/assets/test_certs/test_server.key")
+	Expect(err).ToNot(HaveOccurred())
+
+	tlsConfig := tlsconfig.Build(
+		tlsconfig.WithIdentity(cert),
+		tlsconfig.WithPivotalDefaults(),
+	)
+
+	serverConfig := tlsConfig.Server(tlsconfig.WithClientAuthentication(caCertPool))
+	serverConfig.BuildNameToCertificate()
+
+	server := ghttp.NewUnstartedServer()
+	server.HTTPTestServer.Listener.Close()
+	server.HTTPTestServer.Listener, err = net.Listen("tcp", ip+":2345")
+	Expect(err).ToNot(HaveOccurred())
+
+	server.HTTPTestServer.TLS = serverConfig
+
+	server.RouteToHandler("GET", "/health", ghttp.RespondWith(http.StatusOK, `{"state": "`+state+`"}`))
+	server.HTTPTestServer.StartTLS()
+
+	return server
 }

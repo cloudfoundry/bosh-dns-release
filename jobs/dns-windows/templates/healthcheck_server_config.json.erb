@@ -1,9 +1,9 @@
 <%=
 {
-  Port:           p('health.server_port'),
-  CertFile:       '/var/vcap/jobs/dns-windows/config/certs/server.pem',
-  KeyFile:        '/var/vcap/jobs/dns-windows/config/certs/server.key',
-  CaFile:         '/var/vcap/jobs/dns-windows/config/certs/ca.pem',
-  HealthFileName: '/var/vcap/instance/health.json'
+  port: p('health.server_port'),
+  certificate_file: '/var/vcap/jobs/dns-windows/config/certs/server.pem',
+  private_key_file: '/var/vcap/jobs/dns-windows/config/certs/server.key',
+  ca_file: '/var/vcap/jobs/dns-windows/config/certs/ca.pem',
+  health_file_name: '/var/vcap/instance/health.json'
 }.to_json
 %>

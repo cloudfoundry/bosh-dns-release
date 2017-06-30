@@ -36,7 +36,7 @@ func NewHealthServer(logger boshlog.Logger, fs system.FileSystem, healthFileName
 func (c *concreteHealthServer) Serve(config *HealthCheckConfig) {
 	http.HandleFunc("/health", c.healthEntryPoint)
 
-	caCert, err := ioutil.ReadFile(config.CaFile)
+	caCert, err := ioutil.ReadFile(config.CAFile)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -44,7 +44,7 @@ func (c *concreteHealthServer) Serve(config *HealthCheckConfig) {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	cert, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
+	cert, err := tls.LoadX509KeyPair(config.CertificateFile, config.PrivateKeyFile)
 	if err != nil {
 		log.Fatal(err)
 		return

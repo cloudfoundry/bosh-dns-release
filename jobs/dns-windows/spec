@@ -10,6 +10,8 @@ templates:
   healthcheck_server_config.json.erb: config/healthcheck_server_config.json
   server.key.erb: config/certs/server.key
   server.pem.erb: config/certs/server.pem
+  client.key.erb: config/certs/client.key
+  client.pem.erb: config/certs/client.pem
   ca.pem.erb:     config/certs/ca.pem
 
 packages:
@@ -62,10 +64,16 @@ properties:
     default: 8080
 
   health.server_tls_key:
-    description: "Private key for the health daemon's TLS cert."
+    description: "Server-side mutual TLS key for healthchecking"
 
   health.server_tls_cert:
-    description: "The health daemon's TLS cert."
+    description: "Server-side mutual TLS certificate for healthchecking"
+
+  health.client_tls_key:
+    description: "Client-side mutual TLS key for healthchecking"
+
+  health.client_tls_cert:
+    description: "Client-side mutual TLS certificate for healthchecking"
 
   health.ca_tls_cert:
     description: "Root CA for the health service."

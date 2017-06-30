@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -9,6 +10,7 @@ import (
 	"os"
 
 	"dns/config"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -19,6 +21,13 @@ var _ = Describe("Config", func() {
 		listenPort      int
 		timeout         string
 		recursorTimeout string
+
+		healthCAFile          string
+		healthCertificateFile string
+		healthCheckInterval   string
+		healthPort            int
+		healthPrivateKeyFile  string
+		healthcheckDomains    []string
 	)
 
 	BeforeEach(func() {
@@ -28,16 +37,31 @@ var _ = Describe("Config", func() {
 		listenPort = rand.Int()
 		timeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		recursorTimeout = fmt.Sprintf("%vs", rand.Int31n(16))
+		healthPort = 2345
+		healthCertificateFile = "/etc/certificate"
+		healthPrivateKeyFile = "/etc/private_key"
+		healthCAFile = "/etc/ca"
+		healthCheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
+		healthcheckDomains = []string{"healthcheck.domain.", "health2.bosh."}
 	})
 
 	It("returns config from a config file", func() {
-		configFilePath := writeConfigFile(fmt.Sprintf(`{
-		  "address": "%s",
-		  "port": %d,
-		  "timeout": "%s",
-		  "recursor_timeout": "%s",
-		  "healthcheck_domains": %s
-		}`, listenAddress, listenPort, timeout, recursorTimeout, `["healthcheck.domain.","health2.bosh."]`))
+		configContents, err := json.Marshal(map[string]interface{}{
+			"address":             listenAddress,
+			"port":                listenPort,
+			"timeout":             timeout,
+			"recursor_timeout":    recursorTimeout,
+			"healthcheck_domains": healthcheckDomains,
+			"health": map[string]interface{}{
+				"enabled":          true,
+				"port":             healthPort,
+				"certificate_file": healthCertificateFile,
+				"private_key_file": healthPrivateKeyFile,
+				"ca_file":          healthCAFile,
+				"check_interval":   healthCheckInterval,
+			},
+		})
+		configFilePath := writeConfigFile(string(configContents))
 
 		timeoutDuration, err := time.ParseDuration(timeout)
 		Expect(err).ToNot(HaveOccurred())
@@ -45,14 +69,25 @@ var _ = Describe("Config", func() {
 		recursorTimeoutDuration, err := time.ParseDuration(recursorTimeout)
 		Expect(err).ToNot(HaveOccurred())
 
+		healthCheckIntervalDuration, err := time.ParseDuration(healthCheckInterval)
+		Expect(err).ToNot(HaveOccurred())
+
 		dnsConfig, err := config.LoadFromFile(configFilePath)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dnsConfig).To(Equal(config.Config{
 			Address:            listenAddress,
 			Port:               listenPort,
-			Timeout:            config.Timeout(timeoutDuration),
-			RecursorTimeout:    config.Timeout(recursorTimeoutDuration),
+			Timeout:            config.DurationJSON(timeoutDuration),
+			RecursorTimeout:    config.DurationJSON(recursorTimeoutDuration),
 			HealthcheckDomains: []string{"healthcheck.domain.", "health2.bosh."},
+			Health: config.HealthConfig{
+				Enabled:         true,
+				Port:            healthPort,
+				CertificateFile: healthCertificateFile,
+				PrivateKeyFile:  healthPrivateKeyFile,
+				CAFile:          healthCAFile,
+				CheckInterval:   config.DurationJSON(healthCheckIntervalDuration),
+			},
 		}))
 	})
 
@@ -83,7 +118,7 @@ var _ = Describe("Config", func() {
 			dnsConfig, err := config.LoadFromFile(configFilePath)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(dnsConfig.RecursorTimeout).To(Equal(config.Timeout(2 * time.Second)))
+			Expect(dnsConfig.RecursorTimeout).To(Equal(config.DurationJSON(2 * time.Second)))
 		})
 	})
 
@@ -104,7 +139,7 @@ var _ = Describe("Config", func() {
 			dnsConfig, err := config.LoadFromFile(configFilePath)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(dnsConfig.Timeout).To(Equal(config.Timeout(5 * time.Second)))
+			Expect(dnsConfig.Timeout).To(Equal(config.DurationJSON(5 * time.Second)))
 		})
 	})
 

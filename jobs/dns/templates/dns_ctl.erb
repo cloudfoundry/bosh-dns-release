@@ -48,11 +48,13 @@ function start_dns() {
   setcap cap_net_bind_service=+ep ${DNS_PACKAGE}/bin/dns
   ulimit -n 65536
 
+  pushd ${JOB_DIR}
   chpst -u vcap:vcap \
     "${DNS_PACKAGE}/bin/dns" \
     --config "${JOB_DIR}/config/config.json" \
     1>> ${LOG_DIR}/dns.stdout.log \
     2>> ${LOG_DIR}/dns.stderr.log &
+  popd
 
    echo $! > $PIDFILE
 }

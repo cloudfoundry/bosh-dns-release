@@ -13,6 +13,7 @@ type LocalDomain struct {
 	logTag        string
 	recordSetRepo RecordSetRepo
 	shuffler      AnswerShuffler
+	healthLookup  HealthLookup
 }
 
 //go:generate counterfeiter . RecordSetRepo
@@ -25,17 +26,22 @@ type AnswerShuffler interface {
 	Shuffle(src []dns.RR) []dns.RR
 }
 
-func NewLocalDomain(logger logger.Logger, recordSetRepo RecordSetRepo, shuffler AnswerShuffler) LocalDomain {
+//go:generate counterfeiter . HealthLookup
+type HealthLookup interface {
+	IsHealthy(ip string) bool
+}
+
+func NewLocalDomain(logger logger.Logger, recordSetRepo RecordSetRepo, shuffler AnswerShuffler, healthLookup HealthLookup) LocalDomain {
 	return LocalDomain{
 		logger:        logger,
 		logTag:        "LocalDomain",
 		recordSetRepo: recordSetRepo,
 		shuffler:      shuffler,
+		healthLookup:  healthLookup,
 	}
 }
 
 func (d LocalDomain) Resolve(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
-
 	answers, rCode := d.resolve(requestMsg.Question[0].Name, questionDomains)
 
 	responseMsg := &dns.Msg{}
@@ -57,6 +63,7 @@ func (d LocalDomain) resolve(answerDomain string, questionDomains []string) ([]d
 	}
 
 	answers := []dns.RR{}
+	healthyAnswers := []dns.RR{}
 
 	for _, questionDomain := range questionDomains {
 		ips, err := recordSet.Resolve(questionDomain)
@@ -66,7 +73,7 @@ func (d LocalDomain) resolve(answerDomain string, questionDomains []string) ([]d
 		}
 
 		for _, ip := range ips {
-			answers = append(answers, &dns.A{
+			answer := &dns.A{
 				Hdr: dns.RR_Header{
 					Name:   answerDomain,
 					Rrtype: dns.TypeA,
@@ -74,10 +81,19 @@ func (d LocalDomain) resolve(answerDomain string, questionDomains []string) ([]d
 					Ttl:    0,
 				},
 				A: net.ParseIP(ip),
-			})
+			}
+
+			if d.healthLookup.IsHealthy(ip) {
+				healthyAnswers = append(healthyAnswers, answer)
+			} else {
+				answers = append(answers, answer)
+			}
 		}
 	}
 
+	if len(healthyAnswers) > 0 {
+		answers = healthyAnswers
+	}
 	return d.shuffler.Shuffle(answers), dns.RcodeSuccess
 }
 

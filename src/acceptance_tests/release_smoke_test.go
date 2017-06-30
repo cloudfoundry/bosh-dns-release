@@ -119,6 +119,43 @@ var _ = Describe("Integration", func() {
 				"state": "running",
 			}))
 		})
+
+		It("returns stops returning IP addresses of instances that go unhealthy", func() {
+			var output string
+			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
+
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-YWxs.dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+			output = string(session.Out.Contents())
+			Expect(output).To(ContainSubstring("Got answer:"))
+			Expect(output).To(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
+			for _, info := range allDeployedInstances {
+				Expect(output).To(MatchRegexp("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
+			}
+			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+
+			stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
+				"stop", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID),
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+
+			Eventually(func() string {
+				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-YWxs.dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+				output = string(session.Out.Contents())
+				return output
+			}, 21*time.Second).Should(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+
+			Expect(output).To(MatchRegexp("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP))
+			Expect(output).ToNot(MatchRegexp("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP))
+		})
 	})
 })
 
@@ -139,6 +176,8 @@ func ensureHealthEndpointDeployed() {
 		"--var-file", "health_ca=../healthcheck/assets/test_certs/test_ca.pem",
 		"--var-file", "health_tls_cert=../healthcheck/assets/test_certs/test_server.pem",
 		"--var-file", "health_tls_key=../healthcheck/assets/test_certs/test_server.key",
+		"--var-file", "client_health_tls_cert=../healthcheck/assets/test_certs/test_client.pem",
+		"--var-file", "client_health_tls_key=../healthcheck/assets/test_certs/test_client.key",
 		"-v", "health_server_port=2345",
 		"-o", "../healthcheck/assets/enable-health-manifest-ops.yml",
 		manifestPath,

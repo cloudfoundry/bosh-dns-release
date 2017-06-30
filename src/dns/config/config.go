@@ -12,17 +12,28 @@ import (
 type Config struct {
 	Address            string
 	Port               int
-	Timeout            Timeout
-	RecursorTimeout    Timeout `json:"recursor_timeout"`
+	Timeout            DurationJSON
+	RecursorTimeout    DurationJSON `json:"recursor_timeout"`
 	Recursors          []string
 	RecordsFile        string   `json:"records_file"`
 	AliasFilesGlob     string   `json:"alias_files_glob"`
 	HealthcheckDomains []string `json:"healthcheck_domains"`
+
+	Health HealthConfig `json:"health"`
 }
 
-type Timeout time.Duration
+type HealthConfig struct {
+	Enabled         bool
+	Port            int          `json:"port"`
+	CertificateFile string       `json:"certificate_file"`
+	PrivateKeyFile  string       `json:"private_key_file"`
+	CAFile          string       `json:"ca_file"`
+	CheckInterval   DurationJSON `json:"check_interval"`
+}
 
-func (t *Timeout) UnmarshalJSON(b []byte) error {
+type DurationJSON time.Duration
+
+func (t *DurationJSON) UnmarshalJSON(b []byte) error {
 	var s string
 
 	if err := json.Unmarshal(b, &s); err != nil {
@@ -34,7 +45,7 @@ func (t *Timeout) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*t = Timeout(timeoutDuration)
+	*t = DurationJSON(timeoutDuration)
 
 	return nil
 }
@@ -46,8 +57,8 @@ func LoadFromFile(configFilePath string) (Config, error) {
 	}
 
 	c := Config{
-		Timeout:         Timeout(5 * time.Second),
-		RecursorTimeout: Timeout(2 * time.Second),
+		Timeout:         DurationJSON(5 * time.Second),
+		RecursorTimeout: DurationJSON(2 * time.Second),
 	}
 
 	if err := json.Unmarshal(configFileContents, &c); err != nil {

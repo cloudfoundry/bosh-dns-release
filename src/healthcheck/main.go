@@ -36,9 +36,8 @@ func mainExitCode() int {
 	healthServer = healthserver.NewHealthServer(logger, fs, config.HealthFileName)
 
 	healthServer.Serve(config)
-    return 0
+	return 0
 }
-
 
 func getConfig() (*healthserver.HealthCheckConfig, error) {
 	var configFile string
