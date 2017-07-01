@@ -3,11 +3,8 @@
   exit 1
 }
 
-$env:GOPATH = Join-Path -Path $PWD "gopath"
+$env:GOPATH = Join-Path -Path $PWD "dns-release"
 $env:PATH = $env:GOPATH + "/bin;C:/go/bin;C:/var/vcap/bosh/bin;" + $env:PATH
-
-mkdir -path $env:GOPATH/src/github.com/cloudfoundry
-mv ./dns-release $env:GOPATH/src/github.com/cloudfoundry/dns-release
 
 cd $env:GOPATH/src/bosh-dns/dns
 
