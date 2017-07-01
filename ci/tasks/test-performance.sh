@@ -46,6 +46,6 @@ go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
 echo $ZONES_JSON_HASH > /tmp/zones.json
 
-pushd $GOPATH/src/performance_tests
+pushd $GOPATH/src/bosh-dns/performance_tests
     ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
 popd
