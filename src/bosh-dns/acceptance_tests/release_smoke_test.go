@@ -151,7 +151,7 @@ var _ = Describe("Integration", func() {
 
 				output = string(session.Out.Contents())
 				return output
-			}, 21*time.Second).Should(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+			}, 30*time.Second).Should(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 
 			Expect(output).To(MatchRegexp("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP))
 			Expect(output).ToNot(MatchRegexp("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP))

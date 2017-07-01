@@ -1,8 +1,7 @@
 package zone_pickers_test
 
 import (
-	. "performance_tests/zone_pickers"
-
+	"bosh-dns/performance_tests/zone_pickers"
 	"io/ioutil"
 	"os"
 
@@ -13,7 +12,7 @@ import (
 var _ = Describe("ZoneFilePicker", func() {
 	var (
 		sourceFile string
-		picker     *ZoneFilePicker
+		picker     *zone_pickers.ZoneFilePicker
 	)
 
 	Describe("NewZoneFilePickerFromFile", func() {
@@ -34,7 +33,7 @@ var _ = Describe("ZoneFilePicker", func() {
 			})
 
 			It("returns a pointer to a ZoneFilePicker", func() {
-				picker, err := NewZoneFilePickerFromFile(sourceFile)
+				picker, err := zone_pickers.NewZoneFilePickerFromFile(sourceFile)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(picker).ToNot(BeNil())
 			})
@@ -42,7 +41,7 @@ var _ = Describe("ZoneFilePicker", func() {
 
 		Context("when the given file is NOT present", func() {
 			It("returns a nil pointer and an error", func() {
-				picker, err := NewZoneFilePickerFromFile(sourceFile)
+				picker, err := zone_pickers.NewZoneFilePickerFromFile(sourceFile)
 				Expect(picker).To(BeNil())
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Creating zone picker"))
@@ -61,7 +60,7 @@ var _ = Describe("ZoneFilePicker", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				sourceFile = file.Name()
-				picker, err = NewZoneFilePickerFromFile(sourceFile)
+				picker, err = zone_pickers.NewZoneFilePickerFromFile(sourceFile)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -92,7 +91,7 @@ var _ = Describe("ZoneFilePicker", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				sourceFile = file.Name()
-				picker, err = NewZoneFilePickerFromFile(sourceFile)
+				picker, err = zone_pickers.NewZoneFilePickerFromFile(sourceFile)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
