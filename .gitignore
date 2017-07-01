@@ -1,15 +1,20 @@
-#*
 *#
 *.swp
 *~
 .DS_Store
+
+# BOSH
 .dev_builds
 .final_builds/jobs/**/*.tgz
 .final_builds/packages/**/*.tgz
 .idea
-blobs
+blobs/
 config/private.yml
-dev_releases
-pkg/
+dev_releases/
 releases/**/*.tgz
 releases/*.tgz
+
+
+# Golang
+/bin/
+/pkg/

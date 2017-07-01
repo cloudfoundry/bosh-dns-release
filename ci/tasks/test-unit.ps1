@@ -9,7 +9,7 @@ $env:PATH = $env:GOPATH + "/bin;C:/go/bin;C:/var/vcap/bosh/bin;" + $env:PATH
 mkdir -path $env:GOPATH/src/github.com/cloudfoundry
 mv ./dns-release $env:GOPATH/src/github.com/cloudfoundry/dns-release
 
-cd $env:GOPATH/src/dns
+cd $env:GOPATH/src/bosh-dns/dns
 
 if ((Get-Command "go.exe" -ErrorAction SilentlyContinue) -eq $null)
 {
@@ -25,7 +25,7 @@ if ((Get-Command "go.exe" -ErrorAction SilentlyContinue) -eq $null)
   Write-Host "Go is installed!"
 }
 
-go.exe install github.com/onsi/ginkgo/ginkgo
+go.exe install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 ginkgo.exe -r -race -keepGoing -randomizeAllSpecs -randomizeSuites
 if ($LastExitCode -ne 0)
 {
@@ -33,7 +33,7 @@ if ($LastExitCode -ne 0)
     exit 1
 }
 
-cd $env:GOPATH/src/healthcheck
+cd $env:GOPATH/src/bosh-dns/healthcheck
 ginkgo.exe -r -race -keepGoing -randomizeAllSpecs -randomizeSuites
 if ($LastExitCode -ne 0)
 {

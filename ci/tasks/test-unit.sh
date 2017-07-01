@@ -24,15 +24,12 @@ export GOROOT=/usr/local/golang
 export GOPATH=$PWD/dns-release
 export PATH=$GOPATH/bin:$BOSH_INSTALL_TARGET/bin:$PATH
 
-mkdir -p go/src/github.com/cloudfoundry
-mkdir -p go/src/github.com/onsi
+go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
-go install vendor/github.com/onsi/ginkgo/ginkgo
-
-pushd $GOPATH/src/dns
+pushd $GOPATH/src/bosh-dns/dns
     ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
 popd
 
-pushd $GOPATH/src/healthcheck
+pushd $GOPATH/src/bosh-dns/healthcheck
     ginkgo -r -randomizeAllSpecs -randomizeSuites -race .
 popd

@@ -22,8 +22,8 @@ export GOROOT="/var/vcap/packages/golang"
 export GOPATH="/var/vcap/packages/acceptance-tests"
 export PATH="$GOROOT/bin:${GOPATH}/bin:${PATH}"
 
-go install vendor/github.com/onsi/ginkgo/ginkgo
+go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
-pushd $GOPATH/src/acceptance_tests
+pushd $GOPATH/src/bosh-dns/acceptance_tests
    ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
 popd

@@ -4,10 +4,10 @@ name: acceptance-tests-windows
 dependencies: []
 
 files:
-- acceptance_tests/**/*
-- healthcheck/assets/**/*
-- vendor/**/*
+- bosh-dns/acceptance_tests/**/*
+- bosh-dns/healthcheck/assets/**/*
+- bosh-dns/vendor/**/*
 - exiter.ps1
 
 excluded_files:
-- vendor/github.com/bmatcuk/doublestar/test/**/*
+- bosh-dns/vendor/github.com/bmatcuk/doublestar/test/**/*

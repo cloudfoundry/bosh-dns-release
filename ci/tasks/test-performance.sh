@@ -21,7 +21,7 @@ export BOSH_BINARY_PATH=$(which bosh)
 export BOSH_DEPLOYMENT="bosh-dns"
 
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
-    -o $ROOT_DIR/dns-release/src/test_yml_assets/add-static-ips-to-cloud-config.yml > /tmp/cloud-config.yml
+    -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/add-static-ips-to-cloud-config.yml > /tmp/cloud-config.yml
 
 bosh -n update-cloud-config /tmp/cloud-config.yml -v network=director_network
 
@@ -32,17 +32,17 @@ pushd $ROOT_DIR/dns-release
 popd
 
 bosh -n deploy \
-    -v acceptance_release_path=$ROOT_DIR/dns-release/src/acceptance_tests/dns-acceptance-release \
-    -o $ROOT_DIR/dns-release/src/test_yml_assets/one-instance-with-static-ips.yml \
-    -o $ROOT_DIR/dns-release/src/test_yml_assets/configure-recursor.yml \
+    -v acceptance_release_path=$ROOT_DIR/dns-release/src/bosh-dns/acceptance_tests/dns-acceptance-release \
+    -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/one-instance-with-static-ips.yml \
+    -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/configure-recursor.yml \
     -v recursor_ip="8.8.8.8" \
-    $ROOT_DIR/dns-release/src/test_yml_assets/manifest.yml
+    $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/manifest.yml
 
 
 export GOPATH=$PWD/dns-release
 export PATH="${GOPATH}/bin":$PATH
 
-go install vendor/github.com/onsi/ginkgo/ginkgo
+go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
 echo $ZONES_JSON_HASH > /tmp/zones.json
 

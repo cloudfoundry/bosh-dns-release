@@ -3,10 +3,7 @@ set -eu
 mkdir -p "${BOSH_INSTALL_TARGET}/src"
 mkdir -p "${BOSH_INSTALL_TARGET}/bin"
 
-mv acceptance_tests "${BOSH_INSTALL_TARGET}/src/"
-mv healthcheck "${BOSH_INSTALL_TARGET}/src/"
-mv test_yml_assets "${BOSH_INSTALL_TARGET}/src/"
-mv vendor "${BOSH_INSTALL_TARGET}/src/"
+mv bosh-dns "${BOSH_INSTALL_TARGET}/src/"
 
 cp bosh-cli/bosh-cli-2.0.16-linux-amd64 ${BOSH_INSTALL_TARGET}/bin/bosh
 chmod +x ${BOSH_INSTALL_TARGET}/bin/bosh

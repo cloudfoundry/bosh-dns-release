@@ -15,17 +15,17 @@ if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\"
 }
 
-go.exe install "dns"
+go.exe install "bosh-dns\dns"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: dns"
 }
 
-go.exe install "dns\nameserverconfig"
+go.exe install "bosh-dns\dns\nameserverconfig"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: dns\nameserverconfig"
 }
 
-go.exe install "healthcheck"
+go.exe install "bosh-dns\healthcheck"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: healthcheck"
 }
@@ -41,9 +41,9 @@ if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /PURGE emptyfolder ${BOSH_INSTALL_TARGET}/pkg"
 }
 
-robocopy "dns\nameserverconfig\assets" "${BOSH_INSTALL_TARGET}/bin" "*.ps1"
+robocopy "bosh-dns\dns\nameserverconfig\assets" "${BOSH_INSTALL_TARGET}/bin" "*.ps1"
 if ($LASTEXITCODE -ge 8) {
-    Write-Error "robocopy dns\nameserverconfig\assets\*.ps1 ${BOSH_INSTALL_TARGET}/bin"
+    Write-Error "robocopy bosh-dns\dns\nameserverconfig\assets\*.ps1 ${BOSH_INSTALL_TARGET}/bin"
 }
 
 Remove-Item -Force -Recurse "${BOSH_INSTALL_TARGET}/src"

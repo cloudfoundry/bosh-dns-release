@@ -4,11 +4,11 @@ name: acceptance-tests
 dependencies: []
 
 files:
-- acceptance_tests/**/*
-- healthcheck/assets/**/*
-- test_yml_assets/*
-- vendor/**/*
+- bosh-dns/acceptance_tests/**/*
+- bosh-dns/healthcheck/assets/**/*
+- bosh-dns/test_yml_assets/*
+- bosh-dns/vendor/**/*
 - bosh-cli/bosh-cli-2.0.16-linux-amd64
 
 excluded_files:
-- vendor/github.com/bmatcuk/doublestar/test/**/*
+- bosh-dns/vendor/github.com/bmatcuk/doublestar/test/**/*

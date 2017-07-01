@@ -5,10 +5,10 @@ dependencies:
 - golang-windows
 
 files:
-- healthcheck/**/*
-- dns/**/*
-- vendor/**/*
+- bosh-dns/healthcheck/**/*
+- bosh-dns/dns/**/*
+- bosh-dns/vendor/**/*
 - exiter.ps1
 
 excluded_files:
-- vendor/github.com/bmatcuk/doublestar/test/**/*
+- bosh-dns/vendor/github.com/bmatcuk/doublestar/test/**/*
