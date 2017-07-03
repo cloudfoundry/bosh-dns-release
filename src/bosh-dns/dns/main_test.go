@@ -1,10 +1,12 @@
 package main_test
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/config"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -153,21 +155,23 @@ var _ = Describe("main", func() {
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
-			cmd = newCommandWithConfig(fmt.Sprintf(`{
-				"address": %q,
-				"port": %d,
-				"records_file": %q,
-				"alias_files_glob": %q,
-				"upcheck_domains": ["health.check.bosh.","health.check.ca."],
-				"health": {
-					"enabled": true,
-					"port": 2345,
-					"ca_file": "../healthcheck/assets/test_certs/test_ca.pem",
+			configContents, err := json.Marshal(map[string]interface{}{
+				"address":          listenAddress,
+				"port":             listenPort,
+				"records_file":     recordsFilePath,
+				"alias_files_glob": path.Join(aliasesDir, "*"),
+				"upcheck_domains":  []string{"health.check.bosh.", "health.check.ca."},
+				"health": map[string]interface{}{
+					"enabled":          true,
+					"port":             2345 + config.GinkgoConfig.ParallelNode,
+					"ca_file":          "../healthcheck/assets/test_certs/test_ca.pem",
 					"certificate_file": "../healthcheck/assets/test_certs/test_client.pem",
 					"private_key_file": "../healthcheck/assets/test_certs/test_client.key",
-					"check_interval": "1s"
-				}
-			}`, listenAddress, listenPort, recordsFilePath, path.Join(aliasesDir, "*")))
+					"check_interval":   "1s",
+				},
+			})
+			Expect(err).NotTo(HaveOccurred())
+			cmd = newCommandWithConfig(string(configContents))
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -664,8 +668,16 @@ func newFakeHealthServer(ip, state string) *ghttp.Server {
 
 	server := ghttp.NewUnstartedServer()
 	server.HTTPTestServer.Listener.Close()
-	server.HTTPTestServer.Listener, err = net.Listen("tcp", ip+":2345")
-	Expect(err).ToNot(HaveOccurred())
+	port := 2345 + config.GinkgoConfig.ParallelNode
+	server.HTTPTestServer.Listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
+	Expect(err).ToNot(HaveOccurred(),
+		fmt.Sprintf(`
+===========================================
+ ATTENTION: on macOS you may need to run
+    sudo ifconfig lo0 alias %s up
+===========================================
+`, ip),
+	)
 
 	server.HTTPTestServer.TLS = serverConfig
 

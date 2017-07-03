@@ -13,8 +13,6 @@ import (
 	"net"
 	"time"
 
-	"sync"
-
 	"bosh-dns/dns/server/internal/internalfakes"
 	"bosh-dns/dns/server/serverfakes"
 
@@ -136,10 +134,8 @@ var _ = Describe("Server", func() {
 		fakeUDPServer   *serverfakes.FakeDNSServer
 		tcpUpcheck      *serverfakes.FakeUpcheck
 		udpUpcheck      *serverfakes.FakeUpcheck
-		fakeDialer      server.Dialer
 		timeout         time.Duration
 		bindAddress     string
-		lock            sync.Mutex
 		pollingInterval time.Duration
 		shutdownChannel chan struct{}
 		stopFakeServer  chan struct{}
@@ -170,8 +166,6 @@ var _ = Describe("Server", func() {
 		SetDefaultConsistentlyDuration(timeout + 2*time.Second)
 
 		pollingInterval = 5 * time.Second
-
-		fakeDialer = net.Dial
 	})
 
 	JustBeforeEach(func() {
@@ -239,40 +233,13 @@ var _ = Describe("Server", func() {
 			})
 
 			Context("when both servers are up", func() {
-				var fakeProtocolConn map[string]*internalfakes.FakeConn
-				var fakeProtocolDialConn map[string]int
-
-				BeforeEach(func() {
-					fakeProtocolConn = map[string]*internalfakes.FakeConn{
-						"tcp": {},
-						"udp": {},
-					}
-
-					fakeProtocolDialConn = map[string]int{
-						"tcp": 0,
-						"udp": 0,
-					}
-
-					fakeDialer = func(protocol, address string) (net.Conn, error) {
-						lock.Lock()
-						fakeProtocolDialConn[protocol]++
-						lock.Unlock()
-
-						return fakeProtocolConn[protocol], nil
-					}
-				})
-
-				It("blocks forever", func() {
+				It("proceeds through upchecks", func() {
 					dnsServerFinished := make(chan error)
 					go func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
 
-					Consistently(dnsServerFinished).ShouldNot(Receive())
-
-					Expect(fakeProtocolConn["tcp"].CloseCallCount()).To(Equal(fakeProtocolDialConn["tcp"]))
-					Expect(fakeProtocolConn["udp"].CloseCallCount()).To(Equal(fakeProtocolDialConn["udp"]))
-					Expect(logger.DebugCallCount()).To(BeNumerically(">", 0))
+					Eventually(logger.DebugCallCount).Should(BeNumerically(">", 0))
 					tag, msg, _ := logger.DebugArgsForCall(0)
 					Expect(tag).To(Equal("server"))
 					Expect(msg).To(Equal("done with upchecks"))
@@ -281,6 +248,7 @@ var _ = Describe("Server", func() {
 
 			Describe("self-correcting runtime upchecks", func() {
 				triggerNFailures := func(out chan error, N chan int, notifyDone chan int) {
+					out <- nil
 					for {
 						select {
 						case numFailures := <-N:
@@ -322,7 +290,6 @@ var _ = Describe("Server", func() {
 							dnsServerFinished <- dnsServer.Run()
 						}()
 
-						Consistently(dnsServerFinished).ShouldNot(Receive())
 						startFailing <- 5
 						Expect(<-numFailuresSent).To(Equal(5))
 						Eventually(dnsServerFinished).Should(Receive())
@@ -336,13 +303,15 @@ var _ = Describe("Server", func() {
 							dnsServerFinished <- dnsServer.Run()
 						}()
 
-						Consistently(dnsServerFinished).ShouldNot(Receive())
 						startFailing <- 3
 						Expect(<-numFailuresSent).To(Equal(3))
-						Consistently(dnsServerFinished).ShouldNot(Receive())
+
+						Consistently(dnsServerFinished, 3*pollingInterval).ShouldNot(Receive())
+
 						startFailing <- 3
 						Expect(<-numFailuresSent).To(Equal(3))
-						Consistently(dnsServerFinished).ShouldNot(Receive())
+
+						Consistently(dnsServerFinished, 3*pollingInterval).ShouldNot(Receive())
 					})
 				})
 
@@ -360,7 +329,6 @@ var _ = Describe("Server", func() {
 							dnsServerFinished <- dnsServer.Run()
 						}()
 
-						Consistently(dnsServerFinished).ShouldNot(Receive())
 						startFailing <- 5
 						Expect(<-numFailuresSent).To(Equal(5))
 						Eventually(dnsServerFinished).Should(Receive())
@@ -374,13 +342,14 @@ var _ = Describe("Server", func() {
 							dnsServerFinished <- dnsServer.Run()
 						}()
 
-						Consistently(dnsServerFinished).ShouldNot(Receive())
 						startFailing <- 3
 						Expect(<-numFailuresSent).To(Equal(3))
-						Consistently(dnsServerFinished).ShouldNot(Receive())
+
+						Consistently(dnsServerFinished, 3*pollingInterval).ShouldNot(Receive())
+
 						startFailing <- 3
 						Expect(<-numFailuresSent).To(Equal(3))
-						Consistently(dnsServerFinished).ShouldNot(Receive())
+						Consistently(dnsServerFinished, 3*pollingInterval).ShouldNot(Receive())
 					})
 				})
 			})
@@ -403,9 +372,7 @@ var _ = Describe("Server", func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
 
-					Consistently(dnsServerFinished).ShouldNot(Receive())
-
-					Expect(logger.WarnCallCount()).To(Equal(1))
+					Eventually(logger.WarnCallCount).Should(Equal(1))
 					tag, msg, _ := logger.WarnArgsForCall(0)
 					Expect(tag).To(Equal("server"))
 					Expect(msg).To(Equal("proceeding immediately: no upchecks configured"))
@@ -459,8 +426,6 @@ var _ = Describe("Server", func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
 
-					Consistently(dnsServerFinished).ShouldNot(Receive())
-
 					close(shutdownChannel)
 					Eventually(dnsServerFinished).Should(Receive(nil))
 
@@ -475,8 +440,6 @@ var _ = Describe("Server", func() {
 					go func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
-
-					Consistently(dnsServerFinished).ShouldNot(Receive())
 
 					close(shutdownChannel)
 					Eventually(dnsServerFinished).Should(Receive(Equal(err)))
