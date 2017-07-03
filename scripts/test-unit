@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+GOPATH=$(cd $DIR/.. && pwd)
+PATH=$GOPATH/bin:$PATH
+
+go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
+
+pushd $GOPATH/src/bosh-dns
+    ginkgo -r -randomizeAllSpecs -randomizeSuites -keepGoing -race dns healthcheck
+popd

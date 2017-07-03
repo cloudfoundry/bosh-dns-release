@@ -6,8 +6,6 @@
 $env:GOPATH = Join-Path -Path $PWD "dns-release"
 $env:PATH = $env:GOPATH + "/bin;C:/go/bin;C:/var/vcap/bosh/bin;" + $env:PATH
 
-cd $env:GOPATH/src/bosh-dns/dns
-
 if ((Get-Command "go.exe" -ErrorAction SilentlyContinue) -eq $null)
 {
   Write-Host "Installing Go 1.7.5!"
@@ -22,16 +20,10 @@ if ((Get-Command "go.exe" -ErrorAction SilentlyContinue) -eq $null)
   Write-Host "Go is installed!"
 }
 
-go.exe install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
-ginkgo.exe -r -race -keepGoing -randomizeAllSpecs -randomizeSuites
-if ($LastExitCode -ne 0)
-{
-    Write-Error $_
-    exit 1
-}
+cd $env:GOPATH/src/bosh-dns
 
-cd $env:GOPATH/src/bosh-dns/healthcheck
-ginkgo.exe -r -race -keepGoing -randomizeAllSpecs -randomizeSuites
+go.exe install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
+ginkgo.exe -r -race -keepGoing -randomizeAllSpecs -randomizeSuites dns healthcheck
 if ($LastExitCode -ne 0)
 {
     Write-Error $_
