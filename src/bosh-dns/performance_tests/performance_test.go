@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	zp "performance_tests/zone_pickers"
+	zp "bosh-dns/performance_tests/zone_pickers"
 
 	"github.com/cloudfoundry/gosigar"
 	"github.com/miekg/dns"
@@ -160,7 +160,7 @@ var _ = Describe("Performance", func() {
 			cmd := exec.Command(boshBinaryPath, []string{"scp", "dns:/var/vcap/instance/dns/records.json", "records.json"}...)
 			err := cmd.Run()
 			if err != nil {
-				panic(fmt.Sprintf("Failed to bosh scp: %s\nOutput: %s", err.Error()))
+				panic(fmt.Sprintf("Failed to bosh scp: %s", err.Error()))
 			}
 
 			recordsJsonBytes, err := ioutil.ReadFile("records.json")
