@@ -11,6 +11,7 @@ import (
 
 	"bosh-dns/healthcheck/healthserver"
 
+	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/gomega/gexec"
 
 	. "github.com/onsi/ginkgo"
@@ -44,7 +45,7 @@ var _ = BeforeSuite(func() {
 	healthFile, err = ioutil.TempFile("", "health.json")
 	Expect(err).ToNot(HaveOccurred())
 
-	configPort = 1234
+	configPort = 1234 + config.GinkgoConfig.ParallelNode
 
 	configContents, err := json.Marshal(healthserver.HealthCheckConfig{
 		Port:            configPort,

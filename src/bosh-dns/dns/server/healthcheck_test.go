@@ -2,11 +2,11 @@ package server_test
 
 import (
 	"fmt"
-	"math/rand"
 
-	boshlogf "github.com/cloudfoundry/bosh-utils/logger/fakes"
 	"bosh-dns/dns/server"
 	"bosh-dns/dns/server/handlers"
+
+	boshlogf "github.com/cloudfoundry/bosh-utils/logger/fakes"
 	"github.com/miekg/dns"
 
 	. "github.com/onsi/ginkgo"
@@ -43,8 +43,11 @@ var _ = Describe("Healthcheck", func() {
 	healthCheckDomain := "healthcheck.bosh-dns."
 
 	JustBeforeEach(func() {
-		ports["udp"] = rand.Int() % 50000
-		ports["tcp"] = ports["udp"] + 1
+		var err error
+		ports["udp"], err = getFreePort()
+		Expect(err).NotTo(HaveOccurred())
+		ports["tcp"], err = getFreePort()
+		Expect(err).NotTo(HaveOccurred())
 		addresses["udp"] = fmt.Sprintf("%s:%d", listenDomain, ports["udp"])
 		addresses["tcp"] = fmt.Sprintf("%s:%d", listenDomain, ports["tcp"])
 

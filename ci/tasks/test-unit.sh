@@ -27,5 +27,5 @@ export PATH=$GOPATH/bin:$BOSH_INSTALL_TARGET/bin:$PATH
 go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
 pushd $GOPATH/src/bosh-dns
-    ginkgo -r -randomizeAllSpecs -randomizeSuites -keepGoing -race dns healthcheck
+    ginkgo -p -r -randomizeAllSpecs -randomizeSuites -keepGoing -race dns healthcheck
 popd

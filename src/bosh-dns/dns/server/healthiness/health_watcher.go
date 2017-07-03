@@ -61,7 +61,7 @@ func (hw *healthWatcher) IsHealthy(ip string) bool {
 }
 
 func (hw *healthWatcher) Run(signal <-chan struct{}) {
-	timer := hw.clock.NewTimer(0)
+	timer := hw.clock.NewTimer(hw.checkInterval)
 	defer timer.Stop()
 
 	for {

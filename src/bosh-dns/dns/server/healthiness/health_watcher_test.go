@@ -59,7 +59,7 @@ var _ = Describe("HealthWatcher", func() {
 		Context("when the status is known", func() {
 			JustBeforeEach(func() {
 				healthWatcher.IsHealthy(ip)
-				Eventually(fakeChecker.GetStatusCallCount).Should(BeNumerically(">", 0))
+				Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
 				Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
 			})
 
@@ -93,6 +93,7 @@ var _ = Describe("HealthWatcher", func() {
 				It("goes unhealthy if the new status is stopped", func() {
 					Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
 					fakeChecker.GetStatusReturns(false)
+
 					Consistently(func() bool {
 						return healthWatcher.IsHealthy(ip)
 					}).Should(BeTrue())

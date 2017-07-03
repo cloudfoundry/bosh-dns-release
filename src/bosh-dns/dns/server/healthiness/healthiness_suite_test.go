@@ -9,5 +9,5 @@ import (
 
 func TestHealthiness(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Healthiness Suite")
+	RunSpecs(t, "dns/server/healthiness")
 }

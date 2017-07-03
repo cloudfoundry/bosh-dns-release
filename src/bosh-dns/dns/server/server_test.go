@@ -2,9 +2,11 @@ package server_test
 
 import (
 	"fmt"
+	"strconv"
+
+	"bosh-dns/dns/server"
 
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
-	"bosh-dns/dns/server"
 
 	"errors"
 
@@ -15,23 +17,29 @@ import (
 
 	"bosh-dns/dns/server/internal/internalfakes"
 	"bosh-dns/dns/server/serverfakes"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-func getFreePort() (string, error) {
+func getFreePort() (int, error) {
 	l, err := net.Listen("tcp", ":0")
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	l.Close()
 
 	_, port, err := net.SplitHostPort(l.Addr().String())
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
-	return port, nil
+	intPort, err := strconv.Atoi(port)
+	if err != nil {
+		return 0, err
+	}
+
+	return intPort, nil
 }
 
 func tcpServerStub(bindAddress string, stop chan struct{}) func() error {
@@ -146,7 +154,7 @@ var _ = Describe("Server", func() {
 		port, err := getFreePort()
 		Expect(err).NotTo(HaveOccurred())
 
-		bindAddress = fmt.Sprintf("127.0.0.1:%s", port)
+		bindAddress = fmt.Sprintf("127.0.0.1:%d", port)
 
 		fakeTCPServer = &serverfakes.FakeDNSServer{}
 		fakeUDPServer = &serverfakes.FakeDNSServer{}
