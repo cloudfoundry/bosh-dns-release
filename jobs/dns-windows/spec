@@ -9,10 +9,11 @@ templates:
   pre-start.ps1.erb: bin/pre-start.ps1
   healthcheck_server_config.json.erb: config/healthcheck_server_config.json
   server.key.erb: config/certs/server.key
-  server.pem.erb: config/certs/server.pem
+  server.crt.erb: config/certs/server.crt
+  server_ca.crt.erb: config/certs/server_ca.crt
   client.key.erb: config/certs/client.key
-  client.pem.erb: config/certs/client.pem
-  ca.pem.erb:     config/certs/ca.pem
+  client.crt.erb: config/certs/client.crt
+  client_ca.crt.erb: config/certs/client_ca.crt
 
 packages:
   - dns-windows
@@ -59,21 +60,12 @@ properties:
     description: "Enable healthchecks for DNS resolution"
     default: false
 
-  health.server_port:
+  health.server.port:
     description: "Port to run healthchecks server on"
     default: 8080
 
-  health.server_tls_key:
-    description: "Server-side mutual TLS key for healthchecking"
+  health.server.tls:
+    description: "Server-side mutual TLS configuration for healthchecking"
 
-  health.server_tls_cert:
-    description: "Server-side mutual TLS certificate for healthchecking"
-
-  health.client_tls_key:
-    description: "Client-side mutual TLS key for healthchecking"
-
-  health.client_tls_cert:
-    description: "Client-side mutual TLS certificate for healthchecking"
-
-  health.ca_tls_cert:
-    description: "Root CA for the health service."
+  health.client.tls:
+    description: "Client-side mutual TLS configuration for healthchecking"

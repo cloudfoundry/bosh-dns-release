@@ -1,9 +1,9 @@
 <%=
 {
-  port: p('health.server_port'),
-  certificate_file: '/var/vcap/jobs/dns-windows/config/certs/server.pem',
+  port: p('health.server.port'),
+  certificate_file: '/var/vcap/jobs/dns-windows/config/certs/server.crt',
   private_key_file: '/var/vcap/jobs/dns-windows/config/certs/server.key',
-  ca_file: '/var/vcap/jobs/dns-windows/config/certs/ca.pem',
+  ca_file: '/var/vcap/jobs/dns-windows/config/certs/server_ca.crt',
   health_file_name: '/var/vcap/instance/health.json'
 }.to_json
 %>

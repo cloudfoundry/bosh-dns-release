@@ -190,6 +190,7 @@ var _ = Describe("Server", func() {
 					tcpUpcheck = downCheck()
 					udpUpcheck = downCheck()
 				})
+
 				It("returns an error", func() {
 					fakeTCPServer.ListenAndServeStub = notListeningStub(stopFakeServer)
 					fakeUDPServer.ListenAndServeStub = notListeningStub(stopFakeServer)

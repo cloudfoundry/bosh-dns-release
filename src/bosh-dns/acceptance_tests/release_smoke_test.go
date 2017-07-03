@@ -15,7 +15,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -101,10 +100,7 @@ var _ = Describe("Integration", func() {
 		})
 
 		It("returns a healthy response when the instance is running", func() {
-			client, err := setupSecureGet(
-				"../healthcheck/assets/test_certs/test_ca.pem",
-				"../healthcheck/assets/test_certs/test_client.pem",
-				"../healthcheck/assets/test_certs/test_client.key")
+			client, err := setupSecureGet()
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func() map[string]string {
@@ -173,13 +169,9 @@ func ensureHealthEndpointDeployed() {
 		"-n", "-d", boshDeployment, "deploy",
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
-		"--var-file", "health_ca=../healthcheck/assets/test_certs/test_ca.pem",
-		"--var-file", "health_tls_cert=../healthcheck/assets/test_certs/test_server.pem",
-		"--var-file", "health_tls_key=../healthcheck/assets/test_certs/test_server.key",
-		"--var-file", "client_health_tls_cert=../healthcheck/assets/test_certs/test_client.pem",
-		"--var-file", "client_health_tls_key=../healthcheck/assets/test_certs/test_client.key",
 		"-v", "health_server_port=2345",
-		"-o", "../healthcheck/assets/enable-health-manifest-ops.yml",
+		"-o", "../test_yml_assets/enable-health-manifest-ops.yml",
+		"--vars-store", "creds.yml",
 		manifestPath,
 	)
 	Expect(err).ToNot(HaveOccurred())
@@ -187,22 +179,37 @@ func ensureHealthEndpointDeployed() {
 	allDeployedInstances = getInstanceInfos(boshBinaryPath)
 }
 
-func setupSecureGet(caFile, clientCertFile, clientKeyFile string) (*http.Client, error) {
-	// Load client cert
-	cert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
+func setupSecureGet() (*http.Client, error) {
+	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
+		"int", "creds.yml",
+		"--path", "/dns_healthcheck_client_tls/certificate",
+	)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+	clientCertificate := stdOut
 
-	// Load CA cert
-	caCert, err := ioutil.ReadFile(caFile)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
+	stdOut, stdErr, exitStatus, err = cmdRunner.RunCommand(boshBinaryPath,
+		"int", "creds.yml",
+		"--path", "/dns_healthcheck_client_tls/private_key",
+	)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+	clientPrivateKey := stdOut
+
+	stdOut, stdErr, exitStatus, err = cmdRunner.RunCommand(boshBinaryPath,
+		"int", "creds.yml",
+		"--path", "/dns_healthcheck_client_tls/ca",
+	)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+	caCert := stdOut
+
+	// Load client cert
+	cert, err := tls.X509KeyPair([]byte(clientCertificate), []byte(clientPrivateKey))
+	Expect(err).NotTo(HaveOccurred())
+
 	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
+	caCertPool.AppendCertsFromPEM([]byte(caCert))
 
 	tlsConfig := tlsconfig.Build(
 		tlsconfig.WithIdentity(cert),
