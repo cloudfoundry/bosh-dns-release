@@ -10,14 +10,14 @@ import (
 )
 
 type Config struct {
-	Address            string
-	Port               int
-	Timeout            DurationJSON
-	RecursorTimeout    DurationJSON `json:"recursor_timeout"`
-	Recursors          []string
-	RecordsFile        string   `json:"records_file"`
-	AliasFilesGlob     string   `json:"alias_files_glob"`
-	HealthcheckDomains []string `json:"healthcheck_domains"`
+	Address         string
+	Port            int
+	Timeout         DurationJSON
+	RecursorTimeout DurationJSON `json:"recursor_timeout"`
+	Recursors       []string
+	RecordsFile     string   `json:"records_file"`
+	AliasFilesGlob  string   `json:"alias_files_glob"`
+	UpcheckDomains  []string `json:"upcheck_domains"`
 
 	Health HealthConfig `json:"health"`
 }

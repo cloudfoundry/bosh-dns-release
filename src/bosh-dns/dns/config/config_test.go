@@ -24,10 +24,10 @@ var _ = Describe("Config", func() {
 
 		healthCAFile          string
 		healthCertificateFile string
-		healthCheckInterval   string
+		upcheckInterval       string
 		healthPort            int
 		healthPrivateKeyFile  string
-		healthcheckDomains    []string
+		upcheckDomains        []string
 	)
 
 	BeforeEach(func() {
@@ -41,24 +41,24 @@ var _ = Describe("Config", func() {
 		healthCertificateFile = "/etc/certificate"
 		healthPrivateKeyFile = "/etc/private_key"
 		healthCAFile = "/etc/ca"
-		healthCheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
-		healthcheckDomains = []string{"healthcheck.domain.", "health2.bosh."}
+		upcheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
+		upcheckDomains = []string{"upcheck.domain.", "health2.bosh."}
 	})
 
 	It("returns config from a config file", func() {
 		configContents, err := json.Marshal(map[string]interface{}{
-			"address":             listenAddress,
-			"port":                listenPort,
-			"timeout":             timeout,
-			"recursor_timeout":    recursorTimeout,
-			"healthcheck_domains": healthcheckDomains,
+			"address":          listenAddress,
+			"port":             listenPort,
+			"timeout":          timeout,
+			"recursor_timeout": recursorTimeout,
+			"upcheck_domains":  upcheckDomains,
 			"health": map[string]interface{}{
 				"enabled":          true,
 				"port":             healthPort,
 				"certificate_file": healthCertificateFile,
 				"private_key_file": healthPrivateKeyFile,
 				"ca_file":          healthCAFile,
-				"check_interval":   healthCheckInterval,
+				"check_interval":   upcheckInterval,
 			},
 		})
 		configFilePath := writeConfigFile(string(configContents))
@@ -69,24 +69,24 @@ var _ = Describe("Config", func() {
 		recursorTimeoutDuration, err := time.ParseDuration(recursorTimeout)
 		Expect(err).ToNot(HaveOccurred())
 
-		healthCheckIntervalDuration, err := time.ParseDuration(healthCheckInterval)
+		upcheckIntervalDuration, err := time.ParseDuration(upcheckInterval)
 		Expect(err).ToNot(HaveOccurred())
 
 		dnsConfig, err := config.LoadFromFile(configFilePath)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dnsConfig).To(Equal(config.Config{
-			Address:            listenAddress,
-			Port:               listenPort,
-			Timeout:            config.DurationJSON(timeoutDuration),
-			RecursorTimeout:    config.DurationJSON(recursorTimeoutDuration),
-			HealthcheckDomains: []string{"healthcheck.domain.", "health2.bosh."},
+			Address:         listenAddress,
+			Port:            listenPort,
+			Timeout:         config.DurationJSON(timeoutDuration),
+			RecursorTimeout: config.DurationJSON(recursorTimeoutDuration),
+			UpcheckDomains:  []string{"upcheck.domain.", "health2.bosh."},
 			Health: config.HealthConfig{
 				Enabled:         true,
 				Port:            healthPort,
 				CertificateFile: healthCertificateFile,
 				PrivateKeyFile:  healthPrivateKeyFile,
 				CAFile:          healthCAFile,
-				CheckInterval:   config.DurationJSON(healthCheckIntervalDuration),
+				CheckInterval:   config.DurationJSON(upcheckIntervalDuration),
 			},
 		}))
 	})

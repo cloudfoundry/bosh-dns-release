@@ -9,28 +9,29 @@ import (
 )
 
 //go:generate counterfeiter . DNSServer
+
 type DNSServer interface {
 	ListenAndServe() error
 	Shutdown() error
 }
 
 type Server struct {
-	servers             []DNSServer
-	healthchecks        []HealthCheck
-	timeout             time.Duration
-	healthcheckInterval time.Duration
-	shutdownChan        chan struct{}
-	logger              logger.Logger
+	servers         []DNSServer
+	upchecks        []Upcheck
+	timeout         time.Duration
+	upcheckInterval time.Duration
+	shutdownChan    chan struct{}
+	logger          logger.Logger
 }
 
-func New(servers []DNSServer, healthchecks []HealthCheck, timeout, healthcheckInterval time.Duration, shutdownChan chan struct{}, logger logger.Logger) Server {
+func New(servers []DNSServer, upchecks []Upcheck, timeout, upcheckInterval time.Duration, shutdownChan chan struct{}, logger logger.Logger) Server {
 	return Server{
-		servers:             servers,
-		healthchecks:        healthchecks,
-		timeout:             timeout,
-		shutdownChan:        shutdownChan,
-		healthcheckInterval: healthcheckInterval,
-		logger:              logger,
+		servers:         servers,
+		upchecks:        upchecks,
+		timeout:         timeout,
+		shutdownChan:    shutdownChan,
+		upcheckInterval: upcheckInterval,
+		logger:          logger,
 	}
 }
 
@@ -39,7 +40,7 @@ func (s Server) Run() error {
 	s.listenAndServe(err)
 
 	done := make(chan struct{})
-	s.doHealthChecks(done)
+	s.doUpchecks(done)
 
 	select {
 	case e := <-err:
@@ -47,10 +48,10 @@ func (s Server) Run() error {
 	case <-time.After(s.timeout):
 		return errors.New("timed out waiting for server to bind")
 	case <-done:
-		s.logger.Debug("server", "done with health checks")
+		s.logger.Debug("server", "done with upchecks")
 	}
 
-	s.monitorHealthChecks()
+	s.monitorUpchecks()
 
 	select {
 	case <-s.shutdownChan:
@@ -58,12 +59,12 @@ func (s Server) Run() error {
 	}
 }
 
-func (s Server) monitorHealthChecks() {
-	for _, healthcheck := range s.healthchecks {
-		go func(h HealthCheck, limit int) {
+func (s Server) monitorUpchecks() {
+	for _, upcheck := range s.upchecks {
+		go func(h Upcheck, limit int) {
 			danger := 0
 			for {
-				if err := h.IsHealthy(); err != nil {
+				if err := h.IsUp(); err != nil {
 					danger += 1
 					if danger >= limit && s.shutdownChan != nil {
 						close(s.shutdownChan)
@@ -74,18 +75,18 @@ func (s Server) monitorHealthChecks() {
 					danger = 0
 				}
 
-				time.Sleep(s.healthcheckInterval)
+				time.Sleep(s.upcheckInterval)
 			}
-		}(healthcheck, 5)
+		}(upcheck, 5)
 	}
 }
 
-func (s Server) doHealthChecks(done chan struct{}) {
+func (s Server) doUpchecks(done chan struct{}) {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(s.healthchecks))
+	wg.Add(len(s.upchecks))
 
-	if len(s.healthchecks) == 0 {
-		s.logger.Warn("server", "proceeding immediately: no healthchecks configured")
+	if len(s.upchecks) == 0 {
+		s.logger.Warn("server", "proceeding immediately: no upchecks configured")
 		close(done)
 		return
 	}
@@ -95,20 +96,20 @@ func (s Server) doHealthChecks(done chan struct{}) {
 		close(done)
 	}()
 
-	for _, healthcheck := range s.healthchecks {
-		go func(healthcheck HealthCheck) {
+	for _, upcheck := range s.upchecks {
+		go func(upcheck Upcheck) {
 			for {
 				var err error
-				if err = healthcheck.IsHealthy(); err == nil {
+				if err = upcheck.IsUp(); err == nil {
 					break
 				}
-				s.logger.Debug("healthcheck", "waiting for server to come up", err)
+				s.logger.Debug("upcheck", "waiting for server to come up", err)
 
 				time.Sleep(50 * time.Millisecond)
 			}
 
 			wg.Done()
-		}(healthcheck)
+		}(upcheck)
 	}
 }
 

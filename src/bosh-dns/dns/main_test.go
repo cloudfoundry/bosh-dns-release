@@ -139,7 +139,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile1.Close()
 			_, err = aliasesFile1.Write([]byte(fmt.Sprint(`{
-				"hc.alias.": ["healthcheck.bosh-dns."]
+				"uc.alias.": ["upcheck.bosh-dns."]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -158,7 +158,7 @@ var _ = Describe("main", func() {
 				"port": %d,
 				"records_file": %q,
 				"alias_files_glob": %q,
-				"healthcheck_domains": ["health.check.bosh.","health.check.ca."],
+				"upcheck_domains": ["health.check.bosh.","health.check.ca."],
 				"health": {
 					"enabled": true,
 					"port": 2345,
@@ -297,7 +297,7 @@ var _ = Describe("main", func() {
 				})
 			})
 
-			Context("healthcheck domains", func() {
+			Context("upcheck domains", func() {
 				BeforeEach(func() {
 					m.SetQuestion("health.check.bosh.", dns.TypeA)
 				})
@@ -324,7 +324,7 @@ var _ = Describe("main", func() {
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.HealthCheckHandler Request \[1\] \[health\.check\.bosh\.\] 0 \d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.UpcheckHandler Request \[1\] \[health\.check\.bosh\.\] 0 \d+ns`))
 				})
 			})
 
@@ -544,7 +544,7 @@ var _ = Describe("main", func() {
 				"address": "%s",
 				"port": %d,
 				"recursors": ["8.8.8.8"],
-				"healthcheck_domains":["healthcheck.bosh-dns."],
+				"upcheck_domains":["upcheck.bosh-dns."],
 				"alias_files_glob": %q
 			}`, listenAddress, listenPort, path.Join(aliasesDir, "*")))
 		})
@@ -577,7 +577,7 @@ var _ = Describe("main", func() {
 			cmd := newCommandWithConfig(fmt.Sprintf(`{
 				"address": "%s",
 				"port": %d,
-				"healthcheck_domains":["healthcheck.bosh-dns."],
+				"upcheck_domains":["upcheck.bosh-dns."],
 				"timeout": "0s"
 			}`, listenAddress, listenPort))
 
@@ -593,7 +593,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile1.Close()
 			_, err = aliasesFile1.Write([]byte(fmt.Sprint(`{
-				"hc.alias.": ["healthcheck.bosh-dns."]
+				"uc.alias.": ["upcheck.bosh-dns."]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 

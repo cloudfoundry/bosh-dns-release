@@ -1,9 +1,10 @@
 package handlers_test
 
 import (
-	"code.cloudfoundry.org/clock/fakeclock"
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/internal/internalfakes"
+
+	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/miekg/dns"
 
 	"time"
@@ -53,7 +54,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 	Describe("ServeDNS", func() {
 		It("delegates to the child handler", func() {
 			m := dns.Msg{}
-			m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
+			m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
 
 			handler.ServeDNS(fakeWriter, &m)
 
@@ -67,14 +68,14 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 		It("logs the request info", func() {
 			m := &dns.Msg{}
-			m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
+			m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
 
 			handler.ServeDNS(fakeWriter, m)
 
 			Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 			tag, message, _ := fakeLogger.InfoArgsForCall(0)
 			Expect(tag).To(Equal("RequestLoggerHandler"))
-			Expect(message).To(Equal("dns.HandlerFunc Request [255] [healthcheck.bosh-dns.] 0 3ns"))
+			Expect(message).To(Equal("dns.HandlerFunc Request [255] [upcheck.bosh-dns.] 0 3ns"))
 		})
 
 		Context("when there are no questions", func() {
@@ -93,7 +94,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 			It("includes all question types in the log", func() {
 				m := &dns.Msg{
 					Question: []dns.Question{
-						{Name: "healthcheck.bosh-dns.", Qtype: dns.TypeANY},
+						{Name: "upcheck.bosh-dns.", Qtype: dns.TypeANY},
 						{Name: "q-what.bosh.", Qtype: dns.TypeA},
 					},
 				}
@@ -102,7 +103,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.InfoArgsForCall(0)
-				Expect(message).To(Equal("dns.HandlerFunc Request [255,1] [healthcheck.bosh-dns.,q-what.bosh.] 0 3ns"))
+				Expect(message).To(Equal("dns.HandlerFunc Request [255,1] [upcheck.bosh-dns.,q-what.bosh.] 0 3ns"))
 			})
 		})
 

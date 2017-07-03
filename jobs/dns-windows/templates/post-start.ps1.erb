@@ -1,9 +1,9 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 try
 {
-    Resolve-DnsName -DnsOnly -Name healthcheck.bosh-dns. -Server <%= p('address').to_s == "0.0.0.0" ? "127.0.0.1" : p('address') %>
-    Resolve-DnsName -TcpOnly -DnsOnly -Name healthcheck.bosh-dns. -Server <%= p('address').to_s == "0.0.0.0" ? "127.0.0.1" : p('address') %>
+    Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. -Server <%= p('address').to_s == "0.0.0.0" ? "127.0.0.1" : p('address') %>
+    Resolve-DnsName -TcpOnly -DnsOnly -Name upcheck.bosh-dns. -Server <%= p('address').to_s == "0.0.0.0" ? "127.0.0.1" : p('address') %>
 }
 catch
 {

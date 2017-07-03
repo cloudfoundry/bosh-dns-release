@@ -16,8 +16,8 @@ import (
 
 var _ = Describe("dns job: disable_nameserver_override", func() {
 	Context("when the system has not been configured to use the bosh dns server", func() {
-		It("does not resolve the bosh-dns healthcheck", func() {
-			cmd := exec.Command("powershell.exe", "-Command", "Resolve-DnsName -DnsOnly -Type A -Name healthcheck.bosh-dns.")
+		It("does not resolve the bosh-dns upcheck", func() {
+			cmd := exec.Command("powershell.exe", "-Command", "Resolve-DnsName -DnsOnly -Type A -Name upcheck.bosh-dns.")
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 

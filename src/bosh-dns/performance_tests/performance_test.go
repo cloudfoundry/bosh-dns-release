@@ -5,6 +5,7 @@ import (
 	"time"
 
 	zp "performance_tests/zone_pickers"
+
 	"github.com/cloudfoundry/gosigar"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
@@ -132,13 +133,13 @@ var _ = Describe("Performance", func() {
 		})
 	})
 
-	Describe("using healthcheck zone", func() {
+	Describe("using upcheck zone", func() {
 		BeforeEach(func() {
-			picker = zp.NewStaticZonePicker("healthcheck.bosh-dns.")
-			label = "healthcheck zone"
+			picker = zp.NewStaticZonePicker("upcheck.bosh-dns.")
+			label = "upcheck zone"
 		})
 
-		It("handles DNS responses quickly for healthcheck zone", func() {
+		It("handles DNS responses quickly for upcheck zone", func() {
 			TestDNSPerformance(1.5)
 		})
 	})

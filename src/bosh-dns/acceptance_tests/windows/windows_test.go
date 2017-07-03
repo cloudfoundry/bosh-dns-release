@@ -24,24 +24,24 @@ var _ = Describe("windows tests", func() {
 	})
 
 	It("should respond to dns queries", func() {
-		cmd := exec.Command("powershell.exe", "-Command", "Resolve-DnsName -DnsOnly -Name healthcheck.bosh-dns. -Server 169.254.0.2 | Format-list")
+		cmd := exec.Command("powershell.exe", "-Command", "Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. -Server 169.254.0.2 | Format-list")
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 		Expect(session.Out.Contents()).To(ContainSubstring("IPAddress  : 127.0.0.1"))
-		Expect(session.Out.Contents()).To(ContainSubstring("Name       : healthcheck.bosh-dns"))
+		Expect(session.Out.Contents()).To(ContainSubstring("Name       : upcheck.bosh-dns"))
 	})
 
 	Context("as the system-configured nameserver", func() {
 		It("should respond to dns queries", func() {
-			cmd := exec.Command("powershell.exe", "-Command", "Resolve-DnsName -DnsOnly -Name healthcheck.bosh-dns. | Format-list")
+			cmd := exec.Command("powershell.exe", "-Command", "Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. | Format-list")
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 			Expect(session.Out.Contents()).To(ContainSubstring("IPAddress  : 127.0.0.1"))
-			Expect(session.Out.Contents()).To(ContainSubstring("Name       : healthcheck.bosh-dns"))
+			Expect(session.Out.Contents()).To(ContainSubstring("Name       : upcheck.bosh-dns"))
 		})
 	})
 })

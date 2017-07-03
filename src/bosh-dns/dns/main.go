@@ -116,11 +116,11 @@ func mainExitCode() int {
 
 	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
 
-	healthchecks := []server.HealthCheck{}
-	for _, healthCheckDomain := range config.HealthcheckDomains {
-		handlers.AddHandler(mux, clock, healthCheckDomain, handlers.NewHealthCheckHandler(logger), logger)
-		healthchecks = append(healthchecks, server.NewAnswerValidatingHealthCheck(fmt.Sprintf("%s:%d", config.Address, config.Port), healthCheckDomain, "udp"))
-		healthchecks = append(healthchecks, server.NewAnswerValidatingHealthCheck(fmt.Sprintf("%s:%d", config.Address, config.Port), healthCheckDomain, "tcp"))
+	upchecks := []server.Upcheck{}
+	for _, upcheckDomain := range config.UpcheckDomains {
+		handlers.AddHandler(mux, clock, upcheckDomain, handlers.NewUpcheckHandler(logger), logger)
+		upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("%s:%d", config.Address, config.Port), upcheckDomain, "udp"))
+		upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("%s:%d", config.Address, config.Port), upcheckDomain, "tcp"))
 	}
 
 	forwardHandler := handlers.NewForwardHandler(config.Recursors, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), logger)
@@ -139,7 +139,7 @@ func mainExitCode() int {
 			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: aliasResolver},
 			&dns.Server{Addr: bindAddress, Net: "udp", Handler: aliasResolver, UDPSize: 65535},
 		},
-		healthchecks,
+		upchecks,
 		time.Duration(config.Timeout),
 		time.Duration(5*time.Second),
 		shutdown,

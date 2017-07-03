@@ -16,8 +16,8 @@ import (
 var _ = Describe("dns job: override_nameserver", func() {
 	Describe("disabled", func() {
 		Context("as the system-configured nameserver", func() {
-			It("resolves the bosh-dns healthcheck", func() {
-				cmd := exec.Command(boshBinaryPath, []string{"ssh", "-d", boshDeployment, "dns/0", "-c", "dig +time=3 +tries=1 -t A healthcheck.bosh-dns."}...)
+			It("resolves the bosh-dns upcheck", func() {
+				cmd := exec.Command(boshBinaryPath, []string{"ssh", "-d", boshDeployment, "dns/0", "-c", "dig +time=3 +tries=1 -t A upcheck.bosh-dns."}...)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -48,7 +48,7 @@ var _ = Describe("dns job: override_nameserver", func() {
 					Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 					Eventually(func() *gexec.Session {
-						cmd := exec.Command(boshBinaryPath, []string{"ssh", "-d", boshDeployment, "dns/0", "-c", "dig +time=3 +tries=1 -t A healthcheck.bosh-dns."}...)
+						cmd := exec.Command(boshBinaryPath, []string{"ssh", "-d", boshDeployment, "dns/0", "-c", "dig +time=3 +tries=1 -t A upcheck.bosh-dns."}...)
 						session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 						Expect(err).NotTo(HaveOccurred())
 						Eventually(session, 10*time.Second).Should(gexec.Exit())

@@ -32,15 +32,15 @@ func startServer(network string, address string, handler dns.Handler) dns.Server
 	return server
 }
 
-var _ = Describe("Healthcheck", func() {
-	var subject server.HealthCheck
+var _ = Describe("Upcheck", func() {
+	var subject server.Upcheck
 	var dnsHandler dns.Handler
 	var udpServer dns.Server
 	var tcpServer dns.Server
 	var listenDomain string
 	var ports map[string]int
 	var addresses map[string]string
-	healthCheckDomain := "healthcheck.bosh-dns."
+	upcheckDomain := "upcheck.bosh-dns."
 
 	JustBeforeEach(func() {
 		var err error
@@ -66,14 +66,14 @@ var _ = Describe("Healthcheck", func() {
 		ports = map[string]int{}
 		addresses = map[string]string{}
 		listenDomain = "127.0.0.1"
-		dnsHandler = handlers.NewHealthCheckHandler(&boshlogf.FakeLogger{})
+		dnsHandler = handlers.NewUpcheckHandler(&boshlogf.FakeLogger{})
 	})
 
-	Context("when the health check target is a malformed address", func() {
+	Context("when the upcheck target is a malformed address", func() {
 		DescribeTable("returns an error", func(network string) {
-			subject = server.NewAnswerValidatingHealthCheck("~~~~~~~~~~", healthCheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, network)
 
-			err := subject.IsHealthy()
+			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("on %s: ", network))
 			Expect(err.Error()).To(ContainSubstring("missing port in address"))
@@ -84,12 +84,12 @@ var _ = Describe("Healthcheck", func() {
 		)
 	})
 
-	Context("when the target server resolves the healthcheck domain", func() {
+	Context("when the target server resolves the upcheck domain", func() {
 		Context("when the target address is 127.0.0.1", func() {
 			DescribeTable("it checks on 127.0.0.1", func(network string) {
-				subject = server.NewAnswerValidatingHealthCheck(fmt.Sprintf("127.0.0.1:%d", ports[network]), healthCheckDomain, network)
+				subject = server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports[network]), upcheckDomain, network)
 
-				err := subject.IsHealthy()
+				err := subject.IsUp()
 				Expect(err).NotTo(HaveOccurred())
 			},
 				Entry("when networking is udp", "udp"),
@@ -99,9 +99,9 @@ var _ = Describe("Healthcheck", func() {
 
 		Context("when the target address is 0.0.0.0", func() {
 			DescribeTable("it checks on 127.0.0.1", func(network string) {
-				subject = server.NewAnswerValidatingHealthCheck(fmt.Sprintf("0.0.0.0:%d", ports[network]), healthCheckDomain, network)
+				subject = server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports[network]), upcheckDomain, network)
 
-				err := subject.IsHealthy()
+				err := subject.IsUp()
 				Expect(err).NotTo(HaveOccurred())
 			},
 				Entry("when networking is udp", "udp"),
@@ -110,11 +110,11 @@ var _ = Describe("Healthcheck", func() {
 		})
 	})
 
-	Context("when the health check takes a long time", func() {
+	Context("when the upcheck takes a long time", func() {
 		DescribeTable("times out with error", func(network string) {
-			subject = server.NewAnswerValidatingHealthCheck("203.0.113.1:30", healthCheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, network)
 
-			err := subject.IsHealthy()
+			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(MatchRegexp(`on %s:.*%s.*203\.0\.113\.1.*i/o timeout`, network, network))
 		},
@@ -123,7 +123,7 @@ var _ = Describe("Healthcheck", func() {
 		)
 	})
 
-	Context("when the health check domain resolves with no answers", func() {
+	Context("when the upcheck domain resolves with no answers", func() {
 		BeforeEach(func() {
 			dnsHandler = dns.HandlerFunc(func(r dns.ResponseWriter, m *dns.Msg) {
 				m.Rcode = dns.RcodeSuccess
@@ -132,9 +132,9 @@ var _ = Describe("Healthcheck", func() {
 		})
 
 		DescribeTable("returns with error", func(network string) {
-			subject = server.NewAnswerValidatingHealthCheck(addresses[network], healthCheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck(addresses[network], upcheckDomain, network)
 
-			err := subject.IsHealthy()
+			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
 		},
 			Entry("when networking is udp", "udp"),
@@ -142,7 +142,7 @@ var _ = Describe("Healthcheck", func() {
 		)
 	})
 
-	Context("when the health check domain resolve failed", func() {
+	Context("when the upcheck domain resolve failed", func() {
 		BeforeEach(func() {
 			dnsHandler = dns.HandlerFunc(func(r dns.ResponseWriter, m *dns.Msg) {
 				m.Rcode = dns.RcodeServerFailure
@@ -151,9 +151,9 @@ var _ = Describe("Healthcheck", func() {
 		})
 
 		DescribeTable("returns with error", func(network string) {
-			subject = server.NewAnswerValidatingHealthCheck(addresses[network], healthCheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck(addresses[network], upcheckDomain, network)
 
-			err := subject.IsHealthy()
+			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
 		},
 			Entry("when networking is udp", "udp"),

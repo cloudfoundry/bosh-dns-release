@@ -9,17 +9,17 @@ import (
 
 var localhostIP = net.ParseIP("127.0.0.1")
 
-type HealthCheckHandler struct {
+type UpcheckHandler struct {
 	logger logger.Logger
 }
 
-func NewHealthCheckHandler(logger logger.Logger) HealthCheckHandler {
-	return HealthCheckHandler{
+func NewUpcheckHandler(logger logger.Logger) UpcheckHandler {
+	return UpcheckHandler{
 		logger: logger,
 	}
 }
 
-func (h HealthCheckHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
+func (h UpcheckHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 	msg := new(dns.Msg)
 	msg.Authoritative = true
 	msg.RecursionAvailable = false
@@ -36,6 +36,6 @@ func (h HealthCheckHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 	msg.SetReply(req)
 	msg.SetRcode(req, dns.RcodeSuccess)
 	if err := resp.WriteMsg(msg); err != nil {
-		h.logger.Error("HealthCheckHandler", err.Error())
+		h.logger.Error("UpcheckHandler", err.Error())
 	}
 }

@@ -28,26 +28,26 @@ var _ = Describe("Alias address binding", func() {
 	})
 
 	It("should respond to tcp dns queries", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +tcp healthcheck.bosh-dns. @169.254.0.2"}...)
+		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +tcp upcheck.bosh-dns. @169.254.0.2"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
 		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-		Eventually(session.Out).Should(gbytes.Say("healthcheck\\.bosh-dns\\.\\s+0\\s+IN\\s+A\\s+127\\.0\\.0\\.1"))
+		Eventually(session.Out).Should(gbytes.Say("upcheck\\.bosh-dns\\.\\s+0\\s+IN\\s+A\\s+127\\.0\\.0\\.1"))
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
 
 	It("should respond to udp dns queries", func() {
-		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +notcp healthcheck.bosh-dns. @169.254.0.2"}...)
+		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +notcp upcheck.bosh-dns. @169.254.0.2"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
 		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-		Eventually(session.Out).Should(gbytes.Say(";healthcheck\\.bosh-dns\\.\\s+IN\\s+A"))
+		Eventually(session.Out).Should(gbytes.Say(";upcheck\\.bosh-dns\\.\\s+IN\\s+A"))
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
 
@@ -59,7 +59,7 @@ var _ = Describe("Alias address binding", func() {
 			Eventually(session, 10*time.Second).Should(gexec.Exit())
 		})
 
-		It("should kill itself if its healthcheck becomes unreachable", func() {
+		It("should kill itself if its upcheck becomes unreachable", func() {
 			serverPidRegex := regexp.MustCompile(`dns\S*\s+(\d+).*TCP .*:domain`)
 
 			getServerPid := func() (int, error) {
@@ -108,8 +108,8 @@ var _ = Describe("Alias address binding", func() {
 	})
 
 	Context("as the system-configured nameserver", func() {
-		It("resolves the bosh-dns healthcheck", func() {
-			cmd := exec.Command(boshBinaryPath, []string{"ssh", "dns/0", "-c", "dig -t A healthcheck.bosh-dns."}...)
+		It("resolves the bosh-dns upcheck", func() {
+			cmd := exec.Command(boshBinaryPath, []string{"ssh", "dns/0", "-c", "dig -t A upcheck.bosh-dns."}...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -141,7 +141,7 @@ var _ = Describe("Alias address binding", func() {
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 				Eventually(func() *gexec.Session {
-					cmd := exec.Command(boshBinaryPath, []string{"ssh", "dns/0", "-c", "dig +time=3 +tries=1 -t A healthcheck.bosh-dns."}...)
+					cmd := exec.Command(boshBinaryPath, []string{"ssh", "dns/0", "-c", "dig +time=3 +tries=1 -t A upcheck.bosh-dns."}...)
 					session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 					Expect(err).NotTo(HaveOccurred())
 					Eventually(session, 10*time.Second).Should(gexec.Exit())
@@ -151,7 +151,7 @@ var _ = Describe("Alias address binding", func() {
 
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-				Expect(output).To(MatchRegexp("healthcheck\\.bosh-dns\\.\\s+0\\s+IN\\s+A\\s+127\\.0\\.0\\.1"))
+				Expect(output).To(MatchRegexp("upcheck\\.bosh-dns\\.\\s+0\\s+IN\\s+A\\s+127\\.0\\.0\\.1"))
 			})
 		})
 	})

@@ -99,26 +99,26 @@ func notListeningStub(stop chan struct{}) func() error {
 	}
 }
 
-func passthroughCheck(reactiveAnswerChan chan error) *serverfakes.FakeHealthCheck {
-	return &serverfakes.FakeHealthCheck{
-		IsHealthyStub: func() error {
+func passthroughCheck(reactiveAnswerChan chan error) *serverfakes.FakeUpcheck {
+	return &serverfakes.FakeUpcheck{
+		IsUpStub: func() error {
 			return <-reactiveAnswerChan
 		},
 	}
 }
 
-func healthyCheck() *serverfakes.FakeHealthCheck {
-	return &serverfakes.FakeHealthCheck{
-		IsHealthyStub: func() error {
+func upCheck() *serverfakes.FakeUpcheck {
+	return &serverfakes.FakeUpcheck{
+		IsUpStub: func() error {
 			return nil
 		},
 	}
 }
 
-func unhealthyCheck() *serverfakes.FakeHealthCheck {
-	return &serverfakes.FakeHealthCheck{
-		IsHealthyStub: func() error {
-			return errors.New("fake unhealthy")
+func downCheck() *serverfakes.FakeUpcheck {
+	return &serverfakes.FakeUpcheck{
+		IsUpStub: func() error {
+			return errors.New("fake down")
 		},
 	}
 }
@@ -131,19 +131,19 @@ func shutdownStub(err error) func() error {
 
 var _ = Describe("Server", func() {
 	var (
-		dnsServer             server.Server
-		fakeTCPServer         *serverfakes.FakeDNSServer
-		fakeUDPServer         *serverfakes.FakeDNSServer
-		tcpHealthCheck        *serverfakes.FakeHealthCheck
-		udpHealthCheck        *serverfakes.FakeHealthCheck
-		fakeDialer            server.Dialer
-		timeout               time.Duration
-		bindAddress           string
-		lock                  sync.Mutex
-		healthPollingInterval time.Duration
-		shutdownChannel       chan struct{}
-		stopFakeServer        chan struct{}
-		logger                *fakes.FakeLogger
+		dnsServer       server.Server
+		fakeTCPServer   *serverfakes.FakeDNSServer
+		fakeUDPServer   *serverfakes.FakeDNSServer
+		tcpUpcheck      *serverfakes.FakeUpcheck
+		udpUpcheck      *serverfakes.FakeUpcheck
+		fakeDialer      server.Dialer
+		timeout         time.Duration
+		bindAddress     string
+		lock            sync.Mutex
+		pollingInterval time.Duration
+		shutdownChannel chan struct{}
+		stopFakeServer  chan struct{}
+		logger          *fakes.FakeLogger
 	)
 
 	BeforeEach(func() {
@@ -163,13 +163,13 @@ var _ = Describe("Server", func() {
 
 		logger = &fakes.FakeLogger{}
 
-		tcpHealthCheck = healthyCheck()
-		udpHealthCheck = healthyCheck()
+		tcpUpcheck = upCheck()
+		udpUpcheck = upCheck()
 
 		SetDefaultEventuallyTimeout(timeout + 2*time.Second)
 		SetDefaultConsistentlyDuration(timeout + 2*time.Second)
 
-		healthPollingInterval = 5 * time.Second
+		pollingInterval = 5 * time.Second
 
 		fakeDialer = net.Dial
 	})
@@ -177,9 +177,9 @@ var _ = Describe("Server", func() {
 	JustBeforeEach(func() {
 		dnsServer = server.New(
 			[]server.DNSServer{fakeTCPServer, fakeUDPServer},
-			[]server.HealthCheck{tcpHealthCheck, udpHealthCheck},
+			[]server.Upcheck{tcpUpcheck, udpUpcheck},
 			timeout,
-			healthPollingInterval,
+			pollingInterval,
 			shutdownChannel,
 			logger,
 		)
@@ -193,8 +193,8 @@ var _ = Describe("Server", func() {
 		Context("when the timeout has been reached", func() {
 			Context("and the servers are not up", func() {
 				BeforeEach(func() {
-					tcpHealthCheck = unhealthyCheck()
-					udpHealthCheck = unhealthyCheck()
+					tcpUpcheck = downCheck()
+					udpUpcheck = downCheck()
 				})
 				It("returns an error", func() {
 					fakeTCPServer.ListenAndServeStub = notListeningStub(stopFakeServer)
@@ -210,10 +210,10 @@ var _ = Describe("Server", func() {
 			})
 		})
 
-		Context("when a provided healthcheck server cannot listen and serve", func() {
+		Context("when a provided upcheck server cannot listen and serve", func() {
 			BeforeEach(func() {
-				tcpHealthCheck = unhealthyCheck()
-				udpHealthCheck = unhealthyCheck()
+				tcpUpcheck = downCheck()
+				udpUpcheck = downCheck()
 			})
 
 			It("should return an error when the tcp server cannot listen and serve", func() {
@@ -231,7 +231,7 @@ var _ = Describe("Server", func() {
 			})
 		})
 
-		Context("health checking", func() {
+		Context("upchecking", func() {
 			var fakeConn *internalfakes.FakeConn
 
 			BeforeEach(func() {
@@ -275,11 +275,11 @@ var _ = Describe("Server", func() {
 					Expect(logger.DebugCallCount()).To(BeNumerically(">", 0))
 					tag, msg, _ := logger.DebugArgsForCall(0)
 					Expect(tag).To(Equal("server"))
-					Expect(msg).To(Equal("done with health checks"))
+					Expect(msg).To(Equal("done with upchecks"))
 				})
 			})
 
-			Describe("self-correcting runtime health checks", func() {
+			Describe("self-correcting runtime upchecks", func() {
 				triggerNFailures := func(out chan error, N chan int, notifyDone chan int) {
 					for {
 						select {
@@ -298,24 +298,24 @@ var _ = Describe("Server", func() {
 				var (
 					startFailing    chan int
 					numFailuresSent chan int
-					healthChan      chan error
+					upChan          chan error
 				)
 
 				BeforeEach(func() {
-					healthPollingInterval = 50 * time.Millisecond
+					pollingInterval = 50 * time.Millisecond
 					startFailing = make(chan int)
 					numFailuresSent = make(chan int)
-					healthChan = make(chan error)
+					upChan = make(chan error)
 				})
 
 				Context("when the TCP server suddenly stops working", func() {
 					BeforeEach(func() {
-						udpHealthCheck = healthyCheck()
-						tcpHealthCheck = passthroughCheck(healthChan)
+						udpUpcheck = upCheck()
+						tcpUpcheck = passthroughCheck(upChan)
 					})
 
 					It("kills itself after five failures in a row", func() {
-						go triggerNFailures(healthChan, startFailing, numFailuresSent)
+						go triggerNFailures(upChan, startFailing, numFailuresSent)
 
 						dnsServerFinished := make(chan error)
 						go func() {
@@ -329,7 +329,7 @@ var _ = Describe("Server", func() {
 					})
 
 					It("recovers if the failures are not consistent", func() {
-						go triggerNFailures(healthChan, startFailing, numFailuresSent)
+						go triggerNFailures(upChan, startFailing, numFailuresSent)
 
 						dnsServerFinished := make(chan error)
 						go func() {
@@ -348,12 +348,12 @@ var _ = Describe("Server", func() {
 
 				Context("when the UDP server suddenly stops working", func() {
 					BeforeEach(func() {
-						udpHealthCheck = passthroughCheck(healthChan)
-						tcpHealthCheck = healthyCheck()
+						udpUpcheck = passthroughCheck(upChan)
+						tcpUpcheck = upCheck()
 					})
 
 					It("kills itself after five failures in a row", func() {
-						go triggerNFailures(healthChan, startFailing, numFailuresSent)
+						go triggerNFailures(upChan, startFailing, numFailuresSent)
 
 						dnsServerFinished := make(chan error)
 						go func() {
@@ -367,7 +367,7 @@ var _ = Describe("Server", func() {
 					})
 
 					It("recovers if the failures are not consistent", func() {
-						go triggerNFailures(healthChan, startFailing, numFailuresSent)
+						go triggerNFailures(upChan, startFailing, numFailuresSent)
 
 						dnsServerFinished := make(chan error)
 						go func() {
@@ -385,13 +385,13 @@ var _ = Describe("Server", func() {
 				})
 			})
 
-			Context("when no healthchecks are configured", func() {
+			Context("when no upchecks are configured", func() {
 				JustBeforeEach(func() {
 					dnsServer = server.New(
 						[]server.DNSServer{fakeTCPServer, fakeUDPServer},
-						[]server.HealthCheck{},
+						[]server.Upcheck{},
 						timeout,
-						healthPollingInterval,
+						pollingInterval,
 						shutdownChannel,
 						logger,
 					)
@@ -408,13 +408,13 @@ var _ = Describe("Server", func() {
 					Expect(logger.WarnCallCount()).To(Equal(1))
 					tag, msg, _ := logger.WarnArgsForCall(0)
 					Expect(tag).To(Equal("server"))
-					Expect(msg).To(Equal("proceeding immediately: no healthchecks configured"))
+					Expect(msg).To(Equal("proceeding immediately: no upchecks configured"))
 				})
 			})
 
 			Context("when the udp server never binds to a port", func() {
 				BeforeEach(func() {
-					udpHealthCheck = unhealthyCheck()
+					udpUpcheck = downCheck()
 				})
 
 				It("returns an error", func() {
@@ -435,7 +435,7 @@ var _ = Describe("Server", func() {
 
 			Context("when the tcp server never binds to a port", func() {
 				BeforeEach(func() {
-					tcpHealthCheck = unhealthyCheck()
+					tcpUpcheck = downCheck()
 				})
 
 				It("returns an error", func() {

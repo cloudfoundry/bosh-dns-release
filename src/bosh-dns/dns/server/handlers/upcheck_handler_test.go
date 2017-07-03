@@ -5,6 +5,7 @@ import (
 
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/internal/internalfakes"
+
 	"github.com/miekg/dns"
 
 	"net"
@@ -14,25 +15,25 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("HealthCheckHandler", func() {
+var _ = Describe("UpcheckHandler", func() {
 	var (
-		fakeLogger         *loggerfakes.FakeLogger
-		healthCheckHandler handlers.HealthCheckHandler
-		fakeWriter         *internalfakes.FakeResponseWriter
+		fakeLogger     *loggerfakes.FakeLogger
+		upcheckHandler handlers.UpcheckHandler
+		fakeWriter     *internalfakes.FakeResponseWriter
 	)
 
 	BeforeEach(func() {
 		fakeLogger = &loggerfakes.FakeLogger{}
-		healthCheckHandler = handlers.NewHealthCheckHandler(fakeLogger)
+		upcheckHandler = handlers.NewUpcheckHandler(fakeLogger)
 		fakeWriter = &internalfakes.FakeResponseWriter{}
 	})
 
 	Describe("ServeDNS", func() {
 		It("returns success rcode", func() {
 			m := &dns.Msg{}
-			m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
+			m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
 
-			healthCheckHandler.ServeDNS(fakeWriter, m)
+			upcheckHandler.ServeDNS(fakeWriter, m)
 			message := fakeWriter.WriteMsgArgsForCall(0)
 			Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
 			Expect(message.Authoritative).To(Equal(true))
@@ -40,7 +41,7 @@ var _ = Describe("HealthCheckHandler", func() {
 			Expect(len(message.Answer)).To(Equal(1))
 			Expect(message.Answer[0]).To(Equal(&dns.A{
 				Hdr: dns.RR_Header{
-					Name:   "healthcheck.bosh-dns.",
+					Name:   "upcheck.bosh-dns.",
 					Rrtype: dns.TypeA,
 					Class:  dns.ClassINET,
 					Ttl:    0,
@@ -54,12 +55,12 @@ var _ = Describe("HealthCheckHandler", func() {
 				fakeWriter.WriteMsgReturns(errors.New("failed to write message"))
 
 				m := &dns.Msg{}
-				m.SetQuestion("healthcheck.bosh-dns.", dns.TypeANY)
-				healthCheckHandler.ServeDNS(fakeWriter, m)
+				m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
+				upcheckHandler.ServeDNS(fakeWriter, m)
 
 				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
 				tag, msg, _ := fakeLogger.ErrorArgsForCall(0)
-				Expect(tag).To(Equal("HealthCheckHandler"))
+				Expect(tag).To(Equal("UpcheckHandler"))
 				Expect(msg).To(Equal("failed to write message"))
 			})
 		})
