@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"runtime"
 	"testing"
 	"time"
 
@@ -32,12 +31,16 @@ var (
 	configPort   int
 )
 
-var _ = BeforeSuite(func() {
-	var err error
-
-	pathToServer, err = gexec.Build("bosh-dns/healthcheck")
+var _ = SynchronizedBeforeSuite(func() []byte {
+	serverPath, err := gexec.Build("bosh-dns/healthcheck")
 	Expect(err).NotTo(HaveOccurred())
 	SetDefaultEventuallyTimeout(2 * time.Second)
+
+	return []byte(serverPath)
+}, func(data []byte) {
+	pathToServer = string(data)
+
+	var err error
 
 	configFile, err = ioutil.TempFile("", "config.json")
 	Expect(err).ToNot(HaveOccurred())
@@ -67,18 +70,10 @@ var _ = BeforeSuite(func() {
 	Expect(waitForServer(configPort)).To(Succeed())
 })
 
-var _ = AfterSuite(func() {
+var _ = SynchronizedAfterSuite(func() {
 	if cmd.Process != nil {
-		if runtime.GOOS == "windows" {
-			killcmd := exec.Command("powershell", "Taskkill", "/PID", string(cmd.Process.Pid), "/F")
-			_, err := gexec.Start(killcmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-
-		} else {
-			sess.Terminate()
-			sess.Wait()
-		}
+		Eventually(sess.Kill()).Should(gexec.Exit())
 	}
-
+}, func() {
 	gexec.CleanupBuildArtifacts()
 })

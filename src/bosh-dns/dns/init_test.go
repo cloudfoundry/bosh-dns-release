@@ -18,14 +18,16 @@ var (
 	pathToServer string
 )
 
-var _ = BeforeSuite(func() {
-	var err error
-
-	pathToServer, err = gexec.Build("bosh-dns/dns")
+var _ = SynchronizedBeforeSuite(func() []byte {
+	path, err := gexec.Build("bosh-dns/dns")
 	Expect(err).NotTo(HaveOccurred())
 	SetDefaultEventuallyTimeout(2 * time.Second)
+	return []byte(path)
+}, func(data []byte) {
+	pathToServer = string(data)
 })
 
-var _ = AfterSuite(func() {
+var _ = SynchronizedAfterSuite(func() {
+}, func() {
 	gexec.CleanupBuildArtifacts()
 })
