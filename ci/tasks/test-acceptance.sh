@@ -46,7 +46,8 @@ bosh -n deploy $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/manifest.yml \
    -v acceptance_release_path=$ROOT_DIR/dns-release/src/bosh-dns/acceptance_tests/dns-acceptance-release \
    -v health_server_port=2345 \
    -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/use-dns-release-default-bind-and-alias-addresses.yml \
-   -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/enable-health-manifest-ops.yml
+   -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/enable-health-manifest-ops.yml \
+   --vars-store dns-creds.yml
 
 pushd $GOPATH/src/bosh-dns/acceptance_tests/linux
    ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race -r .
