@@ -17,6 +17,8 @@ instance_groups:
   networks:
   - name: default
   jobs:
+  - name: needs-alias
+    release: dns-acceptance
   - name: dns
     release: dns
     properties:
@@ -24,8 +26,6 @@ instance_groups:
       recursors:
       - "172.17.0.1:9955"
       recursor_timeout: 1s
-  - name: needs-alias
-    release: dns-acceptance
 
 releases:
 - name: dns

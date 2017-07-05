@@ -18,7 +18,7 @@ cd $WORK_DIR
 
 if [ ! -e bbl.env ]; then
     # force lpass logged in
-    lpass show xxxxxxxxxxxxxxxxxxxxxx 2>/dev/null
+    lpass status
     cat <<EOF > bbl.env
 export BBL_GCP_SERVICE_ACCOUNT_KEY='$(lpass show 3654688481222762882 --notes | gobosh int - --path /bbl_gcp_service_account_key_id)'
 export BBL_GCP_PROJECT_ID=cf-bosh-core
@@ -71,12 +71,13 @@ docker run \
   -t -i \
   -v $BBL_STATE_DIR:'/bbl-state' \
   -v `realpath $BOSH_RELEASE_DIR`:/bosh-candidate-release \
+  -v `realpath $WORK_DIR`:/workdir \
   -v `realpath $BBL_CLI_DIR`:/bbl-cli \
   -v `realpath $BOSH_CLI_DIR`:/bosh-cli \
   -v ~/workspace/bosh-deployment:/bosh-deployment \
   -v $DIR/..:/dns-release \
   bosh/main-ruby-go \
-  bash -c 'source /dns-release/bbl.env; /dns-release/ci/tasks/bbl-up.sh'
+  bash -c 'source /workdir/bbl.env; /dns-release/ci/tasks/bbl-up.sh'
 
 # windows specfic
 fly -t production execute -x --privileged \
@@ -97,9 +98,10 @@ docker run \
   -v $BBL_STATE_DIR:'/bbl-state' \
   -v `realpath $BBL_CLI_DIR`:/bbl-cli \
   -v `realpath $BOSH_CLI_DIR`:/bosh-cli \
+  -v `realpath $WORK_DIR`:/workdir \
   -v ~/workspace/bosh-deployment:/bosh-deployment \
   -v $DIR/..:/dns-release bosh/main-ruby-go \
-  bash -c 'source /dns-release/bbl.env; /dns-release/ci/tasks/bbl-destroy.sh'
+  bash -c 'source /workdir/bbl.env; /dns-release/ci/tasks/bbl-destroy.sh'
 
 # Clean up creds.yml so that the next bbl-up will recreate certs for the new instances.
 rm -f $BBL_STATE_DIR/creds.yml

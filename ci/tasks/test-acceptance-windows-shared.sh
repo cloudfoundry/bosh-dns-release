@@ -20,7 +20,8 @@ bosh -n -d bosh-dns-shared-acceptance deploy $ROOT_DIR/dns-release/src/bosh-dns/
     -v bosh_client_secret="$BOSH_CLIENT_SECRET" \
     -v bosh_client="$BOSH_CLIENT" \
     -v bosh_environment="$BOSH_ENVIRONMENT" \
-    -v bosh_deployment=bosh-dns
+    -v bosh_deployment=bosh-dns \
+    --vars-store dns-creds.yml
 
 pushd $ROOT_DIR/dns-release/src/bosh-dns/acceptance_tests/dns-acceptance-release
    bosh create-release --force && bosh upload-release --rebase

@@ -30,8 +30,8 @@
       - client_auth
 
 # we're using instance_group 0 because windows acceptance tests need this
-# we're using job 0 because the windows job is a different name.
-- path: /instance_groups/0/jobs/0/properties?/health
+# we're using job 1 because the windows job is a different name.
+- path: /instance_groups/0/jobs/1/properties?/health
   type: replace
   value:
     enabled: true
