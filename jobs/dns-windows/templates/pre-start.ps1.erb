@@ -1,7 +1,7 @@
-<% if p('health.enabled') %>
+﻿<% if p('health.enabled') %>
 try
 {
-    New-NetFirewallRule -DisplayName "bosh health server TCP" -Direction Inbound -LocalPort <%= p('health.server_port') %> -Protocol TCP
+    New-NetFirewallRule -DisplayName "bosh health server TCP" -Direction Inbound -LocalPort <%= p('health.server.port') %> -Protocol TCP
     New-NetFirewallRule -DisplayName "bosh health/dns server outbound" -Direction Outbound
 }
 catch
