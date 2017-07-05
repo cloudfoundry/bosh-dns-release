@@ -139,6 +139,14 @@ var _ = Describe("Integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
 
+			defer func() {
+				stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
+					"start", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID),
+				)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+			}()
+
 			Eventually(func() string {
 				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-YWxs.dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
