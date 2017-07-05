@@ -20,9 +20,9 @@ instance_groups:
   networks:
   - name: private
   jobs:
-  - name: acceptance-tests-windows
-    release: dns
   - name: dns-windows
+    release: dns
+  - name: acceptance-tests-windows
     release: dns
 
 releases:
