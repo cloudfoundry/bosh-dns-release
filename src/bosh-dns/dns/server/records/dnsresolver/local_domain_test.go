@@ -400,6 +400,36 @@ var _ = Describe("LocalDomain", func() {
 			Entry("all unhealthy IPs, returns all IPs", false, false, []string{"127.0.0.1", "127.0.0.2"}),
 		)
 
+		It("logs a message when all IPs are unhealthy", func() {
+			recordSet := records.RecordSet{
+				Records: []records.Record{
+					{
+						Id:         "instance-id",
+						Group:      "group-1",
+						Network:    "network-name",
+						Deployment: "deployment-name",
+						Ip:         "127.0.0.1",
+						Domain:     "bosh.",
+					},
+				},
+			}
+			fakeRecordSetRepo.GetReturns(recordSet, nil)
+			fakeHealthLookup.IsHealthyReturns(false)
+
+			req := &dns.Msg{}
+			req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeA)
+
+			localDomain.Resolve(
+				[]string{"instance-id.group-1.network-name.deployment-name.bosh."},
+				fakeWriter,
+				req,
+			)
+
+			Expect(fakeLogger.InfoCallCount()).To(Equal(1))
+			_, msg, _ := fakeLogger.InfoArgsForCall(0)
+			Expect(msg).To(ContainSubstring("No healthy IP addresses found, returning all IP addresses"))
+		})
+
 		Context("when loading the records returns an error", func() {
 			var dnsReturnCode int
 

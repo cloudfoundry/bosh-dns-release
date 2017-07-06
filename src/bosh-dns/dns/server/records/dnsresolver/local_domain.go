@@ -3,8 +3,9 @@ package dnsresolver
 import (
 	"net"
 
-	"github.com/cloudfoundry/bosh-utils/logger"
 	"bosh-dns/dns/server/records"
+
+	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
 
@@ -93,6 +94,8 @@ func (d LocalDomain) resolve(answerDomain string, questionDomains []string) ([]d
 
 	if len(healthyAnswers) > 0 {
 		answers = healthyAnswers
+	} else {
+		d.logger.Info(d.logTag, "No healthy IP addresses found, returning all IP addresses")
 	}
 	return d.shuffler.Shuffle(answers), dns.RcodeSuccess
 }

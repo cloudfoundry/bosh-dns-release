@@ -9,7 +9,8 @@ function realpath() {
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-fly -t production login
+# workers exits 1 if not logged in
+fly -t production workers || fly -t production login
 
 WORK_DIR=/tmp/test-acceptance-windows-workdir
 echo "working out of ${WORK_DIR}..."

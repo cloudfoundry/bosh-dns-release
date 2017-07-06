@@ -19,13 +19,13 @@ instance_groups:
   networks:
   - name: default
   jobs:
+  - name: needs-alias
+    release: dns-acceptance
   - name: dns-windows
     release: dns
     properties:
       address: 0.0.0.0
       recursors: ["10.0.31.191:9955"]
-  - name: needs-alias
-    release: dns-acceptance
   - name: windows-firewall-rules
     release: dns-acceptance
 

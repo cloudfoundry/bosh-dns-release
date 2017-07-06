@@ -139,14 +139,6 @@ var _ = Describe("Integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
 
-			defer func() {
-				stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
-					"start", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID),
-				)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-			}()
-
 			Eventually(func() string {
 				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-YWxs.dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
@@ -159,6 +151,12 @@ var _ = Describe("Integration", func() {
 
 			Expect(output).To(MatchRegexp("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP))
 			Expect(output).ToNot(MatchRegexp("q-YWxs\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP))
+
+			stdOut, stdErr, exitStatus, err = cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
+				"start", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID),
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
 		})
 	})
 })
