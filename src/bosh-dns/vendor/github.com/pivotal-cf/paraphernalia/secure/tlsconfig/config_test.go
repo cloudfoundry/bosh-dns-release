@@ -18,37 +18,45 @@ var _ = Describe("generating TLS configurations", func() {
 		tlsOpts []tlsconfig.TLSOption
 	)
 
-	ItCanUseInternalPivotalDefaults := func() {
-		Describe("with internal Pivotal defaults", func() {
-			BeforeEach(func() {
-				tlsOpts = []tlsconfig.TLSOption{
-					tlsconfig.WithPivotalDefaults(),
-				}
-			})
+	ItCanUseInternalServiceDefaults := func() {
+		Describe("with internal service defaults", func() {
+			aliasedOpts := map[string]tlsconfig.TLSOption{
+				"old pivotal":  tlsconfig.WithPivotalDefaults(),
+				"new internal": tlsconfig.WithInternalServiceDefaults(),
+			}
 
-			It("makes sure that the server is the source of truth for cipher suites", func() {
-				Expect(config.PreferServerCipherSuites).To(BeTrue())
-			})
+			for name, opt := range aliasedOpts {
+				Context("with the "+name+" way of doing things", func() {
 
-			It("enforces the use of TLS 1.2", func() {
-				Expect(config.MinVersion).To(Equal(uint16(tls.VersionTLS12)))
-			})
+					BeforeEach(func() {
+						tlsOpts = []tlsconfig.TLSOption{opt}
+					})
 
-			It("uses approved cipher suites", func() {
-				Expect(config.CipherSuites).To(Equal([]uint16{
-					tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-					tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-				}))
-			})
+					It("makes sure that the server is the source of truth for cipher suites", func() {
+						Expect(config.PreferServerCipherSuites).To(BeTrue())
+					})
 
-			It("includes the suite which is required by the HTTP/2 spec", func() {
-				// https://http2.github.io/http2-spec/#rfc.section.9.2.2
-				Expect(config.CipherSuites).To(ContainElement(tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256))
-			})
+					It("enforces the use of TLS 1.2", func() {
+						Expect(config.MinVersion).To(Equal(uint16(tls.VersionTLS12)))
+					})
 
-			It("uses approved curves", func() {
-				Expect(config.CurvePreferences).To(ConsistOf(tls.CurveP384))
-			})
+					It("uses approved cipher suites", func() {
+						Expect(config.CipherSuites).To(Equal([]uint16{
+							tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+							tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+						}))
+					})
+
+					It("includes the suite which is required by the HTTP/2 spec", func() {
+						// https://http2.github.io/http2-spec/#rfc.section.9.2.2
+						Expect(config.CipherSuites).To(ContainElement(tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256))
+					})
+
+					It("uses approved curves", func() {
+						Expect(config.CurvePreferences).To(ConsistOf(tls.CurveP384))
+					})
+				})
+			}
 		})
 	}
 
@@ -86,7 +94,7 @@ var _ = Describe("generating TLS configurations", func() {
 			config = tlsconfig.Build(tlsOpts...).Server(serverOpts...)
 		})
 
-		ItCanUseInternalPivotalDefaults()
+		ItCanUseInternalServiceDefaults()
 		ItCanBeAssignedAnIdentity()
 
 		Describe("with client authentication", func() {
@@ -123,7 +131,7 @@ var _ = Describe("generating TLS configurations", func() {
 			config = tlsconfig.Build(tlsOpts...).Client(clientOpts...)
 		})
 
-		ItCanUseInternalPivotalDefaults()
+		ItCanUseInternalServiceDefaults()
 		ItCanBeAssignedAnIdentity()
 
 		Describe("with authority", func() {

@@ -52,7 +52,7 @@ func (c *concreteHealthServer) Serve(config *HealthCheckConfig) {
 
 	tlsConfig := tlsconfig.Build(
 		tlsconfig.WithIdentity(cert),
-		tlsconfig.WithPivotalDefaults(),
+		tlsconfig.WithInternalServiceDefaults(),
 	)
 
 	serverConfig := tlsConfig.Server(tlsconfig.WithClientAuthentication(caCertPool))

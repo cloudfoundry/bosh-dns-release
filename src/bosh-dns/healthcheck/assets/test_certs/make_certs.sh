@@ -4,7 +4,7 @@ set -ex
 
 # CERT_SET='test_in'
 
-# EC keys not approved for DoD use so we turned them off in WithPivotalDefaults()
+# EC keys not approved for DoD use so we turned them off in.WithInternalServiceDefaults()
 # If they get added back in, you can switch back to EC keys.
 #openssl ecparam -genkey -name secp384r1 -out test_ca.key
 #openssl ecparam -genkey -name secp384r1 -out test_fake_ca.key

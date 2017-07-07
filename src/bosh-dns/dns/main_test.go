@@ -40,7 +40,8 @@ func getFreePort() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	l.Close()
+	err = l.Close()
+	Expect(err).NotTo(HaveOccurred())
 
 	_, port, err := net.SplitHostPort(l.Addr().String())
 	if err != nil {
@@ -66,7 +67,8 @@ var _ = Describe("main", func() {
 		if runtime.GOOS == "windows" {
 			err := os.MkdirAll("/var/vcap/packages/dns-windows/bin", os.ModePerm)
 			Expect(err).ToNot(HaveOccurred())
-			ioutil.WriteFile("/var/vcap/packages/dns-windows/bin/list-server-addresses.ps1", []byte(""), os.ModePerm)
+			err = ioutil.WriteFile("/var/vcap/packages/dns-windows/bin/list-server-addresses.ps1", []byte(""), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
 		}
 	})
 
@@ -111,9 +113,14 @@ var _ = Describe("main", func() {
 			session         *gexec.Session
 			aliasesDir      string
 			recordsFilePath string
+			checkInterval   string
 		)
 
 		BeforeEach(func() {
+			checkInterval = "100ms"
+		})
+
+		JustBeforeEach(func() {
 			var err error
 
 			recordsFile, err := ioutil.TempFile("", "recordsjson")
@@ -167,7 +174,7 @@ var _ = Describe("main", func() {
 					"ca_file":          "../healthcheck/assets/test_certs/test_ca.pem",
 					"certificate_file": "../healthcheck/assets/test_certs/test_client.pem",
 					"private_key_file": "../healthcheck/assets/test_certs/test_client.key",
-					"check_interval":   "1s",
+					"check_interval":   checkInterval,
 				},
 			})
 			Expect(err).NotTo(HaveOccurred())
@@ -389,7 +396,7 @@ var _ = Describe("main", func() {
 			})
 
 			Context("changing records.json", func() {
-				BeforeEach(func() {
+				JustBeforeEach(func() {
 					var err error
 					err = ioutil.WriteFile(recordsFilePath, []byte(fmt.Sprint(`{
 						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
@@ -430,51 +437,94 @@ var _ = Describe("main", func() {
 		Context("health checking", func() {
 			var healthServers []*ghttp.Server
 
-			BeforeEach(func() {
-				healthServers = []*ghttp.Server{
-					newFakeHealthServer("127.0.0.1", "running"),
-					// sudo ifconfig lo0 alias 127.0.0.2 up # on osx
-					newFakeHealthServer("127.0.0.2", "stopped"),
-				}
-			})
-
-			AfterEach(func() {
-				for _, server := range healthServers {
-					server.Close()
-				}
-			})
-
-			It("checks healthiness of results", func() {
-				c := &dns.Client{Net: "udp"}
-
-				m := &dns.Msg{}
-				m.SetQuestion("q-YWxs.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
-
-				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-
-				Expect(err).NotTo(HaveOccurred())
-				Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-				Expect(r.Answer).To(HaveLen(2))
-
-				ips := []string{r.Answer[0].(*dns.A).A.String(), r.Answer[1].(*dns.A).A.String()}
-				Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.2"))
-
-				serverRequestLen := func(server *ghttp.Server) func() int {
-					return func() int {
-						return len(server.ReceivedRequests())
+			Context("when both servers are running and return responses", func() {
+				BeforeEach(func() {
+					healthServers = []*ghttp.Server{
+						newFakeHealthServer("127.0.0.1", "running"),
+						// sudo ifconfig lo0 alias 127.0.0.2 up # on osx
+						newFakeHealthServer("127.0.0.2", "stopped"),
 					}
-				}
-				Eventually(serverRequestLen(healthServers[0]), 5*time.Second).Should(BeNumerically(">", 2))
-				Eventually(serverRequestLen(healthServers[1]), 5*time.Second).Should(BeNumerically(">", 2))
+				})
 
-				r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+				AfterEach(func() {
+					for _, server := range healthServers {
+						server.Close()
+					}
+				})
 
-				Expect(err).NotTo(HaveOccurred())
-				Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-				Expect(r.Answer).To(HaveLen(1))
+				It("checks healthiness of results", func() {
+					c := &dns.Client{Net: "udp"}
 
-				ips = []string{r.Answer[0].(*dns.A).A.String()}
-				Expect(ips).To(ConsistOf("127.0.0.1"))
+					m := &dns.Msg{}
+					m.SetQuestion("q-YWxs.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Answer).To(HaveLen(2))
+
+					ips := []string{r.Answer[0].(*dns.A).A.String(), r.Answer[1].(*dns.A).A.String()}
+					Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.2"))
+
+					serverRequestLen := func(server *ghttp.Server) func() int {
+						return func() int {
+							return len(server.ReceivedRequests())
+						}
+					}
+					Eventually(serverRequestLen(healthServers[0]), 5*time.Second).Should(BeNumerically(">", 2))
+					Eventually(serverRequestLen(healthServers[1]), 5*time.Second).Should(BeNumerically(">", 2))
+
+					r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Answer).To(HaveLen(1))
+
+					ips = []string{r.Answer[0].(*dns.A).A.String()}
+					Expect(ips).To(ConsistOf("127.0.0.1"))
+				})
+			})
+
+			Context("when a server is not returning responses", func() {
+				var brokenServer *ghttp.Server
+
+				BeforeEach(func() {
+					checkInterval = "1m"
+					brokenServer = newFakeHealthServer("127.0.0.2", "stopped")
+					brokenServer.RouteToHandler("GET", "/health", ghttp.RespondWith(http.StatusGatewayTimeout, ``))
+
+					healthServers = []*ghttp.Server{
+						newFakeHealthServer("127.0.0.1", "running"),
+						// sudo ifconfig lo0 alias 127.0.0.2 up # on osx
+						brokenServer,
+					}
+				})
+
+				AfterEach(func() {
+					for _, server := range healthServers {
+						server.Close()
+					}
+				})
+
+				It("retries errors", func() {
+					c := &dns.Client{Net: "udp"}
+
+					m := &dns.Msg{}
+					m.SetQuestion("q-YWxs.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+
+					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+					Expect(err).NotTo(HaveOccurred())
+
+					serverRequestLen := func(server *ghttp.Server) func() int {
+						return func() int {
+							return len(server.ReceivedRequests())
+						}
+					}
+					Eventually(serverRequestLen(healthServers[0]), 5*time.Second).Should(BeNumerically("==", 1))
+					Eventually(serverRequestLen(healthServers[1]), 5*time.Second).Should(BeNumerically("==", 5))
+				})
 			})
 		})
 	})
@@ -491,7 +541,9 @@ var _ = Describe("main", func() {
 			defer l.Close()
 
 			go func() {
-				l.Accept()
+				defer GinkgoRecover()
+				_, err := l.Accept()
+				Expect(err).NotTo(HaveOccurred())
 			}()
 
 			cmd = newCommandWithConfig(fmt.Sprintf(`{
@@ -641,7 +693,8 @@ func waitForServer(port int) error {
 			continue
 		}
 
-		c.Close()
+		err = c.Close()
+		Expect(err).NotTo(HaveOccurred())
 		return nil
 	}
 
@@ -660,14 +713,16 @@ func newFakeHealthServer(ip, state string) *ghttp.Server {
 
 	tlsConfig := tlsconfig.Build(
 		tlsconfig.WithIdentity(cert),
-		tlsconfig.WithPivotalDefaults(),
+		tlsconfig.WithInternalServiceDefaults(),
 	)
 
 	serverConfig := tlsConfig.Server(tlsconfig.WithClientAuthentication(caCertPool))
 	serverConfig.BuildNameToCertificate()
 
 	server := ghttp.NewUnstartedServer()
-	server.HTTPTestServer.Listener.Close()
+	err = server.HTTPTestServer.Listener.Close()
+	Expect(err).NotTo(HaveOccurred())
+
 	port := 2345 + config.GinkgoConfig.ParallelNode
 	server.HTTPTestServer.Listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	Expect(err).ToNot(HaveOccurred(),

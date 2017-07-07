@@ -325,6 +325,9 @@ const (
 	ECHOKE                               = 0x800
 	ECHONL                               = 0x40
 	ECHOPRT                              = 0x400
+	EFD_CLOEXEC                          = 0x80000
+	EFD_NONBLOCK                         = 0x800
+	EFD_SEMAPHORE                        = 0x1
 	ENCODING_DEFAULT                     = 0x0
 	ENCODING_FM_MARK                     = 0x3
 	ENCODING_FM_SPACE                    = 0x4
@@ -1281,7 +1284,16 @@ const (
 	RLIMIT_CPU                           = 0x0
 	RLIMIT_DATA                          = 0x2
 	RLIMIT_FSIZE                         = 0x1
+	RLIMIT_LOCKS                         = 0xa
+	RLIMIT_MEMLOCK                       = 0x8
+	RLIMIT_MSGQUEUE                      = 0xc
+	RLIMIT_NICE                          = 0xd
 	RLIMIT_NOFILE                        = 0x7
+	RLIMIT_NPROC                         = 0x6
+	RLIMIT_RSS                           = 0x5
+	RLIMIT_RTPRIO                        = 0xe
+	RLIMIT_RTTIME                        = 0xf
+	RLIMIT_SIGPENDING                    = 0xb
 	RLIMIT_STACK                         = 0x3
 	RLIM_INFINITY                        = -0x1
 	RTAX_ADVMSS                          = 0x8
@@ -1443,6 +1455,9 @@ const (
 	SCM_TIMESTAMPING_OPT_STATS           = 0x36
 	SCM_TIMESTAMPNS                      = 0x23
 	SCM_WIFI_STATUS                      = 0x29
+	SECCOMP_MODE_DISABLED                = 0x0
+	SECCOMP_MODE_FILTER                  = 0x2
+	SECCOMP_MODE_STRICT                  = 0x1
 	SHUT_RD                              = 0x0
 	SHUT_RDWR                            = 0x2
 	SHUT_WR                              = 0x1
@@ -1802,6 +1817,7 @@ const (
 	TUNSETVNETBE                         = 0x400454de
 	TUNSETVNETHDRSZ                      = 0x400454d8
 	TUNSETVNETLE                         = 0x400454dc
+	UMOUNT_NOFOLLOW                      = 0x8
 	VDISCARD                             = 0xd
 	VEOF                                 = 0x4
 	VEOL                                 = 0xb
@@ -1838,6 +1854,8 @@ const (
 	WORDSIZE                             = 0x40
 	WSTOPPED                             = 0x2
 	WUNTRACED                            = 0x2
+	XATTR_CREATE                         = 0x1
+	XATTR_REPLACE                        = 0x2
 	XCASE                                = 0x4
 	XTABS                                = 0x1800
 )

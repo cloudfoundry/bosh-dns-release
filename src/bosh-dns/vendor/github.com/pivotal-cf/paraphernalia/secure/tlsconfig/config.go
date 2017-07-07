@@ -6,6 +6,7 @@ package tlsconfig
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"log"
 )
 
 // Config represents a half configured TLS configuration. It can be made usable
@@ -67,12 +68,18 @@ func (c Config) Client(opts ...ClientOption) *tls.Config {
 	return config
 }
 
-// WithPivotalDefaults modifies a *tls.Config that is suitable for use in
-// internal communication links between Pivotal services. It is not guaranteed
-// to be suitable for communication to other external services as it contains a
-// strict definition of acceptable standards. The standards were taken from the
-// "Consolidated Remarks" internal document.
-func WithPivotalDefaults() TLSOption {
+// WithInternalServiceDefaults modifies a *tls.Config that is suitable for use
+// in communication links between internal services. It is not guaranteed to be
+// suitable for communication to other external services as it contains a
+// strict definition of acceptable standards.
+//
+// The standards were taken from the "Consolidated Remarks" internal document
+// from Pivotal.
+//
+// Note: Due to the aggressive nature of the ciphersuites chosen here (they do
+// not support any ECC signing) it is not possible to use ECC keys with this
+// option.
+func WithInternalServiceDefaults() TLSOption {
 	return func(c *tls.Config) {
 		c.MinVersion = tls.VersionTLS12
 		c.PreferServerCipherSuites = true
@@ -84,6 +91,16 @@ func WithPivotalDefaults() TLSOption {
 			tls.CurveP384,
 		}
 	}
+}
+
+// WithPivotalDefaults is the same as WithInternalServiceDefaults and is only
+// provided for backwards compatibility. These configuration options are now
+// used beyond just Pivotal.
+//
+// Deprecated: Use WithInternalServiceDefaults() instead.
+func WithPivotalDefaults() TLSOption {
+	log.Println("DEPRECATED! tlsconfig: Please use WithInternalServiceDefaults() rather than WithPivotalDefaults()")
+	return WithInternalServiceDefaults()
 }
 
 // WithIdentity sets the identity of the server or client which will be

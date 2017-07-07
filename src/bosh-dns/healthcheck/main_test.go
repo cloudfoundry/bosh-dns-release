@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
+	boshhttp "github.com/cloudfoundry/bosh-utils/http"
 )
 
 type Health struct {
@@ -160,17 +160,7 @@ func setupSecureGet(caFile, clientCertFile, clientKeyFile string) (*http.Client,
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	tlsConfig := tlsconfig.Build(
-		tlsconfig.WithIdentity(cert),
-		tlsconfig.WithPivotalDefaults(),
-	)
-
-	clientConfig := tlsConfig.Client(tlsconfig.WithAuthority(caCertPool))
-	clientConfig.BuildNameToCertificate()
-	clientConfig.ServerName = "health.bosh-dns"
-
-	transport := &http.Transport{TLSClientConfig: clientConfig}
-	return &http.Client{Transport: transport}, nil
+	return boshhttp.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns"), nil
 }
 
 func secureGetRespBody(client *http.Client, port int) ([]byte, error) {

@@ -22,9 +22,9 @@ import (
 	"net/http"
 	"path/filepath"
 
+	boshhttp "github.com/cloudfoundry/bosh-utils/http"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
-	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 var _ = Describe("Integration", func() {
@@ -217,17 +217,7 @@ func setupSecureGet() (*http.Client, error) {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM([]byte(caCert))
 
-	tlsConfig := tlsconfig.Build(
-		tlsconfig.WithIdentity(cert),
-		tlsconfig.WithPivotalDefaults(),
-	)
-
-	clientConfig := tlsConfig.Client(tlsconfig.WithAuthority(caCertPool))
-	clientConfig.BuildNameToCertificate()
-	clientConfig.ServerName = "health.bosh-dns"
-
-	transport := &http.Transport{TLSClientConfig: clientConfig}
-	return &http.Client{Transport: transport}, nil
+	return boshhttp.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns"), nil
 }
 
 func secureGetRespBody(client *http.Client, hostname string, port int) ([]byte, error) {

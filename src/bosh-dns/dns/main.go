@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,7 +15,6 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 	"log"
-	"net/http"
 
 	dnsconfig "bosh-dns/dns/config"
 	"bosh-dns/dns/server"
@@ -28,12 +26,12 @@ import (
 	"bosh-dns/dns/shuffle"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshhttp "github.com/cloudfoundry/bosh-utils/http"
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"github.com/miekg/dns"
-	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 func parseFlags() (string, error) {
@@ -98,7 +96,7 @@ func mainExitCode() int {
 
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
 	if config.Health.Enabled {
-		httpClient, err := setupSecureGet(config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile)
+		httpClient, err := setupSecureGet(config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, logger)
 		if err != nil {
 			logger.Error(logTag, fmt.Sprintf("Unable to configure health checker %s", err.Error()))
 			return 1
@@ -172,7 +170,7 @@ func mainExitCode() int {
 	return 0
 }
 
-func setupSecureGet(caFile, clientCertFile, clientKeyFile string) (*http.Client, error) {
+func setupSecureGet(caFile, clientCertFile, clientKeyFile string, logger boshlog.Logger) (boshhttp.Client, error) {
 	// Load client cert
 	cert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
 	if err != nil {
@@ -189,20 +187,7 @@ func setupSecureGet(caFile, clientCertFile, clientKeyFile string) (*http.Client,
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	tlsConfig := tlsconfig.Build(
-		tlsconfig.WithIdentity(cert),
-		tlsconfig.WithPivotalDefaults(),
-	)
+	client := boshhttp.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns")
 
-	clientConfig := tlsConfig.Client(tlsconfig.WithAuthority(caCertPool))
-	clientConfig.BuildNameToCertificate()
-	clientConfig.ServerName = "health.bosh-dns"
-
-	dialer := &net.Dialer{
-		Timeout:   5 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}
-
-	transport := &http.Transport{TLSClientConfig: clientConfig, Dial: dialer.Dial}
-	return &http.Client{Transport: transport}, nil
+	return boshhttp.NewNetworkSafeRetryClient(client, 5, 500*time.Millisecond, logger), nil
 }
