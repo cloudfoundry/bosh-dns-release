@@ -107,7 +107,8 @@ func mainExitCode() int {
 	}
 
 	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
-	localDomain := dnsresolver.NewLocalDomain(logger, recordsRepo, shuffle.New(), healthWatcher)
+	healthyRecordSet := healthiness.NewHealthyRecordSet(recordsRepo, healthWatcher)
+	localDomain := dnsresolver.NewLocalDomain(logger, healthyRecordSet, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordsRepo, mux, discoveryHandler)

@@ -3,42 +3,35 @@ package dnsresolver
 import (
 	"net"
 
-	"bosh-dns/dns/server/records"
-
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
 
 type LocalDomain struct {
-	logger        logger.Logger
-	logTag        string
-	recordSetRepo RecordSetRepo
-	shuffler      AnswerShuffler
-	healthLookup  HealthLookup
-}
-
-//go:generate counterfeiter . RecordSetRepo
-type RecordSetRepo interface {
-	Get() (records.RecordSet, error)
+	logger    logger.Logger
+	logTag    string
+	recordSet RecordSet
+	shuffler  AnswerShuffler
 }
 
 //go:generate counterfeiter . AnswerShuffler
+
 type AnswerShuffler interface {
 	Shuffle(src []dns.RR) []dns.RR
 }
 
-//go:generate counterfeiter . HealthLookup
-type HealthLookup interface {
-	IsHealthy(ip string) bool
+//go:generate counterfeiter . RecordSet
+
+type RecordSet interface {
+	Resolve(domain string) ([]string, error)
 }
 
-func NewLocalDomain(logger logger.Logger, recordSetRepo RecordSetRepo, shuffler AnswerShuffler, healthLookup HealthLookup) LocalDomain {
+func NewLocalDomain(logger logger.Logger, recordSet RecordSet, shuffler AnswerShuffler) LocalDomain {
 	return LocalDomain{
-		logger:        logger,
-		logTag:        "LocalDomain",
-		recordSetRepo: recordSetRepo,
-		shuffler:      shuffler,
-		healthLookup:  healthLookup,
+		logger:    logger,
+		logTag:    "LocalDomain",
+		recordSet: recordSet,
+		shuffler:  shuffler,
 	}
 }
 
@@ -57,19 +50,12 @@ func (d LocalDomain) Resolve(questionDomains []string, responseWriter dns.Respon
 }
 
 func (d LocalDomain) resolve(answerDomain string, questionDomains []string) ([]dns.RR, int) {
-	recordSet, err := d.recordSetRepo.Get()
-	if err != nil {
-		d.logger.Error(d.logTag, "failed to get ip addresses: %v", err)
-		return nil, dns.RcodeServerFailure
-	}
-
 	answers := []dns.RR{}
-	healthyAnswers := []dns.RR{}
 
 	for _, questionDomain := range questionDomains {
-		ips, err := recordSet.Resolve(questionDomain)
+		ips, err := d.recordSet.Resolve(questionDomain)
 		if err != nil {
-			d.logger.Error(d.logTag, "failed to decode query: %v", err)
+			d.logger.Error(d.logTag, "failed to get ip addresses: %v", err)
 			return nil, dns.RcodeFormatError
 		}
 
@@ -84,19 +70,10 @@ func (d LocalDomain) resolve(answerDomain string, questionDomains []string) ([]d
 				A: net.ParseIP(ip),
 			}
 
-			if d.healthLookup.IsHealthy(ip) {
-				healthyAnswers = append(healthyAnswers, answer)
-			} else {
-				answers = append(answers, answer)
-			}
+			answers = append(answers, answer)
 		}
 	}
 
-	if len(healthyAnswers) > 0 {
-		answers = healthyAnswers
-	} else {
-		d.logger.Info(d.logTag, "No healthy IP addresses found, returning all IP addresses")
-	}
 	return d.shuffler.Shuffle(answers), dns.RcodeSuccess
 }
 

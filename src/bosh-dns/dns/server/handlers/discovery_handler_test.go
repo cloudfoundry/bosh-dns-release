@@ -5,9 +5,7 @@ import (
 	"net"
 
 	"bosh-dns/dns/server/handlers"
-	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/internal/internalfakes"
-	"bosh-dns/dns/server/records"
 	"bosh-dns/dns/server/records/dnsresolver"
 	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 
@@ -22,24 +20,24 @@ import (
 var _ = Describe("DiscoveryHandler", func() {
 	Context("ServeDNS", func() {
 		var (
-			discoveryHandler  handlers.DiscoveryHandler
-			fakeWriter        *internalfakes.FakeResponseWriter
-			fakeLogger        *loggerfakes.FakeLogger
-			fakeRecordSetRepo *dnsresolverfakes.FakeRecordSetRepo
-			fakeShuffler      *dnsresolverfakes.FakeAnswerShuffler
+			discoveryHandler handlers.DiscoveryHandler
+			fakeWriter       *internalfakes.FakeResponseWriter
+			fakeLogger       *loggerfakes.FakeLogger
+			fakeRecordSet    *dnsresolverfakes.FakeRecordSet
+			fakeShuffler     *dnsresolverfakes.FakeAnswerShuffler
 		)
 
 		BeforeEach(func() {
 			fakeWriter = &internalfakes.FakeResponseWriter{}
 			fakeLogger = &loggerfakes.FakeLogger{}
-			fakeRecordSetRepo = &dnsresolverfakes.FakeRecordSetRepo{}
+			fakeRecordSet = &dnsresolverfakes.FakeRecordSet{}
 			fakeShuffler = &dnsresolverfakes.FakeAnswerShuffler{}
 			fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
 				return input
 			}
 
 			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
-			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSetRepo, fakeShuffler, healthiness.NewNopHealthWatcher()))
+			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler))
 		})
 
 		Context("when there are no questions", func() {
@@ -89,19 +87,7 @@ var _ = Describe("DiscoveryHandler", func() {
 			Context("when the question is an A or ANY record", func() {
 				DescribeTable("returns an A record based off of the records data",
 					func(queryType uint16) {
-						recordSet := records.RecordSet{
-							Records: []records.Record{
-								{
-									Id:         "my-instance",
-									Group:      "my-group",
-									Network:    "my-network",
-									Deployment: "my-deployment",
-									Ip:         "123.123.123.123",
-									Domain:     "bosh.",
-								},
-							},
-						}
-						fakeRecordSetRepo.GetReturns(recordSet, nil)
+						fakeRecordSet.ResolveReturns([]string{"123.123.123.123"}, nil)
 
 						m := &dns.Msg{}
 						m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", queryType)
@@ -131,166 +117,6 @@ var _ = Describe("DiscoveryHandler", func() {
 					Entry("when the question is an A query", dns.TypeA),
 					Entry("when the question is an ANY query", dns.TypeANY),
 				)
-
-				Context("when there are too many records to fit into 512 bytes", func() {
-					var (
-						recordSet records.RecordSet
-						req       *dns.Msg
-					)
-
-					BeforeEach(func() {
-						recordSet = records.RecordSet{
-							Records: []records.Record{
-								{
-									Id:         "my-instance",
-									Group:      "my-group",
-									Network:    "my-network",
-									Deployment: "my-deployment",
-									Ip:         "123.123.123.123",
-									Domain:     "bosh.",
-								},
-								{
-									Id:         "my-instance",
-									Group:      "my-group",
-									Network:    "my-network",
-									Deployment: "my-deployment",
-									Ip:         "127.0.0.1",
-									Domain:     "bosh.",
-								},
-								{
-									Id:         "my-instance",
-									Group:      "my-group",
-									Network:    "my-network",
-									Deployment: "my-deployment",
-									Ip:         "127.0.0.2",
-									Domain:     "bosh.",
-								},
-								{
-									Id:         "my-instance",
-									Group:      "my-group",
-									Network:    "my-network",
-									Deployment: "my-deployment",
-									Ip:         "127.0.0.3",
-									Domain:     "bosh.",
-								},
-								{
-									Id:         "my-instance",
-									Group:      "my-group",
-									Network:    "my-network",
-									Deployment: "my-deployment",
-									Ip:         "127.0.0.4",
-									Domain:     "bosh.",
-								},
-								{
-									Id:         "my-instance",
-									Group:      "my-group",
-									Network:    "my-network",
-									Deployment: "my-deployment",
-									Ip:         "127.0.0.5",
-									Domain:     "bosh.",
-								},
-								{
-									Id:         "my-instance",
-									Group:      "my-group",
-									Network:    "my-network",
-									Deployment: "my-deployment",
-									Ip:         "127.0.0.6",
-									Domain:     "bosh.",
-								},
-							},
-						}
-
-						fakeRecordSetRepo.GetReturns(recordSet, nil)
-						req = &dns.Msg{}
-						req.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
-					})
-
-					Context("when the request is udp", func() {
-						It("truncates the response", func() {
-							discoveryHandler.ServeDNS(fakeWriter, req)
-
-							responseMsg := fakeWriter.WriteMsgArgsForCall(0)
-							Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
-							Expect(len(responseMsg.Answer)).To(Equal(6))
-							Expect(responseMsg.Truncated).To(Equal(true))
-							Expect(responseMsg.Len()).To(BeNumerically("<", 512))
-						})
-					})
-
-					Context("when the request is tcp", func() {
-						It("does not truncate", func() {
-							fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
-							discoveryHandler.ServeDNS(fakeWriter, req)
-
-							responseMsg := fakeWriter.WriteMsgArgsForCall(0)
-							Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
-							Expect(responseMsg.Truncated).To(Equal(false))
-							Expect(len(responseMsg.Answer)).To(Equal(7))
-							Expect(responseMsg.Len()).To(BeNumerically(">", 512))
-						})
-					})
-				})
-			})
-
-			Context("when loading the records returns an error", func() {
-				BeforeEach(func() {
-					recordSet := records.RecordSet{}
-					fakeRecordSetRepo.GetReturns(recordSet, errors.New("i screwed up"))
-				})
-
-				It("returns rcode server failure", func() {
-					m := &dns.Msg{}
-					m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeA)
-
-					discoveryHandler.ServeDNS(fakeWriter, m)
-					message := fakeWriter.WriteMsgArgsForCall(0)
-					Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
-					Expect(message.Authoritative).To(Equal(true))
-					Expect(message.RecursionAvailable).To(Equal(false))
-				})
-
-				It("logs the error", func() {
-					m := &dns.Msg{}
-					m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeA)
-					discoveryHandler.ServeDNS(fakeWriter, m)
-
-					Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
-					tag, msg, args := fakeLogger.ErrorArgsForCall(0)
-					Expect(tag).To(Equal("LocalDomain"))
-					Expect(msg).To(Equal("failed to get ip addresses: %v"))
-					Expect(args[0]).To(MatchError("i screwed up"))
-				})
-			})
-
-			Context("when parsing the query returns an error", func() {
-				var question string
-				BeforeEach(func() {
-					recordSet := records.RecordSet{}
-					fakeRecordSetRepo.GetReturns(recordSet, nil)
-					question = "q-&^$*^*#^.my-group.my-network.my-deployment.bosh."
-				})
-
-				It("returns rcode format error", func() {
-					m := &dns.Msg{}
-					m.SetQuestion(question, dns.TypeA)
-
-					discoveryHandler.ServeDNS(fakeWriter, m)
-					message := fakeWriter.WriteMsgArgsForCall(0)
-					Expect(message.Rcode).To(Equal(dns.RcodeFormatError))
-					Expect(message.Authoritative).To(Equal(true))
-					Expect(message.RecursionAvailable).To(Equal(false))
-				})
-
-				It("logs the error", func() {
-					m := &dns.Msg{}
-					m.SetQuestion(question, dns.TypeA)
-					discoveryHandler.ServeDNS(fakeWriter, m)
-
-					Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
-					tag, msg, _ := fakeLogger.ErrorArgsForCall(0)
-					Expect(tag).To(Equal("LocalDomain"))
-					Expect(msg).To(Equal("failed to decode query: %v"))
-				})
 			})
 		})
 

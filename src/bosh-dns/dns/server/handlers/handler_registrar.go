@@ -3,9 +3,10 @@ package handlers
 import (
 	"time"
 
+	"bosh-dns/dns/server/records"
+
 	"code.cloudfoundry.org/clock"
 	"github.com/cloudfoundry/bosh-utils/logger"
-	"bosh-dns/dns/server/records"
 	"github.com/miekg/dns"
 )
 
@@ -16,6 +17,8 @@ type ServerMux interface {
 	Handle(pattern string, handler dns.Handler)
 	HandleRemove(pattern string)
 }
+
+//go:generate counterfeiter . RecordSetRepo
 
 type RecordSetRepo interface {
 	Get() (records.RecordSet, error)

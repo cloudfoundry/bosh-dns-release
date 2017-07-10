@@ -6,11 +6,11 @@ import (
 
 	"code.cloudfoundry.org/clock/fakeclock"
 
-	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/records"
-	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
+
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -23,7 +23,7 @@ func (*HandlerRegistrarTestHandler) ServeDNS(dns.ResponseWriter, *dns.Msg) {}
 var _ = Describe("HandlerRegistrar", func() {
 	var (
 		logger           *loggerfakes.FakeLogger
-		recordsRepo      *dnsresolverfakes.FakeRecordSetRepo
+		recordsRepo      *handlersfakes.FakeRecordSetRepo
 		mux              *handlersfakes.FakeServerMux
 		handlerRegistrar handlers.HandlerRegistrar
 		childHandler     dns.Handler
@@ -32,7 +32,7 @@ var _ = Describe("HandlerRegistrar", func() {
 
 	BeforeEach(func() {
 		logger = &loggerfakes.FakeLogger{}
-		recordsRepo = &dnsresolverfakes.FakeRecordSetRepo{}
+		recordsRepo = &handlersfakes.FakeRecordSetRepo{}
 		mux = &handlersfakes.FakeServerMux{}
 		childHandler = &HandlerRegistrarTestHandler{}
 		clock = fakeclock.NewFakeClock(time.Now())

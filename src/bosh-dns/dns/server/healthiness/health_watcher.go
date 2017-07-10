@@ -14,6 +14,8 @@ type HealthChecker interface {
 	GetStatus(ip string) bool
 }
 
+//go:generate counterfeiter . HealthWatcher
+
 type HealthWatcher interface {
 	IsHealthy(ip string) bool
 	Run(signal <-chan struct{})

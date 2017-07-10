@@ -18,3 +18,5 @@ releases/*.tgz
 # Golang
 /bin/
 /pkg/
+src/golang.org
+src/github.com
