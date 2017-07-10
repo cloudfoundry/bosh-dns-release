@@ -14,7 +14,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
-	"log"
 
 	dnsconfig "bosh-dns/dns/config"
 	"bosh-dns/dns/server"
@@ -174,14 +173,12 @@ func setupSecureGet(caFile, clientCertFile, clientKeyFile string, logger boshlog
 	// Load client cert
 	cert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
 	// Load CA cert
 	caCert, err := ioutil.ReadFile(caFile)
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 	caCertPool := x509.NewCertPool()

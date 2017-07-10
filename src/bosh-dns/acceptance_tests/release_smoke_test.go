@@ -100,8 +100,7 @@ var _ = Describe("Integration", func() {
 		})
 
 		It("returns a healthy response when the instance is running", func() {
-			client, err := setupSecureGet()
-			Expect(err).ToNot(HaveOccurred())
+			client := setupSecureGet()
 
 			Eventually(func() map[string]string {
 				respData, err := secureGetRespBody(client, firstInstance.IP, 2345)
@@ -185,7 +184,7 @@ func ensureHealthEndpointDeployed() {
 	allDeployedInstances = getInstanceInfos(boshBinaryPath)
 }
 
-func setupSecureGet() (*http.Client, error) {
+func setupSecureGet() *http.Client {
 	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
 		"int", "creds.yml",
 		"--path", "/dns_healthcheck_client_tls/certificate",
@@ -217,7 +216,7 @@ func setupSecureGet() (*http.Client, error) {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM([]byte(caCert))
 
-	return boshhttp.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns"), nil
+	return boshhttp.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns")
 }
 
 func secureGetRespBody(client *http.Client, hostname string, port int) ([]byte, error) {

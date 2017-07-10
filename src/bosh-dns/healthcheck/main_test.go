@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -50,11 +49,10 @@ var _ = Describe("HealthCheck server", func() {
 
 		Describe("When the vm is healthy", func() {
 			It("returns healthy json output", func() {
-				client, err := setupSecureGet(
+				client := setupSecureGet(
 					"assets/test_certs/test_ca.pem",
 					"assets/test_certs/test_client.pem",
 					"assets/test_certs/test_client.key")
-				Expect(err).ToNot(HaveOccurred())
 
 				respData, err := secureGetRespBody(client, configPort)
 				Expect(err).ToNot(HaveOccurred())
@@ -75,11 +73,10 @@ var _ = Describe("HealthCheck server", func() {
 			})
 
 			It("returns unhealthy json output", func() {
-				client, err := setupSecureGet(
+				client := setupSecureGet(
 					"assets/test_certs/test_ca.pem",
 					"assets/test_certs/test_client.pem",
 					"assets/test_certs/test_client.key")
-				Expect(err).ToNot(HaveOccurred())
 
 				respData, err := secureGetRespBody(client, configPort)
 				Expect(err).ToNot(HaveOccurred())
@@ -95,23 +92,21 @@ var _ = Describe("HealthCheck server", func() {
 		})
 
 		It("should reject a client cert with the wrong root CA", func() {
-			client, err := setupSecureGet(
+			client := setupSecureGet(
 				"assets/test_certs/test_fake_ca.pem",
 				"assets/test_certs/test_fake_client.pem",
 				"assets/test_certs/test_client.key")
-			Expect(err).ToNot(HaveOccurred())
 
-			_, err = secureGetRespBody(client, configPort)
+			_, err := secureGetRespBody(client, configPort)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("x509: certificate signed by unknown authority"))
 		})
 
 		It("should reject a client cert with the wrong CN", func() {
-			client, err := setupSecureGet(
+			client := setupSecureGet(
 				"assets/test_certs/test_ca.pem",
 				"assets/test_certs/test_wrong_cn_client.pem",
 				"assets/test_certs/test_client.key")
-			Expect(err).ToNot(HaveOccurred())
 
 			resp, err := secureGet(client, configPort)
 			Expect(err).ToNot(HaveOccurred())
@@ -143,24 +138,18 @@ func waitForServer(port int) error {
 	return err //errors.New("dns server failed to start")
 }
 
-func setupSecureGet(caFile, clientCertFile, clientKeyFile string) (*http.Client, error) {
+func setupSecureGet(caFile, clientCertFile, clientKeyFile string) *http.Client {
 	// Load client cert
 	cert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
+	Expect(err).NotTo(HaveOccurred())
 
 	// Load CA cert
 	caCert, err := ioutil.ReadFile(caFile)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
+	Expect(err).NotTo(HaveOccurred())
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	return boshhttp.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns"), nil
+	return boshhttp.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns")
 }
 
 func secureGetRespBody(client *http.Client, port int) ([]byte, error) {
