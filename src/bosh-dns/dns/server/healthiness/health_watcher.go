@@ -28,7 +28,7 @@ type healthWatcher struct {
 
 	checkWorkPool *workpool.WorkPool
 	state         map[string]bool
-	stateMutex    *sync.Mutex
+	stateMutex    *sync.RWMutex
 }
 
 func NewHealthWatcher(checker HealthChecker, clock clock.Clock, checkInterval time.Duration) *healthWatcher {
@@ -41,19 +41,17 @@ func NewHealthWatcher(checker HealthChecker, clock clock.Clock, checkInterval ti
 
 		checkWorkPool: wp,
 		state:         map[string]bool{},
-		stateMutex:    &sync.Mutex{},
+		stateMutex:    &sync.RWMutex{},
 	}
 }
 
 func (hw *healthWatcher) IsHealthy(ip string) bool {
-	hw.stateMutex.Lock()
-	defer hw.stateMutex.Unlock()
+	hw.stateMutex.RLock()
+	defer hw.stateMutex.RUnlock()
 
 	if health, found := hw.state[ip]; found {
 		return health
 	}
-
-	hw.state[ip] = false
 
 	hw.checkWorkPool.Submit(func() {
 		hw.runCheck(ip)
@@ -69,7 +67,7 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 	for {
 		select {
 		case <-timer.C():
-			hw.stateMutex.Lock()
+			hw.stateMutex.RLock()
 			for ip := range hw.state {
 				// closing on ip, we need to ensure it's fixed within this context
 				ip := ip
@@ -77,11 +75,12 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 					hw.runCheck(ip)
 				})
 			}
-			hw.stateMutex.Unlock()
+			hw.stateMutex.RUnlock()
+
+			timer.Reset(hw.checkInterval)
 		case <-signal:
 			return
 		}
-		timer.Reset(hw.checkInterval)
 	}
 }
 

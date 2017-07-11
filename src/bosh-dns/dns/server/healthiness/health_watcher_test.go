@@ -92,6 +92,8 @@ var _ = Describe("HealthWatcher", func() {
 
 				It("goes unhealthy if the new status is stopped", func() {
 					Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
+					Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
+
 					fakeChecker.GetStatusReturns(false)
 
 					Consistently(func() bool {
