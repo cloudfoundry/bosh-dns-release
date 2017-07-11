@@ -12,21 +12,26 @@ import (
 var _ = Describe("Recursor", func() {
 	var dnsConfig config.Config
 	var resolvConfReader *configfakes.FakeRecursorReader
+	var stringShuffler *configfakes.FakeStringShuffler
 
 	BeforeEach(func() {
 		dnsConfig = config.Config{}
 		resolvConfReader = &configfakes.FakeRecursorReader{}
+		stringShuffler = &configfakes.FakeStringShuffler{}
 	})
 
 	Context("when dnsConfig does not have any recursors configured", func() {
 		BeforeEach(func() {
-			resolvConfReader.GetReturns([]string{"some-recursor-1"}, nil)
+			resolvConfReader.GetReturns([]string{"some-recursor-1", "some-recursor-2"}, nil)
+			stringShuffler.ShuffleStub = func(src []string) []string {
+				return []string{src[1], src[0]}
+			}
 		})
 
-		It("should generate recursors from the resolv.conf", func() {
-			err := config.ConfigureRecursors(resolvConfReader, &dnsConfig)
+		It("should generate recursors from the resolv.conf, shuffled", func() {
+			err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(dnsConfig.Recursors).Should(ConsistOf("some-recursor-1"))
+			Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-2", "some-recursor-1"}))
 
 			Expect(resolvConfReader.GetCallCount()).To(Equal(1))
 		})
@@ -37,17 +42,15 @@ var _ = Describe("Recursor", func() {
 			})
 
 			It("should return the error", func() {
-				err := config.ConfigureRecursors(resolvConfReader, &dnsConfig)
+				err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
 
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(Equal(errors.New("some-error")))
 			})
 		})
-
 	})
 
 	Context("when dnsConfig does has recursors configured", func() {
-
 		BeforeEach(func() {
 			dnsConfig = config.Config{
 				Recursors: []string{"foo-bar"},
@@ -55,7 +58,7 @@ var _ = Describe("Recursor", func() {
 		})
 
 		It("should not modify config", func() {
-			err := config.ConfigureRecursors(resolvConfReader, &dnsConfig)
+			err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dnsConfig.Recursors).Should(ConsistOf("foo-bar"))
 		})
@@ -64,7 +67,7 @@ var _ = Describe("Recursor", func() {
 
 	Context("when dnsConfig is not provided", func() {
 		It("should not error", func() {
-			err := config.ConfigureRecursors(resolvConfReader, nil)
+			err := config.ConfigureRecursors(resolvConfReader, stringShuffler, nil)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

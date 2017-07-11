@@ -6,7 +6,12 @@ type RecursorReader interface {
 	Get() ([]string, error)
 }
 
-func ConfigureRecursors(reader RecursorReader, dnsConfig *Config) error {
+//go:generate counterfeiter . StringShuffler
+type StringShuffler interface {
+	Shuffle(src []string) []string
+}
+
+func ConfigureRecursors(reader RecursorReader, shuffler StringShuffler, dnsConfig *Config) error {
 	if dnsConfig == nil {
 		return nil
 	}
@@ -16,6 +21,8 @@ func ConfigureRecursors(reader RecursorReader, dnsConfig *Config) error {
 		if err != nil {
 			return err
 		}
+
+		recursors = shuffler.Shuffle(recursors)
 
 		dnsConfig.Recursors = recursors
 	}

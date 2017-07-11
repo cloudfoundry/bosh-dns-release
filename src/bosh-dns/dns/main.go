@@ -87,7 +87,8 @@ func mainExitCode() int {
 
 	dnsManager := newDNSManager(logger, clock, fs)
 	recursorReader := dnsconfig.NewRecursorReader(dnsManager, config.Address)
-	err = dnsconfig.ConfigureRecursors(recursorReader, &config)
+	stringShuffler := shuffle.NewStringShuffler()
+	err = dnsconfig.ConfigureRecursors(recursorReader, stringShuffler, &config)
 	if err != nil {
 		logger.Error(logTag, fmt.Sprintf("Unable to configure recursor addresses from os: %s", err.Error()))
 		return 1
