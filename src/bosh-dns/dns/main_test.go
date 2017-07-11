@@ -522,8 +522,8 @@ var _ = Describe("main", func() {
 							return len(server.ReceivedRequests())
 						}
 					}
-					Eventually(serverRequestLen(healthServers[0]), 5*time.Second).Should(BeNumerically("==", 1))
-					Eventually(serverRequestLen(healthServers[1]), 5*time.Second).Should(BeNumerically("==", 5))
+					Eventually(serverRequestLen(healthServers[0]), 4*time.Second).Should(BeNumerically("==", 1))
+					Eventually(serverRequestLen(healthServers[1]), 4*time.Second).Should(BeNumerically("==", 4))
 				})
 			})
 		})

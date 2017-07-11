@@ -187,6 +187,7 @@ func setupSecureGet(caFile, clientCertFile, clientKeyFile string, logger boshlog
 	caCertPool.AppendCertsFromPEM(caCert)
 
 	client := boshhttp.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns")
+	client.Timeout = 5 * time.Second
 
-	return boshhttp.NewNetworkSafeRetryClient(client, 5, 500*time.Millisecond, logger), nil
+	return boshhttp.NewNetworkSafeRetryClient(client, 4, 500*time.Millisecond, logger), nil
 }
