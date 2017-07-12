@@ -79,7 +79,7 @@ func (c *concreteHealthServer) healthEntryPoint(w http.ResponseWriter, r *http.R
 	healthRaw, err := ioutil.ReadFile(c.healthJsonFileName)
 
 	if err != nil {
-		c.logger.Error(logTag, "Couldn't marshall healthcheck data %s. error: %s", string(healthRaw), err)
+		c.logger.Error(logTag, "Failed to read healthcheck data %s. error: %s", string(healthRaw), err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
