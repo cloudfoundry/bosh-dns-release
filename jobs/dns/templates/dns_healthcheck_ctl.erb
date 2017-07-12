@@ -32,7 +32,11 @@ function create_directories_and_chown_to_vcap() {
 
 function start_process() {
   pushd ${JOB_DIR}
-  "${DNS_PACKAGE}/bin/healthcheck" \
+  # Allowed number of open file descriptors
+  ulimit -v unlimited
+  ulimit -n 4096
+
+  exec chpst -u vcap:vcap "${DNS_PACKAGE}/bin/healthcheck" \
     config/healthcheck_server_config.json \
     1>> ${LOG_DIR}/dns_healthcheck.stdout.log \
     2>> ${LOG_DIR}/dns_healthcheck.stderr.log &
