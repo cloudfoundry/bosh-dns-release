@@ -24,7 +24,7 @@ var _ = Describe("Repo", func() {
 		recordsFile    boshsys.File
 		repo           records.RecordSetProvider
 		fakeClock      *fakeclock.FakeClock
-		fakeLogger     = &loggerfakes.FakeLogger{}
+		fakeLogger     *loggerfakes.FakeLogger
 		fakeFileSystem *fakes.FakeFileSystem
 	)
 
@@ -32,6 +32,7 @@ var _ = Describe("Repo", func() {
 		shutdownChan = make(chan struct{})
 		fakeFileSystem = fakes.NewFakeFileSystem()
 		fakeClock = fakeclock.NewFakeClock(time.Now())
+		fakeLogger = &loggerfakes.FakeLogger{}
 		recordsFile = fakes.NewFakeFile("/fake/file", fakeFileSystem)
 
 		err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(fmt.Sprint(`{
