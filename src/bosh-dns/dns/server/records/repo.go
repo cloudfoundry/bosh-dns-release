@@ -21,6 +21,7 @@ const logTag string = "RecordsRepo"
 
 type RecordSetProvider interface {
 	Get() (RecordSet, error)
+	Subscribe() <-chan bool
 }
 
 type autoUpdatingRepo struct {
@@ -33,6 +34,8 @@ type autoUpdatingRepo struct {
 	cacheStat       os.FileInfo
 	cache           *RecordSet
 	cacheErr        error
+
+	subscribers []chan bool
 }
 
 func NewRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Clock, logger logger.Logger, shutdownChan chan struct{}) RecordSetProvider {
@@ -42,6 +45,8 @@ func NewRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Cloc
 		clock:           clock,
 		logger:          logger,
 		rwlock:          &sync.RWMutex{},
+
+		subscribers: []chan bool{},
 	}
 
 	_, records, err := repo.needNewFromDisk()
@@ -62,12 +67,21 @@ func NewRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Cloc
 				newData, data, err := repo.needNewFromDisk()
 				if newData && err == nil {
 					repo.atomicallyUpdateCache(&data, err)
+					for _, c := range repo.subscribers {
+						c <- true
+					}
 				}
 			}
 		}
 	}()
 
 	return repo
+}
+
+func (r *autoUpdatingRepo) Subscribe() <-chan bool {
+	c := make(chan bool)
+	r.subscribers = append(r.subscribers, c)
+	return c
 }
 
 func (r *autoUpdatingRepo) needNewFromDisk() (needsNew bool, set RecordSet, err error) {

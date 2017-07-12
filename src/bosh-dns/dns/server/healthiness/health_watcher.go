@@ -18,6 +18,7 @@ type HealthChecker interface {
 
 type HealthWatcher interface {
 	IsHealthy(ip string) bool
+	Untrack(ip string)
 	Run(signal <-chan struct{})
 }
 
@@ -58,6 +59,12 @@ func (hw *healthWatcher) IsHealthy(ip string) bool {
 	})
 
 	return true
+}
+
+func (hw *healthWatcher) Untrack(ip string) {
+	hw.stateMutex.Lock()
+	delete(hw.state, ip)
+	hw.stateMutex.Unlock()
 }
 
 func (hw *healthWatcher) Run(signal <-chan struct{}) {

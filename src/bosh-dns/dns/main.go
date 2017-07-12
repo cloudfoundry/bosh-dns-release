@@ -106,8 +106,11 @@ func mainExitCode() int {
 		healthWatcher = healthiness.NewHealthWatcher(healthChecker, clock, checkInterval)
 	}
 
+	shutdown := make(chan struct{})
+
 	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
-	healthyRecordSet := healthiness.NewHealthyRecordSet(recordsRepo, healthWatcher)
+	healthyRecordSet := healthiness.NewHealthyRecordSet(recordsRepo, healthWatcher, shutdown)
+
 	localDomain := dnsresolver.NewLocalDomain(logger, healthyRecordSet, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
@@ -132,7 +135,6 @@ func mainExitCode() int {
 	}
 
 	bindAddress := fmt.Sprintf("%s:%d", config.Address, config.Port)
-	shutdown := make(chan struct{})
 	dnsServer := server.New(
 		[]server.DNSServer{
 			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: aliasResolver},

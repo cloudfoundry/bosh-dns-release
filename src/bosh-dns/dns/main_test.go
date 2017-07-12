@@ -483,6 +483,21 @@ var _ = Describe("main", func() {
 
 					ips = []string{r.Answer[0].(*dns.A).A.String()}
 					Expect(ips).To(ConsistOf("127.0.0.1"))
+
+					err = ioutil.WriteFile(recordsFilePath, []byte(fmt.Sprint(`{
+						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+						"record_infos": [
+							["my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1", "bosh"]
+						]
+					}`)), 0644)
+					Expect(err).NotTo(HaveOccurred())
+
+					Eventually(func() bool {
+						startLength := len(healthServers[1].ReceivedRequests())
+						time.Sleep(200 * time.Millisecond)
+						finalLength := len(healthServers[1].ReceivedRequests())
+						return startLength == finalLength
+					}).Should(BeTrue())
 				})
 			})
 

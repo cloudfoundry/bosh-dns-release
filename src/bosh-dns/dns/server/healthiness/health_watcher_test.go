@@ -109,4 +109,21 @@ var _ = Describe("HealthWatcher", func() {
 			})
 		})
 	})
+
+	Describe("Untrack", func() {
+		var ip string
+
+		BeforeEach(func() {
+			ip = "127.0.0.2"
+			healthWatcher.IsHealthy(ip)
+			Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
+			Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
+		})
+
+		It("stops tracking the status", func() {
+			healthWatcher.Untrack(ip)
+			fakeClock.WaitForWatcherAndIncrement(interval)
+			Consistently(fakeChecker.GetStatusCallCount).Should(Equal(1))
+		})
+	})
 })

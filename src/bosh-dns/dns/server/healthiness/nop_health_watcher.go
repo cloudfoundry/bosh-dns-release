@@ -10,6 +10,8 @@ func (hw *nopHealthWatcher) IsHealthy(ip string) bool {
 	return true
 }
 
+func (hw *nopHealthWatcher) Untrack(ip string) {}
+
 func (hw *nopHealthWatcher) Run(signal <-chan struct{}) {
 	<-signal
 }

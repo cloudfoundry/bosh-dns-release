@@ -6,9 +6,10 @@ import (
 
 	"code.cloudfoundry.org/clock/fakeclock"
 
+	"bosh-dns/dns/server/records"
+
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/cloudfoundry/bosh-utils/system/fakes"
-	"bosh-dns/dns/server/records"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -18,27 +19,47 @@ import (
 )
 
 var _ = Describe("Repo", func() {
+	var (
+		shutdownChan   chan struct{}
+		recordsFile    boshsys.File
+		repo           records.RecordSetProvider
+		fakeClock      *fakeclock.FakeClock
+		fakeLogger     = &loggerfakes.FakeLogger{}
+		fakeFileSystem *fakes.FakeFileSystem
+	)
+
+	BeforeEach(func() {
+		shutdownChan = make(chan struct{})
+		fakeFileSystem = fakes.NewFakeFileSystem()
+		fakeClock = fakeclock.NewFakeClock(time.Now())
+		recordsFile = fakes.NewFakeFile("/fake/file", fakeFileSystem)
+
+		err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(fmt.Sprint(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_infos": [
+					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
+				]
+			}`)))
+		Expect(err).NotTo(HaveOccurred())
+
+		repo = records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger, shutdownChan)
+	})
+
+	AfterEach(func() {
+		close(shutdownChan)
+	})
+
 	Describe("NewRepo", func() {
 		var (
-			shutdownChan        chan struct{}
-			repo                records.RecordSetProvider
-			fakeLogger          = &loggerfakes.FakeLogger{}
-			fakeClock           = fakeclock.NewFakeClock(time.Now())
-			fakeFileSystem      *fakes.FakeFileSystem
 			nonExistentFilePath string
 		)
 
 		BeforeEach(func() {
-			shutdownChan = make(chan struct{})
-			fakeFileSystem = fakes.NewFakeFileSystem()
 			nonExistentFilePath = "/some/fake/path"
 			fakeFileSystem.RegisterOpenFile(nonExistentFilePath, &fakes.FakeFile{
 				StatErr: errors.New("NOPE"),
 			})
-		})
-
-		AfterEach(func() {
-			close(shutdownChan)
 		})
 
 		Context("initial failure cases", func() {
@@ -54,37 +75,6 @@ var _ = Describe("Repo", func() {
 	})
 
 	Describe("Get", func() {
-		var (
-			shutdownChan   chan struct{}
-			recordsFile    boshsys.File
-			repo           records.RecordSetProvider
-			fakeClock      *fakeclock.FakeClock
-			fakeLogger     = &loggerfakes.FakeLogger{}
-			fakeFileSystem *fakes.FakeFileSystem
-		)
-
-		BeforeEach(func() {
-			shutdownChan = make(chan struct{})
-			fakeFileSystem = fakes.NewFakeFileSystem()
-			fakeClock = fakeclock.NewFakeClock(time.Now())
-			recordsFile = fakes.NewFakeFile("/fake/file", fakeFileSystem)
-
-			err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(fmt.Sprint(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
-				"record_infos": [
-					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
-					["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "my-domain"]
-				]
-			}`)))
-			Expect(err).NotTo(HaveOccurred())
-
-			repo = records.NewRepo(recordsFile.Name(), fakeFileSystem, fakeClock, fakeLogger, shutdownChan)
-		})
-
-		AfterEach(func() {
-			close(shutdownChan)
-		})
-
 		Context("initial failure cases", func() {
 			It("returns an error when the file does not exist", func() {
 				nonExistentFilePath := "/some/fake/path"
@@ -484,6 +474,31 @@ var _ = Describe("Repo", func() {
 					})
 				})
 			})
+		})
+	})
+
+	Describe("Subscribe", func() {
+		It("notifies when changes occur", func() {
+			c := repo.Subscribe()
+
+			err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
+				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_infos": [
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.128", "my-domain"],
+					["my-instance2", "my-group", "az1", "my-network", "my-deployment", "123.123.123.129", "my-domain"]
+				]
+			}`))
+			Expect(err).NotTo(HaveOccurred())
+
+			fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{
+				Stats: &fakes.FakeFileStats{
+					ModTime: fakeClock.Now(),
+				},
+			})
+
+			Consistently(c).ShouldNot(Receive())
+			fakeClock.WaitForWatcherAndIncrement(time.Second)
+			Eventually(c).Should(Receive())
 		})
 	})
 })

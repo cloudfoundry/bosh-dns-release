@@ -4,7 +4,8 @@ set -e -o pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-fly -t production login
+# workers exits 1 if not logged in
+fly -t production workers || fly -t production login
 
 fly -t production execute -x --privileged \
   --config=./ci/tasks/test-acceptance.yml \

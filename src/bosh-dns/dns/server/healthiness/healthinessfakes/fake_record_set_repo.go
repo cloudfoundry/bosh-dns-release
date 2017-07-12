@@ -19,6 +19,15 @@ type FakeRecordSetRepo struct {
 		result1 records.RecordSet
 		result2 error
 	}
+	SubscribeStub        func() <-chan bool
+	subscribeMutex       sync.RWMutex
+	subscribeArgsForCall []struct{}
+	subscribeReturns     struct {
+		result1 <-chan bool
+	}
+	subscribeReturnsOnCall map[int]struct {
+		result1 <-chan bool
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -66,11 +75,53 @@ func (fake *FakeRecordSetRepo) GetReturnsOnCall(i int, result1 records.RecordSet
 	}{result1, result2}
 }
 
+func (fake *FakeRecordSetRepo) Subscribe() <-chan bool {
+	fake.subscribeMutex.Lock()
+	ret, specificReturn := fake.subscribeReturnsOnCall[len(fake.subscribeArgsForCall)]
+	fake.subscribeArgsForCall = append(fake.subscribeArgsForCall, struct{}{})
+	fake.recordInvocation("Subscribe", []interface{}{})
+	fake.subscribeMutex.Unlock()
+	if fake.SubscribeStub != nil {
+		return fake.SubscribeStub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fake.subscribeReturns.result1
+}
+
+func (fake *FakeRecordSetRepo) SubscribeCallCount() int {
+	fake.subscribeMutex.RLock()
+	defer fake.subscribeMutex.RUnlock()
+	return len(fake.subscribeArgsForCall)
+}
+
+func (fake *FakeRecordSetRepo) SubscribeReturns(result1 <-chan bool) {
+	fake.SubscribeStub = nil
+	fake.subscribeReturns = struct {
+		result1 <-chan bool
+	}{result1}
+}
+
+func (fake *FakeRecordSetRepo) SubscribeReturnsOnCall(i int, result1 <-chan bool) {
+	fake.SubscribeStub = nil
+	if fake.subscribeReturnsOnCall == nil {
+		fake.subscribeReturnsOnCall = make(map[int]struct {
+			result1 <-chan bool
+		})
+	}
+	fake.subscribeReturnsOnCall[i] = struct {
+		result1 <-chan bool
+	}{result1}
+}
+
 func (fake *FakeRecordSetRepo) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.getMutex.RLock()
 	defer fake.getMutex.RUnlock()
+	fake.subscribeMutex.RLock()
+	defer fake.subscribeMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
