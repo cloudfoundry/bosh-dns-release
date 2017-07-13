@@ -2,7 +2,6 @@ package server_test
 
 import (
 	"fmt"
-	"strconv"
 
 	"bosh-dns/dns/server"
 
@@ -17,39 +16,22 @@ import (
 	"bosh-dns/dns/server/serverfakes"
 
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 )
 
-func getFreePort() (int, error) {
-	l, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return 0, err
-	}
-	l.Close()
-
-	_, port, err := net.SplitHostPort(l.Addr().String())
-	if err != nil {
-		return 0, err
-	}
-
-	intPort, err := strconv.Atoi(port)
-	if err != nil {
-		return 0, err
-	}
-
-	return intPort, nil
-}
-
 func tcpServerStub(bindAddress string, stop chan struct{}) func() error {
 	return func() error {
-		_, err := net.Listen("tcp", bindAddress)
+		listener, err := net.Listen("tcp", bindAddress)
 		if err != nil {
 			return err
 		}
+		defer func() {
+			err := listener.Close()
+			Expect(err).NotTo(HaveOccurred())
+		}()
 
-		select {
-		case <-stop:
-		}
+		<-stop
 
 		return nil
 	}
@@ -58,11 +40,17 @@ func tcpServerStub(bindAddress string, stop chan struct{}) func() error {
 func udpServerStub(bindAddress string, timeout time.Duration, stop chan struct{}) func() error {
 	return func() error {
 		listener, err := net.ListenPacket("udp", bindAddress)
-
 		if err != nil {
 			return err
 		}
-		listener.SetDeadline(time.Now().Add(timeout + (10 * time.Second)))
+		go func() {
+			defer GinkgoRecover()
+			<-stop
+			err := listener.Close()
+			Expect(err).NotTo(HaveOccurred())
+		}()
+
+		listener.SetDeadline(time.Now().Add(timeout + (1 * time.Second)))
 
 		buf := make([]byte, 1)
 		for {
@@ -77,11 +65,6 @@ func udpServerStub(bindAddress string, timeout time.Duration, stop chan struct{}
 
 			if _, err := listener.WriteTo(buf, addr); err != nil {
 				return err
-			}
-
-			select {
-			case <-stop:
-			default:
 			}
 		}
 	}
@@ -147,9 +130,7 @@ var _ = Describe("Server", func() {
 		shutdownChannel = make(chan struct{})
 		timeout = 1 * time.Second
 
-		port, err := getFreePort()
-		Expect(err).NotTo(HaveOccurred())
-
+		port := 8200 + config.GinkgoConfig.ParallelNode
 		bindAddress = fmt.Sprintf("127.0.0.1:%d", port)
 
 		fakeTCPServer = &serverfakes.FakeDNSServer{}
@@ -181,6 +162,9 @@ var _ = Describe("Server", func() {
 
 	AfterEach(func() {
 		close(stopFakeServer)
+		if shutdownChannel != nil {
+			close(shutdownChannel)
+		}
 	})
 
 	Context("Run", func() {
@@ -292,8 +276,10 @@ var _ = Describe("Server", func() {
 						}()
 
 						startFailing <- 5
-						Expect(<-numFailuresSent).To(Equal(5))
+						Eventually(numFailuresSent).Should(Receive(Equal(5)))
 						Eventually(dnsServerFinished).Should(Receive())
+						Eventually(shutdownChannel).Should(BeClosed())
+						shutdownChannel = nil
 					})
 
 					It("recovers if the failures are not consistent", func() {
@@ -305,12 +291,12 @@ var _ = Describe("Server", func() {
 						}()
 
 						startFailing <- 3
-						Expect(<-numFailuresSent).To(Equal(3))
+						Eventually(numFailuresSent).Should(Receive(Equal(3)))
 
 						Consistently(dnsServerFinished, 3*pollingInterval).ShouldNot(Receive())
 
 						startFailing <- 3
-						Expect(<-numFailuresSent).To(Equal(3))
+						Eventually(numFailuresSent).Should(Receive(Equal(3)))
 
 						Consistently(dnsServerFinished, 3*pollingInterval).ShouldNot(Receive())
 					})
@@ -331,8 +317,10 @@ var _ = Describe("Server", func() {
 						}()
 
 						startFailing <- 5
-						Expect(<-numFailuresSent).To(Equal(5))
+						Eventually(numFailuresSent).Should(Receive(Equal(5)))
 						Eventually(dnsServerFinished).Should(Receive())
+						Eventually(shutdownChannel).Should(BeClosed())
+						shutdownChannel = nil
 					})
 
 					It("recovers if the failures are not consistent", func() {
@@ -344,12 +332,12 @@ var _ = Describe("Server", func() {
 						}()
 
 						startFailing <- 3
-						Expect(<-numFailuresSent).To(Equal(3))
+						Eventually(numFailuresSent).Should(Receive(Equal(3)))
 
 						Consistently(dnsServerFinished, 3*pollingInterval).ShouldNot(Receive())
 
 						startFailing <- 3
-						Expect(<-numFailuresSent).To(Equal(3))
+						Eventually(numFailuresSent).Should(Receive(Equal(3)))
 						Consistently(dnsServerFinished, 3*pollingInterval).ShouldNot(Receive())
 					})
 				})
@@ -428,6 +416,7 @@ var _ = Describe("Server", func() {
 					}()
 
 					close(shutdownChannel)
+					shutdownChannel = nil
 					Eventually(dnsServerFinished).Should(Receive(nil))
 
 					Expect(fakeTCPServer.ShutdownCallCount()).To(Equal(1))
@@ -443,6 +432,7 @@ var _ = Describe("Server", func() {
 					}()
 
 					close(shutdownChannel)
+					shutdownChannel = nil
 					Eventually(dnsServerFinished).Should(Receive(Equal(err)))
 
 					Expect(fakeTCPServer.ShutdownCallCount()).To(Equal(1))

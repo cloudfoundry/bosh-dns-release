@@ -17,7 +17,6 @@ import (
 	"net"
 
 	"io/ioutil"
-	"strconv"
 
 	"runtime"
 	"syscall"
@@ -35,22 +34,6 @@ import (
 	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
-func getFreePort() (int, error) {
-	l, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return 0, err
-	}
-	err = l.Close()
-	Expect(err).NotTo(HaveOccurred())
-
-	_, port, err := net.SplitHostPort(l.Addr().String())
-	if err != nil {
-		return 0, err
-	}
-
-	return strconv.Atoi(port)
-}
-
 var _ = Describe("main", func() {
 	var (
 		listenAddress string
@@ -58,11 +41,8 @@ var _ = Describe("main", func() {
 	)
 
 	BeforeEach(func() {
-		var err error
-
 		listenAddress = "127.0.0.1"
-		listenPort, err = getFreePort()
-		Expect(err).NotTo(HaveOccurred())
+		listenPort = 8000 + config.GinkgoConfig.ParallelNode
 
 		if runtime.GOOS == "windows" {
 			err := os.MkdirAll("/var/vcap/packages/dns-windows/bin", os.ModePerm)
@@ -190,8 +170,8 @@ var _ = Describe("main", func() {
 				m := &dns.Msg{}
 				m.SetQuestion("primer-instance.primer-group.primer-network.primer-deployment.primer.", dns.TypeANY)
 				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-
 				Expect(err).NotTo(HaveOccurred())
+
 				return r.Rcode
 			}).Should(Equal(dns.RcodeSuccess))
 		})
@@ -551,7 +531,7 @@ var _ = Describe("main", func() {
 		)
 
 		It("will timeout after the recursor_timeout has been reached", func() {
-			l, err := net.Listen("tcp", "127.0.0.1:0")
+			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", 9000+config.GinkgoConfig.ParallelNode))
 			Expect(err).NotTo(HaveOccurred())
 			defer l.Close()
 
@@ -702,7 +682,7 @@ func newCommandWithConfig(config string) *exec.Cmd {
 
 func waitForServer(port int) error {
 	for i := 0; i < 20; i++ {
-		c, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", strconv.Itoa(port)))
+		c, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 		if err != nil {
 			time.Sleep(100 * time.Millisecond)
 			continue

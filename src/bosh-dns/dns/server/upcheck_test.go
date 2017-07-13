@@ -10,6 +10,7 @@ import (
 	"github.com/miekg/dns"
 
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/config"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
@@ -43,11 +44,8 @@ var _ = Describe("Upcheck", func() {
 	upcheckDomain := "upcheck.bosh-dns."
 
 	JustBeforeEach(func() {
-		var err error
-		ports["udp"], err = getFreePort()
-		Expect(err).NotTo(HaveOccurred())
-		ports["tcp"], err = getFreePort()
-		Expect(err).NotTo(HaveOccurred())
+		ports["udp"] = 8000 + config.GinkgoConfig.ParallelNode
+		ports["tcp"] = 8100 + config.GinkgoConfig.ParallelNode
 		addresses["udp"] = fmt.Sprintf("%s:%d", listenDomain, ports["udp"])
 		addresses["tcp"] = fmt.Sprintf("%s:%d", listenDomain, ports["tcp"])
 
