@@ -2,6 +2,8 @@ package server_test
 
 import (
 	"fmt"
+	"net"
+	"strconv"
 
 	"bosh-dns/dns/server"
 	"bosh-dns/dns/server/handlers"
@@ -10,16 +12,16 @@ import (
 	"github.com/miekg/dns"
 
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/config"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
-func startServer(network string, address string, handler dns.Handler) dns.Server {
-	notifyDone := make(chan bool)
-	server := dns.Server{Addr: address, Net: network, Handler: handler, NotifyStartedFunc: func() {
-		notifyDone <- true
+func startServer(network string, address string, handler dns.Handler) *dns.Server {
+	notifyDone := make(chan struct{})
+	server := &dns.Server{Addr: address, Net: network, Handler: handler, NotifyStartedFunc: func() {
+		close(notifyDone)
 	}}
+
 	go func() {
 		defer GinkgoRecover()
 		err := server.ListenAndServe()
@@ -29,23 +31,28 @@ func startServer(network string, address string, handler dns.Handler) dns.Server
 		//   TCP server. We have to allow that particular error.
 		Expect(err).To(Or(Not(HaveOccurred()), MatchError(ContainSubstring("use of closed network connection"))))
 	}()
-	Expect(<-notifyDone).To(BeTrue())
+
+	Eventually(notifyDone).Should(BeClosed())
+
 	return server
 }
 
 var _ = Describe("Upcheck", func() {
 	var subject server.Upcheck
 	var dnsHandler dns.Handler
-	var udpServer dns.Server
-	var tcpServer dns.Server
+	var udpServer *dns.Server
+	var tcpServer *dns.Server
 	var listenDomain string
 	var ports map[string]int
 	var addresses map[string]string
 	upcheckDomain := "upcheck.bosh-dns."
 
 	JustBeforeEach(func() {
-		ports["udp"] = 8000 + config.GinkgoConfig.ParallelNode
-		ports["tcp"] = 8100 + config.GinkgoConfig.ParallelNode
+		var err error
+		ports["udp"], err = getFreePort()
+		Expect(err).NotTo(HaveOccurred())
+		ports["tcp"], err = getFreePort()
+		Expect(err).NotTo(HaveOccurred())
 		addresses["udp"] = fmt.Sprintf("%s:%d", listenDomain, ports["udp"])
 		addresses["tcp"] = fmt.Sprintf("%s:%d", listenDomain, ports["tcp"])
 
@@ -110,6 +117,7 @@ var _ = Describe("Upcheck", func() {
 
 	Context("when the upcheck takes a long time", func() {
 		DescribeTable("times out with error", func(network string) {
+			// 203.0.113.0/24 is reserved for documentation as per RFC 5737
 			subject = server.NewDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, network)
 
 			err := subject.IsUp()
@@ -159,3 +167,23 @@ var _ = Describe("Upcheck", func() {
 		)
 	})
 })
+
+func getFreePort() (int, error) {
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+	l.Close()
+
+	_, port, err := net.SplitHostPort(l.Addr().String())
+	if err != nil {
+		return 0, err
+	}
+
+	intPort, err := strconv.Atoi(port)
+	if err != nil {
+		return 0, err
+	}
+
+	return intPort, nil
+}

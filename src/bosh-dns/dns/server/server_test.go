@@ -16,7 +16,6 @@ import (
 	"bosh-dns/dns/server/serverfakes"
 
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 )
 
@@ -130,7 +129,8 @@ var _ = Describe("Server", func() {
 		shutdownChannel = make(chan struct{})
 		timeout = 1 * time.Second
 
-		port := 8200 + config.GinkgoConfig.ParallelNode
+		port, err := getFreePort()
+		Expect(err).NotTo(HaveOccurred())
 		bindAddress = fmt.Sprintf("127.0.0.1:%d", port)
 
 		fakeTCPServer = &serverfakes.FakeDNSServer{}

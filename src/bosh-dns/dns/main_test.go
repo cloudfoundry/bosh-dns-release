@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/config"
@@ -42,7 +43,9 @@ var _ = Describe("main", func() {
 
 	BeforeEach(func() {
 		listenAddress = "127.0.0.1"
-		listenPort = 8000 + config.GinkgoConfig.ParallelNode
+		var err error
+		listenPort, err = getFreePort()
+		Expect(err).NotTo(HaveOccurred())
 
 		if runtime.GOOS == "windows" {
 			err := os.MkdirAll("/var/vcap/packages/dns-windows/bin", os.ModePerm)
@@ -170,10 +173,12 @@ var _ = Describe("main", func() {
 				m := &dns.Msg{}
 				m.SetQuestion("primer-instance.primer-group.primer-network.primer-deployment.primer.", dns.TypeANY)
 				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-				Expect(err).NotTo(HaveOccurred())
+				if err != nil {
+					return -1
+				}
 
 				return r.Rcode
-			}).Should(Equal(dns.RcodeSuccess))
+			}, 5*time.Second).Should(Equal(dns.RcodeSuccess))
 		})
 
 		AfterEach(func() {
@@ -735,4 +740,24 @@ func newFakeHealthServer(ip, state string) *ghttp.Server {
 	server.HTTPTestServer.StartTLS()
 
 	return server
+}
+
+func getFreePort() (int, error) {
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+	l.Close()
+
+	_, port, err := net.SplitHostPort(l.Addr().String())
+	if err != nil {
+		return 0, err
+	}
+
+	intPort, err := strconv.Atoi(port)
+	if err != nil {
+		return 0, err
+	}
+
+	return intPort, nil
 }
