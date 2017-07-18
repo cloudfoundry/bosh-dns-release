@@ -56,16 +56,14 @@ jobs:
     - get: gcp-linux-stemcell
     - get: bosh-candidate-stemcell-windows
     - get: bosh-candidate-release
-    - do:
-      - task: windows
-        file: dns-release/ci/tasks/test-acceptance-windows.yml
-      - task: windows-nameserver-disabled
-        file: dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
-      - task: windows-shared
-        file: dns-release/ci/tasks/test-acceptance-windows-shared.yml
-      ensure:
-        task: clean-up
-        file: dns-release/ci/tasks/clean-up.yml
+    - task: windows
+      file: dns-release/ci/tasks/test-acceptance-windows.yml
+    - task: windows-nameserver-disabled
+      file: dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
+    - task: windows-shared
+      file: dns-release/ci/tasks/test-acceptance-windows-shared.yml
+    - task: clean-up
+      file: dns-release/ci/tasks/clean-up.yml
 
 - name: bbl-up
   serial: true
