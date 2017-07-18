@@ -65,6 +65,8 @@ We'll use a short, hardcoded dictionary; the keys are one letter, and the values
 * `s` (or `h`?) for status - 0 is healthy and the default, 1 is unhealthy, 2 is all of the above.
 * `z` for Not AZ. (it's az backwards.)
 
+The director will always specify at least the health/status query (the default query is just `q-s0`, and that is tacked onto all queries).
+
 Sample queries:
 
 * `a100a101n102s0` - az 100 or az 101, network 102, healthy
