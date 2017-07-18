@@ -3,9 +3,8 @@
 set -o pipefail
 
 ROOT_DIR=$PWD
-BBL_STATE_DIR=$ROOT_DIR/bbl-state
+BBL_STATE_DIR=$ROOT_DIR/envs/$ENV_NAME
 
-export PATH=$BBL_STATE_DIR/bin:$PATH
 source $BBL_STATE_DIR/bosh.sh
 
 bosh -n upload-stemcell $ROOT_DIR/bosh-candidate-stemcell-windows/*.tgz

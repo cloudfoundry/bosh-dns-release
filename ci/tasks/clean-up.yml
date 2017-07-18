@@ -11,17 +11,8 @@ inputs:
   - name: dns-release
   - name: envs
 
-outputs:
-  - name: envs
-    path: envs-output
-
 params:
-  BBL_GCP_SERVICE_ACCOUNT_KEY:
-  BBL_GCP_PROJECT_ID: cf-bosh-core
-  BBL_GCP_ZONE: us-central1-a
-  BBL_GCP_REGION: us-central1
-  BBL_IAAS: gcp
   ENV_NAME: default
 
 run:
-  path: dns-release/ci/tasks/bbl-destroy.sh
+  path: dns-release/ci/tasks/clean-up.sh

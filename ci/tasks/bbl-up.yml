@@ -4,17 +4,18 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: bosh/main-ruby-go
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v2.5.0
 
 inputs:
   - name: dns-release
-  - name: bbl-cli
-  - name: bosh-cli
   - name: bosh-deployment
   - name: bosh-candidate-release
+  - name: envs
 
 outputs:
-  - name: bbl-state
+  - name: envs
+    path: envs-output
 
 params:
   BBL_GCP_SERVICE_ACCOUNT_KEY:
@@ -22,6 +23,7 @@ params:
   BBL_GCP_ZONE: us-central1-a
   BBL_GCP_REGION: us-central1
   BBL_IAAS: gcp
+  ENV_NAME: default
 
 run:
   path: dns-release/ci/tasks/bbl-up.sh

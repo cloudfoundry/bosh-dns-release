@@ -4,13 +4,17 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: bosh/main-ruby-go
+    repository: bosh/dns-release
+    tag: acceptance-tests-windows
 
 inputs:
   - name: dns-release
-  - name: bbl-state
+  - name: envs
   - name: bosh-candidate-stemcell-windows
   - name: gcp-linux-stemcell
 
 run:
   path: dns-release/ci/tasks/test-acceptance-windows-shared.sh
+
+params:
+  ENV_NAME: default

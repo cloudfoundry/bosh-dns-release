@@ -1,30 +1,30 @@
 #!/bin/bash -eux
 
-set -o pipefail
+set -eu -o pipefail
 
 ROOT_DIR=$PWD
-BBL_STATE_DIR=$ROOT_DIR/bbl-state
+REPO_DIR=$ROOT_DIR/envs-output
 
-mkdir -p $BBL_STATE_DIR/bin
-export PATH=$BBL_STATE_DIR/bin:$PATH
+git clone -q "file://$ROOT_DIR/envs" "$REPO_DIR"
 
-set +u
-source /usr/local/share/chruby/chruby.sh
-chruby ruby-2.3.1
-set -u
+BBL_STATE_DIR=$REPO_DIR/$ENV_NAME
 
-apt-get install -y zip
+function commit_state {
+  cd "$REPO_DIR"
 
-wget https://releases.hashicorp.com/terraform/0.9.4/terraform_0.9.4_linux_amd64.zip
-unzip terraform_0.9.4_linux_amd64.zip
-mv terraform $BBL_STATE_DIR/bin/
-chmod +x $BBL_STATE_DIR/bin/terraform
+  if [[ ! -n "$(git status --porcelain)" ]]; then
+    return
+  fi
 
-cp $(realpath $ROOT_DIR/bosh-cli/bosh-cli-*) $BBL_STATE_DIR/bin/bosh
-chmod +x $BBL_STATE_DIR/bin/bosh
+  git config user.name "${GIT_COMMITTER_NAME:-CI Bot}"
+  git config user.email "${GIT_COMMITTER_EMAIL:-ci@localhost}"
+  git add -A .
+  git commit -m "$ENV_NAME: bbl-up"
+}
 
-cp $(realpath $ROOT_DIR/bbl-cli/bbl-*_linux_x86-64) $BBL_STATE_DIR/bin/bbl
-chmod +x $BBL_STATE_DIR/bin/bbl
+trap commit_state EXIT
+
+mkdir -p $BBL_STATE_DIR
 
 bbl --state-dir=$BBL_STATE_DIR up --no-director
 

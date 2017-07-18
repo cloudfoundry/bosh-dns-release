@@ -45,31 +45,61 @@ jobs:
 - name: test-acceptance-windows
   public: true
   serial: true
+  serial_groups:
+  - windows-acceptance-env
   plan:
     - get: dns-release
       trigger: true
       passed: [test-unit-windows]
-    - get: bosh-cli
-    - get: bbl-cli
+    - get: envs
     - get: bosh-deployment
     - get: gcp-linux-stemcell
     - get: bosh-candidate-stemcell-windows
     - get: bosh-candidate-release
-    - task: test-acceptance
+    - do:
+      - task: windows
+        file: dns-release/ci/tasks/test-acceptance-windows.yml
+      - task: windows-nameserver-disabled
+        file: dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
+      - task: windows-shared
+        file: dns-release/ci/tasks/test-acceptance-windows-shared.yml
+      ensure:
+        task: clean-up
+        file: dns-release/ci/tasks/clean-up.yml
+
+- name: bbl-up
+  serial: true
+  serial_groups:
+  - windows-acceptance-env
+  plan:
+    - get: dns-release
+    - get: bosh-deployment
+    - get: bosh-candidate-release
+    - get: envs
+    - task: bbl-up
       file: dns-release/ci/tasks/bbl-up.yml
       params:
         BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
-      on_success:
-        do:
-          - task: windows
-            file: dns-release/ci/tasks/test-acceptance-windows.yml
-          - task: windows-nameserver-disabled
-            file: dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
-          - task: windows-shared
-            file: dns-release/ci/tasks/test-acceptance-windows-shared.yml
       ensure:
-        task: teardown
-        file: dns-release/ci/tasks/bbl-destroy.yml
+        put: envs
+        params:
+          repository: envs
+
+- name: bbl-destroy
+  serial: true
+  serial_groups:
+  - windows-acceptance-env
+  plan:
+    - get: dns-release
+    - get: envs
+    - task: bbl-destroy
+      file: dns-release/ci/tasks/bbl-destroy.yml
+      params:
+        BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
+      ensure:
+        put: envs
+        params:
+          repository: envs
 
 resources:
 - name: dns-release
@@ -102,20 +132,14 @@ resources:
     bucket: bosh-candidate-release-tarballs
     versioned_file: bosh-dev-release.tgz
 
-- name: bosh-cli
-  type: s3
-  source:
-    regexp: bosh-cli-([0-9.]+)-linux-amd64
-    bucket: bosh-cli-artifacts
-    region_name: us-east-1
-
-- name: bbl-cli
-  type: github-release
-  source:
-    user: cloudfoundry
-    repository: bosh-bootloader
-
 - name: gcp-linux-stemcell
   type: bosh-io-stemcell
   source:
     name: bosh-google-kvm-ubuntu-trusty-go_agent
+
+- name: envs
+  type: git
+  source:
+    branch: master
+    uri: git@github.com:cloudfoundry/dns-release-ci-envs.git
+    private_key: {{envs_private_key}}
