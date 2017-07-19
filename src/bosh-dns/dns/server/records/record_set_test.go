@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"bosh-dns/dns/server/records"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -117,6 +118,15 @@ var _ = Describe("RecordSet", func() {
 
 				Expect(records).To(HaveLen(0))
 			})
+		})
+	})
+
+	Context("when fqdn is already an IP address", func() {
+		It("return the IP back", func() {
+			records, err := recordSet.Resolve("123.123.123.123")
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(records).To(ContainElement("123.123.123.123"))
 		})
 	})
 

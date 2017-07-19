@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -15,6 +16,10 @@ type RecordSet struct {
 }
 
 func (r RecordSet) Resolve(fqdn string) ([]string, error) {
+	if net.ParseIP(fqdn) != nil {
+		return []string{fqdn}, nil
+	}
+
 	var ips []string
 
 	if strings.HasPrefix(fqdn, "q-") {

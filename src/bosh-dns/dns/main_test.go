@@ -141,7 +141,8 @@ var _ = Describe("main", func() {
 			_, err = aliasesFile2.Write([]byte(fmt.Sprint(`{
 				"one.alias.": ["my-instance.my-group.my-network.my-deployment.bosh."],
 				"internal.alias.": ["my-instance-2.my-group.my-network.my-deployment-2.bosh.","my-instance.my-group.my-network.my-deployment.bosh."],
-				"group.internal.alias.": ["*.my-group.my-network.my-deployment.bosh."]
+				"group.internal.alias.": ["*.my-group.my-network.my-deployment.bosh."],
+				"ip.alias.": ["10.11.12.13"]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -238,6 +239,27 @@ var _ = Describe("main", func() {
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
 						Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[one\.alias\.\] 0 \d+ns`))
+					})
+				})
+
+				Context("with an address resolving to an IP", func() {
+					BeforeEach(func() {
+						m.SetQuestion("ip.alias.", dns.TypeA)
+					})
+
+					It("resolves to the appropriate domain before deferring to mux", func() {
+						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(response.Answer).To(HaveLen(1))
+						Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(response.Answer[0].Header().Name).To(Equal("ip.alias."))
+						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
+						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
+						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
+						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("10.11.12.13"))
+
+						Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[ip\.alias\.\] 0 \d+ns`))
 					})
 				})
 

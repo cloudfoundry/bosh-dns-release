@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"sort"
 	"strings"
 
@@ -69,6 +70,8 @@ func (c *Config) setAlias(alias string, domains []string) error {
 	for _, domain := range domains {
 		if strings.HasPrefix(domain, "*.") {
 			qualifedDomains = append(qualifedDomains, dns.Fqdn(strings.Replace(dns.Fqdn(domain), "*", "q-YWxs", 1)))
+		} else if net.ParseIP(domain) != nil {
+			qualifedDomains = append(qualifedDomains, domain)
 		} else {
 			qualifedDomains = append(qualifedDomains, dns.Fqdn(domain))
 		}

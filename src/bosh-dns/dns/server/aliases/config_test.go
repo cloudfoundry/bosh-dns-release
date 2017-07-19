@@ -71,6 +71,7 @@ var _ = Describe("Config", func() {
 			})
 		})
 	})
+
 	Describe("group alias", func() {
 		Context("single level aliases", func() {
 			It("resolves", func() {
@@ -110,6 +111,16 @@ var _ = Describe("Config", func() {
 
 				Expect(c.Resolutions("sub.alias1.")).To(Equal([]string{"*unsupported.deepsub.sub.domain."}))
 			})
+		})
+	})
+
+	Describe("IP aliases", func() {
+		It("resolves and does not add a trailing dot", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"alias1": {"1.1.1.1"},
+			})
+
+			Expect(c.Resolutions("alias1.")).To(Equal([]string{"1.1.1.1"}))
 		})
 	})
 
