@@ -1,3 +1,4 @@
+required = ["github.com/onsi/ginkgo/ginkgo"]
 
 [[constraint]]
   branch = "master"
@@ -26,3 +27,4 @@
 [[constraint]]
   branch = "master"
   name = "code.cloudfoundry.org/workpool"
+
