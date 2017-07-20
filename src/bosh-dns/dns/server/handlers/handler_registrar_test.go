@@ -92,7 +92,7 @@ var _ = Describe("HandlerRegistrar", func() {
 				Eventually(logger.ErrorCallCount).Should(Equal(1))
 				tag, msg, stuff := logger.ErrorArgsForCall(0)
 				Expect(tag).To(Equal("handler-registrar"))
-				Expect(msg).To(Equal("cannot get record set"))
+				Expect(msg).To(Equal("cannot get record set %v"))
 				Expect(stuff).To(HaveLen(1))
 				Expect(stuff[0]).To(Equal(getErr))
 

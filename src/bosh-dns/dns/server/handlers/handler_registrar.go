@@ -53,7 +53,7 @@ func (h *HandlerRegistrar) Run(signal chan struct{}) error {
 		case <-ticker.C():
 			recordSet, err := h.recordsRepo.Get()
 			if err != nil {
-				h.logger.Error("handler-registrar", "cannot get record set", err)
+				h.logger.Error("handler-registrar", "cannot get record set %v", err)
 				continue
 			}
 
