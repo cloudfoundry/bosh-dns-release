@@ -5,7 +5,7 @@ set -o pipefail
 ROOT_DIR=$PWD
 BBL_STATE_DIR=$ROOT_DIR/envs/$ENV_NAME
 
-source $BBL_STATE_DIR/bosh.sh
+source $BBL_STATE_DIR/.envrc
 
 bosh -n upload-stemcell $ROOT_DIR/bosh-candidate-stemcell-windows/*.tgz
 bosh -n upload-stemcell $ROOT_DIR/gcp-linux-stemcell/*.tgz

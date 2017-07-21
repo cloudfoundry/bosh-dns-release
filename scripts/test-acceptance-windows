@@ -26,26 +26,8 @@ export BBL_GCP_PROJECT_ID=cf-bosh-core
 export BBL_GCP_ZONE=us-central1-a
 export BBL_GCP_REGION=us-central1
 export BBL_IAAS=gcp
+export ENV_NAME=$(hostname)
 EOF
-fi
-
-# Download bosh-cli if it doesn't exist
-BOSH_CLI_DIR=${WORK_DIR}/bosh-cli
-mkdir -p $BOSH_CLI_DIR
-if [ ! -e $BOSH_CLI_DIR/bosh-cli-linux ]; then
-  pushd ${BOSH_CLI_DIR}
-    curl -o bosh-cli-linux https://s3.amazonaws.com/bosh-cli-alpha-artifacts/alpha-bosh-cli-0.0.250-linux-amd64
-  popd
-fi
-
-# Download the bbl cli if it doesn't exist
-BBL_CLI_DIR=${WORK_DIR}/bbl-cli
-mkdir -p $BBL_CLI_DIR
-if [ ! -e ${BBL_CLI_DIR}/bbl-v3.2.0_linux_x86-64 ]; then
-  pushd $BBL_CLI_DIR
-    curl -o bbl-v3.2.0_linux_x86-64 -L -v https://github.com/cloudfoundry/bosh-bootloader/releases/download/v3.2.0/bbl-v3.2.0_linux_x86-64
-    chmod +x ./bbl-v3.2.0_linux_x86-64
-  popd
 fi
 
 # Download bosh-release if it doesn't exist
@@ -58,58 +40,46 @@ if [ ! -e ${BOSH_RELEASE_DIR}/bosh-dev-release.tgz ]; then
   popd
 fi
 
-BBL_STATE_DIR=$WORK_DIR/bbl-state
-mkdir -p $BBL_STATE_DIR
-pushd $BBL_STATE_DIR
+ENVS=$WORK_DIR/envs
+mkdir -p $ENVS
+pushd $ENVS
   set +e
   git init
   set -e
 popd
 
-docker pull bosh/main-ruby-go
+source bbl.env
 
-docker run \
-  -t -i \
-  -v $BBL_STATE_DIR:'/bbl-state' \
-  -v `realpath $BOSH_RELEASE_DIR`:/bosh-candidate-release \
-  -v `realpath $WORK_DIR`:/workdir \
-  -v `realpath $BBL_CLI_DIR`:/bbl-cli \
-  -v `realpath $BOSH_CLI_DIR`:/bosh-cli \
-  -v ~/workspace/bosh-deployment:/bosh-deployment \
-  -v $DIR/..:/dns-release \
-  bosh/main-ruby-go \
-  bash -c 'source /workdir/bbl.env; /dns-release/ci/tasks/bbl-up.sh'
+SKIP_GIT=true \
+	BOSH_RELEASE_PATH=${BOSH_RELEASE_DIR}/bosh-dev-release.tgz \
+	ROOT_DIR=$WORK_DIR \
+	BOSH_DEPLOYMENT_PATH=$DIR/../../bosh-deployment \
+	$DIR/../ci/tasks/bbl-up.sh
 
 # windows specfic
 fly -t production execute -x --privileged \
   --config=$DIR/../ci/tasks/test-acceptance-windows.yml \
   --inputs-from=dns-release/test-acceptance-windows \
   --input=dns-release=$DIR/../ \
-  --input=bbl-state=$BBL_STATE_DIR
+  --input=envs=$ENVS
 
 # nameserver-disabled
 fly -t production execute -x --privileged \
+  --config=$DIR/../ci/tasks/test-acceptance-windows-nameserver-disabled.yml \
   --inputs-from=dns-release/test-acceptance-windows \
   --input=dns-release=$DIR/../ \
-  --input=bbl-state=$BBL_STATE_DIR \
-  --config=$DIR/../ci/tasks/test-acceptance-windows-nameserver-disabled.yml
+  --input=envs=$ENVS
 
 # shared
 fly -t production execute -x --privileged \
+  --config=$DIR/../ci/tasks/test-acceptance-windows-shared.yml \
   --inputs-from=dns-release/test-acceptance-windows \
   --input=dns-release=$DIR/../ \
-  --input=bbl-state=$BBL_STATE_DIR \
-  --config=$DIR/../ci/tasks/test-acceptance-windows-shared.yml
+  --input=envs=$ENVS
 
-docker run \
-  -t -i \
-  -v $BBL_STATE_DIR:'/bbl-state' \
-  -v `realpath $BBL_CLI_DIR`:/bbl-cli \
-  -v `realpath $BOSH_CLI_DIR`:/bosh-cli \
-  -v `realpath $WORK_DIR`:/workdir \
-  -v ~/workspace/bosh-deployment:/bosh-deployment \
-  -v $DIR/..:/dns-release bosh/main-ruby-go \
-  bash -c 'source /workdir/bbl.env; /dns-release/ci/tasks/bbl-destroy.sh'
+SKIP_GIT=true \
+	ROOT_DIR=$WORK_DIR \
+	$DIR/../ci/tasks/bbl-destroy.sh
 
 # Clean up creds.yml so that the next bbl-up will recreate certs for the new instances.
 rm -f $BBL_STATE_DIR/creds.yml
