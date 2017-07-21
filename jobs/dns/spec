@@ -5,10 +5,10 @@ templates:
   aliases.json.erb: dns/aliases.json
   dns_ctl.erb: bin/dns_ctl
   dns_resolvconf_ctl.erb: bin/dns_resolvconf_ctl
-  dns_healthcheck_ctl.erb: bin/dns_healthcheck_ctl
+  dns_health_ctl.erb: bin/dns_health_ctl
   post-start.erb: bin/post-start
   config.json.erb: config/config.json
-  healthcheck_server_config.json.erb: config/healthcheck_server_config.json
+  health_server_config.json.erb: config/health_server_config.json
   server.key.erb: config/certs/server.key
   server.crt.erb: config/certs/server.crt
   server_ca.crt.erb: config/certs/server_ca.crt
@@ -65,7 +65,7 @@ properties:
     default: false
 
   health.server.port:
-    description: "Port to run healthchecks server on"
+    description: "Port to run health server on"
     default: 8853
 
   health.server.tls:

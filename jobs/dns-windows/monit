@@ -11,7 +11,7 @@ monit = {
 if p('override_nameserver')
   monit[:processes] << {
     name: "dns-nameserverconfig-windows",
-    executable: "/var/vcap/packages/dns-windows/bin/nameserverconfig.exe",
+    executable: "/var/vcap/packages/dns-windows/bin/dns-nameserverconfig.exe",
     args: ["--bindAddress", p('address').to_s == "0.0.0.0" ? "127.0.0.1" : p('address')]
   }
 end
@@ -19,8 +19,8 @@ end
 if p('health.enabled')
   monit[:processes] << {
     name: "dns-healthcheck-windows",
-    executable: "/var/vcap/packages/dns-windows/bin/healthcheck.exe",
-    args: ["/var/vcap/jobs/dns-windows/config/healthcheck_server_config.json"]
+    executable: "/var/vcap/packages/dns-windows/bin/dns-health.exe",
+    args: ["/var/vcap/jobs/dns-windows/config/health_server_config.json"]
   }
 end
 

@@ -12,8 +12,8 @@ check process dns-resolvconf
 <% end %>
 <% if p('health.enabled') %>
 check process dns-healthcheck
-  with pidfile /var/vcap/sys/run/dns/dns_healthcheck.pid
-  start program "/var/vcap/jobs/dns/bin/dns_healthcheck_ctl start"
-  stop program "/var/vcap/jobs/dns/bin/dns_healthcheck_ctl stop"
+  with pidfile /var/vcap/sys/run/dns/dns_health.pid
+  start program "/var/vcap/jobs/dns/bin/dns_health_ctl start"
+  stop program "/var/vcap/jobs/dns/bin/dns_health_ctl stop"
   group vcap
 <% end %>

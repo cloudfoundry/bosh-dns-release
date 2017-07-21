@@ -30,7 +30,7 @@ function create_directories_and_chown_to_vcap() {
 }
 
 function start_process() {
-  "${DNS_PACKAGE}/bin/nameserverconfig" \
+  "${DNS_PACKAGE}/bin/dns-nameserverconfig" \
     --bindAddress "<%= p('address') %>" \
     1>> ${LOG_DIR}/dns_resolvconf.stdout.log \
     2>> ${LOG_DIR}/dns_resolvconf.stderr.log &

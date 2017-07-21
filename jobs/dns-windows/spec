@@ -7,7 +7,7 @@ templates:
   dns_ctl.ps1.erb: bin/dns_ctl.ps1
   post-start.ps1.erb: bin/post-start.ps1
   pre-start.ps1.erb: bin/pre-start.ps1
-  healthcheck_server_config.json.erb: config/healthcheck_server_config.json
+  health_server_config.json.erb: config/health_server_config.json
   server.key.erb: config/certs/server.key
   server.crt.erb: config/certs/server.crt
   server_ca.crt.erb: config/certs/server_ca.crt
@@ -61,7 +61,7 @@ properties:
     default: false
 
   health.server.port:
-    description: "Port to run healthchecks server on"
+    description: "Port to run health server on"
     default: 8853
 
   health.server.tls:

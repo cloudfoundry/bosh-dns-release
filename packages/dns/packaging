@@ -9,8 +9,6 @@ export PATH="${GOROOT}/bin:${PATH}"
 mkdir -p "${GOPATH}/src"
 mv * "${GOPATH}/src"
 
-go install "bosh-dns/dns"
-go install "bosh-dns/dns/nameserverconfig"
-go install "bosh-dns/healthcheck"
-
-mv "${GOPATH}/bin/"* "${BOSH_INSTALL_TARGET}/bin"
+go build -o "${BOSH_INSTALL_TARGET}/bin/dns" "bosh-dns/dns"
+go build -o "${BOSH_INSTALL_TARGET}/bin/dns-nameserverconfig" "bosh-dns/dns/nameserverconfig"
+go build -o "${BOSH_INSTALL_TARGET}/bin/dns-health" "bosh-dns/healthcheck"
