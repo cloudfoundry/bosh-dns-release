@@ -9,6 +9,8 @@ ROOT_DIR=${ROOT_DIR:-$PWD}
 
 REPO_DIR=$ROOT_DIR/envs
 
+SKIP_GIT=${SKIP_GIT:-}
+
 if [ -z "${SKIP_GIT}" ]; then
 	REPO_DIR=$ROOT_DIR/envs-output
 

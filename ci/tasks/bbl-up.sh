@@ -9,6 +9,8 @@ BOSH_RELEASE_PATH=${BOSH_RELEASE_PATH:-$ROOT_DIR/bosh-candidate-release/bosh-dev
 
 REPO_DIR=$ROOT_DIR/envs
 
+SKIP_GIT=${SKIP_GIT:-}
+
 if [ -z "${SKIP_GIT}" ]; then
 	REPO_DIR=$ROOT_DIR/envs-output
 	git clone -q "file://$ROOT_DIR/envs" "$REPO_DIR"
