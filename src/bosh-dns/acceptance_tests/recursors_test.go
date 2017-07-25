@@ -37,10 +37,6 @@ var _ = Describe("recursor", func() {
 		})
 
 		It("fowards queries to the configured recursors on port 53", func() {
-			if testTargetOS == "windows" {
-				Skip("Windows agent does not properly configure DNS nameservers from cloud config")
-			}
-
 			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A example.com @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
