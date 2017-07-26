@@ -168,14 +168,7 @@ var _ = Describe("HealthyRecordSet", func() {
 		})
 
 		It("checks the health of new ones", func() {
-			Expect(fakeHealthWatcher.IsHealthyCallCount()).To(Equal(3))
-
-			// healthCheckedIPs := []string{
-			// 	fakeHealthWatcher.IsHealthyArgsForCall(2),
-			// 	fakeHealthWatcher.IsHealthyArgsForCall(3),
-			// }
-			// Expect(healthCheckedIPs).To(ConsistOf("123.123.123.123", "123.123.123.5"))
-
+			Eventually(fakeHealthWatcher.IsHealthyCallCount).Should(Equal(3))
 			Expect(fakeHealthWatcher.IsHealthyArgsForCall(2)).To(Equal("123.123.123.5"))
 		})
 
