@@ -38,7 +38,6 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 	network := r.network(responseWriter)
 
 	client := r.exchangerFactory(network)
-	r.logger.Info(r.logTag, "attempting recursors")
 	for _, recursor := range r.recursors {
 		exchangeAnswer, _, err := client.Exchange(request, recursor)
 		if err == nil || err == dns.ErrTruncated {

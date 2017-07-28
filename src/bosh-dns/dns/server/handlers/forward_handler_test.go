@@ -5,10 +5,11 @@ import (
 	"net"
 	"time"
 
-	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
+
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
 
 	"fmt"
@@ -52,8 +53,8 @@ var _ = Describe("ForwardHandler", func() {
 				recursionHandler.ServeDNS(fakeWriter, msg)
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 
-				Expect(fakeLogger.InfoCallCount()).To(Equal(2))
-				tag, logMsg, _ := fakeLogger.InfoArgsForCall(1)
+				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
+				tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
 				Expect(logMsg).To(Equal("no response from recursors"))
 
@@ -145,11 +146,6 @@ var _ = Describe("ForwardHandler", func() {
 					msg, recursor := fakeExchanger.ExchangeArgsForCall(0)
 					Expect(recursor).To(Equal("127.0.0.1"))
 					Expect(msg).To(Equal(m))
-
-					Expect(fakeLogger.InfoCallCount()).To(Equal(1))
-					tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
-					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(logMsg).To(Equal("attempting recursors"))
 				},
 				Entry("forwards query to recursor via udp for udp clients", "udp", nil, false),
 				Entry("forwards query to recursor via udp for udp clients when the response is truncated", "udp", nil, true),
@@ -288,14 +284,14 @@ var _ = Describe("ForwardHandler", func() {
 				})
 
 				It("writes a failure result", func() {
-					Expect(fakeLogger.InfoCallCount()).To(Equal(4))
-					tag, msg, args := fakeLogger.InfoArgsForCall(1)
+					Expect(fakeLogger.InfoCallCount()).To(Equal(3))
+					tag, msg, args := fakeLogger.InfoArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
 					Expect(msg).To(Equal("error recursing to %s %s"))
 					Expect(args[0]).To(Equal("127.0.0.1"))
 					Expect(args[1]).To(Equal("failed to exchange"))
 
-					tag, msg, args = fakeLogger.InfoArgsForCall(2)
+					tag, msg, args = fakeLogger.InfoArgsForCall(1)
 					Expect(tag).To(Equal("ForwardHandler"))
 					Expect(msg).To(Equal("error recursing to %s %s"))
 					Expect(args[0]).To(Equal("127.0.0.2"))
