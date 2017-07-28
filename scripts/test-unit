@@ -1,14 +1,24 @@
 #!/bin/bash
 
-set -e -o pipefail
+main() {
+		set -eu -o pipefail -x
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+		DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-GOPATH=$(cd $DIR/.. && pwd)
-PATH=$GOPATH/bin:$PATH
+		GOPATH="$(cd "$DIR/.." && pwd)"
+		PATH=$GOPATH/bin:$PATH
 
-go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
+		go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
-pushd $GOPATH/src/bosh-dns
-    ginkgo -p -r -randomizeAllSpecs -randomizeSuites -keepGoing -race dns healthcheck
-popd
+		local recursive_flag='-r'
+		local packages="src/bosh-dns"
+
+		if [[ "$#" -gt 0 ]]; then
+				recursive_flag=''
+				packages=$*
+		fi
+
+		ginkgo -p $recursive_flag -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=acceptance_tests,performance_tests,test_yml_assets,vendor $packages
+}
+
+main "$@"
