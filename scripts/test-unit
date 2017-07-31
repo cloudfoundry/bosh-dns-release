@@ -5,8 +5,9 @@ main() {
 
 		DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+		export GOPATH
 		GOPATH="$(cd "$DIR/.." && pwd)"
-		PATH=$GOPATH/bin:$PATH
+		export PATH=$GOPATH/bin:$PATH
 
 		go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 

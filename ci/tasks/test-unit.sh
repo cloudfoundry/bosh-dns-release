@@ -21,11 +21,8 @@ pushd dns-release/
 popd
 
 export GOROOT=/usr/local/golang
-export GOPATH=$PWD/dns-release
-export PATH=$GOPATH/bin:$BOSH_INSTALL_TARGET/bin:$PATH
+export PATH=$BOSH_INSTALL_TARGET/bin:$PATH
 
-go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
-
-pushd $GOPATH/src/bosh-dns
-    ginkgo -p -r -randomizeAllSpecs -randomizeSuites -keepGoing -race dns healthcheck
+pushd $PWD/dns-release
+  scripts/test-unit
 popd
