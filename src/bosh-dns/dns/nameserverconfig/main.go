@@ -9,10 +9,11 @@ import (
 	"syscall"
 	"time"
 
+	"bosh-dns/dns/nameserverconfig/monitor"
+
 	"code.cloudfoundry.org/clock"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"bosh-dns/dns/nameserverconfig/monitor"
 )
 
 func main() {
