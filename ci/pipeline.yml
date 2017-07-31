@@ -33,6 +33,8 @@ jobs:
 - name: test-acceptance
   public: true
   plan:
+    - get: every-2h
+      trigger: true
     - get: dns-release
       trigger: true
       passed: [test-unit]
@@ -48,6 +50,8 @@ jobs:
   serial_groups:
   - windows-acceptance-env
   plan:
+    - get: every-2h
+      trigger: true
     - get: dns-release
       trigger: true
       passed: [test-unit-windows]
@@ -141,3 +145,7 @@ resources:
     branch: master
     uri: git@github.com:cloudfoundry/dns-release-ci-envs.git
     private_key: {{envs_private_key}}
+
+- name: every-2h
+  type: time
+  source: {interval: 2h}
