@@ -6,8 +6,9 @@ import (
 
 	"code.cloudfoundry.org/clock"
 
-	"github.com/cloudfoundry/bosh-utils/logger"
 	"bosh-dns/dns/server/handlers/internal"
+
+	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
 

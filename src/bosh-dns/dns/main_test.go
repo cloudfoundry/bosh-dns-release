@@ -596,7 +596,34 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
 
-			Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ForwardHandler Request \[255\] \[bosh\.io\.\] 2 \d+ns`))
+			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request \[255\] \[bosh\.io\.\] 2 \[no response from recursors\] \d+ns`))
+		})
+
+		It("logs the recursor used to resolve", func() {
+			var err error
+
+			cmd = newCommandWithConfig(fmt.Sprintf(`{
+				"address": %q,
+				"port": %d,
+				"recursors": [%q],
+				"recursor_timeout": %q
+			}`, listenAddress, listenPort, "8.8.8.8", "1s"))
+
+			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(waitForServer(listenPort)).To(Succeed())
+
+			c := &dns.Client{}
+			m := &dns.Msg{}
+			m.SetQuestion("bosh.io.", dns.TypeANY)
+
+			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+
+			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request \[255\] \[bosh\.io\.\] 0 \[recursor=8\.8\.8\.8:53\] \d+ns`))
+			Consistently(session.Out).ShouldNot(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ForwardHandler Request \[255\] \[bosh\.io\.\] 0 \d+ns`))
 		})
 
 		AfterEach(func() {

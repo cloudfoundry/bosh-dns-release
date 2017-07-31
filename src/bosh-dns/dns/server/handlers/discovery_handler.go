@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"github.com/cloudfoundry/bosh-utils/logger"
 	"bosh-dns/dns/server/records/dnsresolver"
+
+	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
 

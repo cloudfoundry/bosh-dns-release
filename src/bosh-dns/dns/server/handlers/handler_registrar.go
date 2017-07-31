@@ -71,7 +71,7 @@ func (h *HandlerRegistrar) Run(signal chan struct{}) error {
 				}
 			}
 
-			for domain, _ := range currentDomains {
+			for domain := range currentDomains {
 				delete(h.domains, domain)
 				h.mux.HandleRemove(domain)
 			}

@@ -5,6 +5,8 @@ import (
 	"net"
 	"time"
 
+	"code.cloudfoundry.org/clock/fakeclock"
+
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
@@ -26,6 +28,7 @@ var _ = Describe("ForwardHandler", func() {
 			recursionHandler     handlers.ForwardHandler
 			fakeExchangerFactory handlers.ExchangerFactory
 			fakeExchanger        *handlersfakes.FakeExchanger
+			fakeClock            *fakeclock.FakeClock
 			fakeLogger           *loggerfakes.FakeLogger
 		)
 
@@ -36,15 +39,16 @@ var _ = Describe("ForwardHandler", func() {
 				return fakeExchanger
 			}
 			fakeLogger = &loggerfakes.FakeLogger{}
+			fakeClock = fakeclock.NewFakeClock(time.Now())
 
-			recursionHandler = handlers.NewForwardHandler([]string{"127.0.0.1", "10.244.5.4"}, fakeExchangerFactory, fakeLogger)
+			recursionHandler = handlers.NewForwardHandler([]string{"127.0.0.1", "10.244.5.4"}, fakeExchangerFactory, fakeClock, fakeLogger)
 		})
 
 		Context("when no recursors are configured", func() {
 			var recursionHandler handlers.ForwardHandler
 			var msg *dns.Msg
 			BeforeEach(func() {
-				recursionHandler = handlers.NewForwardHandler([]string{}, fakeExchangerFactory, fakeLogger)
+				recursionHandler = handlers.NewForwardHandler([]string{}, fakeExchangerFactory, fakeClock, fakeLogger)
 				msg = &dns.Msg{}
 				msg.SetQuestion("example.com.", dns.TypeANY)
 			})
@@ -56,7 +60,7 @@ var _ = Describe("ForwardHandler", func() {
 				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 				tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
-				Expect(logMsg).To(Equal("no response from recursors"))
+				Expect(logMsg).To(Equal("handlers.ForwardHandler Request [255] [example.com.] 2 [no response from recursors] 0ns"))
 
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Question).To(Equal(msg.Question))
@@ -132,7 +136,7 @@ var _ = Describe("ForwardHandler", func() {
 					}
 
 					fakeWriter.RemoteAddrReturns(remoteAddrReturns)
-					recursionHandler := handlers.NewForwardHandler([]string{"127.0.0.1"}, fakeExchangerFactory, fakeLogger)
+					recursionHandler := handlers.NewForwardHandler([]string{"127.0.0.1"}, fakeExchangerFactory, fakeClock, fakeLogger)
 
 					m := &dns.Msg{}
 					m.SetQuestion("example.com.", dns.TypeANY)
@@ -146,6 +150,12 @@ var _ = Describe("ForwardHandler", func() {
 					msg, recursor := fakeExchanger.ExchangeArgsForCall(0)
 					Expect(recursor).To(Equal("127.0.0.1"))
 					Expect(msg).To(Equal(m))
+
+					Expect(fakeLogger.InfoCallCount()).To(Equal(1))
+
+					logTag, logMessage, _ := fakeLogger.InfoArgsForCall(0)
+					Expect(logTag).To(Equal("ForwardHandler"))
+					Expect(logMessage).To(Equal("handlers.ForwardHandler Request [255] [example.com.] 0 [recursor=127.0.0.1] 0ns"))
 				},
 				Entry("forwards query to recursor via udp for udp clients", "udp", nil, false),
 				Entry("forwards query to recursor via udp for udp clients when the response is truncated", "udp", nil, true),
@@ -180,7 +190,7 @@ var _ = Describe("ForwardHandler", func() {
 					}
 					fakeExchanger := &handlersfakes.FakeExchanger{}
 					fakeExchangerFactory := func(net string) handlers.Exchanger { return fakeExchanger }
-					recursionHandler = handlers.NewForwardHandler([]string{"127.0.0.1"}, fakeExchangerFactory, fakeLogger)
+					recursionHandler = handlers.NewForwardHandler([]string{"127.0.0.1"}, fakeExchangerFactory, fakeClock, fakeLogger)
 					requestMessage = &dns.Msg{}
 					requestMessage.SetQuestion("example.com.", dns.TypeANY)
 					fakeExchanger.ExchangeReturns(recursorAnswer, 0, nil)
@@ -275,7 +285,7 @@ var _ = Describe("ForwardHandler", func() {
 						return fakeExchanger
 					}
 
-					recursionHandler := handlers.NewForwardHandler([]string{"127.0.0.1", "127.0.0.2"}, fakeExchangerFactory, fakeLogger)
+					recursionHandler := handlers.NewForwardHandler([]string{"127.0.0.1", "127.0.0.2"}, fakeExchangerFactory, fakeClock, fakeLogger)
 
 					msg = &dns.Msg{}
 					msg.SetQuestion("example.com.", dns.TypeANY)
@@ -284,14 +294,14 @@ var _ = Describe("ForwardHandler", func() {
 				})
 
 				It("writes a failure result", func() {
-					Expect(fakeLogger.InfoCallCount()).To(Equal(3))
-					tag, msg, args := fakeLogger.InfoArgsForCall(0)
+					Expect(fakeLogger.DebugCallCount()).To(Equal(2))
+					tag, msg, args := fakeLogger.DebugArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
 					Expect(msg).To(Equal("error recursing to %s %s"))
 					Expect(args[0]).To(Equal("127.0.0.1"))
 					Expect(args[1]).To(Equal("failed to exchange"))
 
-					tag, msg, args = fakeLogger.InfoArgsForCall(1)
+					tag, msg, args = fakeLogger.DebugArgsForCall(1)
 					Expect(tag).To(Equal("ForwardHandler"))
 					Expect(msg).To(Equal("error recursing to %s %s"))
 					Expect(args[0]).To(Equal("127.0.0.2"))

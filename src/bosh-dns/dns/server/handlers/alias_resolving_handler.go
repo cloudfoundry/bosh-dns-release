@@ -3,9 +3,10 @@ package handlers
 import (
 	"errors"
 
+	"bosh-dns/dns/server/aliases"
+
 	"code.cloudfoundry.org/clock"
 	"github.com/cloudfoundry/bosh-utils/logger"
-	"bosh-dns/dns/server/aliases"
 
 	"fmt"
 	"strings"
@@ -23,6 +24,7 @@ type AliasResolvingHandler struct {
 }
 
 //go:generate counterfeiter . DomainResolver
+
 type DomainResolver interface {
 	Resolve(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg
 }
