@@ -18,6 +18,7 @@ jobs:
 
 - name: test-performance
   public: true
+  serial: true
   plan:
     - get: dns-release
       trigger: true
