@@ -8,3 +8,5 @@ BBL_STATE_DIR=$ROOT_DIR/envs/$ENV_NAME
 source $BBL_STATE_DIR/.envrc
 
 bosh -n clean-up --all
+
+bosh deployments --column name | xargs -n1 bosh -n delete-deployment -d
