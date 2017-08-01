@@ -105,7 +105,7 @@ var _ = Describe("Performance", func() {
 			testFailures = append(testFailures, errors.New(fmt.Sprintf("Median DNS response time of %.3fms was greater than %.3fms benchmark", medTime, medianResponseBenchmark)))
 		}
 		if maxTime > 7540 {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max DNS response time of %.3fms was greater than 7540ms benchmark", maxTime)))
+			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max DNS response time of %d.000ms was greater than 7540ms benchmark", maxTime)))
 		}
 		if maxCPU > 5 {
 			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max DNS server CPU usage of %.2f%% was greater than 5%% ceiling", maxCPU)))
@@ -129,7 +129,8 @@ var _ = Describe("Performance", func() {
 		})
 
 		It("handles DNS responses quickly for prod like zones", func() {
-			TestDNSPerformance(12)
+			timeToGoogleInMilliseconds := float64(averageTimeToGoogle() / time.Millisecond)
+			TestDNSPerformance(timeToGoogleInMilliseconds + 1)
 		})
 	})
 
@@ -151,7 +152,8 @@ var _ = Describe("Performance", func() {
 		})
 
 		It("handles DNS responses quickly for google zone", func() {
-			TestDNSPerformance(12)
+			timeToGoogleInMilliseconds := float64(averageTimeToGoogle() / time.Millisecond)
+			TestDNSPerformance(timeToGoogleInMilliseconds + 1)
 		})
 	})
 
@@ -259,6 +261,27 @@ func MakeDnsRequestUntilSuccessful(picker zp.ZonePicker, flow chan bool, result 
 	r := makeRequest(c, m)
 
 	result <- DnsResult{Id: int(m.Id), RCode: r.Rcode, EndTime: time.Now()}
+}
+
+func timeToGoogle() time.Duration {
+	m := new(dns.Msg)
+	c := new(dns.Client)
+	m.SetQuestion("google.com.", dns.TypeA)
+
+	before := time.Now()
+	_, _, err := c.Exchange(m, "8.8.8.8:53")
+	Expect(err).NotTo(HaveOccurred())
+	return time.Since(before)
+}
+
+func averageTimeToGoogle() time.Duration {
+	total := time.Duration(0)
+
+	for i := 0; i < 10; i++ {
+		total += timeToGoogle()
+	}
+
+	return total / 10
 }
 
 func makeRequest(c *dns.Client, m *dns.Msg) *dns.Msg {
