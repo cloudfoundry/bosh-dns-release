@@ -20,6 +20,8 @@ jobs:
   public: true
   serial: true
   plan:
+    - get: every-2h
+      trigger: true
     - get: dns-release
       trigger: true
       passed: [test-unit]
