@@ -79,7 +79,7 @@ var _ = Describe("Config", func() {
 					"alias1": {"*.domain"},
 				})
 
-				Expect(c.Resolutions("alias1.")).To(Equal([]string{"q-YWxs.domain."}))
+				Expect(c.Resolutions("alias1.")).To(Equal([]string{"q-s0.domain."}))
 			})
 		})
 
@@ -89,7 +89,7 @@ var _ = Describe("Config", func() {
 					"alias1": {"*.domain.com"},
 				})
 
-				Expect(c.Resolutions("alias1.")).To(Equal([]string{"q-YWxs.domain.com."}))
+				Expect(c.Resolutions("alias1.")).To(Equal([]string{"q-s0.domain.com."}))
 			})
 		})
 
@@ -99,7 +99,7 @@ var _ = Describe("Config", func() {
 					"sub.alias1": {"*.deepsub.sub.domain"},
 				})
 
-				Expect(c.Resolutions("sub.alias1.")).To(Equal([]string{"q-YWxs.deepsub.sub.domain."}))
+				Expect(c.Resolutions("sub.alias1.")).To(Equal([]string{"q-s0.deepsub.sub.domain."}))
 			})
 		})
 

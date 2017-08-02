@@ -1,12 +1,12 @@
 package records
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net"
 	"strings"
 
+	"errors"
 	"github.com/miekg/dns"
 )
 
@@ -24,18 +24,19 @@ func (r RecordSet) Resolve(fqdn string) ([]string, error) {
 
 	if strings.HasPrefix(fqdn, "q-") {
 		matcher := strings.SplitN(fqdn, ".", 2)
-		base64EncodedQuery := strings.TrimPrefix(matcher[0], "q-")
-		decodedQuery, err := base64.RawURLEncoding.DecodeString(base64EncodedQuery)
+		if len(matcher) < 2 {
+			return ips, errors.New("domain is malformed")
+		}
+		encodedQuery := strings.TrimPrefix(matcher[0], "q-")
+		filter, err := parseCriteria(encodedQuery)
 		if err != nil {
 			return ips, err
 		}
 
-		if string(decodedQuery) == "all" {
-			for _, record := range r.Records {
-				recordName := record.Fqdn(false)
-				if recordName == matcher[1] {
-					ips = append(ips, record.Ip)
-				}
+		for _, record := range r.Records {
+			recordName := record.Fqdn(false)
+			if recordName == matcher[1] && filter.isAllowed(record) {
+				ips = append(ips, record.Ip)
 			}
 		}
 	} else {
@@ -69,6 +70,7 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 		networkIndex,
 		deploymentIndex,
 		ipIndex,
+		azIdIndex,
 		domainIndex int
 
 	for i, k := range swap.Keys {
@@ -85,6 +87,8 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 			ipIndex = i
 		case "domain":
 			domainIndex = i
+		case "az_id":
+			azIdIndex = i
 		default:
 			continue
 		}
@@ -108,6 +112,7 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 			Network:    info[networkIndex],
 			Deployment: info[deploymentIndex],
 			Ip:         info[ipIndex],
+			AzIndex:    info[azIdIndex],
 			Domain:     domain,
 		}
 	}

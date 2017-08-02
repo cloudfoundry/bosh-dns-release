@@ -110,14 +110,14 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = recordsFile.Write([]byte(fmt.Sprint(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_keys": ["id", "instance_group", "az", "az_id","network", "deployment", "ip", "domain"],
 				"record_infos": [
-					["my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
-					["my-instance-1", "my-group", "az1", "my-network", "my-deployment", "127.0.0.2", "bosh"],
-					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "127.0.0.3", "bosh"],
-					["my-instance-1", "my-group", "az1", "my-network", "my-deployment", "127.0.0.2", "foo"],
-					["my-instance-2", "my-group", "az1", "my-network", "my-deployment-2", "127.0.0.3", "foo"],
-					["primer-instance", "primer-group", "az1", "primer-network", "primer-deployment", "127.0.0.254", "primer"]
+					["my-instance", "my-group", "az1", "1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
+					["my-instance-1", "my-group", "az2", "2", "my-network", "my-deployment", "127.0.0.2", "bosh"],
+					["my-instance-2", "my-group", "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "bosh"],
+					["my-instance-1", "my-group", "az1", "1", "my-network", "my-deployment", "127.0.0.2", "foo"],
+					["my-instance-2", "my-group", "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "foo"],
+					["primer-instance", "primer-group", "az1", "1", "primer-network", "primer-deployment", "127.0.0.254", "primer"]
 				]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
@@ -370,10 +370,55 @@ var _ = Describe("main", func() {
 
 			Context("domains from records.json", func() {
 				BeforeEach(func() {
-					m.SetQuestion("my-instance-1.my-group.my-network.my-deployment.foo.", dns.TypeA)
+				})
+
+				It("can interpret AZ-specific queries", func() {
+					m.SetQuestion("q-a1s0.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(r.Answer).To(HaveLen(1))
+
+					answer := r.Answer[0]
+					header := answer.Header()
+
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Authoritative).To(BeTrue())
+					Expect(r.RecursionAvailable).To(BeFalse())
+
+					Expect(header.Rrtype).To(Equal(dns.TypeA))
+					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+					Expect(header.Ttl).To(Equal(uint32(0)))
+
+					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+					Expect(answer.(*dns.A).A.String()).To(Equal("127.0.0.1"))
+
+					m.SetQuestion("q-a2s0.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+
+					r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(r.Answer).To(HaveLen(1))
+
+					answer = r.Answer[0]
+					header = answer.Header()
+
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Authoritative).To(BeTrue())
+					Expect(r.RecursionAvailable).To(BeFalse())
+
+					Expect(header.Rrtype).To(Equal(dns.TypeA))
+					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+					Expect(header.Ttl).To(Equal(uint32(0)))
+
+					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+					Expect(answer.(*dns.A).A.String()).To(Equal("127.0.0.2"))
 				})
 
 				It("responds to A queries for foo. with content from the record API", func() {
+					m.SetQuestion("my-instance-1.my-group.my-network.my-deployment.foo.", dns.TypeA)
+
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
@@ -395,6 +440,8 @@ var _ = Describe("main", func() {
 				})
 
 				It("logs handler time", func() {
+					m.SetQuestion("my-instance-1.my-group.my-network.my-deployment.foo.", dns.TypeA)
+
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
@@ -463,7 +510,7 @@ var _ = Describe("main", func() {
 					c := &dns.Client{Net: "udp"}
 
 					m := &dns.Msg{}
-					m.SetQuestion("q-YWxs.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+					m.SetQuestion("q-s0.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
@@ -533,7 +580,7 @@ var _ = Describe("main", func() {
 					c := &dns.Client{Net: "udp"}
 
 					m := &dns.Msg{}
-					m.SetQuestion("q-YWxs.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+					m.SetQuestion("q-s0.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 

@@ -15,12 +15,13 @@ var _ = Describe("RecordSet", func() {
 		BeforeEach(func() {
 			jsonBytes := []byte(`
 			{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_keys": ["id", "instance_group", "az", "az_id", "network", "deployment", "ip", "domain"],
 				"record_infos": [
-				["instance0", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
-				["instance1", "my-group", "az2", "my-network", "my-deployment", "123.123.123.124", "my-domain"],
-				["instance2", "my-group-2", "az1", "my-network", "my-deployment", "123.123.123.125", "my-domain"],
-				["instance4", "my-group", "az1", "another-network", "my-deployment", "123.123.123.127", "my-domain"]
+				["instance0", "my-group", "az1", "1", "my-network", "my-deployment", "123.123.123.123", "my-domain"],
+				["instance1", "my-group", "az2", "2", "my-network", "my-deployment", "123.123.123.124", "my-domain"],
+				["instance1", "my-group", "az3", "3", "my-network", "my-deployment", "123.123.123.126", "my-domain"],
+				["instance2", "my-group-2", "az1", "1", "my-network", "my-deployment", "123.123.123.125", "my-domain"],
+				["instance4", "my-group", "az4", "4", "another-network", "my-deployment", "123.123.123.127", "my-domain"]
 				]
 			}
 			`)
@@ -29,51 +30,67 @@ var _ = Describe("RecordSet", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		Context("when the query is for 'all'", func() {
+		Context("when the query is for 'status=healthy'", func() {
 			It("returns all records matching the my-group.my-network.my-deployment.my-domain portion of the fqdn", func() {
-				// b64(all) ==  YWxs
-				ips, err := recordSet.Resolve("q-YWxs.my-group.my-network.my-deployment.my-domain.")
+				ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
 				Expect(err).ToNot(HaveOccurred())
-				Expect(ips).To(HaveLen(2))
+				Expect(ips).To(HaveLen(3))
 				Expect(ips).To(ContainElement("123.123.123.123"))
 				Expect(ips).To(ContainElement("123.123.123.124"))
+				Expect(ips).To(ContainElement("123.123.123.126"))
 			})
 		})
 
-		Context("when the query is for anything but all", func() {
+		Context("when the query contains poorly formed contents", func() {
 			It("returns an empty set", func() {
-				// b64(potato) ==  cG90YXRv
-				ips, err := recordSet.Resolve("q-cG90YXRv.my-group.my-network.my-deployment.my-domain.")
-				Expect(err).ToNot(HaveOccurred())
-				Expect(len(ips)).To(Equal(0))
-			})
-		})
-
-		Context("when the query fails to decode", func() {
-			It("returns an empty set", func() {
-				// garbage string ==  )(*&)(*&)(*&)(*&
-				ips, err := recordSet.Resolve("q- )(*&)(*&)(*&)(*&.my-group.my-network.my-deployment.my-domain.")
+				ips, err := recordSet.Resolve("q-missingvalue.my-group.my-network.my-deployment.my-domain.")
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("illegal base64 data at input byte 0"))
 				Expect(len(ips)).To(Equal(0))
 			})
 		})
 
-		Context("when the query is standard base64-encoded", func() {
-			It("returns an empty set", func() {
-				// b64(Ma~) == TWF+Cg==
-				_, err := recordSet.Resolve("q-TWF+Cg==.my-group.my-network.my-deployment.my-domain.")
+		Context("when the query does not include any filters", func() {
+			It("returns all records matching the my-group.my-network.my-deployment.my-domain portion of the fqdn", func() {
+				ips, err := recordSet.Resolve("q-.my-group.my-network.my-deployment.my-domain.")
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("illegal base64 data at input byte 3"))
+				Expect(ips).To(HaveLen(0))
 			})
 		})
 
-		Context("when the query is base64-raw-URL encoded", func() {
+		Context("when the query includes unrecognized filters", func() {
 			It("returns an empty set", func() {
-				// b64_rawURL(Ma~) == TWF-Cg
-				ips, err := recordSet.Resolve("q-TWF-Cg.my-group.my-network.my-deployment.my-domain.")
-				Expect(err).ToNot(HaveOccurred())
+				ips, err := recordSet.Resolve("q-x1.my-group.my-network.my-deployment.my-domain.")
+				Expect(err).To(HaveOccurred())
 				Expect(len(ips)).To(Equal(0))
+			})
+		})
+
+		Describe("filtering by AZ", func() {
+			Context("when the query includes an az id", func() {
+				It("only returns records that are in that az", func() {
+					ips, err := recordSet.Resolve("q-a1.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(ips).To(HaveLen(1))
+					Expect(ips).To(ContainElement("123.123.123.123"))
+				})
+			})
+
+			Context("when the query includes multiple az ids", func() {
+				It("returns records that are in any of those azs", func() {
+					ips, err := recordSet.Resolve("q-a1a3.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(ips).To(HaveLen(2))
+					Expect(ips).To(ContainElement("123.123.123.123"))
+					Expect(ips).To(ContainElement("123.123.123.126"))
+				})
+			})
+
+			Context("when the query includes an AZ index that isn't known", func() {
+				It("returns an empty set", func() {
+					ips, err := recordSet.Resolve("q-a6.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(len(ips)).To(Equal(0))
+				})
 			})
 		})
 	})
@@ -82,10 +99,10 @@ var _ = Describe("RecordSet", func() {
 		BeforeEach(func() {
 			jsonBytes := []byte(`
 {
-	"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+	"record_keys": ["id", "instance_group", "az", "az_id", "network", "deployment", "ip", "domain"],
 	"record_infos": [
-		["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "potato"],
-		["my-instance", "my-group", "az1", "my-network", "my-deployment", "123.123.123.124", "potato"]
+		["my-instance", "my-group", "az1", "1", "my-network", "my-deployment", "123.123.123.123", "potato"],
+		["my-instance", "my-group", "az1", "1", "my-network", "my-deployment", "123.123.123.124", "potato"]
 	]
 }
 			`)
@@ -133,10 +150,10 @@ var _ = Describe("RecordSet", func() {
 	Describe("UnmarshalJSON", func() {
 		BeforeEach(func() {
 			jsonBytes := []byte(`{
-				"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+				"record_keys": ["id", "instance_group", "az", "az_id", "network", "deployment", "ip", "domain"],
 				"record_infos": [
-				["instance0", "my-group", "az1", "my-network", "my-deployment", "123.123.123.123", "withadot."],
-				["instance1", "my-group", "az2", "my-network", "my-deployment", "123.123.123.124", "nodot"]
+				["instance0", "my-group", "az1", "1", "my-network", "my-deployment", "123.123.123.123", "withadot."],
+				["instance1", "my-group", "az2", "2", "my-network", "my-deployment", "123.123.123.124", "nodot"]
 				]
 			}`)
 			err := json.Unmarshal(jsonBytes, &recordSet)
@@ -154,6 +171,7 @@ var _ = Describe("RecordSet", func() {
 					Deployment: "my-deployment",
 					Ip:         "123.123.123.123",
 					Domain:     "withadot.",
+					AzIndex:    "1",
 				},
 				{
 					Id:         "instance1",
@@ -162,6 +180,7 @@ var _ = Describe("RecordSet", func() {
 					Deployment: "my-deployment",
 					Ip:         "123.123.123.124",
 					Domain:     "nodot.",
+					AzIndex:    "2",
 				},
 			}))
 		})

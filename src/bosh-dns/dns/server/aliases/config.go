@@ -69,7 +69,7 @@ func (c *Config) setAlias(alias string, domains []string) error {
 	qualifedDomains := []string{}
 	for _, domain := range domains {
 		if strings.HasPrefix(domain, "*.") {
-			qualifedDomains = append(qualifedDomains, dns.Fqdn(strings.Replace(dns.Fqdn(domain), "*", "q-YWxs", 1)))
+			qualifedDomains = append(qualifedDomains, dns.Fqdn(strings.Replace(dns.Fqdn(domain), "*", "q-s0", 1)))
 		} else if net.ParseIP(domain) != nil {
 			qualifedDomains = append(qualifedDomains, domain)
 		} else {

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 	"bosh-dns/dns/manager/managerfakes"
 	"bosh-dns/dns/nameserverconfig/monitor"
+	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
