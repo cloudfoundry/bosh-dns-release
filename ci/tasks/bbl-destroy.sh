@@ -48,5 +48,7 @@ $BOSH_BINARY_PATH -n delete-env $BBL_STATE_DIR/bosh-manifest.yml \
 bbl --state-dir=$BBL_STATE_DIR destroy --no-confirm --skip-if-missing
 
 if [ -z "${SKIP_GIT}" ]; then
-	git rm -rf .
+  pushd $BBL_STATE_DIR
+    git rm -rf .
+  popd
 fi
