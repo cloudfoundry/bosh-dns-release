@@ -35,16 +35,16 @@ bosh -n deploy \
     -v acceptance_release_path=$ROOT_DIR/dns-release/src/bosh-dns/acceptance_tests/dns-acceptance-release \
     -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/one-instance-with-static-ips.yml \
     -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/configure-recursor.yml \
+    -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/enable-health-manifest-ops.yml \
+    -v health_server_port=8853 \
     -v recursor_ip="8.8.8.8" \
+    --vars-store=$ROOT_DIR/dns-release/src/bosh-dns/performance_tests/creds.yml \
     $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/manifest.yml
-
 
 export GOPATH=$PWD/dns-release
 export PATH="${GOPATH}/bin":$PATH
 
 go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
-
-echo $ZONES_JSON_HASH > /tmp/zones.json
 
 pushd $GOPATH/src/bosh-dns/performance_tests
     ginkgo -r -randomizeAllSpecs -randomizeSuites -race .

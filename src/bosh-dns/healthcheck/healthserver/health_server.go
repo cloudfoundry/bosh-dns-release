@@ -1,12 +1,13 @@
 package healthserver
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
 
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
@@ -62,8 +63,10 @@ func (c *concreteHealthServer) Serve(config *HealthCheckConfig) {
 		Addr:      fmt.Sprintf(":%d", config.Port),
 		TLSConfig: serverConfig,
 	}
+	server.SetKeepAlivesEnabled(false)
 
-	c.logger.Error(logTag, "http healthcheck ending with %s", server.ListenAndServeTLS("", ""))
+	serveErr := server.ListenAndServeTLS("", "")
+	c.logger.Error(logTag, "http healthcheck ending with %s", serveErr)
 }
 
 func (c *concreteHealthServer) healthEntryPoint(w http.ResponseWriter, r *http.Request) {

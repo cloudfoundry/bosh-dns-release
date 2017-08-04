@@ -11,8 +11,5 @@ inputs:
   - name: bosh-candidate-stemcell
   - name: bosh-candidate-release
 
-params:
-  ZONES_JSON_HASH:
-
 run:
   path: dns-release/ci/tasks/test-performance.sh

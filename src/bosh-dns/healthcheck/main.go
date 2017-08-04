@@ -8,9 +8,10 @@ import (
 	"os"
 	"time"
 
+	"bosh-dns/healthcheck/healthserver"
+
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"bosh-dns/healthcheck/healthserver"
 )
 
 var healthServer healthserver.HealthServer
@@ -51,13 +52,13 @@ func getConfig() (*healthserver.HealthCheckConfig, error) {
 
 	configRaw, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Couldn't open config file for health. error: %s", err))
+		return nil, fmt.Errorf("Couldn't open config file for health. error: %s", err)
 	}
 
 	config = &healthserver.HealthCheckConfig{}
 	err = json.Unmarshal(configRaw, config)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Couldn't decode config file for health. error: %s", err))
+		return nil, fmt.Errorf("Couldn't decode config file for health. error: %s", err)
 	}
 
 	return config, nil

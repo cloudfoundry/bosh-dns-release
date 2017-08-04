@@ -1,6 +1,8 @@
 package acceptance_test
 
 import (
+	"bosh-dns/healthcheck/healthclient"
+	"crypto/tls"
 	"fmt"
 	"strings"
 
@@ -11,8 +13,6 @@ import (
 
 	"time"
 
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"io/ioutil"
 
@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"path/filepath"
 
-	boshhttp "github.com/cloudfoundry/bosh-utils/http"
+	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
 )
@@ -186,7 +186,7 @@ func ensureHealthEndpointDeployed() {
 	allDeployedInstances = getInstanceInfos(boshBinaryPath)
 }
 
-func setupSecureGet() *http.Client {
+func setupSecureGet() httpclient.HTTPClient {
 	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
 		"int", "creds.yml",
 		"--path", "/dns_healthcheck_client_tls/certificate",
@@ -211,17 +211,14 @@ func setupSecureGet() *http.Client {
 	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
 	caCert := stdOut
 
-	// Load client cert
 	cert, err := tls.X509KeyPair([]byte(clientCertificate), []byte(clientPrivateKey))
 	Expect(err).NotTo(HaveOccurred())
 
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM([]byte(caCert))
-
-	return boshhttp.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns")
+	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard, ioutil.Discard)
+	return healthclient.NewHealthClient([]byte(caCert), cert, logger)
 }
 
-func secureGetRespBody(client *http.Client, hostname string, port int) ([]byte, error) {
+func secureGetRespBody(client httpclient.HTTPClient, hostname string, port int) ([]byte, error) {
 	resp, err := secureGet(client, hostname, port)
 	if err != nil {
 		fmt.Println(err)
@@ -230,7 +227,7 @@ func secureGetRespBody(client *http.Client, hostname string, port int) ([]byte, 
 	return ioutil.ReadAll(resp.Body)
 }
 
-func secureGet(client *http.Client, hostname string, port int) (*http.Response, error) {
+func secureGet(client httpclient.HTTPClient, hostname string, port int) (*http.Response, error) {
 	resp, err := client.Get(fmt.Sprintf("https://%s:%d/health", hostname, port))
 	if err != nil {
 		fmt.Println(err)

@@ -1,0 +1,16 @@
+{
+  "zones": [
+    "amazonaws.com.",
+    "cloudamqp.com.",
+    "cloudfront.net.",
+    "datadoghq.com.",
+    "freenet.de.",
+    "github.com.",
+    "google.com.",
+    "googleapis.com.",
+    "newrelic.com.",
+    "packagist.org.",
+    "phusionpassenger.com.",
+    "twitter.com."
+  ]
+}

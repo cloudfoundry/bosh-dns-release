@@ -11,10 +11,6 @@ import (
 
 	"code.cloudfoundry.org/clock"
 
-	"crypto/tls"
-	"crypto/x509"
-	"io/ioutil"
-
 	dnsconfig "bosh-dns/dns/config"
 	"bosh-dns/dns/server"
 	"bosh-dns/dns/server/aliases"
@@ -23,10 +19,9 @@ import (
 	"bosh-dns/dns/server/records"
 	"bosh-dns/dns/server/records/dnsresolver"
 	"bosh-dns/dns/shuffle"
+	"bosh-dns/healthcheck/healthclient"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
-	boshhttp "github.com/cloudfoundry/bosh-utils/http"
-	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
@@ -96,12 +91,12 @@ func mainExitCode() int {
 
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
 	if config.Health.Enabled {
-		httpClient, err := setupSecureGet(config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, logger)
+		httpClient, err := healthclient.NewHealthClientFromFiles(config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, logger)
 		if err != nil {
 			logger.Error(logTag, fmt.Sprintf("Unable to configure health checker %s", err.Error()))
 			return 1
 		}
-		healthChecker := healthiness.NewHealthChecker(httpclient.NewHTTPClient(httpClient, logger), config.Health.Port)
+		healthChecker := healthiness.NewHealthChecker(httpClient, config.Health.Port)
 		checkInterval := time.Duration(config.Health.CheckInterval)
 		healthWatcher = healthiness.NewHealthWatcher(healthChecker, clock, checkInterval)
 	}
@@ -171,25 +166,4 @@ func mainExitCode() int {
 	}
 
 	return 0
-}
-
-func setupSecureGet(caFile, clientCertFile, clientKeyFile string, logger boshlog.Logger) (boshhttp.Client, error) {
-	// Load client cert
-	cert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
-	if err != nil {
-		return nil, err
-	}
-
-	// Load CA cert
-	caCert, err := ioutil.ReadFile(caFile)
-	if err != nil {
-		return nil, err
-	}
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-
-	client := boshhttp.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns")
-	client.Timeout = 5 * time.Second
-
-	return boshhttp.NewNetworkSafeRetryClient(client, 4, 500*time.Millisecond, logger), nil
 }
