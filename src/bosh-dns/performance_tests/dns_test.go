@@ -2,6 +2,7 @@ package performance_test
 
 import (
 	"math"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -178,7 +179,13 @@ var _ = Describe("DNS", func() {
 
 	Describe("using local bosh dns records", func() {
 		BeforeEach(func() {
-			recordsJsonBytes, err := ioutil.ReadFile("assets/records.json")
+			cmd := exec.Command(boshBinaryPath, []string{"scp", "dns:/var/vcap/instance/dns/records.json", "records.json"}...)
+			err := cmd.Run()
+			if err != nil {
+				panic(fmt.Sprintf("Failed to bosh scp: %s", err.Error()))
+			}
+
+			recordsJsonBytes, err := ioutil.ReadFile("records.json")
 			Expect(err).ToNot(HaveOccurred())
 			recordSet := records.RecordSet{}
 			err = json.Unmarshal(recordsJsonBytes, &recordSet)
