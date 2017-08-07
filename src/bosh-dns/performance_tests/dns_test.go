@@ -111,19 +111,22 @@ var _ = Describe("DNS", func() {
 
 		testFailures := []error{}
 		if medTime > medianResponseBenchmark {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Median DNS response time of %.3fms was greater than %.3fms benchmark", medTime, medianResponseBenchmark)))
+			testFailures = append(testFailures, fmt.Errorf("Median DNS response time of %.3fms was greater than %.3fms benchmark", medTime, medianResponseBenchmark))
 		}
-		if maxTime > 7540 {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max DNS response time of %d.000ms was greater than 7540ms benchmark", maxTime)))
+		maxTimeinMsThreshold := int64(7540)
+		if maxTime > maxTimeinMsThreshold {
+			testFailures = append(testFailures, fmt.Errorf("Max DNS response time of %d.000ms was greater than %d.000ms benchmark", maxTime, maxTimeinMsThreshold))
 		}
-		if maxCPU > 5 {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max DNS server CPU usage of %.2f%% was greater than 5%% ceiling", maxCPU)))
+		cpuThresholdPercentage := float64(5)
+		if maxCPU > cpuThresholdPercentage {
+			testFailures = append(testFailures, fmt.Errorf("Max DNS server CPU usage of %.2f%% was greater than %.2f%% ceiling", maxCPU, cpuThresholdPercentage))
 		}
-		if maxMem > 15 {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max DNS server memory usage of %.2fMB was greater than 15MB ceiling", maxMem)))
+		memThreshold := float64(15)
+		if maxMem > memThreshold {
+			testFailures = append(testFailures, fmt.Errorf("Max DNS server memory usage of %.2fMB was greater than %.2fMB ceiling", maxMem, memThreshold))
 		}
 		if duration > time.Minute {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("DNS server took %s to serve %d requests, which exceeds 1 minute benchmark", duration.String(), maxDNSRequestsPerMin)))
+			testFailures = append(testFailures, fmt.Errorf("DNS server took %s to serve %d requests, which exceeds 1 minute benchmark", duration.String(, maxDNSRequestsPerMin)))
 		}
 
 		Expect(testFailures).To(BeEmpty())
@@ -143,8 +146,10 @@ var _ = Describe("DNS", func() {
 
 			CheckDNSPerformanceResults(time1, mem, cpu, duration, math.MaxFloat64)
 			offsetMedian := time.Duration(math.Abs(time1.Percentile(0.5) - time2.Percentile(0.5)))
-			Expect(offsetMedian).To(BeNumerically("<", 2*time.Millisecond),
-				"expected our server to add at most 1ms to the median response time, was: "+offsetMedian.String())
+			latencyThreshold := 2 * time.Millisecond
+			Expect(offsetMedian).To(BeNumerically("<", latencyThreshold),
+				fmt.Sprintf("expected our server to add at most %s to the median response time, was: %s", latencyThreshold, offsetMedian),
+			)
 		})
 	})
 
@@ -172,8 +177,10 @@ var _ = Describe("DNS", func() {
 
 			CheckDNSPerformanceResults(time1, mem, cpu, duration, math.MaxFloat64)
 			offsetMedian := time.Duration(math.Abs(time1.Percentile(0.5) - time2.Percentile(0.5)))
-			Expect(offsetMedian).To(BeNumerically("<", 2*time.Millisecond),
-				"expected our server to add at most 1ms to the median response time, was: "+offsetMedian.String())
+			latencyThreshold := 2 * time.Millisecond
+			Expect(offsetMedian).To(BeNumerically("<", latencyThreshold),
+				fmt.Sprintf("expected our server to add at most %s to the median response time, was: %s", latencyThreshold, offsetMedian),
+			)
 		})
 	})
 

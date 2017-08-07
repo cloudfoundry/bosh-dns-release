@@ -2,7 +2,6 @@ package performance_test
 
 import (
 	"bosh-dns/healthcheck/healthclient"
-	"errors"
 	"io/ioutil"
 	"sync"
 	"time"
@@ -73,11 +72,14 @@ var _ = XDescribe("Health Server", func() {
 			close(doneChan)
 		}()
 
-		cpuSample := metrics.NewExpDecaySample(requestsPerSecond*durationInSeconds*2, 0.015)
+		duration := time.Duration(durationInSeconds) * time.Second
+		resourcesInterval := time.Second
+
+		cpuSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
 		cpuHistogram := metrics.NewHistogram(cpuSample)
 		metrics.Register("CPU Usage", cpuHistogram)
 
-		memSample := metrics.NewExpDecaySample(requestsPerSecond*durationInSeconds*2, 0.015)
+		memSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
 		memHistogram := metrics.NewHistogram(memSample)
 		metrics.Register("Mem Usage", memHistogram)
 
@@ -87,7 +89,7 @@ var _ = XDescribe("Health Server", func() {
 		}
 
 		go func() {
-			timer := time.NewTicker(500 * time.Millisecond)
+			timer := time.NewTicker(resourcesInterval)
 			defer timer.Stop()
 
 			for {
@@ -108,10 +110,10 @@ var _ = XDescribe("Health Server", func() {
 
 		wg.Add(workers)
 		for i := 0; i < workers; i++ {
-			go workerFunc(wg, 2*requestsPerSecond/workers, shutdown)
+			go workerFunc(wg, requestsPerSecond/workers, shutdown)
 		}
 
-		time.Sleep(time.Duration(durationInSeconds) * time.Second)
+		time.Sleep(duration)
 		close(shutdown)
 		wg.Wait()
 		close(healthResult)
@@ -139,23 +141,27 @@ var _ = XDescribe("Health Server", func() {
 		printStatsForHistogram(cpuHistogram, fmt.Sprintf("Health server CPU usage"), "%", 1000*1000)
 
 		testFailures := []error{}
-		if (successCount / durationInSeconds) < requestsPerSecond {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Handled Health requests %d per second was lower than %d benchmark", (successCount/durationInSeconds), requestsPerSecond)))
+		// add a 5% margin of error to requests per second
+		if (successCount / durationInSeconds) < int(float64(requestsPerSecond)*0.95) {
+			testFailures = append(testFailures, fmt.Errorf("Handled Health requests %d per second was lower than %d benchmark", (successCount/durationInSeconds), requestsPerSecond))
 		}
 		if successPercentage < 1 {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Health success percentage of %.1f%% is too low", 100*successPercentage)))
+			testFailures = append(testFailures, fmt.Errorf("Health success percentage of %.1f%% is too low", 100*successPercentage))
 		}
 		if medTimeInMs > maxExpectedMedianTimeInMs {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Median Health response time of %.3fms was greater than %.3fms benchmark", medTimeInMs, maxExpectedMedianTimeInMs)))
+			testFailures = append(testFailures, fmt.Errorf("Median Health response time of %.3fms was greater than %.3fms benchmark", medTimeInMs, maxExpectedMedianTimeInMs))
 		}
-		if maxTimeInMs > 7540 {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max Health response time of %d.000ms was greater than 7540ms benchmark", maxTimeInMs)))
+		maxTimeinMsThreshold := int64(7540)
+		if maxTimeInMs > maxTimeinMsThreshold {
+			testFailures = append(testFailures, fmt.Errorf("Max Health response time of %d.000ms was greater than %d.000ms benchmark", maxTimeInMs, maxTimeinMsThreshold))
 		}
-		if maxCPU > 50 {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max Health server CPU usage of %.2f%% was greater than 50%% ceiling", maxCPU)))
+		cpuThresholdPercentage := float64(50)
+		if maxCPU > cpuThresholdPercentage {
+			testFailures = append(testFailures, fmt.Errorf("Max Health server CPU usage of %.2f%% was greater than %.2f%% ceiling", maxCPU, cpuThresholdPercentage))
 		}
-		if maxMem > 15 {
-			testFailures = append(testFailures, errors.New(fmt.Sprintf("Max Health server memory usage of %.2fMB was greater than 15MB ceiling", maxMem)))
+		memThreshold := float64(15)
+		if maxMem > memThreshold {
+			testFailures = append(testFailures, fmt.Errorf("Max Health server memory usage of %.2fMB was greater than %.2fMB ceiling", maxMem, memThreshold))
 		}
 
 		Expect(testFailures).To(BeEmpty())
