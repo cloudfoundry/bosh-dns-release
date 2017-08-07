@@ -126,7 +126,7 @@ var _ = Describe("DNS", func() {
 			testFailures = append(testFailures, fmt.Errorf("Max DNS server memory usage of %.2fMB was greater than %.2fMB ceiling", maxMem, memThreshold))
 		}
 		if duration > time.Minute {
-			testFailures = append(testFailures, fmt.Errorf("DNS server took %s to serve %d requests, which exceeds 1 minute benchmark", duration.String(, maxDNSRequestsPerMin)))
+			testFailures = append(testFailures, fmt.Errorf("DNS server took %s to serve %d requests, which exceeds 1 minute benchmark", duration.String(), maxDNSRequestsPerMin))
 		}
 
 		Expect(testFailures).To(BeEmpty())
