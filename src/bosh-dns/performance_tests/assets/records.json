@@ -1,0 +1,45 @@
+{
+  "records": [
+    [
+      "127.0.0.1",
+      "800c1d38-6eba-4e4b-9662-a9fc66c7a8b1.dns.default.cf.bosh"
+    ],
+    [
+      "127.0.0.2",
+      "2d111fee-966f-48a1-95d0-0d57bad45a08.dns.default.cf.bosh"
+    ]
+  ],
+  "version": 1116,
+  "record_keys": [
+    "id",
+    "instance_group",
+    "az",
+    "network",
+    "deployment",
+    "ip",
+    "domain",
+    "agent_id"
+  ],
+  "record_infos": [
+    [
+      "800c1d38-6eba-4e4b-9662-a9fc66c7a8b1",
+      "dns",
+      "z1",
+      "default",
+      "cf",
+      "127.0.0.1",
+      "bosh",
+      "7afb8466-998e-449b-b0d1-8e5636c6965f"
+    ],
+    [
+      "2d111fee-966f-48a1-95d0-0d57bad45a08",
+      "dns",
+      "z2",
+      "default",
+      "cf",
+      "127.0.0.2",
+      "bosh",
+      "a9cea3f7-6670-4f1e-8b84-dfed9c2866ad"
+    ]
+  ]
+}

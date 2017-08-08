@@ -1,106 +1,75 @@
 package performance_test
 
 import (
-	"math"
-	"os/exec"
-	"sync"
 	"time"
 
 	zp "bosh-dns/performance_tests/zone_pickers"
 
 	"bosh-dns/dns/server/records"
 
-	"github.com/cloudfoundry/gosigar"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/rcrowley/go-metrics"
 
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 )
 
-type DNSResult struct {
-	Id        int
-	RCode     int
-	StartTime time.Time
-	EndTime   time.Time
-}
-
-type PerformanceTestInfo struct {
-	MedianRequestTime         time.Duration
-	ErrorCount                int
-	FailedRequestRCodesCounts map[int]int
-	MaxRuntime                time.Duration
+type Result struct {
+	status       int
+	responseTime time.Duration
 }
 
 var _ = Describe("DNS", func() {
 	var (
-		maxDNSRequestsPerMin int
-		info                 PerformanceTestInfo
-		picker               zp.ZonePicker
-		label                string
-		dnsServerAddress     = "10.245.0.34:53"
+		picker zp.ZonePicker
+		label  string
 
-		dnsServerPid int
+		dnsServerAddress  = "127.0.0.1:9953"
+		durationInSeconds = 60
+		workers           = 10
+		requestsPerSecond = 7
 	)
 
-	BeforeEach(func() {
-		var found bool
-		dnsServerPid, found = GetPidFor("dns")
-		Expect(found).To(BeTrue())
+	TestDNSPerformance := func(server string, requestsPerSecond int, durationInSeconds int, medianResponseBenchmark float64) {
+		shutdown := make(chan struct{})
 
-		maxDNSRequestsPerMin = 420
-		info = PerformanceTestInfo{}
-	})
+		duration := time.Duration(durationInSeconds) * time.Second
+		resourcesInterval := time.Second
 
-	TestDNSPerformance := func(server string) (metrics.Histogram, metrics.Histogram, metrics.Histogram, time.Duration) {
-		flowSignal := createFlowSignal(10)
-		wg, finishedDNSRequestsSignal := setupWaitGroupWithSignaler(maxDNSRequestsPerMin)
-		result := make(chan DNSResult, maxDNSRequestsPerMin*2)
-
-		startTime := time.Now()
-
-		timeSample := metrics.NewExpDecaySample(maxDNSRequestsPerMin, 0.015)
-		timeHistogram := metrics.NewHistogram(timeSample)
-		metrics.Register("DNS response time", timeHistogram)
-
-		cpuSample := metrics.NewExpDecaySample(maxDNSRequestsPerMin, 0.015)
+		cpuSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
 		cpuHistogram := metrics.NewHistogram(cpuSample)
 		metrics.Register("CPU Usage", cpuHistogram)
 
-		memSample := metrics.NewExpDecaySample(maxDNSRequestsPerMin, 0.015)
+		memSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
 		memHistogram := metrics.NewHistogram(memSample)
 		metrics.Register("Mem Usage", memHistogram)
 
-		var resultSummary map[int]DNSResult
-		for i := 0; i < maxDNSRequestsPerMin; i++ {
-			go MakeDNSRequestUntilSuccessful(picker, server, flowSignal, result, wg)
-			mem := sigar.ProcMem{}
-			if err := mem.Get(dnsServerPid); err == nil {
-				memHistogram.Update(int64(mem.Resident))
-				cpuFloat := getProcessCPU(dnsServerPid)
-				cpuInt := cpuFloat * (1000 * 1000)
-				cpuHistogram.Update(int64(cpuInt))
+		done := make(chan struct{})
+		go measureResourceUtilization(dnsSession.Command.Process.Pid, resourcesInterval, cpuHistogram, memHistogram, done, shutdown)
+
+		results := makeParallelRequests(requestsPerSecond, workers, duration, shutdown, func(resultChan chan<- Result) {
+			MakeDNSRequestUntilSuccessful(picker, server, resultChan)
+		})
+		<-done
+
+		timeHistogram := generateTimeHistogram(results)
+
+		successCount := 0
+		for _, dr := range results {
+			if dr.status == dns.RcodeSuccess {
+				successCount++
 			}
 		}
-		<-finishedDNSRequestsSignal
-		endTime := time.Now()
 
-		resultSummary = buildResultSummarySync(result)
+		successPercentage := float64(successCount) / float64(len(results))
+		fmt.Printf("success percentage is %.02f%%\n", successPercentage*100)
+		fmt.Printf("requests per second is %d reqs/s\n", successCount/durationInSeconds)
 
-		for _, summary := range resultSummary {
-			timeHistogram.Update(int64(summary.EndTime.Sub(summary.StartTime)))
-		}
-
-		return timeHistogram, memHistogram, cpuHistogram, endTime.Sub(startTime)
-	}
-
-	CheckDNSPerformanceResults := func(timeHistogram, memHistogram, cpuHistogram metrics.Histogram, duration time.Duration, medianResponseBenchmark float64) {
-		medTime := timeHistogram.Percentile(0.5) / (1000 * 1000)
-		maxTime := timeHistogram.Max() / (1000 * 1000)
+		medTime := timeHistogram.Percentile(0.5) / float64(time.Millisecond)
+		maxTime := timeHistogram.Max() / int64(time.Millisecond)
 		printStatsForHistogram(timeHistogram, fmt.Sprintf("DNS handling latency for %s", label), "ms", 1000*1000)
 
 		maxMem := float64(memHistogram.Max()) / (1024 * 1024)
@@ -110,6 +79,12 @@ var _ = Describe("DNS", func() {
 		printStatsForHistogram(cpuHistogram, fmt.Sprintf("DNS server CPU usage for %s", label), "%", 1000*1000)
 
 		testFailures := []error{}
+		if (successCount / durationInSeconds) < requestsPerSecond {
+			testFailures = append(testFailures, fmt.Errorf("Handled DNS requests %d per second was lower than %d benchmark", successCount/durationInSeconds, requestsPerSecond))
+		}
+		if successPercentage < 1 {
+			testFailures = append(testFailures, fmt.Errorf("DNS success percentage of %.1f%% is too low", 100*successPercentage))
+		}
 		if medTime > medianResponseBenchmark {
 			testFailures = append(testFailures, fmt.Errorf("Median DNS response time of %.3fms was greater than %.3fms benchmark", medTime, medianResponseBenchmark))
 		}
@@ -125,10 +100,6 @@ var _ = Describe("DNS", func() {
 		if maxMem > memThreshold {
 			testFailures = append(testFailures, fmt.Errorf("Max DNS server memory usage of %.2fMB was greater than %.2fMB ceiling", maxMem, memThreshold))
 		}
-		if duration > time.Minute {
-			testFailures = append(testFailures, fmt.Errorf("DNS server took %s to serve %d requests, which exceeds 1 minute benchmark", duration.String(), maxDNSRequestsPerMin))
-		}
-
 		Expect(testFailures).To(BeEmpty())
 	}
 
@@ -141,15 +112,12 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for prod like zones", func() {
-			time1, mem, cpu, duration := TestDNSPerformance(dnsServerAddress)
-			time2, _, _, _ := TestDNSPerformance("8.8.8.8:53")
+			benchmarkTime := generateTimeHistogram(makeParallelRequests(requestsPerSecond, workers, 2*time.Second, make(chan struct{}), func(resultChan chan<- Result) {
+				MakeDNSRequestUntilSuccessful(picker, "8.8.8.8:53", resultChan)
+			}))
 
-			CheckDNSPerformanceResults(time1, mem, cpu, duration, math.MaxFloat64)
-			offsetMedian := time.Duration(math.Abs(time1.Percentile(0.5) - time2.Percentile(0.5)))
-			latencyThreshold := 2 * time.Millisecond
-			Expect(offsetMedian).To(BeNumerically("<", latencyThreshold),
-				fmt.Sprintf("expected our server to add at most %s to the median response time, was: %s", latencyThreshold, offsetMedian),
-			)
+			maxLatency := benchmarkTime.Percentile(0.5)
+			TestDNSPerformance(dnsServerAddress, requestsPerSecond, durationInSeconds, maxLatency)
 		})
 	})
 
@@ -160,8 +128,7 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for upcheck zone", func() {
-			time, mem, cpu, duration := TestDNSPerformance(dnsServerAddress)
-			CheckDNSPerformanceResults(time, mem, cpu, duration, 1.5)
+			TestDNSPerformance(dnsServerAddress, requestsPerSecond, durationInSeconds, 1.5)
 		})
 	})
 
@@ -172,27 +139,18 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for google zone", func() {
-			time1, mem, cpu, duration := TestDNSPerformance(dnsServerAddress)
-			time2, _, _, _ := TestDNSPerformance("8.8.8.8:53")
+			benchmarkTime := generateTimeHistogram(makeParallelRequests(requestsPerSecond, workers, 2*time.Second, make(chan struct{}), func(resultChan chan<- Result) {
+				MakeDNSRequestUntilSuccessful(picker, "8.8.8.8:53", resultChan)
+			}))
 
-			CheckDNSPerformanceResults(time1, mem, cpu, duration, math.MaxFloat64)
-			offsetMedian := time.Duration(math.Abs(time1.Percentile(0.5) - time2.Percentile(0.5)))
-			latencyThreshold := 2 * time.Millisecond
-			Expect(offsetMedian).To(BeNumerically("<", latencyThreshold),
-				fmt.Sprintf("expected our server to add at most %s to the median response time, was: %s", latencyThreshold, offsetMedian),
-			)
+			maxLatency := benchmarkTime.Percentile(0.5)
+			TestDNSPerformance(dnsServerAddress, requestsPerSecond, durationInSeconds, maxLatency)
 		})
 	})
 
 	Describe("using local bosh dns records", func() {
 		BeforeEach(func() {
-			cmd := exec.Command(boshBinaryPath, []string{"scp", "dns:/var/vcap/instance/dns/records.json", "records.json"}...)
-			err := cmd.Run()
-			if err != nil {
-				panic(fmt.Sprintf("Failed to bosh scp: %s", err.Error()))
-			}
-
-			recordsJsonBytes, err := ioutil.ReadFile("records.json")
+			recordsJsonBytes, err := ioutil.ReadFile("assets/records.json")
 			Expect(err).ToNot(HaveOccurred())
 			recordSet := records.RecordSet{}
 			err = json.Unmarshal(recordsJsonBytes, &recordSet)
@@ -207,64 +165,29 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for local zones", func() {
-			time, mem, cpu, duration := TestDNSPerformance(dnsServerAddress)
-			CheckDNSPerformanceResults(time, mem, cpu, duration, 1.5)
+			TestDNSPerformance(dnsServerAddress, requestsPerSecond, durationInSeconds, 1.5)
 		})
 	})
 })
 
-func createFlowSignal(goRoutineSize int) chan bool {
-	flow := make(chan bool, goRoutineSize)
-	for i := 0; i < goRoutineSize; i++ {
-		flow <- true
-	}
-
-	return flow
-}
-
-func MakeDNSRequestUntilSuccessful(picker zp.ZonePicker, server string, flow chan bool, result chan DNSResult, wg *sync.WaitGroup) {
-	defer func() {
-		flow <- true
-		wg.Done()
-	}()
-
-	<-flow
+func MakeDNSRequestUntilSuccessful(picker zp.ZonePicker, server string, result chan<- Result) {
+	defer GinkgoRecover()
 	zone := picker.NextZone()
 	c := new(dns.Client)
+	c.Timeout = 50 * time.Millisecond
 	m := new(dns.Msg)
 
+	startTime := time.Now()
 	m.SetQuestion(dns.Fqdn(zone), dns.TypeA)
-	result <- DNSResult{Id: int(m.Id), StartTime: time.Now()}
 
-	r := makeRequest(c, m, server)
-
-	result <- DNSResult{Id: int(m.Id), RCode: r.Rcode, EndTime: time.Now()}
-}
-
-func makeRequest(c *dns.Client, m *dns.Msg, server string) *dns.Msg {
-	r, _, err := c.Exchange(m, server)
-
-	if err != nil {
-		return makeRequest(c, m, server)
-	}
-
-	return r
-}
-
-func buildResultSummarySync(result chan DNSResult) map[int]DNSResult {
-	resultSummary := make(map[int]DNSResult)
-	close(result)
-
-	for r := range result {
-		if _, found := resultSummary[r.Id]; found {
-			dnsResult := resultSummary[r.Id]
-			dnsResult.EndTime = r.EndTime
-			dnsResult.RCode = r.RCode
-			resultSummary[r.Id] = dnsResult
-		} else {
-			resultSummary[r.Id] = r
+	for i := 0; i < 10; i++ {
+		r, _, err := c.Exchange(m, server)
+		if err == nil {
+			responseTime := time.Since(startTime)
+			result <- Result{status: r.Rcode, responseTime: responseTime}
+			return
 		}
 	}
 
-	return resultSummary
+	Fail("failed DNS request after 10 retries")
 }

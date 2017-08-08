@@ -4,12 +4,11 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: bosh/main-bosh-docker
+    repository: bosh/dns-release
+    tag: performance-tests
 
 inputs:
   - name: dns-release
-  - name: bosh-candidate-stemcell
-  - name: bosh-candidate-release
 
 run:
   path: dns-release/ci/tasks/test-performance.sh
