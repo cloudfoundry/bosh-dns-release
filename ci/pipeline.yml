@@ -25,8 +25,6 @@ jobs:
     - get: dns-release
       trigger: true
       passed: [test-unit]
-    - get: bosh-candidate-stemcell
-    - get: bosh-candidate-release
     - task: test-performance
       tags: ["dns-performance"]
       privileged: true
