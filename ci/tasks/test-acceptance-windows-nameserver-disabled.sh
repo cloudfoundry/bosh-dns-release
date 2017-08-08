@@ -15,4 +15,4 @@ bosh -n deploy --recreate $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/win
     -o $ROOT_DIR/dns-release/src/bosh-dns/acceptance_tests/windows/disable_nameserver_override/manifest-ops.yml \
     --vars-store dns-creds.yml
 
-bosh run-errand acceptance-tests-windows --keep-alive --instance acceptance-tests-windows
+bosh run-errand acceptance-tests-windows --keep-alive
