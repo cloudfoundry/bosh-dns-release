@@ -8,6 +8,11 @@ function realpath() {
 }
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BOSH_BINARY_PATH="${BOSH_BINARY_PATH:-$(which gobosh)}"
+
+tmppath=$(mktemp -d)
+ln -s $(which $BOSH_BINARY_PATH) $tmppath/bosh
+export PATH=$tmppath:$PATH
 
 # workers exits 1 if not logged in
 fly -t production workers || fly -t production login
@@ -83,5 +88,6 @@ SKIP_GIT=true \
 
 # Clean up creds.yml so that the next bbl-up will recreate certs for the new instances.
 rm -f $BBL_STATE_DIR/creds.yml
+rm -rf $tmppath
 
 exit 0
