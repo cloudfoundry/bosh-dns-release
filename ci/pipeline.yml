@@ -20,7 +20,7 @@ jobs:
   public: true
   serial: true
   plan:
-    - get: every-2h
+    - get: every-10m
       trigger: true
     - get: dns-release
       trigger: true
@@ -151,3 +151,7 @@ resources:
 - name: every-2h
   type: time
   source: {interval: 2h}
+
+- name: every-10m
+  type: time
+  source: {interval: 10m}
