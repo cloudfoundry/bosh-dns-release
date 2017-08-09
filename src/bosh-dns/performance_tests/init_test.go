@@ -95,6 +95,17 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	Expect(waitForServer(dnsPort)).To(Succeed())
+
+	c := new(dns.Client)
+	m := new(dns.Msg)
+	m.SetQuestion("2d111fee-966f-48a1-95d0-0d57bad45a08.dns.default.cf.bosh", dns.TypeA)
+	for i := 0; i < 10; i++ {
+		r, _, err := c.Exchange(m, fmt.Sprintf("127.0.0.1:%d", dnsPort))
+		if err == nil && r.Rcode == dns.RcodeSuccess {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 })
 
 func waitForServer(port int) error {
