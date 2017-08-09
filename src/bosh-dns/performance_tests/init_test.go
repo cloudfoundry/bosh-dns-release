@@ -7,9 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os/exec"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
