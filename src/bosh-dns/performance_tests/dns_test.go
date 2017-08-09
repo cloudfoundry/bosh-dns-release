@@ -37,7 +37,7 @@ var _ = Describe("DNS", func() {
 			ServerPID: dnsSession.Command.Process.Pid,
 
 			CPUThreshold: 5,
-			MemThreshold: 15,
+			MemThreshold: 20,
 
 			SuccessStatus: dns.RcodeSuccess,
 
