@@ -48,7 +48,8 @@ var _ = Describe("ForwardHandler", func() {
 			var recursionHandler handlers.ForwardHandler
 			var msg *dns.Msg
 			BeforeEach(func() {
-				recursionHandler = handlers.NewForwardHandler([]string{}, fakeExchangerFactory, fakeClock, fakeLogger)
+				fakeExchanger.ExchangeReturns(nil, 0, errors.New("first recursor failed to reply"))
+				recursionHandler = handlers.NewForwardHandler([]string{"blah"}, fakeExchangerFactory, fakeClock, fakeLogger)
 				msg = &dns.Msg{}
 				msg.SetQuestion("example.com.", dns.TypeANY)
 			})
@@ -269,6 +270,45 @@ var _ = Describe("ForwardHandler", func() {
 							Expect(responseMessage.Len()).To(BeNumerically("<", recursorAnswer.Len()))
 						})
 					})
+				})
+			})
+
+			Context("when the top recursor is not performant", func() {
+				It("starts to failover to another recursor", func() {
+					exchangeMsg := &dns.Msg{
+						Answer: []dns.RR{&dns.A{A: net.ParseIP("99.99.99.99")}},
+					}
+
+					callsToFirst := 0
+
+					fakeExchanger.ExchangeStub = func(msg *dns.Msg, address string) (*dns.Msg, time.Duration, error) {
+						if address == "10.244.5.4" {
+							return exchangeMsg, 0, nil
+						}
+
+						callsToFirst += 1
+						return nil, 0, errors.New("first recursor failed to reply")
+					}
+
+					m := &dns.Msg{}
+					m.SetQuestion("example.com.", dns.TypeANY)
+
+					for i := 0; i < 10; i++ {
+						recursionHandler.ServeDNS(fakeWriter, m)
+					}
+					callsInTheBeginning := callsToFirst
+
+					for i := 0; i < 30; i++ {
+						recursionHandler.ServeDNS(fakeWriter, m)
+					}
+					callsInTheMiddle := callsToFirst
+
+					for i := 0; i < 10; i++ {
+						recursionHandler.ServeDNS(fakeWriter, m)
+					}
+					callsInTheEnd := callsToFirst - callsInTheMiddle
+
+					Expect(callsInTheEnd).To(BeNumerically("<", callsInTheBeginning))
 				})
 			})
 

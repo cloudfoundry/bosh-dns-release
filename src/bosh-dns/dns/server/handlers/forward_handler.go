@@ -8,13 +8,14 @@ import (
 
 	"code.cloudfoundry.org/clock"
 
+	"bosh-dns/dns/server/handlers/internal"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
 
 type ForwardHandler struct {
 	clock            clock.Clock
-	recursors        []string
+	recursors        internal.RecursorPool
 	exchangerFactory ExchangerFactory
 	logger           logger.Logger
 	logTag           string
@@ -28,7 +29,7 @@ type Exchanger interface {
 
 func NewForwardHandler(recursors []string, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger) ForwardHandler {
 	return ForwardHandler{
-		recursors:        recursors,
+		recursors:        internal.NewFailoverRecursorPool(recursors),
 		exchangerFactory: exchangerFactory,
 		clock:            clock,
 		logger:           logger,
@@ -47,7 +48,8 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 	network := r.network(responseWriter)
 
 	client := r.exchangerFactory(network)
-	for _, recursor := range r.recursors {
+
+	err := r.recursors.PerformStrategically(func(recursor string) error {
 		exchangeAnswer, _, err := client.Exchange(request, recursor)
 		if err == nil || err == dns.ErrTruncated {
 			response := r.compressIfNeeded(responseWriter, request, exchangeAnswer)
@@ -58,14 +60,17 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 				r.logRecursor(before, request, response.Rcode, "recursor="+recursor)
 			}
 
-			return
+			return nil
 		}
 
 		r.logger.Debug(r.logTag, "error recursing to %s %s", recursor, err.Error())
-	}
+		return err
+	})
 
-	r.writeNoResponseMessage(responseWriter, request)
-	r.logRecursor(before, request, dns.RcodeServerFailure, "no response from recursors")
+	if err != nil {
+		r.writeNoResponseMessage(responseWriter, request)
+		r.logRecursor(before, request, dns.RcodeServerFailure, err.Error())
+	}
 }
 
 func (r ForwardHandler) logRecursor(before time.Time, request *dns.Msg, code int, recursor string) {
