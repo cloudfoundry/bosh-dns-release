@@ -97,13 +97,12 @@ var _ = Describe("RecursorPool", func() {
 		})
 
 		It("begins to prefer the N+1st recursor", func() {
-			for time := 0; time < 100; time++ {
+			for time := 0; time < 1000; time++ {
 				pool.PerformStrategically(work)
 			}
 
-			Expect(recursorAttempts[0]).To(BeNumerically("<", 25))
-			Expect(recursorAttempts[1]).To(BeNumerically("<", 25))
-			Expect(recursorAttempts[2]).To(BeNumerically(">", 50))
+			Expect(recursorAttempts[0]).To(BeNumerically("<", recursorAttempts[2]))
+			Expect(recursorAttempts[1]).To(BeNumerically("<", recursorAttempts[2]))
 		})
 	})
 
