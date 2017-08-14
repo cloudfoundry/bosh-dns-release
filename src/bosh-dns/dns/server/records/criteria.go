@@ -42,7 +42,7 @@ func matchesCriterion(r Record, key string, values []string) bool {
 	var recordValue string
 	switch key {
 	case "a":
-		recordValue = r.AzIndex
+		recordValue = r.AzId
 	case "s":
 		return true
 	default:

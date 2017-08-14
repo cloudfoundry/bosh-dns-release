@@ -9,7 +9,7 @@ type Record struct {
 	Deployment string
 	Ip         string
 	Domain     string
-	AzIndex    string
+	AzId    string
 }
 
 func (r Record) Fqdn(includeJobLabel bool) string {

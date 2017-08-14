@@ -171,7 +171,7 @@ var _ = Describe("RecordSet", func() {
 					Deployment: "my-deployment",
 					Ip:         "123.123.123.123",
 					Domain:     "withadot.",
-					AzIndex:    "1",
+					AzId:       "1",
 				},
 				{
 					Id:         "instance1",
@@ -180,7 +180,7 @@ var _ = Describe("RecordSet", func() {
 					Deployment: "my-deployment",
 					Ip:         "123.123.123.124",
 					Domain:     "nodot.",
-					AzIndex:    "2",
+					AzId:       "2",
 				},
 			}))
 		})

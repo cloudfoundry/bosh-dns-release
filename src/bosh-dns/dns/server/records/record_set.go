@@ -112,7 +112,7 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 			Network:    info[networkIndex].(string),
 			Deployment: info[deploymentIndex].(string),
 			Ip:         info[ipIndex].(string),
-			AzIndex:    info[azIdIndex].(string),
+			AzId:       info[azIdIndex].(string),
 			Domain:     domain,
 		}
 	}
