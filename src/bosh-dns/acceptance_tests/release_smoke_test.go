@@ -115,7 +115,7 @@ var _ = Describe("Integration", func() {
 			}))
 		})
 
-		It("returns stops returning IP addresses of instances that go unhealthy", func() {
+		It("stops returning IP addresses of instances that go unhealthy", func() {
 			var output string
 			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
 
