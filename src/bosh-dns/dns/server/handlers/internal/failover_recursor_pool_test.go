@@ -6,6 +6,7 @@ import (
 	"errors"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"time"
 )
 
 var _ = Describe("RecursorPool", func() {
@@ -107,7 +108,8 @@ var _ = Describe("RecursorPool", func() {
 	})
 
 	It("can handle concurrent tries", func() {
-		smash := func() {
+		smash := func(done chan struct{}) {
+			defer func() { done <- struct{}{} }()
 			for i := 0; i < 15; i++ {
 				pool.PerformStrategically(func(n string) error {
 					if n == "one" {
@@ -118,7 +120,18 @@ var _ = Describe("RecursorPool", func() {
 			}
 		}
 
-		go smash()
-		go smash()
+		done := make(chan struct{})
+
+		go smash(done)
+		go smash(done)
+
+		for i := 0; i < 2; i++ {
+			select {
+			case <-done:
+				continue
+			case <-time.After(time.Minute):
+				Fail("reached something like a deadlock")
+			}
+		}
 	})
 })

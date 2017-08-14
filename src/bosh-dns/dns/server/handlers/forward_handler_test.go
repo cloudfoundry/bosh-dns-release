@@ -19,6 +19,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	"runtime"
 )
 
 var _ = Describe("ForwardHandler", func() {
@@ -295,16 +296,19 @@ var _ = Describe("ForwardHandler", func() {
 
 					for i := 0; i < 10; i++ {
 						recursionHandler.ServeDNS(fakeWriter, m)
+						runtime.Gosched()
 					}
 					callsInTheBeginning := callsToFirst
 
 					for i := 0; i < 30; i++ {
 						recursionHandler.ServeDNS(fakeWriter, m)
+						runtime.Gosched()
 					}
 					callsInTheMiddle := callsToFirst
 
 					for i := 0; i < 10; i++ {
 						recursionHandler.ServeDNS(fakeWriter, m)
+						runtime.Gosched()
 					}
 					callsInTheEnd := callsToFirst - callsInTheMiddle
 
