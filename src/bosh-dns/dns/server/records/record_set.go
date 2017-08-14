@@ -53,8 +53,8 @@ func (r RecordSet) Resolve(fqdn string) ([]string, error) {
 
 func (s *RecordSet) UnmarshalJSON(j []byte) error {
 	swap := struct {
-		Keys  []string   `json:"record_keys"`
-		Infos [][]string `json:"record_infos"`
+		Keys  []string        `json:"record_keys"`
+		Infos [][]interface{} `json:"record_infos"`
 	}{}
 
 	err := json.Unmarshal(j, &swap)
@@ -103,16 +103,16 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 			return fmt.Errorf("Unbalanced records structure. Found %d fields of an expected %d at record #%d", countInfo, countKeys, index)
 		}
 
-		domain := dns.Fqdn(info[domainIndex])
+		domain := dns.Fqdn(info[domainIndex].(string))
 		domains[domain] = struct{}{}
 
 		s.Records[index] = Record{
-			Id:         info[idIndex],
-			Group:      info[groupIndex],
-			Network:    info[networkIndex],
-			Deployment: info[deploymentIndex],
-			Ip:         info[ipIndex],
-			AzIndex:    info[azIdIndex],
+			Id:         info[idIndex].(string),
+			Group:      info[groupIndex].(string),
+			Network:    info[networkIndex].(string),
+			Deployment: info[deploymentIndex].(string),
+			Ip:         info[ipIndex].(string),
+			AzIndex:    info[azIdIndex].(string),
 			Domain:     domain,
 		}
 	}
