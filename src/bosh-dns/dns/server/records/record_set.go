@@ -2,11 +2,11 @@ package records
 
 import (
 	"encoding/json"
-	"fmt"
 	"net"
 	"strings"
 
 	"errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
 
@@ -51,7 +51,8 @@ func (r RecordSet) Resolve(fqdn string) ([]string, error) {
 	return ips, nil
 }
 
-func (s *RecordSet) UnmarshalJSON(j []byte) error {
+func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
+	s := RecordSet{}
 	swap := struct {
 		Keys  []string        `json:"record_keys"`
 		Infos [][]interface{} `json:"record_infos"`
@@ -59,7 +60,7 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 
 	err := json.Unmarshal(j, &swap)
 	if err != nil {
-		return err
+		return RecordSet{}, err
 	}
 
 	s.Records = make([]Record, len(swap.Infos))
@@ -100,26 +101,51 @@ func (s *RecordSet) UnmarshalJSON(j []byte) error {
 	for index, info := range swap.Infos {
 		countInfo := len(info)
 		if countInfo != countKeys {
-			return fmt.Errorf("Unbalanced records structure. Found %d fields of an expected %d at record #%d", countInfo, countKeys, index)
+			logger.Warn("RecordSet", "Unbalanced records structure. Found %d fields of an expected %d at record #%d", countInfo, countKeys, index)
+			continue
 		}
 
-		domain := dns.Fqdn(info[domainIndex].(string))
+		var domainIndexStr string
+		if !assertStringValue(&domainIndexStr, info, domainIndex, "domain", index, logger) {
+			continue
+		}
+
+		domain := dns.Fqdn(domainIndexStr)
 		domains[domain] = struct{}{}
 
-		s.Records[index] = Record{
-			Id:         info[idIndex].(string),
-			Group:      info[groupIndex].(string),
-			Network:    info[networkIndex].(string),
-			Deployment: info[deploymentIndex].(string),
-			Ip:         info[ipIndex].(string),
-			AzId:       info[azIdIndex].(string),
-			Domain:     domain,
+		record := Record{Domain: domain}
+
+		if !assertStringValue(&record.Id, info, idIndex, "id", index, logger) {
+			continue
+		} else if !assertStringValue(&record.Group, info, groupIndex, "group", index, logger) {
+			continue
+		} else if !assertStringValue(&record.Network, info, networkIndex, "network", index, logger) {
+			continue
+		} else if !assertStringValue(&record.Deployment, info, deploymentIndex, "deployment", index, logger) {
+			continue
+		} else if !assertStringValue(&record.Ip, info, ipIndex, "ip", index, logger) {
+			continue
+		} else if !assertStringValue(&record.AzId, info, azIdIndex, "az_id", index, logger) {
+			continue
 		}
+
+		s.Records[index] = record
 	}
 
 	for domain := range domains {
 		s.Domains = append(s.Domains, domain)
 	}
 
-	return nil
+	return s, nil
+}
+
+func assertStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
+	var ok bool
+	*field, ok = info[fieldIdx].(string)
+
+	if !ok {
+		logger.Warn("RecordSet", "Value %d (%s) of record %d is not expected type of %s: %#+v", fieldIdx, fieldName, infoIdx, "string", info[fieldIdx])
+	}
+
+	return ok
 }

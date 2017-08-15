@@ -198,14 +198,11 @@ var _ = Describe("Repo", func() {
 					Expect(err).NotTo(HaveOccurred())
 				})
 
-				Context("to json that represents an invalid list of records", func() {
+				Context("new file is malformed/incomplete", func() {
 					BeforeEach(func() {
 						err := fakeFileSystem.WriteFile(recordsFile.Name(), []byte(`{
 							"record_keys": ["id", "instance_group", "az", "network", "deployment", "domain", "ip"],
-							"record_infos": [
-							["instance2", "my-group", "az1", "my-network", "deployment2", "123.123.123.125"]
-							]
-						}`))
+							"record_in`))
 						Expect(err).NotTo(HaveOccurred())
 
 						fakeFileSystem.RegisterOpenFile(recordsFile.Name(), &fakes.FakeFile{

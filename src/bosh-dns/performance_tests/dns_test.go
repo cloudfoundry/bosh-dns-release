@@ -11,8 +11,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"encoding/json"
 	"io/ioutil"
+	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 )
 
 var _ = Describe("DNS", func() {
@@ -108,11 +108,12 @@ var _ = Describe("DNS", func() {
 
 	Describe("using local bosh dns records", func() {
 		BeforeEach(func() {
+			logger := &fakes.FakeLogger{}
 			recordsJsonBytes, err := ioutil.ReadFile("assets/records.json")
 			Expect(err).ToNot(HaveOccurred())
-			recordSet := records.RecordSet{}
-			err = json.Unmarshal(recordsJsonBytes, &recordSet)
+			recordSet, err := records.CreateFromJSON(recordsJsonBytes, logger)
 			Expect(err).ToNot(HaveOccurred())
+			Expect(recordSet.Records).To(HaveLen(2))
 
 			records := []string{}
 			for _, record := range recordSet.Records {

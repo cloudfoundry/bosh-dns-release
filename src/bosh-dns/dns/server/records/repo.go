@@ -1,7 +1,6 @@
 package records
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -108,7 +107,7 @@ func (r *autoUpdatingRepo) needNewFromDisk() (needsNew bool, set RecordSet, err 
 
 	r.cacheStat = newStat
 
-	err = json.Unmarshal(buf, &set)
+	set, err = CreateFromJSON(buf, r.logger)
 
 	return
 }
