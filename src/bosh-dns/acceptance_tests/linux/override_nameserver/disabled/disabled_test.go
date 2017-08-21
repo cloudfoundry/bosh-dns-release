@@ -17,7 +17,7 @@ var _ = Describe("dns job: override_nameserver", func() {
 	Describe("disabled", func() {
 		It("does not resolve the bosh-dns upcheck", func() {
 			for i := 0; i < 5; i++ {
-				cmd := exec.Command(boshBinaryPath, []string{"ssh", "-d", boshDeployment, "dns/0", "-c", "dig +time=3 -t A upcheck.bosh-dns."}...)
+				cmd := exec.Command(boshBinaryPath, []string{"ssh", "-d", boshDeployment, "bosh-dns/0", "-c", "dig +time=3 -t A upcheck.bosh-dns."}...)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 

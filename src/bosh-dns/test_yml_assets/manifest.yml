@@ -9,7 +9,7 @@ update:
   update_watch_time: 1000-60000
 
 instance_groups:
-- name: dns
+- name: bosh-dns
   azs: [z1]
   instances: 2
   vm_type: default

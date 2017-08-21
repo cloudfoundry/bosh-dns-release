@@ -37,7 +37,7 @@ var _ = Describe("Integration", func() {
 		})
 
 		It("returns records for bosh instances", func() {
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A %s.dns.default.bosh-dns.bosh @%s", firstInstance.InstanceID, firstInstance.IP), " ")...)
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A %s.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.InstanceID, firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -45,7 +45,7 @@ var _ = Describe("Integration", func() {
 			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
 			Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 			Eventually(session.Out).Should(gbytes.Say(
-				"%s\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s",
+				"%s\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s",
 				firstInstance.InstanceID,
 				firstInstance.IP))
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
@@ -54,7 +54,7 @@ var _ = Describe("Integration", func() {
 		It("returns records for bosh instances found with query for all records", func() {
 			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
 
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -63,7 +63,7 @@ var _ = Describe("Integration", func() {
 			Expect(output).To(ContainSubstring("Got answer:"))
 			Expect(output).To(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
 			for _, info := range allDeployedInstances {
-				Expect(output).To(MatchRegexp("q-s0\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
+				Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
 			}
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 		})
@@ -119,7 +119,7 @@ var _ = Describe("Integration", func() {
 			var output string
 			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
 
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
@@ -128,7 +128,7 @@ var _ = Describe("Integration", func() {
 			Expect(output).To(ContainSubstring("Got answer:"))
 			Expect(output).To(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
 			for _, info := range allDeployedInstances {
-				Expect(output).To(MatchRegexp("q-s0\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
+				Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
 			}
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 
@@ -147,17 +147,21 @@ var _ = Describe("Integration", func() {
 			}()
 
 			Eventually(func() string {
-				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
+				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 				output = string(session.Out.Contents())
+				fmt.Printf("output %s\n", output)
+				fmt.Printf("firstip %s\n", firstInstance.IP)
+				fmt.Printf("instancegroupip %s\n", allDeployedInstances[1].IP)
+
 				return output
 			}, 40*time.Second, 1*time.Second).Should(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 
-			Expect(output).To(MatchRegexp("q-s0\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP))
-			Expect(output).ToNot(MatchRegexp("q-s0\\.dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP))
+			Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP))
+			Expect(output).ToNot(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP))
 		})
 	})
 })

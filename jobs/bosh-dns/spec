@@ -1,5 +1,5 @@
 ---
-name: dns
+name: bosh-dns
 
 templates:
   aliases.json.erb: dns/aliases.json

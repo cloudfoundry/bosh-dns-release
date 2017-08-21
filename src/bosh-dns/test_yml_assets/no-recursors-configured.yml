@@ -1,6 +1,6 @@
 - path: /name
   type: replace
   value: ((name))
-- path: /instance_groups/name=dns/jobs/name=bosh-dns/properties/recursors?
+- path: /instance_groups/name=bosh-dns/jobs/name=bosh-dns/properties/recursors?
   type: remove
 
