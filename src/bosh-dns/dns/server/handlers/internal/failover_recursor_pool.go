@@ -2,7 +2,7 @@ package internal
 
 import (
 	"errors"
-	"sync"
+	"sync/atomic"
 )
 
 const (
@@ -15,22 +15,19 @@ type RecursorPool interface {
 }
 
 type failoverRecursorPool struct {
-	preferenceMutex        *sync.Mutex
-	preferredRecursorIndex int
+	preferredRecursorIndex uint64
 
 	recursors []recursorWithHistory
 }
 
 type recursorWithHistory struct {
-	name           string
-	failBuffer     chan bool
-	failCount      int
-	failCountMutex *sync.Mutex
+	name       string
+	failBuffer chan bool
+	failCount  int32
 }
 
 func NewFailoverRecursorPool(recursors []string) RecursorPool {
 	recursorsWithHistory := []recursorWithHistory{}
-	preferenceMutex := &sync.Mutex{}
 
 	if recursors == nil {
 		recursors = []string{}
@@ -42,19 +39,15 @@ func NewFailoverRecursorPool(recursors []string) RecursorPool {
 			failBuffer <- false
 		}
 
-		preferenceMutex.Lock()
 		recursorsWithHistory = append(recursorsWithHistory, recursorWithHistory{
-			name:           name,
-			failBuffer:     failBuffer,
-			failCount:      0,
-			failCountMutex: &sync.Mutex{},
+			name:       name,
+			failBuffer: failBuffer,
+			failCount:  0,
 		})
-		preferenceMutex.Unlock()
 	}
 	return &failoverRecursorPool{
 		recursors:              recursorsWithHistory,
 		preferredRecursorIndex: 0,
-		preferenceMutex:        preferenceMutex,
 	}
 }
 
@@ -63,36 +56,37 @@ func (q *failoverRecursorPool) PerformStrategically(work func(string) error) err
 		return errors.New("no recursors configured")
 	}
 
-	q.preferenceMutex.Lock()
-	offset := q.preferredRecursorIndex
-	q.preferenceMutex.Unlock()
-	for i := 0; i < len(q.recursors); i++ {
-		index := (i + offset) % len(q.recursors)
+	offset := atomic.LoadUint64(&q.preferredRecursorIndex)
+	uintRecursorCount := uint64(len(q.recursors))
+
+	for i := uint64(0); i < uintRecursorCount; i++ {
+		index := int((i + offset) % uintRecursorCount)
 		err := work(q.recursors[index].name)
 		if err == nil {
-			go q.registerResult(index, false)
+			q.registerResult(index, false)
 			return nil
 		}
-		go q.registerResult(index, true)
+
+		failures := q.registerResult(index, true)
+		if i == 0 && failures >= FAIL_TOLERANCE_THRESHOLD {
+			q.shiftPreference()
+		}
 	}
 
 	return errors.New("no response from recursors")
 }
 
 func (q *failoverRecursorPool) shiftPreference() {
-	q.preferenceMutex.Lock()
-	q.preferredRecursorIndex = (q.preferredRecursorIndex + 1) % len(q.recursors)
-	q.preferenceMutex.Unlock()
+	atomic.AddUint64(&q.preferredRecursorIndex, 1)
 }
 
-func (q *failoverRecursorPool) registerResult(index int, wasError bool) {
+func (q *failoverRecursorPool) registerResult(index int, wasError bool) int32 {
 	failingRecursor := &q.recursors[index]
 
 	oldestResult := <-failingRecursor.failBuffer
 	failingRecursor.failBuffer <- wasError
 
-	overflowed := false
-	change := 0
+	change := int32(0)
 
 	if oldestResult {
 		change -= 1
@@ -102,14 +96,5 @@ func (q *failoverRecursorPool) registerResult(index int, wasError bool) {
 		change += 1
 	}
 
-	if change != 0 {
-		failingRecursor.failCountMutex.Lock()
-		failingRecursor.failCount += change
-		overflowed = (failingRecursor.failCount >= FAIL_TOLERANCE_THRESHOLD)
-		failingRecursor.failCountMutex.Unlock()
-	}
-
-	if overflowed {
-		q.shiftPreference()
-	}
+	return atomic.AddInt32(&failingRecursor.failCount, change)
 }
