@@ -8,14 +8,21 @@ function realpath() {
 }
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BOSH_BINARY_PATH="${BOSH_BINARY_PATH:-$(which gobosh)}"
+export BOSH_BINARY_PATH="${BOSH_BINARY_PATH:-$(which gobosh)}"
 
-tmppath=$(mktemp -d)
+tmppath=$(mktemp -d /tmp/hackytemp)
 ln -s $(which $BOSH_BINARY_PATH) $tmppath/bosh
 export PATH=$tmppath:$PATH
 
 # workers exits 1 if not logged in
 fly -t production workers || fly -t production login
+
+cleanup () {
+  # Clean up creds.yml so that the next bbl-up will recreate certs for the new instances.
+  echo "### Cleaning up..."
+  rm -f $BBL_STATE_DIR/creds.yml
+  rm -rf $tmppath
+}
 
 WORK_DIR=/tmp/test-acceptance-windows-workdir
 echo "working out of ${WORK_DIR}..."
@@ -55,12 +62,19 @@ popd
 
 source bbl.env
 
+echo "### starting bbl-up..." # currently breaking.
 SKIP_GIT=true \
 	BOSH_RELEASE_PATH=${BOSH_RELEASE_DIR}/bosh-dev-release.tgz \
 	ROOT_DIR=$WORK_DIR \
 	BOSH_DEPLOYMENT_PATH=$DIR/../../bosh-deployment \
-	$DIR/../ci/tasks/bbl-up.sh
+	$DIR/../ci/tasks/bbl-up.sh || \
+	(echo "### bbl-up failed! should clean up creds.yml? ..."
+        echo rm -f $BBL_STATE_DIR/creds.yml
+        rm -rf $tmppath
+        exit 1)
 
+
+echo "### starting windows-specific tests..."
 # windows specfic
 fly -t production execute -x --privileged \
   --config=$DIR/../ci/tasks/test-acceptance-windows.yml \
@@ -69,6 +83,7 @@ fly -t production execute -x --privileged \
   --input=envs=$ENVS
 
 # nameserver-disabled
+echo "### tests: nameserver-disabled"
 fly -t production execute -x --privileged \
   --config=$DIR/../ci/tasks/test-acceptance-windows-nameserver-disabled.yml \
   --inputs-from=bosh-dns-release/test-acceptance-windows \
@@ -76,6 +91,7 @@ fly -t production execute -x --privileged \
   --input=envs=$ENVS
 
 # shared
+echo "### tests: shared"
 fly -t production execute -x --privileged \
   --config=$DIR/../ci/tasks/test-acceptance-windows-shared.yml \
   --inputs-from=bosh-dns-release/test-acceptance-windows \

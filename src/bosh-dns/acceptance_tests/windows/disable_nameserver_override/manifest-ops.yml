@@ -1,4 +1,4 @@
-- path: /instance_groups/0/jobs/name=dns-windows/properties?/override_nameserver
+- path: /instance_groups/0/jobs/name=bosh-dns-windows/properties?/override_nameserver
   type: replace
   value: false
 - path: /instance_groups/0/jobs/name=acceptance-tests-windows/properties?/suites

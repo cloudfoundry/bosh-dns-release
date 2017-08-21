@@ -23,7 +23,7 @@ try {
 
   Clear-DnsClientCache
 
-  \var\vcap\packages\dns-windows\bin\dns.exe -config \var\vcap\jobs\dns-windows\config\config.json
+  \var\vcap\packages\bosh-dns-windows\bin\bosh-dns.exe -config \var\vcap\jobs\bosh-dns-windows\config\config.json
 } catch {
   $Host.UI.WriteErrorLine($_.Exception.Message)
   Exit 1

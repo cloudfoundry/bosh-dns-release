@@ -25,7 +25,7 @@ func (manager *windowsManager) SetPrimary(address string) error {
 		return nil
 	}
 
-	_, _, _, err = manager.runner.RunCommand("powershell.exe", "/var/vcap/packages/dns-windows/bin/prepend-dns-server.ps1", address)
+	_, _, _, err = manager.runner.RunCommand("powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/prepend-dns-server.ps1", address)
 	if err != nil {
 		return bosherr.WrapError(err, "Executing prepend-dns-server.ps1")
 	}
@@ -34,7 +34,7 @@ func (manager *windowsManager) SetPrimary(address string) error {
 }
 
 func (manager *windowsManager) Read() ([]string, error) {
-	stdout, _, _, err := manager.runner.RunCommand("powershell.exe", "/var/vcap/packages/dns-windows/bin/list-server-addresses.ps1")
+	stdout, _, _, err := manager.runner.RunCommand("powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1")
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Executing list-server-addresses.ps1")
 	}

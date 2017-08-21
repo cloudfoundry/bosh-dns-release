@@ -1,4 +1,4 @@
-- path: /instance_groups/name=bosh-dns/jobs/name=bosh-dns/properties/override_nameserver?
+- path: /instance_groups/name=dns/jobs/name=bosh-dns/properties/override_nameserver?
   type: replace
   value: false
 - path: /name

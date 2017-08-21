@@ -25,7 +25,7 @@ var _ = Describe("WindowsManager", func() {
 	Describe("Read", func() {
 		Context("powershell fails", func() {
 			It("errors for list", func() {
-				fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{ExitStatus: 1, Error: errors.New("fake-err1")})
+				fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{ExitStatus: 1, Error: errors.New("fake-err1")})
 
 				_, err := dnsManager.Read()
 				Expect(err).To(HaveOccurred())
@@ -35,7 +35,7 @@ var _ = Describe("WindowsManager", func() {
 		})
 
 		It("splits lines and returns as slice", func() {
-			fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{Stdout: fmt.Sprintf("%s\r\n%s", "8.8.8.8", address)})
+			fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{Stdout: fmt.Sprintf("%s\r\n%s", "8.8.8.8", address)})
 
 			servers, err := dnsManager.Read()
 			Expect(err).NotTo(HaveOccurred())
@@ -43,7 +43,7 @@ var _ = Describe("WindowsManager", func() {
 		})
 
 		It("returns an empty array when no servers are configured", func() {
-			fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{Stdout: ""})
+			fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{Stdout: ""})
 
 			servers, err := dnsManager.Read()
 
@@ -56,7 +56,7 @@ var _ = Describe("WindowsManager", func() {
 
 		Context("powershell fails", func() {
 			It("errors for prepend", func() {
-				fakeCmdRunner.AddCmdResult(fmt.Sprintf("powershell.exe /var/vcap/packages/dns-windows/bin/prepend-dns-server.ps1 %s", address), boshsysfakes.FakeCmdResult{ExitStatus: 1, Error: errors.New("fake-err1")})
+				fakeCmdRunner.AddCmdResult(fmt.Sprintf("powershell.exe /var/vcap/packages/bosh-dns-windows/bin/prepend-dns-server.ps1 %s", address), boshsysfakes.FakeCmdResult{ExitStatus: 1, Error: errors.New("fake-err1")})
 
 				err := dnsManager.SetPrimary(address)
 				Expect(err).To(HaveOccurred())
@@ -65,7 +65,7 @@ var _ = Describe("WindowsManager", func() {
 			})
 
 			It("errors for list", func() {
-				fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{ExitStatus: 1, Error: errors.New("fake-err1")})
+				fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{ExitStatus: 1, Error: errors.New("fake-err1")})
 
 				err := dnsManager.SetPrimary(address)
 				Expect(err).To(HaveOccurred())
@@ -75,26 +75,26 @@ var _ = Describe("WindowsManager", func() {
 		})
 
 		It("can execute powershell successfully", func() {
-			fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{Stdout: fmt.Sprintf("%s\r\n%s", "8.8.8.8", address)})
-			fakeCmdRunner.AddCmdResult(fmt.Sprintf("powershell.exe /var/vcap/packages/dns-windows/bin/prepend-dns-server.ps1 %s", address), boshsysfakes.FakeCmdResult{})
+			fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{Stdout: fmt.Sprintf("%s\r\n%s", "8.8.8.8", address)})
+			fakeCmdRunner.AddCmdResult(fmt.Sprintf("powershell.exe /var/vcap/packages/bosh-dns-windows/bin/prepend-dns-server.ps1 %s", address), boshsysfakes.FakeCmdResult{})
 
 			err := dnsManager.SetPrimary(address)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(fakeCmdRunner.RunCommands).To(HaveLen(2))
 			Expect(fakeCmdRunner.RunCommands).To(ConsistOf(
-				[]string{"powershell.exe", "/var/vcap/packages/dns-windows/bin/list-server-addresses.ps1"},
-				[]string{"powershell.exe", "/var/vcap/packages/dns-windows/bin/prepend-dns-server.ps1", address},
+				[]string{"powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1"},
+				[]string{"powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/prepend-dns-server.ps1", address},
 			))
 		})
 
 		It("skips if dns is already configured", func() {
-			fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{Stdout: fmt.Sprintf("%s\r\n", address)})
+			fakeCmdRunner.AddCmdResult("powershell.exe /var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1", boshsysfakes.FakeCmdResult{Stdout: fmt.Sprintf("%s\r\n", address)})
 
 			err := dnsManager.SetPrimary(address)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeCmdRunner.RunCommands).To(HaveLen(1))
-			Expect(fakeCmdRunner.RunCommands).To(ConsistOf([][]string{{"powershell.exe", "/var/vcap/packages/dns-windows/bin/list-server-addresses.ps1"}}))
+			Expect(fakeCmdRunner.RunCommands).To(ConsistOf([][]string{{"powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1"}}))
 		})
 	})
 })

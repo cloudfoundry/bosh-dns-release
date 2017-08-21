@@ -2,25 +2,25 @@
 
 monit = {
   processes: [{
-    name: "dns-windows",
+    name: "bosh-dns-windows",
     executable: "powershell",
-    args: ["/var/vcap/jobs/dns-windows/bin/dns_ctl.ps1"]
+    args: ["/var/vcap/jobs/bosh-dns-windows/bin/bosh_dns_ctl.ps1"]
   }]
 }
 
 if p('override_nameserver')
   monit[:processes] << {
-    name: "dns-nameserverconfig-windows",
-    executable: "/var/vcap/packages/dns-windows/bin/dns-nameserverconfig.exe",
+    name: "bosh-dns-nameserverconfig-windows",
+    executable: "/var/vcap/packages/bosh-dns-windows/bin/bosh-dns-nameserverconfig.exe",
     args: ["--bindAddress", p('address').to_s == "0.0.0.0" ? "127.0.0.1" : p('address')]
   }
 end
 
 if p('health.enabled')
   monit[:processes] << {
-    name: "dns-healthcheck-windows",
-    executable: "/var/vcap/packages/dns-windows/bin/dns-health.exe",
-    args: ["/var/vcap/jobs/dns-windows/config/health_server_config.json"]
+    name: "bosh-dns-healthcheck-windows",
+    executable: "/var/vcap/packages/bosh-dns-windows/bin/bosh-dns-health.exe",
+    args: ["/var/vcap/jobs/bosh-dns-windows/config/health_server_config.json"]
   }
 end
 

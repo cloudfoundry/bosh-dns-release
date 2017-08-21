@@ -15,17 +15,17 @@ if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\"
 }
 
-go.exe build -o ${BOSH_INSTALL_TARGET}\bin\dns.exe "bosh-dns\dns"
+go.exe build -o ${BOSH_INSTALL_TARGET}\bin\bosh-dns.exe "bosh-dns\dns"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: dns"
 }
 
-go.exe build -o ${BOSH_INSTALL_TARGET}\bin\dns-nameserverconfig.exe "bosh-dns\dns\nameserverconfig"
+go.exe build -o ${BOSH_INSTALL_TARGET}\bin\bosh-dns-nameserverconfig.exe "bosh-dns\dns\nameserverconfig"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: dns\nameserverconfig"
 }
 
-go.exe build -o ${BOSH_INSTALL_TARGET}\bin\dns-health.exe "bosh-dns\healthcheck"
+go.exe build -o ${BOSH_INSTALL_TARGET}\bin\bosh-dns-health.exe "bosh-dns\healthcheck"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: healthcheck"
 }

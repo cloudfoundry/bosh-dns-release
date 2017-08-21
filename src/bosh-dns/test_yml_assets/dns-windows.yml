@@ -9,7 +9,7 @@ update:
   update_watch_time: 1000-60000
 
 instance_groups:
-- name: dns
+- name: bosh-dns
   azs: [z1]
   instances: 2
   vm_type: large
@@ -21,7 +21,7 @@ instance_groups:
   jobs:
   - name: needs-alias
     release: dns-acceptance
-  - name: dns-windows
+  - name: bosh-dns-windows
     release: dns
     properties:
       address: 0.0.0.0

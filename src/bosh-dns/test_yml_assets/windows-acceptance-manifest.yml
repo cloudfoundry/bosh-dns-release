@@ -22,7 +22,7 @@ instance_groups:
   jobs:
   - name: acceptance-tests-windows
     release: dns
-  - name: dns-windows
+  - name: bosh-dns-windows
     release: dns
 
 releases:

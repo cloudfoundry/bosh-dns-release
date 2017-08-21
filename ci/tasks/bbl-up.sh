@@ -3,6 +3,8 @@
 set -eu -o pipefail
 
 BOSH_BINARY_PATH=${BOSH_BINARY_PATH:-bosh}
+
+echo "### bosh path: $BOSH_BINARY_PATH"
 ROOT_DIR=${ROOT_DIR:-$PWD}
 BOSH_DEPLOYMENT_PATH=${BOSH_DEPLOYMENT_PATH:-$ROOT_DIR/bosh-deployment}
 BOSH_RELEASE_PATH=${BOSH_RELEASE_PATH:-$ROOT_DIR/bosh-candidate-release/bosh-dev-release.tgz}
@@ -31,11 +33,15 @@ if [ -z "${SKIP_GIT}" ]; then
 	trap commit_state EXIT
 fi
 
-BBL_STATE_DIR=$REPO_DIR/$ENV_NAME
+export BBL_STATE_DIR=$REPO_DIR/$ENV_NAME # can help with cleanup
 mkdir -p $BBL_STATE_DIR
 
 bbl --state-dir=$BBL_STATE_DIR up --no-director
 
+echo "### bosh-deployment-vars:"
+bbl --state-dir=$BBL_STATE_DIR bosh-deployment-vars
+
+echo "### creating manifest..."
 $BOSH_BINARY_PATH int $BOSH_DEPLOYMENT_PATH/bosh.yml \
   --vars-store $BBL_STATE_DIR/creds.yml  \
   -l <(bbl --state-dir=$BBL_STATE_DIR bosh-deployment-vars) \
@@ -47,6 +53,7 @@ $BOSH_BINARY_PATH int $BOSH_DEPLOYMENT_PATH/bosh.yml \
   -v local_bosh_release=$BOSH_RELEASE_PATH \
   > $BBL_STATE_DIR/bosh-manifest.yml
 
+echo "### bosh create-env..." # boom
 $BOSH_BINARY_PATH create-env $BBL_STATE_DIR/bosh-manifest.yml \
   --state $BBL_STATE_DIR/state.json \
   --vars-store $BBL_STATE_DIR/creds.yml \

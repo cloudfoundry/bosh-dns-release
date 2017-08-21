@@ -10,9 +10,9 @@
   health: {
     enabled: p('health.enabled'),
     port: p('health.server.port'),
-    certificate_file: '/var/vcap/jobs/dns-windows/config/certs/client.crt',
-    private_key_file: '/var/vcap/jobs/dns-windows/config/certs/client.key',
-    ca_file: '/var/vcap/jobs/dns-windows/config/certs/client_ca.crt',
+    certificate_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/client.crt',
+    private_key_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/client.key',
+    ca_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/client_ca.crt',
     check_interval: "20s"
   }
 }.to_json

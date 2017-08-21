@@ -30,7 +30,7 @@ var _ = Describe("dns job: disable_nameserver_override", func() {
 			var existingDNS string
 
 			BeforeEach(func() {
-				cmd := exec.Command("powershell.exe", "/var/vcap/packages/dns-windows/bin/list-server-addresses.ps1")
+				cmd := exec.Command("powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1")
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
@@ -39,20 +39,20 @@ var _ = Describe("dns job: disable_nameserver_override", func() {
 			})
 
 			AfterEach(func() {
-				cmd := exec.Command("powershell.exe", "/var/vcap/packages/dns-windows/bin/prepend-dns-server.ps1", "-DNSAddress", existingDNS)
+				cmd := exec.Command("powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/prepend-dns-server.ps1", "-DNSAddress", existingDNS)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 			})
 
 			It("does not rewrite the nameserver configuration to our dns server", func() {
-				cmd := exec.Command("powershell.exe", "/var/vcap/packages/dns-windows/bin/prepend-dns-server.ps1", "-DNSAddress", "192.0.2.100")
+				cmd := exec.Command("powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/prepend-dns-server.ps1", "-DNSAddress", "192.0.2.100")
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 				Consistently(func() string {
-					cmd := exec.Command("powershell.exe", "/var/vcap/packages/dns-windows/bin/list-server-addresses.ps1")
+					cmd := exec.Command("powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1")
 					session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 					Expect(err).NotTo(HaveOccurred())
 					Eventually(session, 10*time.Second).Should(gexec.Exit(0))

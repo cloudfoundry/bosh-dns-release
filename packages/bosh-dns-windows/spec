@@ -1,5 +1,5 @@
 ---
-name: dns-windows
+name: bosh-dns-windows
 
 dependencies:
 - golang-windows

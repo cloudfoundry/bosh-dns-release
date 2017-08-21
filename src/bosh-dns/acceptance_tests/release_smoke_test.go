@@ -153,9 +153,6 @@ var _ = Describe("Integration", func() {
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 				output = string(session.Out.Contents())
-				fmt.Printf("output %s\n", output)
-				fmt.Printf("firstip %s\n", firstInstance.IP)
-				fmt.Printf("instancegroupip %s\n", allDeployedInstances[1].IP)
 
 				return output
 			}, 40*time.Second, 1*time.Second).Should(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
