@@ -3,9 +3,9 @@ name: dns
 
 templates:
   aliases.json.erb: dns/aliases.json
-  dns_ctl.erb: bin/dns_ctl
-  dns_resolvconf_ctl.erb: bin/dns_resolvconf_ctl
-  dns_health_ctl.erb: bin/dns_health_ctl
+  bosh_dns_ctl.erb: bin/bosh_dns_ctl
+  bosh_dns_resolvconf_ctl.erb: bin/bosh_dns_resolvconf_ctl
+  bosh_dns_health_ctl.erb: bin/bosh_dns_health_ctl
   post-start.erb: bin/post-start
   config.json.erb: config/config.json
   health_server_config.json.erb: config/health_server_config.json
@@ -17,7 +17,7 @@ templates:
   client_ca.crt.erb: config/certs/client_ca.crt
 
 packages:
-  - dns
+  - bosh-dns
 
 properties:
   address:

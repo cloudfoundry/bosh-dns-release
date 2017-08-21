@@ -2,11 +2,11 @@
 
 set -o pipefail
 
-RUN_DIR=/var/vcap/sys/run/dns
-PIDFILE=$RUN_DIR/dns_resolvconf.pid
-LOG_DIR=/var/vcap/sys/log/dns
-DNS_PACKAGE=/var/vcap/packages/dns
-SCRIPT_NAME=dns_resolvconf_ctl
+RUN_DIR=/var/vcap/sys/run/bosh-dns
+PIDFILE=$RUN_DIR/bosh_dns_resolvconf.pid
+LOG_DIR=/var/vcap/sys/log/bosh-dns
+DNS_PACKAGE=/var/vcap/packages/bosh-dns
+SCRIPT_NAME=bosh_dns_resolvconf_ctl
 
 function start_logging() {
   exec > >(prepend_datetime >> $LOG_DIR/${SCRIPT_NAME}.stdout.log)
@@ -30,10 +30,10 @@ function create_directories_and_chown_to_vcap() {
 }
 
 function start_process() {
-  "${DNS_PACKAGE}/bin/dns-nameserverconfig" \
+  "${DNS_PACKAGE}/bin/bosh-dns-nameserverconfig" \
     --bindAddress "<%= p('address') %>" \
-    1>> ${LOG_DIR}/dns_resolvconf.stdout.log \
-    2>> ${LOG_DIR}/dns_resolvconf.stderr.log &
+    1>> ${LOG_DIR}/bosh_dns_resolvconf.stdout.log \
+    2>> ${LOG_DIR}/bosh_dns_resolvconf.stderr.log &
 
    echo $! > $PIDFILE
 }

@@ -19,7 +19,7 @@ instance_groups:
   jobs:
   - name: needs-alias
     release: dns-acceptance
-  - name: dns
+  - name: bosh-dns
     release: dns
     properties:
       address: 0.0.0.0

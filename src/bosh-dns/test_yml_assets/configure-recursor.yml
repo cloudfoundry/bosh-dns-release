@@ -1,3 +1,3 @@
 - type: replace
-  path: /instance_groups/name=dns/jobs/name=dns/properties/recursors
+  path: /instance_groups/name=dns/jobs/name=bosh-dns/properties/recursors
   value: [((recursor_ip))]
