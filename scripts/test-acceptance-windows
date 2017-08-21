@@ -64,22 +64,22 @@ SKIP_GIT=true \
 # windows specfic
 fly -t production execute -x --privileged \
   --config=$DIR/../ci/tasks/test-acceptance-windows.yml \
-  --inputs-from=dns-release/test-acceptance-windows \
-  --input=dns-release=$DIR/../ \
+  --inputs-from=bosh-dns-release/test-acceptance-windows \
+  --input=bosh-dns-release=$DIR/../ \
   --input=envs=$ENVS
 
 # nameserver-disabled
 fly -t production execute -x --privileged \
   --config=$DIR/../ci/tasks/test-acceptance-windows-nameserver-disabled.yml \
-  --inputs-from=dns-release/test-acceptance-windows \
-  --input=dns-release=$DIR/../ \
+  --inputs-from=bosh-dns-release/test-acceptance-windows \
+  --input=bosh-dns-release=$DIR/../ \
   --input=envs=$ENVS
 
 # shared
 fly -t production execute -x --privileged \
   --config=$DIR/../ci/tasks/test-acceptance-windows-shared.yml \
-  --inputs-from=dns-release/test-acceptance-windows \
-  --input=dns-release=$DIR/../ \
+  --inputs-from=bosh-dns-release/test-acceptance-windows \
+  --input=bosh-dns-release=$DIR/../ \
   --input=envs=$ENVS
 
 SKIP_GIT=true \

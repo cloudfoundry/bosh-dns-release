@@ -8,12 +8,12 @@ image_resource:
     tag: acceptance-tests-windows
 
 inputs:
-  - name: dns-release
+  - name: bosh-dns-release
   - name: envs
   - name: bosh-candidate-stemcell-windows
 
 run:
-  path: dns-release/ci/tasks/test-acceptance-windows.sh
+  path: bosh-dns-release/ci/tasks/test-acceptance-windows.sh
 
 params:
   ENV_NAME: default

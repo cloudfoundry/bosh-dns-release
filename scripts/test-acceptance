@@ -9,5 +9,5 @@ fly -t production workers || fly -t production login
 
 fly -t production execute -x --privileged \
   --config=./ci/tasks/test-acceptance.yml \
-  --inputs-from=dns-release/test-acceptance \
-  --input=dns-release=$DIR/../
+  --inputs-from=bosh-dns-release/test-acceptance \
+  --input=bosh-dns-release=$DIR/../

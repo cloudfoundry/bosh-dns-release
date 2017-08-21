@@ -23,17 +23,17 @@ export LOCAL_RECURSOR_OPS_FILE="add-test-dns-nameservers"
 export TEST_TARGET_OS="linux"
 
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
-    -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/add-static-ips-to-cloud-config.yml > ${TEST_CLOUD_CONFIG_PATH}
+    -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/add-static-ips-to-cloud-config.yml > ${TEST_CLOUD_CONFIG_PATH}
 
 bosh -n update-cloud-config ${TEST_CLOUD_CONFIG_PATH} -v network=director_network
 
 bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
 
-pushd $ROOT_DIR/dns-release
+pushd $ROOT_DIR/bosh-dns-release
    bosh create-release --force && bosh upload-release
 popd
 
-export GOPATH=$PWD/dns-release
+export GOPATH=$PWD/bosh-dns-release
 export PATH="${GOPATH}/bin":$PATH
 
 go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
@@ -42,11 +42,11 @@ pushd $GOPATH/src/bosh-dns/acceptance_tests
     ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
 popd
 
-bosh -n deploy $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/manifest.yml \
-   -v acceptance_release_path=$ROOT_DIR/dns-release/src/bosh-dns/acceptance_tests/dns-acceptance-release \
+bosh -n deploy $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/manifest.yml \
+   -v acceptance_release_path=$ROOT_DIR/bosh-dns-release/src/bosh-dns/acceptance_tests/dns-acceptance-release \
    -v health_server_port=2345 \
-   -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/use-dns-release-default-bind-and-alias-addresses.yml \
-   -o $ROOT_DIR/dns-release/src/bosh-dns/test_yml_assets/enable-health-manifest-ops.yml \
+   -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/use-dns-release-default-bind-and-alias-addresses.yml \
+   -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/enable-health-manifest-ops.yml \
    --vars-store dns-creds.yml
 
 pushd $GOPATH/src/bosh-dns/acceptance_tests/linux

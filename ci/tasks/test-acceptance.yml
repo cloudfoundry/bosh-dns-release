@@ -8,11 +8,11 @@ image_resource:
     tag: acceptance-tests
 
 inputs:
-  - name: dns-release
+  - name: bosh-dns-release
   - name: bosh-candidate-stemcell
   - name: bosh-candidate-release
 
 params: []
 
 run:
-  path: dns-release/ci/tasks/test-acceptance.sh
+  path: bosh-dns-release/ci/tasks/test-acceptance.sh
