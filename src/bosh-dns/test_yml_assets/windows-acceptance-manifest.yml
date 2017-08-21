@@ -21,12 +21,12 @@ instance_groups:
   - name: private
   jobs:
   - name: acceptance-tests-windows
-    release: dns
+    release: bosh-dns
   - name: bosh-dns-windows
-    release: dns
+    release: bosh-dns
 
 releases:
-- name: dns
+- name: bosh-dns
   version: latest
 
 stemcells:

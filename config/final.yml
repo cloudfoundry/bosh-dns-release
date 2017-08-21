@@ -1,5 +1,5 @@
 ---
-name: dns
+name: bosh-dns
 blobstore:
   provider: s3
   options:

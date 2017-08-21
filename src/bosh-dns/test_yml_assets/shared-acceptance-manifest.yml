@@ -20,7 +20,7 @@ instance_groups:
     static_ips: [10.0.31.191]
   jobs:
   - name: acceptance-tests
-    release: dns
+    release: bosh-dns
     properties:
       bosh_ca_cert: ((bosh_ca_cert))
       bosh_client_secret: ((bosh_client_secret))
@@ -29,7 +29,7 @@ instance_groups:
       bosh_deployment: ((bosh_deployment))
 
 releases:
-- name: dns
+- name: bosh-dns
   version: latest
 
 stemcells:

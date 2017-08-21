@@ -20,7 +20,7 @@ instance_groups:
   - name: needs-alias
     release: dns-acceptance
   - name: bosh-dns
-    release: dns
+    release: bosh-dns
     properties:
       address: 0.0.0.0
       recursors:
@@ -28,7 +28,7 @@ instance_groups:
       recursor_timeout: 1s
 
 releases:
-- name: dns
+- name: bosh-dns
   version: latest
 - name: dns-acceptance
   url: file://((acceptance_release_path))

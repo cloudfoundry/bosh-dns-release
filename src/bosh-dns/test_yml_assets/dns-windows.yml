@@ -22,7 +22,7 @@ instance_groups:
   - name: needs-alias
     release: dns-acceptance
   - name: bosh-dns-windows
-    release: dns
+    release: bosh-dns
     properties:
       address: 0.0.0.0
       recursors: ["10.0.31.191:9955"]
@@ -30,7 +30,7 @@ instance_groups:
     release: dns-acceptance
 
 releases:
-- name: dns
+- name: bosh-dns
   version: latest
 - name: dns-acceptance
   version: latest
