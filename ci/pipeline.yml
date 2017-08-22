@@ -111,7 +111,8 @@ resources:
   source:
     uri: https://github.com/cloudfoundry/bosh-dns-release
     branch: master
-    ignore_paths: ci/docker
+    ignore_paths:
+    - ci/docker
 
 - name: bosh-deployment
   type: git
