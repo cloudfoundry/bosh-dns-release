@@ -3,18 +3,18 @@ jobs:
 - name: test-unit
   public: true
   plan:
-    - get: dns-release
+    - get: bosh-dns-release
       trigger: true
     - task: test-unit
-      file: dns-release/ci/tasks/test-unit.yml
+      file: bosh-dns-release/ci/tasks/test-unit.yml
 
 - name: test-unit-windows
   public: true
   plan:
-    - get: dns-release
+    - get: bosh-dns-release
       trigger: true
     - task: test-unit-windows
-      file: dns-release/ci/tasks/test-unit-windows.yml
+      file: bosh-dns-release/ci/tasks/test-unit-windows.yml
 
 - name: test-performance
   public: true
@@ -22,13 +22,13 @@ jobs:
   plan:
     - get: every-10m
       trigger: true
-    - get: dns-release
+    - get: bosh-dns-release
       trigger: true
       passed: [test-unit]
     - task: test-performance
       tags: ["dns-performance"]
       privileged: true
-      file: dns-release/ci/tasks/test-performance.yml
+      file: bosh-dns-release/ci/tasks/test-performance.yml
       params:
         ZONES_JSON_HASH: {{zones_json_hash}}
 
@@ -37,14 +37,14 @@ jobs:
   plan:
     - get: every-2h
       trigger: true
-    - get: dns-release
+    - get: bosh-dns-release
       trigger: true
       passed: [test-unit]
     - get: bosh-candidate-stemcell
     - get: bosh-candidate-release
     - task: test-acceptance
       privileged: true
-      file: dns-release/ci/tasks/test-acceptance.yml
+      file: bosh-dns-release/ci/tasks/test-acceptance.yml
 
 - name: test-acceptance-windows
   public: true
@@ -54,7 +54,7 @@ jobs:
   plan:
     - get: every-2h
       trigger: true
-    - get: dns-release
+    - get: bosh-dns-release
       trigger: true
       passed: [test-unit-windows]
     - get: envs
@@ -63,25 +63,25 @@ jobs:
     - get: bosh-candidate-stemcell-windows
     - get: bosh-candidate-release
     - task: windows
-      file: dns-release/ci/tasks/test-acceptance-windows.yml
+      file: bosh-dns-release/ci/tasks/test-acceptance-windows.yml
     - task: windows-nameserver-disabled
-      file: dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
+      file: bosh-dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
     - task: windows-shared
-      file: dns-release/ci/tasks/test-acceptance-windows-shared.yml
+      file: bosh-dns-release/ci/tasks/test-acceptance-windows-shared.yml
     - task: clean-up
-      file: dns-release/ci/tasks/clean-up.yml
+      file: bosh-dns-release/ci/tasks/clean-up.yml
 
 - name: bbl-up
   serial: true
   serial_groups:
   - windows-acceptance-env
   plan:
-    - get: dns-release
+    - get: bosh-dns-release
     - get: bosh-deployment
     - get: bosh-candidate-release
     - get: envs
     - task: bbl-up
-      file: dns-release/ci/tasks/bbl-up.yml
+      file: bosh-dns-release/ci/tasks/bbl-up.yml
       params:
         BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
       ensure:
@@ -94,10 +94,10 @@ jobs:
   serial_groups:
   - windows-acceptance-env
   plan:
-    - get: dns-release
+    - get: bosh-dns-release
     - get: envs
     - task: bbl-destroy
-      file: dns-release/ci/tasks/bbl-destroy.yml
+      file: bosh-dns-release/ci/tasks/bbl-destroy.yml
       params:
         BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
       ensure:
@@ -106,10 +106,10 @@ jobs:
           repository: envs
 
 resources:
-- name: dns-release
+- name: bosh-dns-release
   type: git
   source:
-    uri: https://github.com/cloudfoundry/dns-release
+    uri: https://github.com/cloudfoundry/bosh-dns-release
     branch: master
 
 - name: bosh-deployment

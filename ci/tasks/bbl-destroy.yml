@@ -8,7 +8,7 @@ image_resource:
     tag: v2.5.0
 
 inputs:
-  - name: dns-release
+  - name: bosh-dns-release
   - name: envs
 
 outputs:
@@ -24,4 +24,4 @@ params:
   ENV_NAME: default
 
 run:
-  path: dns-release/ci/tasks/bbl-destroy.sh
+  path: bosh-dns-release/ci/tasks/bbl-destroy.sh

@@ -42,7 +42,7 @@ resources:
 - name: repo
   type: git
   source:
-    uri: https://github.com/cloudfoundry/dns-release.git
+    uri: https://github.com/cloudfoundry/bosh-dns-release.git
     branch: master
     paths:
     - "ci/docker"
@@ -53,7 +53,7 @@ resources:
 - name: performance-tests-image
   type: docker-image
   source:
-    repository: bosh/bosh-dns-release
+    repository: bosh/dns-release
     tag: performance-tests
     email: {{dockerhub_email}}
     username: {{dockerhub_username}}
@@ -61,7 +61,7 @@ resources:
 - name: acceptance-tests-image
   type: docker-image
   source:
-    repository: bosh/bosh-dns-release
+    repository: bosh/dns-release
     tag: acceptance-tests
     email: {{dockerhub_email}}
     username: {{dockerhub_username}}
@@ -69,7 +69,7 @@ resources:
 - name: acceptance-tests-windows-image
   type: docker-image
   source:
-    repository: bosh/bosh-dns-release
+    repository: bosh/dns-release
     tag: acceptance-tests-windows
     email: {{dockerhub_email}}
     username: {{dockerhub_username}}

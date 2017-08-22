@@ -12,17 +12,15 @@ chmod +x /usr/local/bin/bosh
 export BOSH_INSTALL_TARGET=/usr/local/golang
 mkdir -p $BOSH_INSTALL_TARGET
 
-pushd dns-release/
+export GOROOT=/usr/local/golang
+export PATH=$BOSH_INSTALL_TARGET/bin:$PATH
+
+pushd bosh-dns-release/
   bosh sync-blobs
 
   pushd blobs
     ../packages/golang/packaging
   popd
-popd
 
-export GOROOT=/usr/local/golang
-export PATH=$BOSH_INSTALL_TARGET/bin:$PATH
-
-pushd $PWD/dns-release
   scripts/test-unit
 popd

@@ -8,7 +8,7 @@ image_resource:
     tag: v2.5.0
 
 inputs:
-  - name: dns-release
+  - name: bosh-dns-release
   - name: bosh-deployment
   - name: bosh-candidate-release
   - name: envs
@@ -26,4 +26,4 @@ params:
   ENV_NAME: default
 
 run:
-  path: dns-release/ci/tasks/bbl-up.sh
+  path: bosh-dns-release/ci/tasks/bbl-up.sh

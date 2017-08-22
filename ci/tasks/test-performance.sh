@@ -3,7 +3,7 @@
 set -exu
 
 
-export GOPATH=$PWD/dns-release
+export GOPATH=$PWD/bosh-dns-release
 export PATH="${GOPATH}/bin":$PATH
 
 go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo

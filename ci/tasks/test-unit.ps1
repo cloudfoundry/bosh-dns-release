@@ -3,7 +3,7 @@
   exit 1
 }
 
-$env:GOPATH = Join-Path -Path $PWD "dns-release"
+$env:GOPATH = Join-Path -Path $PWD "bosh-dns-release"
 $env:PATH = $env:GOPATH + "/bin;C:/go/bin;C:/var/vcap/bosh/bin;" + $env:PATH
 
 if ((Get-Command "go.exe" -ErrorAction SilentlyContinue) -eq $null)

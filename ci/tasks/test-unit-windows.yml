@@ -2,7 +2,7 @@
 platform: windows
 
 inputs:
-- name: dns-release
+- name: bosh-dns-release
 
 run:
   path: powershell
@@ -10,4 +10,4 @@ run:
   - "-ExecutionPolicy"
   - "Bypass"
   - "-File"
-  - dns-release/ci/tasks/test-unit.ps1
+  - bosh-dns-release/ci/tasks/test-unit.ps1

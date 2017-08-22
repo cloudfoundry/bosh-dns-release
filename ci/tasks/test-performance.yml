@@ -8,7 +8,7 @@ image_resource:
     tag: performance-tests
 
 inputs:
-  - name: dns-release
+  - name: bosh-dns-release
 
 run:
-  path: dns-release/ci/tasks/test-performance.sh
+  path: bosh-dns-release/ci/tasks/test-performance.sh

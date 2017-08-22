@@ -48,7 +48,7 @@ var _ = Describe("main", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		if runtime.GOOS == "windows" {
-			err := os.MkdirAll("/var/vcap/packages/dns-windows/bin", os.ModePerm)
+			err := os.MkdirAll("/var/vcap/packages/bosh-dns-windows/bin", os.ModePerm)
 			Expect(err).ToNot(HaveOccurred())
 			err = ioutil.WriteFile("/var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1", []byte(""), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
