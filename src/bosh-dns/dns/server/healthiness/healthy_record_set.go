@@ -1,6 +1,7 @@
 package healthiness
 
 import (
+	"bosh-dns/dns/server/healthiness/internal"
 	"bosh-dns/dns/server/records"
 	"sync"
 )
@@ -18,14 +19,18 @@ type HealthyRecordSet struct {
 	recordSet      records.RecordSet
 	recordSetMutex *sync.RWMutex
 
-	trackedDomains      map[string]struct{}
-	trackedDomainsMutex *sync.RWMutex
+	trackedDomains *internal.PriorityLimitedTranscript
 
-	trackedIPs      map[string]struct{}
+	trackedIPs      map[string]map[string]struct{}
 	trackedIPsMutex *sync.Mutex
 }
 
-func NewHealthyRecordSet(recordSetRepo RecordSetRepo, healthWatcher HealthWatcher, shutdownChan chan struct{}) *HealthyRecordSet {
+func NewHealthyRecordSet(
+	recordSetRepo RecordSetRepo,
+	healthWatcher HealthWatcher,
+	maximumTrackedDomains uint,
+	shutdownChan chan struct{},
+) *HealthyRecordSet {
 	subscriptionChan := recordSetRepo.Subscribe()
 	recordSet, _ := recordSetRepo.Get()
 
@@ -35,10 +40,9 @@ func NewHealthyRecordSet(recordSetRepo RecordSetRepo, healthWatcher HealthWatche
 		recordSet:      recordSet,
 		recordSetMutex: &sync.RWMutex{},
 
-		trackedDomains:      map[string]struct{}{},
-		trackedDomainsMutex: &sync.RWMutex{},
+		trackedDomains: internal.NewPriorityLimitedTranscript(maximumTrackedDomains),
 
-		trackedIPs:      map[string]struct{}{},
+		trackedIPs:      map[string]map[string]struct{}{},
 		trackedIPsMutex: &sync.Mutex{},
 	}
 
@@ -60,38 +64,59 @@ func NewHealthyRecordSet(recordSetRepo RecordSetRepo, healthWatcher HealthWatche
 				hrs.recordSet = recordSet
 				hrs.recordSetMutex.Unlock()
 
-				newTrackedIPs := map[string]struct{}{}
-				hrs.trackedDomainsMutex.RLock()
-				hrs.trackedIPsMutex.Lock()
-				for domain := range hrs.trackedDomains {
-					ips, err := recordSet.Resolve(domain)
-					if err != nil {
-						continue
-					}
-
-					for _, ip := range ips {
-						newTrackedIPs[ip] = struct{}{}
-
-						if _, found := hrs.trackedIPs[ip]; found {
-							delete(hrs.trackedIPs, ip)
-						} else {
-							healthWatcher.IsHealthy(ip)
-						}
-					}
-				}
-				hrs.trackedDomainsMutex.RUnlock()
-
-				for oldIP := range hrs.trackedIPs {
-					hrs.healthWatcher.Untrack(oldIP)
-				}
-
-				hrs.trackedIPs = newTrackedIPs
-				hrs.trackedIPsMutex.Unlock()
+				hrs.refreshTrackedIPs()
 			}
 		}
 	}()
 
 	return hrs
+}
+
+func (hrs *HealthyRecordSet) refreshTrackedIPs() {
+	hrs.recordSetMutex.RLock()
+	recordSet := hrs.recordSet
+	hrs.recordSetMutex.RUnlock()
+
+	newTrackedIPs := map[string]map[string]struct{}{}
+	hrs.trackedIPsMutex.Lock()
+	defer hrs.trackedIPsMutex.Unlock()
+	for _, domain := range hrs.trackedDomains.Registry() {
+		ips, err := recordSet.Resolve(domain)
+		if err != nil {
+			continue
+		}
+
+		for _, ip := range ips {
+			if _, ok := newTrackedIPs[ip]; !ok {
+				newTrackedIPs[ip] = map[string]struct{}{}
+			}
+			newTrackedIPs[ip][domain] = struct{}{}
+
+			if _, found := hrs.trackedIPs[ip]; found {
+				delete(hrs.trackedIPs, ip)
+			} else {
+				hrs.healthWatcher.IsHealthy(ip)
+			}
+		}
+	}
+	for oldIP := range hrs.trackedIPs {
+		hrs.healthWatcher.Untrack(oldIP)
+	}
+	hrs.trackedIPs = newTrackedIPs
+}
+
+func (hrs *HealthyRecordSet) untrackDomain(removedDomain string) {
+	hrs.trackedIPsMutex.Lock()
+	defer hrs.trackedIPsMutex.Unlock()
+
+	for ip, domains := range hrs.trackedIPs {
+		if _, ok := domains[removedDomain]; ok {
+			delete(domains, removedDomain)
+			if len(domains) == 0 {
+				hrs.healthWatcher.Untrack(ip)
+			}
+		}
+	}
 }
 
 func (hrs *HealthyRecordSet) Resolve(fqdn string) ([]string, error) {
@@ -104,16 +129,20 @@ func (hrs *HealthyRecordSet) Resolve(fqdn string) ([]string, error) {
 		return nil, err
 	}
 
-	hrs.trackedDomainsMutex.Lock()
-	hrs.trackedDomains[fqdn] = struct{}{}
-	hrs.trackedDomainsMutex.Unlock()
+	if removed := hrs.trackedDomains.Touch(fqdn); removed != "" {
+		hrs.untrackDomain(removed)
+	}
 
 	healthyIPs := []string{}
 	unhealthyIPs := []string{}
 
 	for _, ip := range ips {
 		hrs.trackedIPsMutex.Lock()
-		hrs.trackedIPs[ip] = struct{}{}
+		hrs.trackedIPs[ip] = map[string]struct{}{}
+		if _, ok := hrs.trackedIPs[ip]; !ok {
+			hrs.trackedIPs[ip] = map[string]struct{}{}
+		}
+		hrs.trackedIPs[ip][fqdn] = struct{}{}
 		hrs.trackedIPsMutex.Unlock()
 
 		if hrs.healthWatcher.IsHealthy(ip) {

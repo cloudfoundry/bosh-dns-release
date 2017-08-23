@@ -22,12 +22,13 @@ var _ = Describe("Config", func() {
 		timeout         string
 		recursorTimeout string
 
-		healthCAFile          string
-		healthCertificateFile string
-		upcheckInterval       string
-		healthPort            int
-		healthPrivateKeyFile  string
-		upcheckDomains        []string
+		healthCAFile            string
+		healthCertificateFile   string
+		upcheckInterval         string
+		healthPort              int
+		healthMaxTrackedQueries int
+		healthPrivateKeyFile    string
+		upcheckDomains          []string
 	)
 
 	BeforeEach(func() {
@@ -38,6 +39,7 @@ var _ = Describe("Config", func() {
 		timeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		recursorTimeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		healthPort = 2345
+		healthMaxTrackedQueries = 50
 		healthCertificateFile = "/etc/certificate"
 		healthPrivateKeyFile = "/etc/private_key"
 		healthCAFile = "/etc/ca"
@@ -53,12 +55,13 @@ var _ = Describe("Config", func() {
 			"recursor_timeout": recursorTimeout,
 			"upcheck_domains":  upcheckDomains,
 			"health": map[string]interface{}{
-				"enabled":          true,
-				"port":             healthPort,
-				"certificate_file": healthCertificateFile,
-				"private_key_file": healthPrivateKeyFile,
-				"ca_file":          healthCAFile,
-				"check_interval":   upcheckInterval,
+				"enabled":             true,
+				"port":                healthPort,
+				"certificate_file":    healthCertificateFile,
+				"private_key_file":    healthPrivateKeyFile,
+				"ca_file":             healthCAFile,
+				"check_interval":      upcheckInterval,
+				"max_tracked_queries": healthMaxTrackedQueries,
 			},
 		})
 		configFilePath := writeConfigFile(string(configContents))
@@ -81,12 +84,13 @@ var _ = Describe("Config", func() {
 			RecursorTimeout: config.DurationJSON(recursorTimeoutDuration),
 			UpcheckDomains:  []string{"upcheck.domain.", "health2.bosh."},
 			Health: config.HealthConfig{
-				Enabled:         true,
-				Port:            healthPort,
-				CertificateFile: healthCertificateFile,
-				PrivateKeyFile:  healthPrivateKeyFile,
-				CAFile:          healthCAFile,
-				CheckInterval:   config.DurationJSON(upcheckIntervalDuration),
+				Enabled:           true,
+				Port:              healthPort,
+				CertificateFile:   healthCertificateFile,
+				PrivateKeyFile:    healthPrivateKeyFile,
+				CAFile:            healthCAFile,
+				CheckInterval:     config.DurationJSON(upcheckIntervalDuration),
+				MaxTrackedQueries: healthMaxTrackedQueries,
 			},
 		}))
 	})
@@ -129,6 +133,17 @@ var _ = Describe("Config", func() {
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dnsConfig.RecordsFile).To(Equal("/some/path"))
+		})
+	})
+
+	Context("health.max_tracked_queries", func() {
+		It("defaults to 2000", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.Health.MaxTrackedQueries).To(Equal(2000))
 		})
 	})
 

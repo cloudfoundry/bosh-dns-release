@@ -6,6 +6,7 @@ import (
 	"bosh-dns/dns/server/records"
 	"errors"
 	"fmt"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -36,7 +37,7 @@ var _ = Describe("HealthyRecordSet", func() {
 			},
 		}
 		fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
-		recordSet = healthiness.NewHealthyRecordSet(fakeRecordSetRepo, fakeHealthWatcher, shutdownChan)
+		recordSet = healthiness.NewHealthyRecordSet(fakeRecordSetRepo, fakeHealthWatcher, 5, shutdownChan)
 	})
 
 	AfterEach(func() {
@@ -205,6 +206,49 @@ var _ = Describe("HealthyRecordSet", func() {
 
 		It("doesn't untrack anything", func() {
 			Expect(fakeHealthWatcher.UntrackCallCount()).To(Equal(0))
+		})
+	})
+
+	Describe("limiting tracked domains", func() {
+		BeforeEach(func() {
+			innerRecordSet = records.RecordSet{Records: []records.Record{}}
+
+			for i := 0; i < 10; i++ {
+				innerRecordSet.Records = append(innerRecordSet.Records, records.Record{
+					Id:         fmt.Sprintf("i%d", i),
+					Group:      "g",
+					Network:    "n",
+					Deployment: "d",
+					Ip:         fmt.Sprintf("%d.%d.%d.%d", i, i, i, i),
+					Domain:     "d.",
+				})
+			}
+
+			fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
+			subscriptionChan <- true
+			Eventually(fakeRecordSetRepo.GetCallCount).Should(Equal(2))
+		})
+
+		It("tracks no more than the maximum number of domains (5) domains", func() {
+			for i := 0; i < 10; i++ {
+				recordSet.Resolve(fmt.Sprintf("i%d.g.n.d.d.", i))
+			}
+
+			Eventually(fakeHealthWatcher.UntrackCallCount, time.Second*20).Should(Equal(5))
+
+			Expect([]string{
+				fakeHealthWatcher.UntrackArgsForCall(0),
+				fakeHealthWatcher.UntrackArgsForCall(1),
+				fakeHealthWatcher.UntrackArgsForCall(2),
+				fakeHealthWatcher.UntrackArgsForCall(3),
+				fakeHealthWatcher.UntrackArgsForCall(4),
+			}).To(ConsistOf(
+				"0.0.0.0",
+				"1.1.1.1",
+				"2.2.2.2",
+				"3.3.3.3",
+				"4.4.4.4",
+			))
 		})
 	})
 })

@@ -23,12 +23,13 @@ type Config struct {
 }
 
 type HealthConfig struct {
-	Enabled         bool
-	Port            int          `json:"port"`
-	CertificateFile string       `json:"certificate_file"`
-	PrivateKeyFile  string       `json:"private_key_file"`
-	CAFile          string       `json:"ca_file"`
-	CheckInterval   DurationJSON `json:"check_interval"`
+	Enabled           bool
+	Port              int          `json:"port"`
+	CertificateFile   string       `json:"certificate_file"`
+	PrivateKeyFile    string       `json:"private_key_file"`
+	CAFile            string       `json:"ca_file"`
+	CheckInterval     DurationJSON `json:"check_interval"`
+	MaxTrackedQueries int          `json:"max_tracked_queries"`
 }
 
 type DurationJSON time.Duration
@@ -59,6 +60,9 @@ func LoadFromFile(configFilePath string) (Config, error) {
 	c := Config{
 		Timeout:         DurationJSON(5 * time.Second),
 		RecursorTimeout: DurationJSON(2 * time.Second),
+		Health: HealthConfig{
+			MaxTrackedQueries: 2000,
+		},
 	}
 
 	if err := json.Unmarshal(configFileContents, &c); err != nil {

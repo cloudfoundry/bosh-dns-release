@@ -69,3 +69,7 @@ properties:
 
   health.client.tls:
     description: "Client-side mutual TLS configuration for healthchecking"
+
+  health.max_tracked_queries:
+    description: "Maximum number of DNS resolved FQDNs to maintain live health info for"
+    default: 2000
