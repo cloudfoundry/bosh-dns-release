@@ -4,7 +4,6 @@ name: bosh-dns-windows
 templates:
   aliases.json.erb: dns/aliases.json
   config.json.erb: config/config.json
-  bosh_dns_ctl.ps1.erb: bin/bosh_dns_ctl.ps1
   post-start.ps1.erb: bin/post-start.ps1
   pre-start.ps1.erb: bin/pre-start.ps1
   health_server_config.json.erb: config/health_server_config.json
