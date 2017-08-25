@@ -3,8 +3,8 @@
 monit = {
   processes: [{
     name: "bosh-dns-windows",
-    executable: "powershell",
-    args: ["/var/vcap/jobs/bosh-dns-windows/bin/bosh_dns_ctl.ps1"]
+    executable: "/var/vcap/packages/bosh-dns-windows/bin/bosh-dns.exe",
+    args: ["-config", "/var/vcap/jobs/bosh-dns-windows/config/config.json"]
   }]
 }
 
