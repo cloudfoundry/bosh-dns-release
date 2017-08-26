@@ -2,6 +2,7 @@ package internal_test
 
 import (
 	. "bosh-dns/dns/server/healthiness/internal"
+	"sync"
 
 	"time"
 
@@ -69,8 +70,10 @@ var _ = Describe("PriorityLimitedTranscript", func() {
 
 	It("is threadsafe", func() {
 		done := make(chan struct{})
+		wg := sync.WaitGroup{}
 
 		touch := func() {
+			defer wg.Done()
 			for {
 				select {
 				case <-done:
@@ -81,11 +84,13 @@ var _ = Describe("PriorityLimitedTranscript", func() {
 			}
 		}
 
+		wg.Add(2)
 		go touch()
 		go touch()
 
 		time.Sleep(59 * time.Microsecond)
 
 		close(done)
+		wg.Wait()
 	})
 })
