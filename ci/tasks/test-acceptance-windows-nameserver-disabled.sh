@@ -1,6 +1,6 @@
 #!/bin/bash -eux
 
-set -o pipefail
+set -eu -o pipefail
 
 ROOT_DIR=$PWD
 BBL_STATE_DIR=$ROOT_DIR/envs/$ENV_NAME
