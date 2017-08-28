@@ -45,6 +45,13 @@ function remove_network_alias() {
 }
 
 function start_dns() {
+  if [ -e "$PIDFILE" ]; then
+    pid=$(head -1 "${PIDFILE}")
+    if pid_exists "$pid"; then
+      return 0
+    fi
+  fi
+
   setcap cap_net_bind_service=+ep ${DNS_PACKAGE}/bin/bosh-dns
   ulimit -n 65536
 
@@ -56,7 +63,7 @@ function start_dns() {
     2>> ${LOG_DIR}/bosh_dns.stderr.log &
   popd
 
-   echo $! > $PIDFILE
+  echo $! > $PIDFILE
 }
 
 function stop_dns() {

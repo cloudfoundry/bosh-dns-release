@@ -31,6 +31,13 @@ function create_directories_and_chown_to_vcap() {
 }
 
 function start_process() {
+  if [ -e "$PIDFILE" ]; then
+    pid=$(head -1 "${PIDFILE}")
+    if pid_exists "$pid"; then
+      return 0
+    fi
+  fi
+
   pushd ${JOB_DIR}
   # Allowed number of open file descriptors
   ulimit -v unlimited
