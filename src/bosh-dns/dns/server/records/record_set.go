@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"errors"
+
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
@@ -36,14 +37,14 @@ func (r RecordSet) Resolve(fqdn string) ([]string, error) {
 		for _, record := range r.Records {
 			recordName := record.Fqdn(false)
 			if recordName == matcher[1] && filter.isAllowed(record) {
-				ips = append(ips, record.Ip)
+				ips = append(ips, record.IP)
 			}
 		}
 	} else {
 		for _, record := range r.Records {
 			compare := record.Fqdn(true)
 			if compare == fqdn {
-				ips = append(ips, record.Ip)
+				ips = append(ips, record.IP)
 			}
 		}
 	}
@@ -71,7 +72,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		networkIndex,
 		deploymentIndex,
 		ipIndex,
-		azIdIndex,
+		azIDIndex,
 		domainIndex int
 
 	for i, k := range swap.Keys {
@@ -89,7 +90,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		case "domain":
 			domainIndex = i
 		case "az_id":
-			azIdIndex = i
+			azIDIndex = i
 		default:
 			continue
 		}
@@ -115,7 +116,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 
 		record := Record{Domain: domain}
 
-		if !assertStringValue(&record.Id, info, idIndex, "id", index, logger) {
+		if !assertStringValue(&record.ID, info, idIndex, "id", index, logger) {
 			continue
 		} else if !assertStringValue(&record.Group, info, groupIndex, "group", index, logger) {
 			continue
@@ -123,11 +124,11 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 			continue
 		} else if !assertStringValue(&record.Deployment, info, deploymentIndex, "deployment", index, logger) {
 			continue
-		} else if !assertStringValue(&record.Ip, info, ipIndex, "ip", index, logger) {
-			continue
-		} else if !assertStringValue(&record.AzId, info, azIdIndex, "az_id", index, logger) {
+		} else if !assertStringValue(&record.IP, info, ipIndex, "ip", index, logger) {
 			continue
 		}
+
+		assertStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger)
 
 		s.Records[index] = record
 	}

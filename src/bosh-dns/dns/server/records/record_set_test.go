@@ -4,6 +4,7 @@ import (
 	"bosh-dns/dns/server/records"
 
 	"fmt"
+
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -49,7 +50,6 @@ var _ = Describe("RecordSet", func() {
 				Expect(logArgs[3]).To(Equal(logExpectedType))
 			},
 			Entry("Domain is not a string", `["instance1", "my-group", "az2", "2", "my-network", "my-deployment", "123.123.123.124", { "foo": "bar" }, 2]`, 7, "domain", "string"),
-			Entry("AZ id is not a string", `["instance1", "my-group", "az3", {"az_id": "3"}, "my-network", "my-deployment", "123.123.123.126", "my-domain", 0]`, 3, "az_id", "string"),
 			Entry("ID is not a string", `[{"id": "id"}, "my-group", "z3", "3", "my-network", "my-deployment", "123.123.123.126", "my-domain", 0]`, 0, "id", "string"),
 			Entry("Group is not a string", `["instance1", {"my-group": "my-group"}, "z3", "3", "my-network", "my-deployment", "123.123.123.126", "my-domain", 0]`, 1, "group", "string"),
 			Entry("Network is not a string", `["instance1", "my-group", "z3", "3", {"network": "my-network"}, "my-deployment", "123.123.123.126", "my-domain", 0]`, 4, "network", "string"),
@@ -226,7 +226,10 @@ var _ = Describe("RecordSet", func() {
 				"record_keys": ["id", "instance_group", "az", "az_id", "network", "deployment", "ip", "domain"],
 				"record_infos": [
 				["instance0", "my-group", "az1", "1", "my-network", "my-deployment", "123.123.123.123", "withadot."],
-				["instance1", "my-group", "az2", "2", "my-network", "my-deployment", "123.123.123.124", "nodot"]
+				["instance1", "my-group", "az2", "2", "my-network", "my-deployment", "123.123.123.124", "nodot"],
+				["instance2", "my-group", "az3", null, "my-network", "my-deployment", "123.123.123.125", "domain."],
+				["instance3", "my-group", null, "3", "my-network", "my-deployment", "123.123.123.126", "domain."],
+				["instance4", "my-group", null, null, "my-network", "my-deployment", "123.123.123.127", "domain."]
 				]
 			}`)
 			recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
@@ -235,26 +238,54 @@ var _ = Describe("RecordSet", func() {
 		})
 
 		It("normalizes domain names", func() {
-			Expect(recordSet.Domains).To(ConsistOf("withadot.", "nodot."))
-			Expect(recordSet.Records).To(Equal([]records.Record{
-				{
-					Id:         "instance0",
-					Group:      "my-group",
-					Network:    "my-network",
-					Deployment: "my-deployment",
-					Ip:         "123.123.123.123",
-					Domain:     "withadot.",
-					AzId:       "1",
-				},
-				{
-					Id:         "instance1",
-					Group:      "my-group",
-					Network:    "my-network",
-					Deployment: "my-deployment",
-					Ip:         "123.123.123.124",
-					Domain:     "nodot.",
-					AzId:       "2",
-				},
+			Expect(recordSet.Domains).To(ConsistOf("withadot.", "nodot.", "domain."))
+			Expect(recordSet.Records).To(ContainElement(records.Record{
+				ID:         "instance0",
+				Group:      "my-group",
+				Network:    "my-network",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.123",
+				Domain:     "withadot.",
+				AZID:       "1",
+			}))
+			Expect(recordSet.Records).To(ContainElement(records.Record{
+				ID:         "instance1",
+				Group:      "my-group",
+				Network:    "my-network",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.124",
+				Domain:     "nodot.",
+				AZID:       "2",
+			}))
+		})
+
+		It("does not ignore null azs", func() {
+			Expect(recordSet.Records).To(ContainElement(records.Record{
+				ID:         "instance2",
+				Group:      "my-group",
+				Network:    "my-network",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.125",
+				Domain:     "domain.",
+				AZID:       "",
+			}))
+			Expect(recordSet.Records).To(ContainElement(records.Record{
+				ID:         "instance3",
+				Group:      "my-group",
+				Network:    "my-network",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.126",
+				Domain:     "domain.",
+				AZID:       "3",
+			}))
+			Expect(recordSet.Records).To(ContainElement(records.Record{
+				ID:         "instance4",
+				Group:      "my-group",
+				Network:    "my-network",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.127",
+				Domain:     "domain.",
+				AZID:       "",
 			}))
 		})
 	})

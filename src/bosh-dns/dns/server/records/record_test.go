@@ -11,11 +11,11 @@ var _ = Describe("Fqdn", func() {
 
 	BeforeEach(func() {
 		record = records.Record{
-			Id:         "label",
+			ID:         "label",
 			Group:      "group",
 			Network:    "network",
 			Deployment: "deployment",
-			Ip:         "ip",
+			IP:         "ip",
 			Domain:     "some-domain.",
 		}
 	})

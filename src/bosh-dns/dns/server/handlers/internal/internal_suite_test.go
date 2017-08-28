@@ -9,5 +9,5 @@ import (
 
 func TestInternal(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Internal Suite")
+	RunSpecs(t, "dns/server/handlers/internal")
 }
