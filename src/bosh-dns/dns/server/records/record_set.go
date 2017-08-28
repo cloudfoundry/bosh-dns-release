@@ -64,16 +64,16 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		return RecordSet{}, err
 	}
 
-	s.Records = make([]Record, len(swap.Infos))
+	s.Records = make([]Record, 0, len(swap.Infos))
 	s.Domains = []string{}
 
-	var idIndex,
-		groupIndex,
-		networkIndex,
-		deploymentIndex,
-		ipIndex,
-		azIDIndex,
-		domainIndex int
+	idIndex := -1
+	groupIndex := -1
+	networkIndex := -1
+	deploymentIndex := -1
+	ipIndex := -1
+	domainIndex := -1
+	azIDIndex := -1
 
 	for i, k := range swap.Keys {
 		switch k {
@@ -130,7 +130,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 
 		assertStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger)
 
-		s.Records[index] = record
+		s.Records = append(s.Records, record)
 	}
 
 	for domain := range domains {
@@ -141,6 +141,10 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 }
 
 func assertStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
+	if fieldIdx < 0 {
+		return false
+	}
+
 	var ok bool
 	*field, ok = info[fieldIdx].(string)
 

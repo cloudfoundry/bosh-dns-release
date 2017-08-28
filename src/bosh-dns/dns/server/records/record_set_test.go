@@ -2,6 +2,8 @@ package records_test
 
 import (
 	"bosh-dns/dns/server/records"
+	"reflect"
+	"strings"
 
 	"fmt"
 
@@ -82,6 +84,70 @@ var _ = Describe("RecordSet", func() {
 				Expect(fakeLogger.WarnCallCount()).To(Equal(1))
 			})
 		})
+
+		DescribeTable("missing required columns", func(column string) {
+			recordKeys := map[string]string{
+				"id":             "id",
+				"instance_group": "instance_group",
+				"network":        "network",
+				"deployment":     "deployment",
+				"ip":             "ip",
+				"domain":         "domain",
+			}
+			delete(recordKeys, column)
+			keys := []string{}
+			values := []string{}
+			for k, v := range recordKeys {
+				keys = append(keys, fmt.Sprintf(`"%s"`, k))
+				values = append(values, fmt.Sprintf(`"%s"`, v))
+			}
+			jsonBytes := []byte(fmt.Sprintf(`{
+				"record_keys": [%s],
+				"record_infos": [[%s]]
+			}`, strings.Join(keys, ","), strings.Join(values, ",")))
+			recordSet, err := records.CreateFromJSON(jsonBytes, fakeLogger)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(recordSet.Records).To(BeEmpty())
+		},
+			Entry("missing id", "id"),
+			Entry("missing instance_group", "instance_group"),
+			Entry("missing network", "network"),
+			Entry("missing deployment", "deployment"),
+			Entry("missing ip", "ip"),
+			Entry("missing domainn", "domain"),
+		)
+
+		DescribeTable("missing optional columns", func(column, field string) {
+			recordKeys := map[string]string{
+				"id":             "id",
+				"instance_group": "instance_group",
+				"network":        "network",
+				"deployment":     "deployment",
+				"ip":             "ip",
+				"domain":         "domain",
+
+				"az_id": "az_id",
+			}
+			delete(recordKeys, column)
+			keys := []string{}
+			values := []string{}
+			for k, v := range recordKeys {
+				keys = append(keys, fmt.Sprintf(`"%s"`, k))
+				values = append(values, fmt.Sprintf(`"%s"`, v))
+			}
+			jsonBytes := []byte(fmt.Sprintf(`{
+				"record_keys": [%s],
+				"record_infos": [[%s]]
+			}`, strings.Join(keys, ","), strings.Join(values, ",")))
+			recordSet, err := records.CreateFromJSON(jsonBytes, fakeLogger)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(recordSet.Records).NotTo(BeEmpty())
+
+			value := reflect.ValueOf(&recordSet.Records[0]).Elem().FieldByName(field)
+			Expect(value.String()).To(BeEmpty())
+		},
+			Entry("missing az_id", "az_id", "AZID"),
+		)
 	})
 
 	Context("when there are records matching the query based fqdn", func() {
