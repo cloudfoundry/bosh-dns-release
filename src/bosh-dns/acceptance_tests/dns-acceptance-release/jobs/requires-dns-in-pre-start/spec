@@ -1,0 +1,7 @@
+---
+name: requires-dns-in-pre-start
+
+templates:
+  pre-start.erb: bin/pre-start
+
+properties: {}

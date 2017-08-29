@@ -7,6 +7,7 @@ dependencies:
 files:
 - bosh-dns/healthcheck/**/*
 - bosh-dns/dns/**/*
+- bosh-dns/wait/**/*
 - bosh-dns/vendor/**/*
 
 excluded_files:

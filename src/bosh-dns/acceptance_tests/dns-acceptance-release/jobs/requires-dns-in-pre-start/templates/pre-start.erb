@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -e
+
+wait_script=/var/vcap/jobs/bosh-dns/bin/wait
+
+LOG_DIR=/var/vcap/sys/log/requires-dns-in-pre-start
+
+function prepend_datetime() {
+  awk -W interactive '{ system("echo -n [$(date +\"%Y-%m-%d %H:%M:%S%z\")]"); print " " $0 }'
+}
+
+exec > >(prepend_datetime >> $LOG_DIR/requires-dns-in-pre-start.stdout.log)
+exec 2> >(prepend_datetime >> $LOG_DIR/requires-dns-in-pre-start.stderr.log)
+
+if [[ -x "$wait_script" ]]; then
+    $wait_script
+
+    if ! dig +short upcheck.bosh-dns | grep -q 127.0.0.1; then
+        exit 1
+    fi
+else
+    echo "WAIT SCRIPT IS NOT PRESENT & EXECUTABLE"
+    exit 1
+fi

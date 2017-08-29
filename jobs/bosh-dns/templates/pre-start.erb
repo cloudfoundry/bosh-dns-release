@@ -1,0 +1,11 @@
+#!/bin/bash
+
+<% if p('health.enabled') %>
+/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl start
+<% end %>
+
+/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl start
+
+<% if p('override_nameserver') %>
+/var/vcap/jobs/bosh-dns/bin/bosh_dns_resolvconf_ctl start
+<% end %>

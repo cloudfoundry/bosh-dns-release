@@ -47,6 +47,7 @@ bosh -n deploy $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/manifest.
    -v health_server_port=2345 \
    -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/use-dns-release-default-bind-and-alias-addresses.yml \
    -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/enable-health-manifest-ops.yml \
+   -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/enable-require-dns-in-pre-start-ops.yml \
    --vars-store dns-creds.yml
 
 pushd $GOPATH/src/bosh-dns/acceptance_tests/linux

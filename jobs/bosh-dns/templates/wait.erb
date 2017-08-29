@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/var/vcap/packages/bosh-dns/bin/bosh-dns-wait --checkDomain <%= p('upcheck_domains').first %> --timeout 5m

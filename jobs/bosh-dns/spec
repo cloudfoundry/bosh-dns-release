@@ -15,6 +15,8 @@ templates:
   client.key.erb: config/certs/client.key
   client.crt.erb: config/certs/client.crt
   client_ca.crt.erb: config/certs/client_ca.crt
+  pre-start.erb: bin/pre-start
+  wait.erb: bin/wait
 
 packages:
   - bosh-dns
