@@ -70,6 +70,26 @@ var _ = Describe("Config", func() {
 				Expect(c.Resolutions("_.")).To(BeNil())
 			})
 		})
+
+		Context("when an underscore and fqdn aliases overlap", func() {
+			It("returns the desired alias value, despite order", func() {
+				c := MustNewConfigFromMap(map[string][]string{
+					"_.alias1":        {"domain1.com"},
+					"specific.alias1": {"domain2.com"},
+				})
+
+				Expect(c.Resolutions("specific.alias1.")).To(Equal([]string{"domain2.com."}))
+				Expect(c.Resolutions("something.alias1.")).To(Equal([]string{"domain1.com."}))
+
+				c = MustNewConfigFromMap(map[string][]string{
+					"specific.alias1": {"domain2.com"},
+					"_.alias1":        {"domain1.com"},
+				})
+
+				Expect(c.Resolutions("specific.alias1.")).To(Equal([]string{"domain2.com."}))
+				Expect(c.Resolutions("something.alias1.")).To(Equal([]string{"domain1.com."}))
+			})
+		})
 	})
 
 	Describe("group alias", func() {
