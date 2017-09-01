@@ -79,9 +79,7 @@ var _ = Describe("Integration", func() {
 			output := string(session.Out.Contents())
 			Expect(output).To(ContainSubstring("Got answer:"))
 			Expect(output).To(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-			for _, info := range allDeployedInstances {
-				Expect(output).To(MatchRegexp("q-i%s\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.Index, info.IP))
-			}
+			Expect(output).To(MatchRegexp("q-i%s\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.Index, firstInstance.IP))
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 		})
 
