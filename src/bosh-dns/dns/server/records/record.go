@@ -3,13 +3,14 @@ package records
 import "strings"
 
 type Record struct {
-	ID         string
-	Group      string
-	Network    string
-	Deployment string
-	IP         string
-	Domain     string
-	AZID       string
+	ID            string
+	Group         string
+	Network       string
+	Deployment    string
+	IP            string
+	Domain        string
+	AZID          string
+	InstanceIndex string
 }
 
 func (r Record) Fqdn(includeJobLabel bool) string {

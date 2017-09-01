@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-var keyValueRegex = regexp.MustCompile("(a|s)([0-9]+)")
+var keyValueRegex = regexp.MustCompile("(a|i|s)([0-9]+)")
 
 type criteria map[string][]string
 
@@ -43,6 +43,8 @@ func matchesCriterion(r Record, key string, values []string) bool {
 	switch key {
 	case "a":
 		recordValue = r.AZID
+	case "i":
+		recordValue = r.InstanceIndex
 	case "s":
 		return true
 	default:

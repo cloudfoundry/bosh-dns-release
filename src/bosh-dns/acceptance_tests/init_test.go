@@ -87,10 +87,11 @@ type instanceInfo struct {
 	IP            string
 	InstanceID    string
 	InstanceGroup string
+	Index         string
 }
 
 func getInstanceInfos(boshBinary string) []instanceInfo {
-	cmd := exec.Command(boshBinary, "instances", "--json")
+	cmd := exec.Command(boshBinary, "instances", "--details", "--json")
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
 	Eventually(session, 20*time.Second).Should(gexec.Exit(0))
@@ -112,6 +113,7 @@ func getInstanceInfos(boshBinary string) []instanceInfo {
 			IP:            row["ips"],
 			InstanceGroup: instanceStrings[0],
 			InstanceID:    instanceStrings[1],
+			Index:         row["index"],
 		})
 	}
 

@@ -7,6 +7,8 @@ import (
 
 	"errors"
 
+	"strconv"
+
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
@@ -74,6 +76,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 	ipIndex := -1
 	domainIndex := -1
 	azIDIndex := -1
+	instanceIndexIndex := -1
 
 	for i, k := range swap.Keys {
 		switch k {
@@ -91,6 +94,8 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 			domainIndex = i
 		case "az_id":
 			azIDIndex = i
+		case "instance_index":
+			instanceIndexIndex = i
 		default:
 			continue
 		}
@@ -129,6 +134,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		}
 
 		assertStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger)
+		assertStringValue(&record.InstanceIndex, info, instanceIndexIndex, "instance_index", index, logger)
 
 		s.Records = append(s.Records, record)
 	}
@@ -149,7 +155,12 @@ func assertStringValue(field *string, info []interface{}, fieldIdx int, fieldNam
 	*field, ok = info[fieldIdx].(string)
 
 	if !ok {
-		logger.Warn("RecordSet", "Value %d (%s) of record %d is not expected type of %s: %#+v", fieldIdx, fieldName, infoIdx, "string", info[fieldIdx])
+		float64Value, ok := info[fieldIdx].(float64) // golang default type for numeric fields
+		if ok {
+			*field = strconv.Itoa(int(float64Value))
+		} else {
+			logger.Warn("RecordSet", "Value %d (%s) of record %d is not expected type of %s: %#+v", fieldIdx, fieldName, infoIdx, "string", info[fieldIdx])
+		}
 	}
 
 	return ok

@@ -114,26 +114,31 @@ var _ = Describe("RecordSet", func() {
 			Entry("missing network", "network"),
 			Entry("missing deployment", "deployment"),
 			Entry("missing ip", "ip"),
-			Entry("missing domainn", "domain"),
+			Entry("missing domain", "domain"),
 		)
 
 		DescribeTable("missing optional columns", func(column, field string) {
-			recordKeys := map[string]string{
+			recordKeys := map[string]interface{}{
 				"id":             "id",
 				"instance_group": "instance_group",
 				"network":        "network",
 				"deployment":     "deployment",
 				"ip":             "ip",
 				"domain":         "domain",
-
-				"az_id": "az_id",
+				"az_id":          "az_id",
+				"instance_index": 1,
 			}
 			delete(recordKeys, column)
 			keys := []string{}
 			values := []string{}
 			for k, v := range recordKeys {
 				keys = append(keys, fmt.Sprintf(`"%s"`, k))
-				values = append(values, fmt.Sprintf(`"%s"`, v))
+				switch typed := v.(type) {
+				case int:
+					values = append(values, fmt.Sprintf(`%d`, typed))
+				case string:
+					values = append(values, fmt.Sprintf(`"%s"`, typed))
+				}
 			}
 			jsonBytes := []byte(fmt.Sprintf(`{
 				"record_keys": [%s],
@@ -147,6 +152,7 @@ var _ = Describe("RecordSet", func() {
 			Expect(value.String()).To(BeEmpty())
 		},
 			Entry("missing az_id", "az_id", "AZID"),
+			Entry("missing instance_index", "instance_index", "InstanceIndex"),
 		)
 	})
 
@@ -201,6 +207,35 @@ var _ = Describe("RecordSet", func() {
 				ips, err := recordSet.Resolve("q-x1.my-group.my-network.my-deployment.my-domain.")
 				Expect(err).To(HaveOccurred())
 				Expect(len(ips)).To(Equal(0))
+			})
+		})
+
+		Describe("filtering by index", func() {
+			Context("when the query includes a single index", func() {
+				It("only returns records that have the index", func() {
+					ips, err := recordSet.Resolve("q-i2.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(ips).To(HaveLen(1))
+					Expect(ips).To(ContainElement("123.123.123.124"))
+				})
+			})
+
+			Context("when the query includes a single index", func() {
+				It("only returns records that have the index", func() {
+					ips, err := recordSet.Resolve("q-i2i0.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(ips).To(HaveLen(2))
+					Expect(ips).To(ContainElement("123.123.123.124"))
+					Expect(ips).To(ContainElement("123.123.123.126"))
+				})
+			})
+
+			Context("when the query includes an index that isn't known", func() {
+				It("returns an empty set", func() {
+					ips, err := recordSet.Resolve("q-i5.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(ips).To(HaveLen(0))
+				})
 			})
 		})
 
@@ -291,11 +326,11 @@ var _ = Describe("RecordSet", func() {
 			jsonBytes := []byte(`{
 				"record_keys": ["id", "instance_group", "az", "az_id", "network", "deployment", "ip", "domain"],
 				"record_infos": [
-				["instance0", "my-group", "az1", "1", "my-network", "my-deployment", "123.123.123.123", "withadot."],
-				["instance1", "my-group", "az2", "2", "my-network", "my-deployment", "123.123.123.124", "nodot"],
-				["instance2", "my-group", "az3", null, "my-network", "my-deployment", "123.123.123.125", "domain."],
-				["instance3", "my-group", null, "3", "my-network", "my-deployment", "123.123.123.126", "domain."],
-				["instance4", "my-group", null, null, "my-network", "my-deployment", "123.123.123.127", "domain."]
+					["instance0", "my-group", "az1", "1", "my-network", "my-deployment", "123.123.123.123", "withadot."],
+					["instance1", "my-group", "az2", "2", "my-network", "my-deployment", "123.123.123.124", "nodot"],
+					["instance2", "my-group", "az3", null, "my-network", "my-deployment", "123.123.123.125", "domain."],
+					["instance3", "my-group", null, "3", "my-network", "my-deployment", "123.123.123.126", "domain."],
+					["instance4", "my-group", null, null, "my-network", "my-deployment", "123.123.123.127", "domain."]
 				]
 			}`)
 			recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
@@ -352,6 +387,77 @@ var _ = Describe("RecordSet", func() {
 				IP:         "123.123.123.127",
 				Domain:     "domain.",
 				AZID:       "",
+			}))
+		})
+
+		It("does not ignore null instance indexes", func() {
+			Expect(recordSet.Records).To(ContainElement(records.Record{
+				ID:            "instance2",
+				Group:         "my-group",
+				Network:       "my-network",
+				Deployment:    "my-deployment",
+				IP:            "123.123.123.125",
+				Domain:        "domain.",
+				AZID:          "",
+				InstanceIndex: "",
+			}))
+			Expect(recordSet.Records).To(ContainElement(records.Record{
+				ID:            "instance3",
+				Group:         "my-group",
+				Network:       "my-network",
+				Deployment:    "my-deployment",
+				IP:            "123.123.123.126",
+				Domain:        "domain.",
+				AZID:          "3",
+				InstanceIndex: "",
+			}))
+			Expect(recordSet.Records).To(ContainElement(records.Record{
+				ID:            "instance4",
+				Group:         "my-group",
+				Network:       "my-network",
+				Deployment:    "my-deployment",
+				IP:            "123.123.123.127",
+				Domain:        "domain.",
+				AZID:          "",
+				InstanceIndex: "",
+			}))
+		})
+	})
+
+	Context("when the records json includes instance_index", func() {
+		BeforeEach(func() {
+			jsonBytes := []byte(`{
+				"record_keys": ["id", "instance_group", "az", "az_id", "network", "deployment", "ip", "domain", "instance_index"],
+				"record_infos": [
+					["instance0", "my-group", "az1", "1", "my-network", "my-deployment", "123.123.123.123", "domain.", 0],
+					["instance1", "my-group", "az2", "1", "my-network", "my-deployment", "123.123.123.124", "domain.", 1]
+				]
+			}`)
+			recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
+
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("parses the instance index", func() {
+			Expect(recordSet.Records).To(ContainElement(records.Record{
+				ID:            "instance0",
+				Group:         "my-group",
+				Network:       "my-network",
+				Deployment:    "my-deployment",
+				IP:            "123.123.123.123",
+				Domain:        "domain.",
+				AZID:          "1",
+				InstanceIndex: "0",
+			}))
+			Expect(recordSet.Records).To(ContainElement(records.Record{
+				ID:            "instance1",
+				Group:         "my-group",
+				Network:       "my-network",
+				Deployment:    "my-deployment",
+				IP:            "123.123.123.124",
+				Domain:        "domain.",
+				AZID:          "1",
+				InstanceIndex: "1",
 			}))
 		})
 	})

@@ -68,6 +68,23 @@ var _ = Describe("Integration", func() {
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 		})
 
+		It("returns records for bosh instances found with query for index", func() {
+			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
+
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-i%s.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.Index, firstInstance.IP), " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring("Got answer:"))
+			Expect(output).To(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+			for _, info := range allDeployedInstances {
+				Expect(output).To(MatchRegexp("q-i%s\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.Index, info.IP))
+			}
+			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+		})
+
 		It("finds and resolves aliases specified in other jobs on the same instance", func() {
 			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A A internal.alias. @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
