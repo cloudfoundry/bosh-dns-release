@@ -160,13 +160,14 @@ var _ = Describe("RecordSet", func() {
 		BeforeEach(func() {
 			jsonBytes := []byte(`
 			{
-				"record_keys": ["id", "instance_group", "az", "az_id", "network", "deployment", "ip", "domain", "instance_index"],
+				"record_keys":
+					["id", "instance_group", "az", "az_id", "network", "deployment", "ip", "domain", "instance_index"],
 				"record_infos": [
-				["instance0", "my-group", "az1", "1", "my-network", "my-deployment", "123.123.123.123", "my-domain", 1],
-				["instance1", "my-group", "az2", "2", "my-network", "my-deployment", "123.123.123.124", "my-domain", 2],
-				["instance1", "my-group", "az3", "3", "my-network", "my-deployment", "123.123.123.126", "my-domain", 0],
-				["instance2", "my-group-2", "az1", "1", "my-network", "my-deployment", "123.123.123.125", "my-domain", 1],
-				["instance4", "my-group", "az4", "4", "another-network", "my-deployment", "123.123.123.127", "my-domain", 0]
+					["instance0", "my-group", "az1", "1", "my-network", "my-deployment", "123.123.123.123", "my-domain", 1],
+					["instance1", "my-group", "az2", "2", "my-network", "my-deployment", "123.123.123.124", "my-domain", 2],
+					["instance1", "my-group", "az3", "3", "my-network", "my-deployment", "123.123.123.126", "my-domain", 0],
+					["instance2", "my-group-2", "az1", "1", "my-network", "my-deployment", "123.123.123.125", "my-domain", 1],
+					["instance4", "my-group", "az4", "4", "another-network", "my-deployment", "123.123.123.127", "my-domain", 0]
 				]
 			}
 			`)
@@ -267,6 +268,81 @@ var _ = Describe("RecordSet", func() {
 				})
 			})
 		})
+
+		Describe("filtering by both AZ and index", func() {
+			/*
+				context:
+					az1: 0, 1
+					az2: 2, 3, 4
+					az3: 5
+			*/
+			BeforeEach(func() {
+				jsonBytes := []byte(`
+			{
+				"record_keys":
+					["id", 				"instance_group", "az", "az_id", "network", 		 "deployment", 		"ip", 						 "domain",  	"instance_index"],
+				"record_infos": [
+					["instance0", "my-group",       "az1", "1",    "my-network", 	 "my-deployment", "123.123.123.123", "my-domain", 0],
+					["instance1", "my-group",       "az1", "1",    "my-network", 	 "my-deployment", "123.123.123.124", "my-domain", 1],
+					["instance2", "my-group",       "az2", "2",    "my-network", 	 "my-deployment", "123.123.123.125", "my-domain", 2],
+					["instance3", "my-group",       "az2", "2",    "my-network", 	 "my-deployment", "123.123.123.126", "my-domain", 3],
+					["instance4", "my-group",       "az2", "2",    "my-network", 	 "my-deployment", "123.123.123.127", "my-domain", 4],
+					["instance5", "my-group",       "az3", "3",    "my-network", 	 "my-deployment", "123.123.123.128", "my-domain", 5]
+				]
+			}
+			`)
+				recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
+
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("matches one index across multiple AZs", func() {
+				/*
+					query: (az2 OR az3) AND i2
+					expected: az2 i2
+				*/
+				ips, err := recordSet.Resolve("q-a2a3i2.my-group.my-network.my-deployment.my-domain.")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(ips).To(HaveLen(1))
+				Expect(ips).To(ContainElement("123.123.123.125"))
+			})
+
+			It("match multiple indexes on one AZ", func() {
+				/*
+					query: az2 AND (i2 OR i3)
+					expected: az2 i2 or i3
+				*/
+				ips, err := recordSet.Resolve("q-a2i2i3.my-group.my-network.my-deployment.my-domain.")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(ips).To(HaveLen(2))
+				Expect(ips).To(ContainElement("123.123.123.125"))
+				Expect(ips).To(ContainElement("123.123.123.126"))
+			})
+
+			It("match multiple indexes on multiple AZs", func() {
+				/*
+					query: (az1 OR az2) AND (i2 OR i1)
+					expected: az1 i1, az2 i2
+				*/
+				ips, err := recordSet.Resolve("q-a1a2i2i1.my-group.my-network.my-deployment.my-domain.")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(ips).To(HaveLen(2))
+				Expect(ips).To(ContainElement("123.123.123.124"))
+				Expect(ips).To(ContainElement("123.123.123.125"))
+			})
+
+			It("don't match an non-existent index on multiple AZs", func() {
+				/*
+					query: (az2 OR az3) AND i0
+					expected: nothing
+				*/
+				ips, err := recordSet.Resolve("q-a2a3i0.my-group.my-network.my-deployment.my-domain.")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(ips).To(HaveLen(0))
+			})
+
+		})
+
 	})
 
 	Context("when there are records matching the specified fqdn", func() {
