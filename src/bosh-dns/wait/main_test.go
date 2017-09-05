@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("wait", func() {
 	It("passes when the check passes", func() {
-		command := exec.Command(pathToBinary, `--timeout=5ms`, `--checkDomain=google.com.`)
+		command := exec.Command(pathToBinary, `--timeout=100ms`, `--checkDomain=google.com.`)
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session).Should(gexec.Exit(0))
@@ -21,6 +21,6 @@ var _ = Describe("wait", func() {
 		command := exec.Command(pathToBinary, `--timeout=5ms`, `--checkDomain=something.does-not-exist.`)
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session, 100*time.Millisecond).Should(gexec.Exit(1))
+		Eventually(session, time.Second).Should(gexec.Exit(1))
 	})
 })
