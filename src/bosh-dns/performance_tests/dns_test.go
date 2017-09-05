@@ -11,7 +11,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"fmt"
 	"io/ioutil"
+
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 )
 
@@ -36,8 +38,9 @@ var _ = Describe("DNS", func() {
 
 			ServerPID: dnsSession.Command.Process.Pid,
 
-			CPUThreshold: 5,
-			MemThreshold: 20,
+			CPUThresholdMax:   20,
+			CPUThresholdPct99: 5,
+			MemThresholdMax:   25,
 
 			SuccessStatus: dns.RcodeSuccess,
 
@@ -148,5 +151,5 @@ func MakeDNSRequestUntilSuccessful(picker zp.ZonePicker, server string, result c
 		}
 	}
 
-	Fail("failed DNS request after 10 retries")
+	Fail(fmt.Sprintf("failed DNS request for %s via server %s after 10 retries", zone, server))
 }

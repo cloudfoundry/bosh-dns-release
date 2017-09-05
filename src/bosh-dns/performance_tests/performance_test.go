@@ -29,8 +29,9 @@ type PerformanceTest struct {
 
 	ServerPID int
 
-	CPUThreshold float64
-	MemThreshold float64
+	CPUThresholdMax   float64
+	CPUThresholdPct99 float64
+	MemThresholdMax   float64
 
 	SuccessStatus int
 
@@ -138,10 +139,11 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	maxTime := time.Duration(timeHistogram.Max())
 	printStatsForHistogram(timeHistogram, fmt.Sprintf("Handling latency for %s", label), "ms", 1000*1000)
 
-	maxMem := float64(memHistogram.Max()) / (1024 * 1024)
+	memMax := float64(memHistogram.Max()) / (1024 * 1024)
 	printStatsForHistogram(memHistogram, fmt.Sprintf("Server mem usage for %s", label), "MB", 1024*1024)
 
-	maxCPU := float64(cpuHistogram.Max()) / (1000 * 1000)
+	cpuMax := float64(cpuHistogram.Max()) / (1000 * 1000)
+	cpu99Pct := float64(cpuHistogram.Percentile(0.99)) / (1000 * 1000)
 	printStatsForHistogram(cpuHistogram, fmt.Sprintf("Server CPU usage for %s", label), "%", 1000*1000)
 
 	testFailures := []error{}
@@ -167,13 +169,19 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 				float64(maxTime/time.Millisecond),
 				float64(p.MaxTimeThreshold/time.Millisecond)))
 	}
-	if maxCPU > p.CPUThreshold {
+	if cpuMax > p.CPUThresholdMax {
 		testFailures = append(testFailures,
-			fmt.Errorf("Max server CPU usage of %.2f%% was greater than %.2f%% ceiling", maxCPU, p.CPUThreshold))
+			fmt.Errorf("Max server CPU usage of %.2f%% was greater than %.2f%% ceiling", cpuMax, p.CPUThresholdMax))
 	}
-	if maxMem > p.MemThreshold {
+
+	if cpu99Pct > p.CPUThresholdPct99 {
 		testFailures = append(testFailures,
-			fmt.Errorf("Max server memory usage of %.2fMB was greater than %.2fMB ceiling", maxMem, p.MemThreshold))
+			fmt.Errorf("99th percentile server CPU usage of %.2f%% was greater than %.2f%% ceiling", cpu99Pct, p.CPUThresholdPct99))
+	}
+
+	if memMax > p.MemThresholdMax {
+		testFailures = append(testFailures,
+			fmt.Errorf("Max server memory usage of %.2fMB was greater than %.2fMB ceiling", memMax, p.MemThresholdMax))
 	}
 
 	Expect(testFailures).To(BeEmpty())

@@ -39,8 +39,9 @@ var _ = Describe("Health Server", func() {
 
 			ServerPID: healthSession.Command.Process.Pid,
 
-			CPUThreshold: 60,
-			MemThreshold: 20,
+			CPUThresholdMax:   60,
+			CPUThresholdPct99: 60,
+			MemThresholdMax:   20,
 
 			SuccessStatus: http.StatusOK,
 
