@@ -639,7 +639,7 @@ var _ = Describe("main", func() {
 
 			startTime := time.Now()
 			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-			Expect(time.Now().Sub(startTime)).Should(BeNumerically(">=", 1*time.Second))
+			Expect(time.Now().Sub(startTime)).Should(BeNumerically(">", 999*time.Millisecond))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
 
