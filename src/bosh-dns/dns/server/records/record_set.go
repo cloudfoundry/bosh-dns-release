@@ -134,7 +134,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		}
 
 		assertStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger)
-		assertStringValue(&record.InstanceIndex, info, instanceIndexIndex, "instance_index", index, logger)
+		assertStringIntegerValue(&record.InstanceIndex, info, instanceIndexIndex, "instance_index", index, logger)
 
 		s.Records = append(s.Records, record)
 	}
@@ -146,6 +146,20 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 	return s, nil
 }
 
+func assertStringIntegerValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
+	if fieldIdx < 0 {
+		return false
+	}
+
+	float64Value, ok := info[fieldIdx].(float64) // golang default type for numeric fields
+	if !ok {
+		logger.Warn("RecordSet", "Value %d (%s) of record %d is not expected type of %s: %#+v", fieldIdx, fieldName, infoIdx, "numeric", info[fieldIdx])
+	}
+
+	*field = strconv.Itoa(int(float64Value))
+	return ok
+}
+
 func assertStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
 	if fieldIdx < 0 {
 		return false
@@ -155,12 +169,7 @@ func assertStringValue(field *string, info []interface{}, fieldIdx int, fieldNam
 	*field, ok = info[fieldIdx].(string)
 
 	if !ok {
-		float64Value, ok := info[fieldIdx].(float64) // golang default type for numeric fields
-		if ok {
-			*field = strconv.Itoa(int(float64Value))
-		} else {
-			logger.Warn("RecordSet", "Value %d (%s) of record %d is not expected type of %s: %#+v", fieldIdx, fieldName, infoIdx, "string", info[fieldIdx])
-		}
+		logger.Warn("RecordSet", "Value %d (%s) of record %d is not expected type of %s: %#+v", fieldIdx, fieldName, infoIdx, "string", info[fieldIdx])
 	}
 
 	return ok
