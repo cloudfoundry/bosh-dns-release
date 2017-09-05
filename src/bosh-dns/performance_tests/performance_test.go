@@ -151,7 +151,7 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 		testFailures = append(testFailures,
 			fmt.Errorf("Handled requests %d per second was lower than %d benchmark", successCount/durationInSeconds, requestsPerSecondThreshold))
 	}
-	if successPercentage < 1 {
+	if successCount < len(results) {
 		testFailures = append(testFailures,
 			fmt.Errorf("Success percentage of %.1f%% is too low", 100*successPercentage))
 	}
