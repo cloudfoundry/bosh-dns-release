@@ -3,4 +3,6 @@ builds:
     version: 0.0.7
   c4b333fd-178a-42fd-7ee9-1ac192859d79:
     version: 0.0.6
+  d2745f42-2699-4630-6f7c-64143b57d04d:
+    version: 0.0.8
 format-version: "2"
