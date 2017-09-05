@@ -70,8 +70,8 @@ var _ = Describe("DNS", func() {
 					MakeParallelRequests(2 * time.Second),
 			)
 
-			maxLatency := benchmarkTime.Percentile(0.5)
-			TestDNSPerformance(time.Duration(maxLatency) * time.Millisecond)
+			medLatency := benchmarkTime.Percentile(0.5)
+			TestDNSPerformance(time.Duration(medLatency) * time.Millisecond)
 		})
 	})
 
@@ -104,8 +104,8 @@ var _ = Describe("DNS", func() {
 					MakeParallelRequests(2 * time.Second),
 			)
 
-			maxLatency := benchmarkTime.Percentile(0.5)
-			TestDNSPerformance(time.Duration(maxLatency) * time.Millisecond)
+			medLatency := benchmarkTime.Percentile(0.5)
+			TestDNSPerformance(time.Duration(medLatency) * time.Millisecond)
 		})
 	})
 
