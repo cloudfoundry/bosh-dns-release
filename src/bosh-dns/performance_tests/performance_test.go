@@ -20,18 +20,32 @@ type Result struct {
 	responseTime time.Duration
 }
 
+type TimeThresholds struct {
+	Max time.Duration
+	Med time.Duration
+}
+
+type VitalsThresholds struct {
+	CPUMax   float64
+	CPUPct99 float64
+	MemMax   float64
+}
+
+func TimeThresholdsFromBenchmark(benchmark metrics.Histogram) TimeThresholds {
+	return TimeThresholds{
+		Max: 7540 * time.Millisecond,
+		Med: time.Duration(benchmark.Percentile(0.5)),
+	}
+}
+
 type PerformanceTest struct {
 	Workers           int
 	RequestsPerSecond int
 
-	MaxTimeThreshold time.Duration
-	MedTimeThreshold time.Duration
-
 	ServerPID int
 
-	CPUThresholdMax   float64
-	CPUThresholdPct99 float64
-	MemThresholdMax   float64
+	TimeThresholds   TimeThresholds
+	VitalsThresholds VitalsThresholds
 
 	SuccessStatus int
 
@@ -157,31 +171,31 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 		testFailures = append(testFailures,
 			fmt.Errorf("Success count %d is less than total count %d. Success percentage %.1f%% is too low", successCount, len(results), 100*successPercentage))
 	}
-	if medTime > p.MedTimeThreshold {
+	if medTime > p.TimeThresholds.Med {
 		testFailures = append(testFailures,
 			fmt.Errorf("Median response time of %.3fms was greater than %.3fms benchmark",
 				float64(medTime/time.Millisecond),
-				float64(p.MedTimeThreshold/time.Millisecond)))
+				float64(p.TimeThresholds.Med/time.Millisecond)))
 	}
-	if maxTime > p.MaxTimeThreshold {
+	if maxTime > p.TimeThresholds.Max {
 		testFailures = append(testFailures,
 			fmt.Errorf("Max response time of %.3fms was greater than %.3fms benchmark",
 				float64(maxTime/time.Millisecond),
-				float64(p.MaxTimeThreshold/time.Millisecond)))
+				float64(p.TimeThresholds.Max/time.Millisecond)))
 	}
-	if cpuMax > p.CPUThresholdMax {
+	if cpuMax > p.VitalsThresholds.CPUMax {
 		testFailures = append(testFailures,
-			fmt.Errorf("Max server CPU usage of %.2f%% was greater than %.2f%% ceiling", cpuMax, p.CPUThresholdMax))
-	}
-
-	if cpu99Pct > p.CPUThresholdPct99 {
-		testFailures = append(testFailures,
-			fmt.Errorf("99th percentile server CPU usage of %.2f%% was greater than %.2f%% ceiling", cpu99Pct, p.CPUThresholdPct99))
+			fmt.Errorf("Max server CPU usage of %.2f%% was greater than %.2f%% ceiling", cpuMax, p.VitalsThresholds.CPUMax))
 	}
 
-	if memMax > p.MemThresholdMax {
+	if cpu99Pct > p.VitalsThresholds.CPUPct99 {
 		testFailures = append(testFailures,
-			fmt.Errorf("Max server memory usage of %.2fMB was greater than %.2fMB ceiling", memMax, p.MemThresholdMax))
+			fmt.Errorf("99th percentile server CPU usage of %.2f%% was greater than %.2f%% ceiling", cpu99Pct, p.VitalsThresholds.CPUPct99))
+	}
+
+	if memMax > p.VitalsThresholds.MemMax {
+		testFailures = append(testFailures,
+			fmt.Errorf("Max server memory usage of %.2fMB was greater than %.2fMB ceiling", memMax, p.VitalsThresholds.MemMax))
 	}
 
 	Expect(testFailures).To(BeEmpty())

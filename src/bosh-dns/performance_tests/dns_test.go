@@ -28,19 +28,19 @@ var _ = Describe("DNS", func() {
 		requestsPerSecond = 7
 	)
 
-	TestDNSPerformance := func(medTimeThreshold time.Duration) {
+	TestDNSPerformance := func(timeThresholds TimeThresholds) {
 		PerformanceTest{
 			Workers:           workers,
 			RequestsPerSecond: requestsPerSecond,
 
-			MaxTimeThreshold: 7540 * time.Millisecond,
-			MedTimeThreshold: medTimeThreshold,
-
 			ServerPID: dnsSession.Command.Process.Pid,
 
-			CPUThresholdMax:   20,
-			CPUThresholdPct99: 5,
-			MemThresholdMax:   25,
+			TimeThresholds: timeThresholds,
+			VitalsThresholds: VitalsThresholds{
+				CPUMax:   20,
+				CPUPct99: 5,
+				MemMax:   25,
+			},
 
 			SuccessStatus: dns.RcodeSuccess,
 
@@ -70,8 +70,7 @@ var _ = Describe("DNS", func() {
 					MakeParallelRequests(2 * time.Second),
 			)
 
-			medLatency := benchmarkTime.Percentile(0.5)
-			TestDNSPerformance(time.Duration(medLatency) * time.Millisecond)
+			TestDNSPerformance(TimeThresholdsFromBenchmark(benchmarkTime))
 		})
 	})
 
@@ -82,7 +81,10 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for upcheck zone", func() {
-			TestDNSPerformance(1500 * time.Microsecond)
+			TestDNSPerformance(TimeThresholds{
+				Max: 7540 * time.Millisecond,
+				Med: 1500 * time.Microsecond,
+			})
 		})
 	})
 
@@ -104,8 +106,7 @@ var _ = Describe("DNS", func() {
 					MakeParallelRequests(2 * time.Second),
 			)
 
-			medLatency := benchmarkTime.Percentile(0.5)
-			TestDNSPerformance(time.Duration(medLatency) * time.Millisecond)
+			TestDNSPerformance(TimeThresholdsFromBenchmark(benchmarkTime))
 		})
 	})
 
@@ -127,7 +128,10 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for local zones", func() {
-			TestDNSPerformance(1500 * time.Microsecond)
+			TestDNSPerformance(TimeThresholds{
+				Max: 7540 * time.Millisecond,
+				Med: 1500 * time.Microsecond,
+			})
 		})
 	})
 })

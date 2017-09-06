@@ -34,14 +34,17 @@ var _ = Describe("Health Server", func() {
 			Workers:           workers,
 			RequestsPerSecond: requestsPerSecond,
 
-			MaxTimeThreshold: 7540 * time.Millisecond,
-			MedTimeThreshold: medTimeThreshold,
-
 			ServerPID: healthSession.Command.Process.Pid,
 
-			CPUThresholdMax:   60,
-			CPUThresholdPct99: 60,
-			MemThresholdMax:   20,
+			TimeThresholds: TimeThresholds{
+				Max: 7540 * time.Millisecond,
+				Med: medTimeThreshold,
+			},
+			VitalsThresholds: VitalsThresholds{
+				CPUMax:   60,
+				CPUPct99: 60,
+				MemMax:   20,
+			},
 
 			SuccessStatus: http.StatusOK,
 
