@@ -155,7 +155,7 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	}
 	if successCount < len(results) {
 		testFailures = append(testFailures,
-			fmt.Errorf("Success percentage of %.1f%% is too low", 100*successPercentage))
+			fmt.Errorf("Success count %d is less than total count %d. Success percentage %.1f%% is too low", successCount, len(results), 100*successPercentage))
 	}
 	if medTime > p.MedTimeThreshold {
 		testFailures = append(testFailures,
