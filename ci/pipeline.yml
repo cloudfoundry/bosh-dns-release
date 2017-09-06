@@ -34,6 +34,7 @@ jobs:
 
 - name: test-acceptance
   public: true
+  serial: true
   plan:
     - get: every-2h
       trigger: true
