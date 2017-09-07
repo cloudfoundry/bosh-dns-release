@@ -84,8 +84,8 @@ var _ = Describe("DNS", func() {
 			TestDNSPerformance(TimeThresholds{
 				Max:   7540 * time.Millisecond,
 				Med:   1500 * time.Microsecond,
-				Pct90: 1500 * time.Microsecond,
-				Pct95: 1500 * time.Microsecond,
+				Pct90: 3000 * time.Microsecond,
+				Pct95: 8000 * time.Microsecond,
 			})
 		})
 	})

@@ -54,10 +54,10 @@ var _ = Describe("Health Server", func() {
 	Describe("health server performance", func() {
 		It("handles requests quickly", func() {
 			TestHealthPerformance(TimeThresholds{
-				Max:   7540 * time.Millisecond,
 				Med:   15 * time.Millisecond,
-				Pct90: 15 * time.Millisecond,
-				Pct95: 15 * time.Millisecond,
+				Pct90: 20 * time.Millisecond,
+				Pct95: 25 * time.Millisecond,
+				Max:   7540 * time.Millisecond,
 			})
 		})
 	})
