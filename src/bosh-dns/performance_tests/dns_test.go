@@ -64,7 +64,7 @@ var _ = Describe("DNS", func() {
 					Workers:           workers,
 					RequestsPerSecond: requestsPerSecond,
 					WorkerFunc: func(resultChan chan<- Result) {
-						MakeDNSRequestUntilSuccessful(picker, "8.8.8.8:53", resultChan)
+						MakeDNSRequestUntilSuccessful(picker, "34.194.75.123:53", resultChan)
 					},
 				}.Setup().
 					MakeParallelRequests(2 * time.Second),
@@ -87,28 +87,6 @@ var _ = Describe("DNS", func() {
 				Pct90: 3000 * time.Microsecond,
 				Pct95: 8000 * time.Microsecond,
 			})
-		})
-	})
-
-	Describe("using google zone", func() {
-		BeforeEach(func() {
-			picker = zp.NewStaticZonePicker("google.com.")
-			label = "google.com zone"
-		})
-
-		It("handles DNS responses quickly for google zone", func() {
-			benchmarkTime := generateTimeHistogram(
-				PerformanceTest{
-					Workers:           workers,
-					RequestsPerSecond: requestsPerSecond,
-					WorkerFunc: func(resultChan chan<- Result) {
-						MakeDNSRequestUntilSuccessful(picker, "8.8.8.8:53", resultChan)
-					},
-				}.Setup().
-					MakeParallelRequests(2 * time.Second),
-			)
-
-			TestDNSPerformance(TimeThresholdsFromBenchmark(benchmarkTime, 1.1))
 		})
 	})
 
@@ -144,7 +122,7 @@ func MakeDNSRequestUntilSuccessful(picker zp.ZonePicker, server string, result c
 	defer GinkgoRecover()
 	zone := picker.NextZone()
 	c := new(dns.Client)
-	c.Timeout = 50 * time.Millisecond
+	c.Timeout = 150 * time.Millisecond
 	m := new(dns.Msg)
 
 	startTime := time.Now()
