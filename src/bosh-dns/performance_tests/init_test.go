@@ -67,7 +67,7 @@ var _ = BeforeSuite(func() {
 		"records_file":     "assets/records.json",
 		"alias_files_glob": "assets/aliases.json",
 		"upcheck_domains":  []string{"upcheck.bosh-dns."},
-		"recursors":        []string{"8.8.8.8"},
+		"recursors":        []string{"34.194.75.123"},
 		"recursor_timeout": "2s",
 		"health": map[string]interface{}{
 			"enabled":          true,
