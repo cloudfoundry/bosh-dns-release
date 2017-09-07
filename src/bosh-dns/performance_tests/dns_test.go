@@ -111,8 +111,8 @@ var _ = Describe("DNS", func() {
 			TestDNSPerformance(TimeThresholds{
 				Max:   7540 * time.Millisecond,
 				Med:   1500 * time.Microsecond,
-				Pct90: 1500 * time.Microsecond,
-				Pct95: 1500 * time.Microsecond,
+				Pct90: 3 * time.Millisecond,
+				Pct95: 8 * time.Millisecond,
 			})
 		})
 	})
@@ -122,7 +122,7 @@ func MakeDNSRequestUntilSuccessful(picker zp.ZonePicker, server string, result c
 	defer GinkgoRecover()
 	zone := picker.NextZone()
 	c := new(dns.Client)
-	c.Timeout = 150 * time.Millisecond
+	c.Timeout = 300 * time.Millisecond
 	m := new(dns.Msg)
 
 	startTime := time.Now()
