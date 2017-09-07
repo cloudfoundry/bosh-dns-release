@@ -21,8 +21,7 @@ type Result struct {
 }
 
 type TimeThresholds struct {
-	Max time.Duration
-	Med time.Duration
+	Max, Med, Pct90, Pct95 time.Duration
 }
 
 type VitalsThresholds struct {
@@ -31,10 +30,12 @@ type VitalsThresholds struct {
 	MemMax   float64
 }
 
-func TimeThresholdsFromBenchmark(benchmark metrics.Histogram) TimeThresholds {
+func TimeThresholdsFromBenchmark(benchmark metrics.Histogram, allowance float64) TimeThresholds {
 	return TimeThresholds{
-		Max: 7540 * time.Millisecond,
-		Med: time.Duration(benchmark.Percentile(0.5)),
+		Max:   7540 * time.Millisecond,
+		Med:   time.Duration(float64(benchmark.Percentile(0.5)) * allowance),
+		Pct90: time.Duration(float64(benchmark.Percentile(0.9)) * allowance),
+		Pct95: time.Duration(float64(benchmark.Percentile(0.95)) * allowance),
 	}
 }
 
@@ -150,6 +151,8 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	fmt.Printf("requests per second is %d reqs/s\n", successCount/durationInSeconds)
 
 	medTime := time.Duration(timeHistogram.Percentile(0.5))
+	pct90Time := time.Duration(timeHistogram.Percentile(0.9))
+	pct95Time := time.Duration(timeHistogram.Percentile(0.95))
 	maxTime := time.Duration(timeHistogram.Max())
 	printStatsForHistogram(timeHistogram, fmt.Sprintf("Handling latency for %s", label), "ms", 1000*1000)
 
@@ -169,13 +172,25 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	}
 	if successCount < len(results) {
 		testFailures = append(testFailures,
-			fmt.Errorf("Success count %d is less than total count %d. Success percentage %.1f%% is too low", successCount, len(results), 100*successPercentage))
+			fmt.Errorf("Success ratio %d/%d, giving percentage %.3f%%, is too low", successCount, len(results), 100*successPercentage))
 	}
 	if medTime > p.TimeThresholds.Med {
 		testFailures = append(testFailures,
 			fmt.Errorf("Median response time of %.3fms was greater than %.3fms benchmark",
-				float64(medTime/time.Millisecond),
-				float64(p.TimeThresholds.Med/time.Millisecond)))
+				float64(medTime)/float64(time.Millisecond),
+				float64(p.TimeThresholds.Med)/float64(time.Millisecond)))
+	}
+	if pct90Time > p.TimeThresholds.Pct90 {
+		testFailures = append(testFailures,
+			fmt.Errorf("90th percentile response time of %.3fms was greater than %.3fms benchmark",
+				float64(pct90Time)/float64(time.Millisecond),
+				float64(p.TimeThresholds.Pct90)/float64(time.Millisecond)))
+	}
+	if pct95Time > p.TimeThresholds.Pct95 {
+		testFailures = append(testFailures,
+			fmt.Errorf("95th percentile response time of %.3fms was greater than %.3fms benchmark",
+				float64(pct95Time)/float64(time.Millisecond),
+				float64(p.TimeThresholds.Pct95)/float64(time.Millisecond)))
 	}
 	if maxTime > p.TimeThresholds.Max {
 		testFailures = append(testFailures,

@@ -22,12 +22,12 @@ import (
 var _ = Describe("Health Server", func() {
 	var (
 		serverAddress     = "127.0.0.1:8853"
-		durationInSeconds = 60 * 30
+		durationInSeconds = 60
 		workers           = 10
 		requestsPerSecond = 400
 	)
 
-	TestHealthPerformance := func(medTimeThreshold time.Duration) {
+	TestHealthPerformance := func(timeThresholds TimeThresholds) {
 		httpClient := setupSecureGet()
 
 		PerformanceTest{
@@ -36,10 +36,7 @@ var _ = Describe("Health Server", func() {
 
 			ServerPID: healthSession.Command.Process.Pid,
 
-			TimeThresholds: TimeThresholds{
-				Max: 7540 * time.Millisecond,
-				Med: medTimeThreshold,
-			},
+			TimeThresholds: timeThresholds,
 			VitalsThresholds: VitalsThresholds{
 				CPUMax:   60,
 				CPUPct99: 60,
@@ -56,7 +53,12 @@ var _ = Describe("Health Server", func() {
 
 	Describe("health server performance", func() {
 		It("handles requests quickly", func() {
-			TestHealthPerformance(15 * time.Millisecond)
+			TestHealthPerformance(TimeThresholds{
+				Max:   7540 * time.Millisecond,
+				Med:   15 * time.Millisecond,
+				Pct90: 15 * time.Millisecond,
+				Pct95: 15 * time.Millisecond,
+			})
 		})
 	})
 })

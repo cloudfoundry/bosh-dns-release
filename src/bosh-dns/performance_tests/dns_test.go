@@ -23,7 +23,7 @@ var _ = Describe("DNS", func() {
 		label  string
 
 		dnsServerAddress  = "127.0.0.1:9953"
-		durationInSeconds = 60 * 30
+		durationInSeconds = 60
 		workers           = 10
 		requestsPerSecond = 7
 	)
@@ -70,7 +70,7 @@ var _ = Describe("DNS", func() {
 					MakeParallelRequests(2 * time.Second),
 			)
 
-			TestDNSPerformance(TimeThresholdsFromBenchmark(benchmarkTime))
+			TestDNSPerformance(TimeThresholdsFromBenchmark(benchmarkTime, 1.1))
 		})
 	})
 
@@ -82,8 +82,10 @@ var _ = Describe("DNS", func() {
 
 		It("handles DNS responses quickly for upcheck zone", func() {
 			TestDNSPerformance(TimeThresholds{
-				Max: 7540 * time.Millisecond,
-				Med: 1500 * time.Microsecond,
+				Max:   7540 * time.Millisecond,
+				Med:   1500 * time.Microsecond,
+				Pct90: 1500 * time.Microsecond,
+				Pct95: 1500 * time.Microsecond,
 			})
 		})
 	})
@@ -106,7 +108,7 @@ var _ = Describe("DNS", func() {
 					MakeParallelRequests(2 * time.Second),
 			)
 
-			TestDNSPerformance(TimeThresholdsFromBenchmark(benchmarkTime))
+			TestDNSPerformance(TimeThresholdsFromBenchmark(benchmarkTime, 1.1))
 		})
 	})
 
@@ -129,8 +131,10 @@ var _ = Describe("DNS", func() {
 
 		It("handles DNS responses quickly for local zones", func() {
 			TestDNSPerformance(TimeThresholds{
-				Max: 7540 * time.Millisecond,
-				Med: 1500 * time.Microsecond,
+				Max:   7540 * time.Millisecond,
+				Med:   1500 * time.Microsecond,
+				Pct90: 1500 * time.Microsecond,
+				Pct95: 1500 * time.Microsecond,
 			})
 		})
 	})
