@@ -67,7 +67,7 @@ var _ = Describe("DNS", func() {
 						MakeDNSRequestUntilSuccessful(picker, "34.194.75.123:53", resultChan)
 					},
 				}.Setup().
-					MakeParallelRequests(2 * time.Second),
+					MakeParallelRequests(20 * time.Second),
 			)
 
 			TestDNSPerformance(TimeThresholdsFromBenchmark(benchmarkTime, 1.1))
@@ -84,8 +84,8 @@ var _ = Describe("DNS", func() {
 			TestDNSPerformance(TimeThresholds{
 				Max:   7540 * time.Millisecond,
 				Med:   1500 * time.Microsecond,
-				Pct90: 3000 * time.Microsecond,
-				Pct95: 8000 * time.Microsecond,
+				Pct90: 3 * time.Millisecond,
+				Pct95: 15 * time.Millisecond,
 			})
 		})
 	})
@@ -112,7 +112,7 @@ var _ = Describe("DNS", func() {
 				Max:   7540 * time.Millisecond,
 				Med:   1500 * time.Microsecond,
 				Pct90: 3 * time.Millisecond,
-				Pct95: 8 * time.Millisecond,
+				Pct95: 15 * time.Millisecond,
 			})
 		})
 	})
@@ -129,6 +129,9 @@ func MakeDNSRequestUntilSuccessful(picker zp.ZonePicker, server string, result c
 	m.SetQuestion(dns.Fqdn(zone), dns.TypeA)
 
 	for i := 0; i < 10; i++ {
+		if i == 9 {
+			c.Timeout = 3000 * time.Millisecond
+		}
 		r, _, err := c.Exchange(m, server)
 		if err == nil {
 			responseTime := time.Since(startTime)
