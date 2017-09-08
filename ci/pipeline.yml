@@ -72,6 +72,29 @@ jobs:
     - task: clean-up
       file: bosh-dns-release/ci/tasks/clean-up.yml
 
+- name: brats-ubuntu
+  plan:
+  - do:
+    - aggregate:
+      - get: bosh-src
+      - get: dns-release
+        resource: bosh-dns-release
+        trigger: true
+        passed: [test-unit]
+      - get: candidate-warden-ubuntu-stemcell
+        resource: bosh-candidate-stemcell
+      - get: bosh-release
+    - task: test-brats
+      file: bosh-src/ci/tasks/test-brats.yml
+      tags: ["worker-brats"]
+      privileged: true
+      params:
+        BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
+        BOSH_DIRECTOR_RELEASE_VERSION: "latest"
+        DNS_RELEASE_FILE_PATH: "dns-release"
+        DNS_RELEASE_VERSION: "create"
+
+
 - name: bbl-up
   serial: true
   serial_groups:
@@ -114,6 +137,19 @@ resources:
     branch: master
     ignore_paths:
     - ci/docker
+
+- name: bosh-src
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/bosh
+    branch: master
+    ignore_paths:
+    - ci/docker
+
+- name: bosh-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/bosh
 
 - name: bosh-deployment
   type: git
