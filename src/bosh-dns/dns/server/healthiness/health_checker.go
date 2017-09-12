@@ -4,16 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-
-	"github.com/cloudfoundry/bosh-utils/httpclient"
+	"net/http"
 )
 
+//go:generate counterfeiter . HTTPClientGetter
+
+type HTTPClientGetter interface {
+	Get(endpoint string) (*http.Response, error)
+}
+
 type healthChecker struct {
-	client httpclient.HTTPClient
+	client HTTPClientGetter
 	port   int
 }
 
-func NewHealthChecker(client httpclient.HTTPClient, port int) HealthChecker {
+func NewHealthChecker(client HTTPClientGetter, port int) HealthChecker {
 	return &healthChecker{
 		client: client,
 		port:   port,

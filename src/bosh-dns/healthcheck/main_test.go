@@ -29,7 +29,7 @@ var _ = Describe("HealthCheck server", func() {
 
 	BeforeEach(func() {
 		status = "running"
-		logger = boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard, ioutil.Discard)
+		logger = boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
 	})
 
 	Describe("/health", func() {
@@ -145,7 +145,7 @@ func waitForServer(port int) error {
 	return err //errors.New("dns server failed to start")
 }
 
-func secureGetRespBody(client httpclient.HTTPClient, port int) ([]byte, error) {
+func secureGetRespBody(client *httpclient.HTTPClient, port int) ([]byte, error) {
 	resp, err := secureGet(client, port)
 	if err != nil {
 		fmt.Println(err)
@@ -154,7 +154,7 @@ func secureGetRespBody(client httpclient.HTTPClient, port int) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-func secureGet(client httpclient.HTTPClient, port int) (*http.Response, error) {
+func secureGet(client *httpclient.HTTPClient, port int) (*http.Response, error) {
 	resp, err := client.Get(fmt.Sprintf("https://127.0.0.1:%d/health", port))
 	if err != nil {
 		fmt.Println(err)

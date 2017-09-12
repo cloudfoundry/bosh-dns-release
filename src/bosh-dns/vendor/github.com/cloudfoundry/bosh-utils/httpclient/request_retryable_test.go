@@ -1,4 +1,4 @@
-package http_test
+package httpclient_test
 
 import (
 	"errors"
@@ -7,12 +7,11 @@ import (
 	"net/http"
 	"strings"
 
-	. "github.com/cloudfoundry/bosh-utils/http"
+	"github.com/cloudfoundry/bosh-utils/httpclient"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	fakehttp "github.com/cloudfoundry/bosh-utils/http/fakes"
+	"github.com/onsi/gomega/ghttp"
 
 	"bytes"
 	"os"
@@ -57,26 +56,30 @@ func (s *seekableReadClose) Close() error {
 var _ = Describe("RequestRetryable", func() {
 	Describe("Attempt", func() {
 		var (
-			requestRetryable RequestRetryable
+			server           *ghttp.Server
+			requestRetryable *httpclient.RequestRetryable
 			request          *http.Request
-			fakeClient       *fakehttp.FakeClient
 			logger           boshlog.Logger
 		)
 
 		BeforeEach(func() {
-			fakeClient = fakehttp.NewFakeClient()
+			server = ghttp.NewServer()
 			logger = boshlog.NewLogger(boshlog.LevelNone)
 
-			request = &http.Request{
-				Body: ioutil.NopCloser(strings.NewReader("fake-request-body")),
-			}
+			var err error
+			request, err = http.NewRequest("GET", server.URL(), ioutil.NopCloser(strings.NewReader("fake-request-body")))
+			Expect(err).NotTo(HaveOccurred())
 
-			requestRetryable = NewRequestRetryable(request, fakeClient, logger, nil)
+			requestRetryable = httpclient.NewRequestRetryable(request, httpclient.DefaultClient, logger, nil)
 		})
 
-		It("calls Do on the delegate", func() {
-			fakeClient.SetMessage("fake-response-body")
-			fakeClient.StatusCode = 200
+		It("sends a request to the server", func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/"),
+					ghttp.RespondWith(200, "fake-response-body"),
+				),
+			)
 
 			_, err := requestRetryable.Attempt()
 			Expect(err).ToNot(HaveOccurred())
@@ -85,19 +88,23 @@ var _ = Describe("RequestRetryable", func() {
 			Expect(readString(resp.Body)).To(Equal("fake-response-body"))
 			Expect(resp.StatusCode).To(Equal(200))
 
-			Expect(fakeClient.CallCount).To(Equal(1))
-			Expect(fakeClient.Requests).To(ContainElement(request))
+			Expect(server.ReceivedRequests()).To(HaveLen(1))
 		})
 
 		Context("when request returns an error", func() {
 			BeforeEach(func() {
-				fakeClient.Error = errors.New("fake-response-error")
+				server.AppendHandlers(
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/"),
+						ghttp.RespondWith(503, "fake-response-error"),
+					),
+				)
 			})
 
 			It("is retryable", func() {
 				isRetryable, err := requestRetryable.Attempt()
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("fake-response-error"))
+				Expect(err).To(MatchError(ContainSubstring("503 Service Unavailable")))
 				Expect(isRetryable).To(BeTrue())
 			})
 		})
@@ -117,16 +124,19 @@ var _ = Describe("RequestRetryable", func() {
 
 			BeforeEach(func() {
 				seekableReaderCloser = NewSeekableReadClose([]byte("hello from seekable"))
-				request = &http.Request{
-					Body: seekableReaderCloser,
-				}
-				requestRetryable = NewRequestRetryable(request, fakeClient, logger, nil)
+				request.Body = seekableReaderCloser
+				requestRetryable = httpclient.NewRequestRetryable(request, httpclient.DefaultClient, logger, nil)
 			})
 
 			Context("when the response status code is success", func() {
 				BeforeEach(func() {
-					fakeClient.SetMessage("fake-response-body")
-					fakeClient.StatusCode = 200
+					server.AppendHandlers(
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("GET", "/"),
+							ghttp.VerifyBody([]byte("hello from seekable")),
+							ghttp.RespondWith(200, "fake-response-body"),
+						),
+					)
 				})
 
 				// It does not consume the whole body and store it in memory for future re-attempts, it seeks to the
@@ -135,7 +145,6 @@ var _ = Describe("RequestRetryable", func() {
 					_, err := requestRetryable.Attempt()
 					Expect(err).ToNot(HaveOccurred())
 					Expect(seekableReaderCloser.Seeked).To(BeTrue())
-					Expect(fakeClient.RequestBodies[0]).To(Equal("hello from seekable"))
 				})
 
 				It("closes file handles", func() {
@@ -148,14 +157,14 @@ var _ = Describe("RequestRetryable", func() {
 			Context("when it returns an error checking if response can be attempted again", func() {
 				BeforeEach(func() {
 					seekableReaderCloser = NewSeekableReadClose([]byte("hello from seekable"))
-					request = &http.Request{
-						Body: seekableReaderCloser,
-					}
+					request.Body = seekableReaderCloser
+
+					server.AppendHandlers(ghttp.VerifyRequest("GET", "/"))
 
 					errOnResponseAttemptable := func(*http.Response, error) (bool, error) {
 						return false, errors.New("fake-error")
 					}
-					requestRetryable = NewRequestRetryable(request, fakeClient, logger, errOnResponseAttemptable)
+					requestRetryable = httpclient.NewRequestRetryable(request, httpclient.DefaultClient, logger, errOnResponseAttemptable)
 				})
 
 				It("still closes the request body", func() {
@@ -171,8 +180,12 @@ var _ = Describe("RequestRetryable", func() {
 					err         error
 				)
 				BeforeEach(func() {
-					fakeClient.SetMessage("fake-response-body")
-					fakeClient.StatusCode = 404
+					server.AppendHandlers(
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("GET", "/"),
+							ghttp.RespondWith(404, "fake-response-body"),
+						),
+					)
 					isRetryable, err = requestRetryable.Attempt()
 				})
 
@@ -187,8 +200,12 @@ var _ = Describe("RequestRetryable", func() {
 
 				Context("when making another, successful, attempt", func() {
 					BeforeEach(func() {
-						fakeClient.SetMessage("fake-response-body")
-						fakeClient.StatusCode = 200
+						server.RouteToHandler("GET", "/",
+							ghttp.CombineHandlers(
+								ghttp.VerifyBody([]byte("hello from seekable")),
+								ghttp.RespondWith(200, "fake-response-body"),
+							),
+						)
 						seekableReaderCloser.Seeked = false
 						_, err = requestRetryable.Attempt()
 					})
@@ -197,7 +214,7 @@ var _ = Describe("RequestRetryable", func() {
 						Expect(err).ToNot(HaveOccurred())
 
 						Expect(seekableReaderCloser.Seeked).To(BeTrue())
-						Expect(fakeClient.RequestBodies[1]).To(Equal("hello from seekable"))
+						Expect(server.ReceivedRequests()).To(HaveLen(2))
 
 						resp := requestRetryable.Response()
 						Expect(resp.StatusCode).To(Equal(200))
@@ -214,8 +231,12 @@ var _ = Describe("RequestRetryable", func() {
 
 		Context("when response status code is not between 200 and 300", func() {
 			BeforeEach(func() {
-				fakeClient.SetMessage("fake-response-body")
-				fakeClient.StatusCode = 404
+				server.RouteToHandler("GET", "/",
+					ghttp.CombineHandlers(
+						ghttp.VerifyBody([]byte("fake-request-body")),
+						ghttp.RespondWith(404, "fake-response-body"),
+					),
+				)
 			})
 
 			It("is retryable", func() {
@@ -239,49 +260,46 @@ var _ = Describe("RequestRetryable", func() {
 				Expect(readString(resp.Body)).To(Equal("fake-response-body"))
 				Expect(resp.StatusCode).To(Equal(404))
 
-				Expect(fakeClient.RequestBodies[0]).To(Equal("fake-request-body"))
-				Expect(fakeClient.RequestBodies[1]).To(Equal("fake-request-body"))
+				Expect(server.ReceivedRequests()).To(HaveLen(2))
 			})
 
 			It("closes the previous response body on subsequent attempts", func() {
-				type ClosedChecker interface {
-					io.ReadCloser
-					Closed() bool
-				}
 				_, err := requestRetryable.Attempt()
 				Expect(err).To(HaveOccurred())
-				originalResp := requestRetryable.Response()
-				Expect(originalResp.Body.(ClosedChecker).Closed()).To(BeFalse())
+				originalRespBody := requestRetryable.Response().Body
 
 				_, err = requestRetryable.Attempt()
 				Expect(err).To(HaveOccurred())
-				Expect(originalResp.Body.(ClosedChecker).Closed()).To(BeTrue())
-				Expect(requestRetryable.Response().Body.(ClosedChecker).Closed()).To(BeFalse())
+
+				_, err = originalRespBody.Read(nil)
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError("http: read on closed response body"))
 			})
 
 			It("fully reads the previous response body on subsequent attempts", func() {
 				// go1.5+ fails the next request with `request canceled` if you do not fully read the
 				// prior requests body; ref https://marc.ttias.be/golang-nuts/2016-02/msg00256.php
-				type readLengthCloser interface {
-					ReadLength() int
-				}
-
+				// This should not be necessary when the following CL gets accepted:
+				// https://go-review.googlesource.com/c/go/+/62891
 				_, err := requestRetryable.Attempt()
 				Expect(err).To(HaveOccurred())
-				originalRespBody := requestRetryable.Response().Body.(readLengthCloser)
-				Expect(originalRespBody.ReadLength()).To(Equal(0))
 
 				_, err = requestRetryable.Attempt()
 				Expect(err).To(HaveOccurred())
-				Expect(originalRespBody.ReadLength()).To(Equal(18))
-				Expect(requestRetryable.Response().Body.(readLengthCloser).ReadLength()).To(Equal(0))
+
+				Expect(err).NotTo(MatchError("request canceled"))
+				// we expect to see 404 here because we don't want to see request
+				// canceled, this is to avoid having a false positive if messages
+				// change in the future
+				Expect(err).To(MatchError(ContainSubstring("404 Not Found")))
 			})
 		})
 	})
 })
 
 func readString(body io.ReadCloser) string {
-	content, err := ReadAndClose(body)
+	defer body.Close()
+	content, err := ioutil.ReadAll(body)
 	Expect(err).ToNot(HaveOccurred())
 	return string(content)
 }

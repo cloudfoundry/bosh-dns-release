@@ -12,12 +12,12 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	gouuid "github.com/nu7hatch/gouuid"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"time"
 )
 
 type FakeFileType string
@@ -49,9 +49,12 @@ type FakeFileSystem struct {
 	ReadFileError       error
 	readFileErrorByPath map[string]error
 
-	WriteFileError  error
-	WriteFileErrors map[string]error
-	SymlinkError    error
+	WriteFileError            error
+	WriteFileErrors           map[string]error
+	WriteFileCallCount        int
+	WriteFileQuietlyCallCount int
+
+	SymlinkError error
 
 	MkdirAllError       error
 	mkdirAllErrorByPath map[string]error
@@ -424,7 +427,17 @@ func (fs *FakeFileSystem) WriteFileString(path, content string) error {
 	return fs.WriteFile(path, []byte(content))
 }
 
+func (fs *FakeFileSystem) WriteFileQuietly(path string, content []byte) error {
+	fs.WriteFileQuietlyCallCount++
+	return fs.writeFile(path, content)
+}
+
 func (fs *FakeFileSystem) WriteFile(path string, content []byte) error {
+	fs.WriteFileCallCount++
+	return fs.writeFile(path, content)
+}
+
+func (fs *FakeFileSystem) writeFile(path string, content []byte) error {
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 
@@ -463,7 +476,7 @@ func (fs *FakeFileSystem) writeDir(path string) error {
 	return nil
 }
 
-func (fs *FakeFileSystem) ConvergeFileContents(path string, content []byte) (bool, error) {
+func (fs *FakeFileSystem) ConvergeFileContents(path string, content []byte, opts ...boshsys.ConvergeFileContentsOpts) (bool, error) {
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 
@@ -474,6 +487,14 @@ func (fs *FakeFileSystem) ConvergeFileContents(path string, content []byte) (boo
 	err := fs.WriteFileErrors[path]
 	if err != nil {
 		return false, err
+	}
+
+	if len(opts) > 0 && opts[0].DryRun {
+		stats := fs.fileRegistry.Get(path)
+		if stats == nil {
+			return true, nil
+		}
+		return bytes.Compare(stats.Content, content) != 0, nil
 	}
 
 	stats := fs.getOrCreateFile(path)

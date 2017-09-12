@@ -62,7 +62,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(session.Err).To(gbytes.Say("[main].*ERROR - --config is a required flag"))
+			Expect(session.Out).To(gbytes.Say("[main].*ERROR - --config is a required flag"))
 		})
 
 		It("exits 1 if the config file does not exist", func() {
@@ -76,7 +76,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(session.Err).To(gbytes.Say("[main].*ERROR - Unable to find config file at 'some/fake/path'"))
+			Expect(session.Out).To(gbytes.Say("[main].*ERROR - Unable to find config file at 'some/fake/path'"))
 		})
 
 		It("exits 1 if the config file is busted", func() {
@@ -86,7 +86,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(session.Err).To(gbytes.Say("[main].*ERROR - unexpected end of JSON input"))
+			Expect(session.Out).To(gbytes.Say("[main].*ERROR - unexpected end of JSON input"))
 		})
 	})
 
@@ -737,7 +737,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Eventually(session.Err).Should(gbytes.Say("[main].*ERROR - timed out waiting for server to bind"))
+			Eventually(session.Out).Should(gbytes.Say("[main].*ERROR - timed out waiting for server to bind"))
 		})
 
 		It("exits 1 and logs a message when the globbed config files contain a broken alias config", func() {
@@ -759,8 +759,8 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Eventually(session.Err).Should(gbytes.Say(`[main].*ERROR - loading alias configuration:.*alias config file malformed:`))
-			Expect(session.Err.Contents()).To(ContainSubstring(fmt.Sprintf(`alias config file malformed: %s`, aliasesFile2.Name())))
+			Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - loading alias configuration:.*alias config file malformed:`))
+			Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf(`alias config file malformed: %s`, aliasesFile2.Name())))
 		})
 	})
 })

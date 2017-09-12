@@ -1,4 +1,4 @@
-package http_test
+package httpclient_test
 
 import (
 	"crypto/tls"
@@ -7,11 +7,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cloudfoundry/bosh-utils/httpclient"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
-
-	boshhttp "github.com/cloudfoundry/bosh-utils/http"
 )
 
 var _ = Describe("NewMutualTLSClient", func() {
@@ -41,7 +40,7 @@ var _ = Describe("NewMutualTLSClient", func() {
 	})
 
 	JustBeforeEach(func() {
-		client = boshhttp.NewMutualTLSClient(identity, caCertPool, serverName)
+		client = httpclient.NewMutualTLSClient(identity, caCertPool, serverName)
 		tlsConfig = client.Transport.(*http.Transport).TLSClientConfig
 	})
 

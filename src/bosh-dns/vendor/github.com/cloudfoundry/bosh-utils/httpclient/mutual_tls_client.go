@@ -1,4 +1,4 @@
-package http
+package httpclient
 
 import (
 	"crypto/tls"
@@ -24,5 +24,4 @@ func NewMutualTLSClient(identity tls.Certificate, caCertPool *x509.CertPool, ser
 		Transport: transport,
 		Timeout:   10 * time.Second,
 	}
-
 }

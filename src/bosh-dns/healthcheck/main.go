@@ -23,7 +23,7 @@ func main() {
 func mainExitCode() int {
 	const logTag = "healthcheck"
 
-	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout, os.Stderr)
+	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout)
 	defer logger.FlushTimeout(5 * time.Second)
 	logger.Info(logTag, "Initializing")
 

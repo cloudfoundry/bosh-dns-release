@@ -1,12 +1,12 @@
-package http
+package httpclient
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
-	"errors"
 	"io"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
@@ -14,12 +14,7 @@ import (
 	boshuuid "github.com/cloudfoundry/bosh-utils/uuid"
 )
 
-type RequestRetryable interface {
-	Attempt() (bool, error)
-	Response() *http.Response
-}
-
-type requestRetryable struct {
+type RequestRetryable struct {
 	request   *http.Request
 	requestID string
 	delegate  Client
@@ -40,12 +35,12 @@ func NewRequestRetryable(
 	delegate Client,
 	logger boshlog.Logger,
 	isResponseAttemptable func(*http.Response, error) (bool, error),
-) RequestRetryable {
+) *RequestRetryable {
 	if isResponseAttemptable == nil {
 		isResponseAttemptable = defaultIsAttemptable
 	}
 
-	return &requestRetryable{
+	return &RequestRetryable{
 		request:               request,
 		delegate:              delegate,
 		attempt:               0,
@@ -56,7 +51,7 @@ func NewRequestRetryable(
 	}
 }
 
-func (r *requestRetryable) Attempt() (bool, error) {
+func (r *RequestRetryable) Attempt() (bool, error) {
 	var err error
 
 	if r.requestID == "" {
@@ -76,7 +71,7 @@ func (r *requestRetryable) Attempt() (bool, error) {
 		if !ok {
 			return false, errors.New("Should never happen")
 		}
-		_, err := seekable.Seek(0, 0)
+		_, err = seekable.Seek(0, 0)
 		r.request.Body = ioutil.NopCloser(seekable)
 
 		if err != nil {
@@ -84,7 +79,8 @@ func (r *requestRetryable) Attempt() (bool, error) {
 		}
 	} else {
 		if r.request.Body != nil && r.bodyBytes == nil {
-			r.bodyBytes, err = ReadAndClose(r.request.Body)
+			defer r.request.Body.Close()
+			r.bodyBytes, err = ioutil.ReadAll(r.request.Body)
 			if err != nil {
 				return false, bosherr.WrapError(err, "Buffering request body")
 			}
@@ -98,7 +94,16 @@ func (r *requestRetryable) Attempt() (bool, error) {
 
 	// close previous attempt's response body to prevent HTTP client resource leaks
 	if r.response != nil {
-		ioutil.ReadAll(r.response.Body)
+		// net/http response body early closing does not block until the body is
+		// properly cleaned up, which would lead to a 'request canceled' error.
+		// Yielding the CPU should allow the scheduler to run the cleanup tasks
+		// before continuing. But we found that that behavior is not deterministic,
+		// we instead avoid the problem altogether by reading the entire body and
+		// forcing an EOF.
+		// This should not be necessary when the following CL gets accepted:
+		// https://go-review.googlesource.com/c/go/+/62891
+		io.Copy(ioutil.Discard, r.response.Body)
+
 		r.response.Body.Close()
 	}
 
@@ -115,11 +120,11 @@ func (r *requestRetryable) Attempt() (bool, error) {
 	return attemptable, err
 }
 
-func (r *requestRetryable) Response() *http.Response {
+func (r *RequestRetryable) Response() *http.Response {
 	return r.response
 }
 
-func (r *requestRetryable) wasSuccessful(resp *http.Response) bool {
+func (r *RequestRetryable) wasSuccessful(resp *http.Response) bool {
 	return resp.StatusCode >= 200 && resp.StatusCode < 300
 }
 
