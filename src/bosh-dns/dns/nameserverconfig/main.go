@@ -25,7 +25,7 @@ func main() {
 		log.Fatalf("invalid ip: %s", bindAddress)
 	}
 
-	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout, os.Stderr)
+	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout)
 	defer logger.FlushTimeout(5 * time.Second)
 
 	shutdown := make(chan struct{})
