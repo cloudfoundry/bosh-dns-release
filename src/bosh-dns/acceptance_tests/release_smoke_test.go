@@ -203,7 +203,7 @@ func ensureHealthEndpointDeployed() {
 	allDeployedInstances = getInstanceInfos(boshBinaryPath)
 }
 
-func setupSecureGet() httpclient.HTTPClient {
+func setupSecureGet() *httpclient.HTTPClient {
 	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
 		"int", "creds.yml",
 		"--path", "/dns_healthcheck_client_tls/certificate",
@@ -231,11 +231,11 @@ func setupSecureGet() httpclient.HTTPClient {
 	cert, err := tls.X509KeyPair([]byte(clientCertificate), []byte(clientPrivateKey))
 	Expect(err).NotTo(HaveOccurred())
 
-	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard, ioutil.Discard)
+	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
 	return healthclient.NewHealthClient([]byte(caCert), cert, logger)
 }
 
-func secureGetRespBody(client httpclient.HTTPClient, hostname string, port int) ([]byte, error) {
+func secureGetRespBody(client *httpclient.HTTPClient, hostname string, port int) ([]byte, error) {
 	resp, err := secureGet(client, hostname, port)
 	if err != nil {
 		fmt.Println(err)
@@ -244,7 +244,7 @@ func secureGetRespBody(client httpclient.HTTPClient, hostname string, port int) 
 	return ioutil.ReadAll(resp.Body)
 }
 
-func secureGet(client httpclient.HTTPClient, hostname string, port int) (*http.Response, error) {
+func secureGet(client *httpclient.HTTPClient, hostname string, port int) (*http.Response, error) {
 	resp, err := client.Get(fmt.Sprintf("https://%s:%d/health", hostname, port))
 	if err != nil {
 		fmt.Println(err)

@@ -63,7 +63,7 @@ var _ = Describe("Health Server", func() {
 	})
 })
 
-func MakeHealthEndpointRequest(client httpclient.HTTPClient, serverAddress string, hr chan<- Result) {
+func MakeHealthEndpointRequest(client *httpclient.HTTPClient, serverAddress string, hr chan<- Result) {
 	startTime := time.Now()
 	resp, err := secureGetHealthEndpoint(client, serverAddress)
 	responseTime := time.Since(startTime)
@@ -76,7 +76,7 @@ func MakeHealthEndpointRequest(client httpclient.HTTPClient, serverAddress strin
 	}
 }
 
-func setupSecureGet() httpclient.HTTPClient {
+func setupSecureGet() *httpclient.HTTPClient {
 	// Load client cert
 	cert, err := tls.LoadX509KeyPair("../healthcheck/assets/test_certs/test_client.pem", "../healthcheck/assets/test_certs/test_client.key")
 	Expect(err).NotTo(HaveOccurred())
@@ -88,7 +88,7 @@ func setupSecureGet() httpclient.HTTPClient {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM([]byte(caCert))
 
-	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard, ioutil.Discard)
+	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
 
 	return healthclient.NewHealthClient(caCert, cert, logger)
 }
