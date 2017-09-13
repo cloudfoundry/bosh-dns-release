@@ -28,3 +28,7 @@ required = ["github.com/onsi/ginkgo/ginkgo"]
   branch = "master"
   name = "code.cloudfoundry.org/workpool"
 
+
+[[constraint]]
+  name = "github.com/coredns/coredns"
+  version = "11.0.0"
