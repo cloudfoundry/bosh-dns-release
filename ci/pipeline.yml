@@ -78,8 +78,7 @@ jobs:
   - do:
     - aggregate:
       - get: bosh-src
-      - get: dns-release
-        resource: bosh-dns-release
+      - get: bosh-dns-release
         trigger: true
         passed: [test-unit]
       - get: candidate-warden-ubuntu-stemcell
