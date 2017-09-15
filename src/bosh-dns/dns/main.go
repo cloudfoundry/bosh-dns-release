@@ -121,7 +121,11 @@ func mainExitCode() int {
 	}
 
 	forwardHandler := handlers.NewForwardHandler(config.Recursors, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), clock, logger)
-	mux.Handle(".", forwardHandler)
+	if config.Cache.Enabled {
+		mux.Handle(".", handlers.NewCachingDNSHandler(forwardHandler))
+	} else {
+		mux.Handle(".", forwardHandler)
+	}
 
 	aliasResolver, err := handlers.NewAliasResolvingHandler(mux, aliasConfiguration, localDomain, clock, logger)
 	if err != nil {

@@ -26,6 +26,8 @@ instance_groups:
       recursors:
       - "172.17.0.1:9955"
       recursor_timeout: 1s
+      cache:
+        enabled: true
 
 releases:
 - name: bosh-dns

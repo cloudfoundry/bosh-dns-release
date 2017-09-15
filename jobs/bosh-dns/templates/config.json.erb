@@ -15,6 +15,9 @@
     ca_file: 'config/certs/client_ca.crt',
     check_interval: "20s",
     max_tracked_queries: p('health.max_tracked_queries')
+  },
+  cache: {
+    enabled: p('cache.enabled')
   }
 }.to_json
 %>

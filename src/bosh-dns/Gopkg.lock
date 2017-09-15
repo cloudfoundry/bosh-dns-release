@@ -14,6 +14,12 @@
   revision = "0e2024d2a925068519f6ba470d11f8b735ecd4f4"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/beorn7/perks"
+  packages = ["quantile"]
+  revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
+
+[[projects]]
   name = "github.com/bmatcuk/doublestar"
   packages = ["."]
   revision = "b3608229437ba4dc33dae64d56a79a2a73f1f6b2"
@@ -38,10 +44,40 @@
   revision = "d9ee2f6269aeeed93de1cb3ed3ea03b80e82221e"
 
 [[projects]]
+  name = "github.com/coredns/coredns"
+  packages = ["core/dnsserver","middleware","middleware/cache","middleware/cache/freq","middleware/etcd/msg","middleware/metrics/vars","middleware/pkg/cache","middleware/pkg/dnsutil","middleware/pkg/edns","middleware/pkg/rcode","middleware/pkg/response","middleware/pkg/trace","pb","request"]
+  revision = "1b60688dc8f7e7ed0edcda5fb3fec02b1ddd3e42"
+  version = "v011"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/flynn/go-shlex"
+  packages = ["."]
+  revision = "3f9db97f856818214da2e1057f8ad84803971cff"
+
+[[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
-  packages = ["proto"]
+  packages = ["proto","ptypes","ptypes/any","ptypes/duration","ptypes/timestamp"]
   revision = "6a1fa9404c0aebf36c879bc50152edcc953910d2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/grpc-ecosystem/grpc-opentracing"
+  packages = ["go/otgrpc"]
+  revision = "6c130eed1e297e1aa4d415a50c90d0c81c52677e"
+
+[[projects]]
+  name = "github.com/matttproud/golang_protobuf_extensions"
+  packages = ["pbutil"]
+  revision = "3247c84500bff8d9fb6d579d800f20b3e091582c"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/mholt/caddy"
+  packages = [".","caddyfile"]
+  revision = "bc56793d3b919b17080deaa427bb5f70a826f4d6"
+  version = "v0.10.9"
 
 [[projects]]
   branch = "master"
@@ -68,10 +104,40 @@
   revision = "dcabb60a477c2b6f456df65037cb6708210fbb02"
 
 [[projects]]
+  name = "github.com/opentracing/opentracing-go"
+  packages = [".","ext","log"]
+  revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
+  version = "v1.0.2"
+
+[[projects]]
   branch = "master"
   name = "github.com/pivotal-cf/paraphernalia"
   packages = ["secure/tlsconfig"]
   revision = "19228380402d05fb5d36f64b6b2327eab2cf650c"
+
+[[projects]]
+  name = "github.com/prometheus/client_golang"
+  packages = ["prometheus"]
+  revision = "c5b7fccd204277076155f10851dad72b76a49317"
+  version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/client_model"
+  packages = ["go"]
+  revision = "6f3806018612930941127f2a7c6c453ba2c527d2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/common"
+  packages = ["expfmt","internal/bitbucket.org/ww/goautoneg","model"]
+  revision = "2f17f4a9d485bf34b4bfaccc273805040e4f86c8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/procfs"
+  packages = [".","xfs"]
+  revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
 
 [[projects]]
   branch = "master"
@@ -82,7 +148,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["html","html/atom","html/charset","proxy"]
+  packages = ["context","html","html/atom","html/charset","http2","http2/hpack","idna","internal/timeseries","lex/httplex","proxy","trace"]
   revision = "054b33e6527139ad5b1ec2f6232c3b175bd9a30c"
 
 [[projects]]
@@ -94,8 +160,20 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
-  packages = ["encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/gen","internal/tag","internal/utf8internal","language","runes","transform","unicode/cldr"]
+  packages = ["encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/gen","internal/tag","internal/triegen","internal/ucd","internal/utf8internal","language","runes","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
   revision = "836efe42bb4aa16aaa17b9c155d8813d336ed720"
+
+[[projects]]
+  branch = "master"
+  name = "google.golang.org/genproto"
+  packages = ["googleapis/rpc/status"]
+  revision = "595979c8a7bf586b2d293fb42246bf91a0b893d9"
+
+[[projects]]
+  name = "google.golang.org/grpc"
+  packages = [".","codes","connectivity","credentials","grpclb/grpc_lb_v1/messages","grpclog","internal","keepalive","metadata","naming","peer","stats","status","tap","transport"]
+  revision = "f92cdcd7dcdc69e81b2d7b338479a19a8723cfa3"
+  version = "v1.6.0"
 
 [[projects]]
   branch = "v2"
@@ -106,6 +184,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4cdd82d5c66ddad852377d7157317837c9a06b93d9c08273796bcf872b4686ee"
+  inputs-digest = "13f10a306d3f3a2f523762be2cc250723e5d73a3337a86337d0e75060f637bdb"
   solver-name = "gps-cdcl"
   solver-version = 1

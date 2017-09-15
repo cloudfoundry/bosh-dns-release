@@ -13,6 +13,7 @@ import (
 
 func main() {
 	server := &dns.Server{Addr: fmt.Sprintf("0.0.0.0:%d", getRecursorPort()), Net: "udp", UDPSize: 65535}
+	nextAddress := 0
 
 	dns.HandleFunc("truncated-recursor.com.", func(resp dns.ResponseWriter, req *dns.Msg) {
 		msg := new(dns.Msg)
@@ -217,11 +218,37 @@ func main() {
 		}
 	})
 
+	dns.HandleFunc("always-different-with-timeout-example.com.", func(resp dns.ResponseWriter, req *dns.Msg) {
+		msg := new(dns.Msg)
+
+		msg.Answer = append(msg.Answer, &dns.A{
+			Hdr: dns.RR_Header{
+				Name:   req.Question[0].Name,
+				Rrtype: dns.TypeA,
+				Class:  dns.ClassINET,
+				Ttl:    5,
+			},
+			A: net.ParseIP(fmt.Sprintf("127.0.0.%d", nextAddress+1)).To4(),
+		})
+		nextAddress = nextAddress + 1
+
+		msg.Authoritative = true
+		msg.RecursionAvailable = false
+
+		msg.SetReply(req)
+
+		err := resp.WriteMsg(msg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Printf("Unable to start server: error: +%v", err)
 		os.Exit(1)
 	}
 }
+
 func getRecursorPort() int {
 	port := 9955
 	if len(os.Args) >= 2 {

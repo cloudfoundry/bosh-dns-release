@@ -9,6 +9,7 @@ import (
 	"code.cloudfoundry.org/clock"
 
 	"bosh-dns/dns/server/handlers/internal"
+
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
@@ -22,9 +23,15 @@ type ForwardHandler struct {
 }
 
 //go:generate counterfeiter . Exchanger
-
 type Exchanger interface {
 	Exchange(*dns.Msg, string) (*dns.Msg, time.Duration, error)
+}
+
+//go:generate counterfeiter . Cache
+type Cache interface {
+	Get(req *dns.Msg) *dns.Msg
+	Write(req, answer *dns.Msg)
+	GetExpired(*dns.Msg) *dns.Msg
 }
 
 func NewForwardHandler(recursors []string, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger) ForwardHandler {
@@ -55,7 +62,7 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 			response := r.compressIfNeeded(responseWriter, request, exchangeAnswer)
 
 			if writeErr := responseWriter.WriteMsg(response); writeErr != nil {
-				r.logger.Error(r.logTag, "error writing response %s", writeErr.Error())
+				r.logger.Error(r.logTag, "error writing response: %s", writeErr.Error())
 			} else {
 				r.logRecursor(before, request, response.Rcode, "recursor="+recursor)
 			}
@@ -63,7 +70,7 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 			return nil
 		}
 
-		r.logger.Debug(r.logTag, "error recursing to %s %s", recursor, err.Error())
+		r.logger.Debug(r.logTag, "error recursing to %q: %s", recursor, err.Error())
 		return err
 	})
 
@@ -127,7 +134,7 @@ func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter
 	responseMessage.Authoritative = false
 	responseMessage.SetRcode(req, dns.RcodeServerFailure)
 	if err := responseWriter.WriteMsg(responseMessage); err != nil {
-		r.logger.Error(r.logTag, "error writing response %s", err.Error())
+		r.logger.Error(r.logTag, "error writing response: %s", err.Error())
 	}
 }
 
@@ -138,6 +145,6 @@ func (r ForwardHandler) writeEmptyMessage(responseWriter dns.ResponseWriter, req
 	emptyMessage.Authoritative = true
 	emptyMessage.SetRcode(req, dns.RcodeSuccess)
 	if err := responseWriter.WriteMsg(emptyMessage); err != nil {
-		r.logger.Error(r.logTag, "error writing response %s", err.Error())
+		r.logger.Error(r.logTag, "error writing response: %s", err.Error())
 	}
 }

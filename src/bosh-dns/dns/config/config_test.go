@@ -63,6 +63,9 @@ var _ = Describe("Config", func() {
 				"check_interval":      upcheckInterval,
 				"max_tracked_queries": healthMaxTrackedQueries,
 			},
+			"cache": map[string]interface{}{
+				"enabled": true,
+			},
 		})
 		configFilePath := writeConfigFile(string(configContents))
 
@@ -91,6 +94,9 @@ var _ = Describe("Config", func() {
 				CAFile:            healthCAFile,
 				CheckInterval:     config.DurationJSON(upcheckIntervalDuration),
 				MaxTrackedQueries: healthMaxTrackedQueries,
+			},
+			Cache: config.Cache{
+				Enabled: true,
 			},
 		}))
 	})

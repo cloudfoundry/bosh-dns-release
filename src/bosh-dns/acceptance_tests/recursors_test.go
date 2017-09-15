@@ -8,6 +8,8 @@ import (
 
 	"strings"
 
+	"regexp"
+
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
 	. "github.com/onsi/ginkgo"
@@ -207,6 +209,56 @@ var _ = Describe("recursor", func() {
 			Expect(output).To(ContainSubstring("flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 			Expect(output).To(MatchRegexp("example.com.\\s+0\\s+IN\\s+A\\s+10\\.10\\.10\\.10"))
 			Expect(output).To(ContainSubstring(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+		})
+	})
+
+	Context("when using cache", func() {
+		BeforeEach(func() {
+			cmd := exec.Command(pathToTestRecursorServer, "9955")
+			recursorSession, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			ensureRecursorIsDefinedByDnsRelease()
+			firstInstance = allDeployedInstances[0]
+		})
+
+		AfterEach(func() {
+			recursorSession.Kill()
+		})
+
+		It("caches dns recursed dns entries for the duration of the TTL", func() {
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+notcp always-different-with-timeout-example.com. @%s", firstInstance.IP), " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+			re := regexp.MustCompile("\\s+(\\d+)\\s+IN\\s+A\\s+127\\.0\\.0\\.(\\d+)")
+			matches := re.FindStringSubmatch(output)
+			Expect(matches[1]).To(Equal("5"))
+			Expect(matches[2]).To(Equal("1"))
+
+			Consistently(func() string {
+				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+notcp always-different-with-timeout-example.com. @%s", firstInstance.IP), " ")...)
+				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+				output = string(session.Out.Contents())
+
+				matches = re.FindStringSubmatch(output)
+				Expect(matches[2]).To(Equal("1"))
+
+				return matches[2]
+			}, "4s", "1s").Should(Equal("1"))
+			time.Sleep(1 * time.Second)
+
+			cmd = exec.Command("dig", strings.Split(fmt.Sprintf("+notcp always-different-with-timeout-example.com. @%s", firstInstance.IP), " ")...)
+			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+			output = string(session.Out.Contents())
+			matches = re.FindStringSubmatch(output)
+			Expect(matches[2]).To(Equal("2"))
 		})
 	})
 })

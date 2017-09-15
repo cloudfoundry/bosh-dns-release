@@ -26,6 +26,8 @@ instance_groups:
     properties:
       address: 0.0.0.0
       recursors: ["10.0.31.191:9955"]
+      cache:
+        enabled: true
   - name: windows-firewall-rules
     release: dns-acceptance
 

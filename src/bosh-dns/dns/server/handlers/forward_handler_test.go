@@ -16,10 +16,11 @@ import (
 
 	"fmt"
 
+	"runtime"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"runtime"
 )
 
 var _ = Describe("ForwardHandler", func() {
@@ -41,7 +42,6 @@ var _ = Describe("ForwardHandler", func() {
 			}
 			fakeLogger = &loggerfakes.FakeLogger{}
 			fakeClock = fakeclock.NewFakeClock(time.Now())
-
 			recursionHandler = handlers.NewForwardHandler([]string{"127.0.0.1", "10.244.5.4"}, fakeExchangerFactory, fakeClock, fakeLogger)
 		})
 
@@ -80,8 +80,7 @@ var _ = Describe("ForwardHandler", func() {
 					Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
 					tag, msg, args := fakeLogger.ErrorArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(msg).To(Equal("error writing response %s"))
-					Expect(args).To(ContainElement("failed to write message"))
+					Expect(fmt.Sprintf(msg, args...)).To(Equal("error writing response: failed to write message"))
 				})
 			})
 		})
@@ -109,8 +108,7 @@ var _ = Describe("ForwardHandler", func() {
 					Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
 					tag, msg, args := fakeLogger.ErrorArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(msg).To(Equal("error writing response %s"))
-					Expect(args).To(ContainElement("failed to write message"))
+					Expect(fmt.Sprintf(msg, args...)).To(Equal("error writing response: failed to write message"))
 				})
 			})
 		})
@@ -341,15 +339,11 @@ var _ = Describe("ForwardHandler", func() {
 					Expect(fakeLogger.DebugCallCount()).To(Equal(2))
 					tag, msg, args := fakeLogger.DebugArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(msg).To(Equal("error recursing to %s %s"))
-					Expect(args[0]).To(Equal("127.0.0.1"))
-					Expect(args[1]).To(Equal("failed to exchange"))
+					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing to "127.0.0.1": failed to exchange`))
 
 					tag, msg, args = fakeLogger.DebugArgsForCall(1)
 					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(msg).To(Equal("error recursing to %s %s"))
-					Expect(args[0]).To(Equal("127.0.0.2"))
-					Expect(args[1]).To(Equal("failed to exchange"))
+					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing to "127.0.0.2": failed to exchange`))
 				})
 
 				Context("when all recursors fail", func() {
@@ -403,8 +397,7 @@ var _ = Describe("ForwardHandler", func() {
 					Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
 					tag, msg, args := fakeLogger.ErrorArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(msg).To(Equal("error writing response %s"))
-					Expect(args).To(ContainElement("failed to write message"))
+					Expect(fmt.Sprintf(msg, args...)).To(Equal("error writing response: failed to write message"))
 				})
 			})
 		})

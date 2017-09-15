@@ -20,6 +20,7 @@ type Config struct {
 	UpcheckDomains  []string `json:"upcheck_domains"`
 
 	Health HealthConfig `json:"health"`
+	Cache  Cache        `json:"cache"`
 }
 
 type HealthConfig struct {
@@ -30,6 +31,10 @@ type HealthConfig struct {
 	CAFile            string       `json:"ca_file"`
 	CheckInterval     DurationJSON `json:"check_interval"`
 	MaxTrackedQueries int          `json:"max_tracked_queries"`
+}
+
+type Cache struct {
+	Enabled bool `json:"enabled"`
 }
 
 type DurationJSON time.Duration
