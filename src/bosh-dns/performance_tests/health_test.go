@@ -93,7 +93,7 @@ func setupSecureGet() *httpclient.HTTPClient {
 	return healthclient.NewHealthClient(caCert, cert, logger)
 }
 
-func secureGetHealthEndpoint(client httpclient.HTTPClient, serverAddress string) (*http.Response, error) {
+func secureGetHealthEndpoint(client *httpclient.HTTPClient, serverAddress string) (*http.Response, error) {
 	resp, err := client.Get(fmt.Sprintf("https://%s/health", serverAddress))
 	if err != nil {
 		fmt.Println(err)
