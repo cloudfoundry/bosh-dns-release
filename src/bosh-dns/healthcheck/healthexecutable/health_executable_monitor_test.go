@@ -115,8 +115,8 @@ var _ = Describe("HealthExecutableMonitor", func() {
 			close(signal)
 			signal = nil
 
-			cmdRunner.AddCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 1})
 			Eventually(clock.WatcherCount).Should(Equal(0))
+			cmdRunner.AddCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 1})
 			clock.Increment(interval * 2)
 			Consistently(monitor.Status).Should(Equal(true))
 		})
