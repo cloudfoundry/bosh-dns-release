@@ -1,6 +1,7 @@
 package performance_test
 
 import (
+	"bosh-dns/dns/config"
 	"bosh-dns/healthcheck/healthserver"
 	"encoding/json"
 	"fmt"
@@ -45,11 +46,12 @@ var _ = BeforeSuite(func() {
 	healthPort := 8853
 
 	healthConfigContents, err := json.Marshal(healthserver.HealthCheckConfig{
-		Port:            healthPort,
-		CertificateFile: "../healthcheck/assets/test_certs/test_server.pem",
-		PrivateKeyFile:  "../healthcheck/assets/test_certs/test_server.key",
-		CAFile:          "../healthcheck/assets/test_certs/test_ca.pem",
-		HealthFileName:  healthFile.Name(),
+		Port:                     healthPort,
+		CertificateFile:          "../healthcheck/assets/test_certs/test_server.pem",
+		PrivateKeyFile:           "../healthcheck/assets/test_certs/test_server.key",
+		CAFile:                   "../healthcheck/assets/test_certs/test_ca.pem",
+		HealthFileName:           healthFile.Name(),
+		HealthExecutableInterval: config.DurationJSON(time.Second),
 	})
 	Expect(err).NotTo(HaveOccurred())
 
