@@ -1,0 +1,9 @@
+---
+name: has-health-executable-windows
+
+templates:
+  healthy.ps1.erb: bin/dns/healthy.ps1
+
+packages: []
+
+properties: {}

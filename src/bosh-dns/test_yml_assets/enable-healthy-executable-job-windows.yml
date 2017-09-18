@@ -1,0 +1,19 @@
+---
+
+- type: replace
+  path: /instance_groups/0/jobs/-
+  value:
+    name: has-health-executable-windows
+    release: dns-acceptance
+
+- type: replace
+  path: /instance_groups/0/jobs/-
+  value:
+    name: make-health-executable-job-unhealthy-windows
+    release: dns-acceptance
+
+- type: replace
+  path: /instance_groups/0/jobs/-
+  value:
+    name: make-health-executable-job-healthy-windows
+    release: dns-acceptance

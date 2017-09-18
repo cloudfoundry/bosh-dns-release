@@ -1,0 +1,9 @@
+---
+name: has-health-executable
+
+templates:
+  healthy.erb: bin/dns/healthy
+
+packages: []
+
+properties: {}

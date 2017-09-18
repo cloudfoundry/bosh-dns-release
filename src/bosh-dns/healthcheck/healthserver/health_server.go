@@ -18,19 +18,25 @@ type HealthServer interface {
 	Serve(config *HealthCheckConfig)
 }
 
+type HealthExecutable interface {
+	Status() bool
+}
+
 type concreteHealthServer struct {
 	logger             boshlog.Logger
 	fs                 system.FileSystem
 	healthJsonFileName string
+	healthExecutable   HealthExecutable
 }
 
 const logTag = "healthServer"
 
-func NewHealthServer(logger boshlog.Logger, fs system.FileSystem, healthFileName string) HealthServer {
+func NewHealthServer(logger boshlog.Logger, fs system.FileSystem, healthFileName string, healthExecutable HealthExecutable) HealthServer {
 	return &concreteHealthServer{
 		logger:             logger,
 		fs:                 fs,
 		healthJsonFileName: healthFileName,
+		healthExecutable:   healthExecutable,
 	}
 }
 
@@ -88,5 +94,10 @@ func (c *concreteHealthServer) healthEntryPoint(w http.ResponseWriter, r *http.R
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	w.Write(healthRaw)
+
+	if c.healthExecutable.Status() {
+		w.Write(healthRaw)
+	} else {
+		w.Write([]byte(`{"state":"job-health-executable-fail"}`))
+	}
 }

@@ -4,6 +4,8 @@
   certificate_file: 'config/certs/server.crt',
   private_key_file: 'config/certs/server.key',
   ca_file: 'config/certs/server_ca.crt',
-  health_file_name: '/var/vcap/instance/health.json'
+  health_file_name: '/var/vcap/instance/health.json',
+  health_executables_glob: "/var/vcap/jobs/*/bin/dns/healthy",
+  health_executable_interval: "5s",
 }.to_json
 %>

@@ -1,0 +1,9 @@
+---
+name: make-health-executable-job-healthy-windows
+
+templates:
+  run.ps1.erb: bin/run.ps1
+
+packages: []
+
+properties: {}

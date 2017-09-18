@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -39,6 +39,8 @@ var _ = Describe("HealthCheck server", func() {
 
 			err = ioutil.WriteFile(healthFile.Name(), healthRaw, 0777)
 			Expect(err).ToNot(HaveOccurred())
+
+			startServer()
 		})
 
 		It("reject non-TLS connections", func() {
@@ -67,6 +69,60 @@ var _ = Describe("HealthCheck server", func() {
 				Expect(respJson).To(Equal(map[string]string{
 					"state": "running",
 				}))
+			})
+		})
+
+		Context("when a health executable exists", func() {
+			Describe("when the vm is healthy and the job health executable reports healthy", func() {
+				BeforeEach(func() {
+					err := ioutil.WriteFile(filepath.Join(healthExecutableDir, "good.ps1"), []byte("#!/bin/bash\nexit 0"), 0700)
+					Expect(err).ToNot(HaveOccurred())
+				})
+
+				It("returns healthy json output", func() {
+					client, err := healthclient.NewHealthClientFromFiles(
+						"assets/test_certs/test_ca.pem",
+						"assets/test_certs/test_client.pem",
+						"assets/test_certs/test_client.key", logger)
+					Expect(err).NotTo(HaveOccurred())
+
+					respData, err := secureGetRespBody(client, configPort)
+					Expect(err).ToNot(HaveOccurred())
+
+					var respJson map[string]string
+					err = json.Unmarshal(respData, &respJson)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(respJson).To(Equal(map[string]string{
+						"state": "running",
+					}))
+				})
+			})
+
+			Describe("when the vm is healthy, but the job health executable reports unhealthy", func() {
+				BeforeEach(func() {
+					err := ioutil.WriteFile(filepath.Join(healthExecutableDir, "bad.ps1"), []byte("#!/bin/bash\nexit 1"), 0700)
+					Expect(err).ToNot(HaveOccurred())
+				})
+
+				It("returns unhealthy json output", func() {
+					client, err := healthclient.NewHealthClientFromFiles(
+						"assets/test_certs/test_ca.pem",
+						"assets/test_certs/test_client.pem",
+						"assets/test_certs/test_client.key", logger)
+					Expect(err).NotTo(HaveOccurred())
+
+					Eventually(func() map[string]string {
+						respData, err := secureGetRespBody(client, configPort)
+						Expect(err).ToNot(HaveOccurred())
+						var respJson map[string]string
+						err = json.Unmarshal(respData, &respJson)
+						Expect(err).ToNot(HaveOccurred())
+						return respJson
+					}, time.Second*2).Should(Equal(map[string]string{
+						"state": "job-health-executable-fail",
+					}))
+				})
 			})
 		})
 
@@ -127,23 +183,6 @@ var _ = Describe("HealthCheck server", func() {
 		})
 	})
 })
-
-func waitForServer(port int) error {
-	var err error
-	for i := 0; i < 20; i++ {
-		var c net.Conn
-		c, err = net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", strconv.Itoa(port)))
-		if err != nil {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-
-		_ = c.Close()
-		return nil
-	}
-
-	return err //errors.New("dns server failed to start")
-}
 
 func secureGetRespBody(client *httpclient.HTTPClient, port int) ([]byte, error) {
 	resp, err := secureGet(client, port)

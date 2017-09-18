@@ -8,8 +8,13 @@ import (
 	"os"
 	"time"
 
+	"bosh-dns/healthcheck/healthexecutable"
 	"bosh-dns/healthcheck/healthserver"
 
+	"os/signal"
+	"syscall"
+
+	"code.cloudfoundry.org/clock"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
@@ -32,11 +37,37 @@ func mainExitCode() int {
 		logger.Error(logTag, fmt.Sprintf("Error: %v", err.Error()))
 		return 1
 	}
+	shutdown := make(chan struct{})
 
 	fs := boshsys.NewOsFileSystem(logger)
-	healthServer = healthserver.NewHealthServer(logger, fs, config.HealthFileName)
+	cmdRunner := boshsys.NewExecCmdRunner(logger)
+	interval := time.Duration(config.HealthExecutableInterval)
+	executablePaths, err := fs.Glob(config.HealthExecutablesGlob)
+	if err != nil {
+		logger.Error(logTag, fmt.Sprintf("Error: %v", err.Error()))
+		return 1
+	}
 
+	healthExecutableMonitor := healthexecutable.NewHealthExecutableMonitor(
+		executablePaths,
+		cmdRunner,
+		clock.NewClock(),
+		interval,
+		shutdown,
+		logger,
+	)
+
+	healthServer = healthserver.NewHealthServer(logger, fs, config.HealthFileName, healthExecutableMonitor)
 	healthServer.Serve(config)
+
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGTERM)
+
+	go func() {
+		<-sigterm
+		close(shutdown)
+	}()
+
 	return 0
 }
 

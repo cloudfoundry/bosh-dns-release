@@ -176,10 +176,78 @@ var _ = Describe("Integration", func() {
 			Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP))
 			Expect(output).ToNot(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP))
 		})
+
+		Context("when a job defines a healthy executable", func() {
+			var (
+				osSuffix string
+			)
+			BeforeEach(func() {
+				osSuffix = ""
+				if testTargetOS == "windows" {
+					osSuffix = "-windows"
+				}
+				ensureHealthEndpointDeployed("-o", "../test_yml_assets/enable-healthy-executable-job"+osSuffix+".yml")
+				firstInstance = allDeployedInstances[0]
+			})
+
+			It("changes the health endpoint return value based on how the executable exits", func() {
+				client := setupSecureGet()
+
+				Eventually(func() map[string]string {
+					respData, err := secureGetRespBody(client, firstInstance.IP, 2345)
+					Expect(err).ToNot(HaveOccurred())
+
+					var respJson map[string]string
+					err = json.Unmarshal(respData, &respJson)
+					Expect(err).ToNot(HaveOccurred())
+					return respJson
+				}, 31*time.Second).Should(Equal(map[string]string{
+					"state": "running",
+				}))
+
+				runErrand("make-health-executable-job-unhealthy" + osSuffix)
+
+				Eventually(func() map[string]string {
+					respData, err := secureGetRespBody(client, firstInstance.IP, 2345)
+					Expect(err).ToNot(HaveOccurred())
+
+					var respJson map[string]string
+					err = json.Unmarshal(respData, &respJson)
+					Expect(err).ToNot(HaveOccurred())
+					return respJson
+				}, 31*time.Second).Should(Equal(map[string]string{
+					"state": "job-health-executable-fail",
+				}))
+
+				runErrand("make-health-executable-job-healthy" + osSuffix)
+
+				Eventually(func() map[string]string {
+					respData, err := secureGetRespBody(client, firstInstance.IP, 2345)
+					Expect(err).ToNot(HaveOccurred())
+
+					var respJson map[string]string
+					err = json.Unmarshal(respData, &respJson)
+					Expect(err).ToNot(HaveOccurred())
+					return respJson
+				}, 31*time.Second).Should(Equal(map[string]string{
+					"state": "running",
+				}))
+			})
+		})
 	})
 })
 
-func ensureHealthEndpointDeployed() {
+func runErrand(errandName string) {
+	session, err := gexec.Start(exec.Command(
+		boshBinaryPath, "-n",
+		"-d", boshDeployment,
+		"run-errand", errandName,
+	), GinkgoWriter, GinkgoWriter)
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(session, time.Minute).Should(gexec.Exit(0))
+}
+
+func ensureHealthEndpointDeployed(extraOps ...string) {
 	cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
 	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", testManifestName()))
@@ -188,8 +256,7 @@ func ensureHealthEndpointDeployed() {
 	Expect(err).ToNot(HaveOccurred())
 
 	updateCloudConfigWithDefaultCloudConfig()
-
-	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
+	args := []string{
 		"-n", "-d", boshDeployment, "deploy",
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
@@ -197,7 +264,11 @@ func ensureHealthEndpointDeployed() {
 		"-o", "../test_yml_assets/enable-health-manifest-ops.yml",
 		"--vars-store", "creds.yml",
 		manifestPath,
-	)
+	}
+
+	args = append(args, extraOps...)
+
+	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, args...)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
 	allDeployedInstances = getInstanceInfos(boshBinaryPath)

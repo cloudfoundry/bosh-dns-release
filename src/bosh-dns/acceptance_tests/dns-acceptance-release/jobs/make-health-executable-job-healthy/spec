@@ -1,0 +1,9 @@
+---
+name: make-health-executable-job-healthy
+
+templates:
+  run.erb: bin/run
+
+packages: []
+
+properties: {}

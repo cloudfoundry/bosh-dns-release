@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 	"time"
+	"fmt"
 )
 
 type Config struct {
@@ -54,6 +55,11 @@ func (t *DurationJSON) UnmarshalJSON(b []byte) error {
 	*t = DurationJSON(timeoutDuration)
 
 	return nil
+}
+
+func (t DurationJSON) MarshalJSON() (b []byte, err error) {
+	d := time.Duration(t)
+	return []byte(fmt.Sprintf(`"%s"`, d.String())), nil
 }
 
 func LoadFromFile(configFilePath string) (Config, error) {

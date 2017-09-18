@@ -3,36 +3,38 @@
 set -e -o pipefail
 set -x
 
-function realpath() {
+realpath() {
   [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export BOSH_BINARY_PATH="${BOSH_BINARY_PATH:-$(which gobosh)}"
-
-tmppath=$(mktemp -d /tmp/hackytemp)
-ln -s $(which $BOSH_BINARY_PATH) $tmppath/bosh
-export PATH=$tmppath:$PATH
-
-# workers exits 1 if not logged in
-fly -t production workers || fly -t production login
-
-cleanup () {
+cleanup() {
   # Clean up creds.yml so that the next bbl-up will recreate certs for the new instances.
   echo "### Cleaning up..."
-  rm -f $BBL_STATE_DIR/creds.yml
   rm -rf $tmppath
 }
 
-WORK_DIR=/tmp/test-acceptance-windows-workdir
-echo "working out of ${WORK_DIR}..."
-mkdir -p $WORK_DIR
-cd $WORK_DIR
+main() {
+  DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+  export BOSH_BINARY_PATH="${BOSH_BINARY_PATH:-$(which gobosh)}"
 
-if [ ! -e bbl.env ]; then
-  # force lpass logged in
-  lpass status
-  cat <<EOF > bbl.env
+  tmppath=$(mktemp -d)
+  ln -s $(which $BOSH_BINARY_PATH) $tmppath/bosh
+  export PATH=$tmppath:$PATH
+
+  trap cleanup EXIT
+
+  # workers exits 1 if not logged in
+  fly -t production workers || fly -t production login
+
+  WORK_DIR=/tmp/test-acceptance-windows-workdir
+  echo "working out of ${WORK_DIR}..."
+  mkdir -p $WORK_DIR
+  cd $WORK_DIR
+
+  if [ ! -e bbl.env ]; then
+    # force lpass logged in
+    lpass status
+    cat <<EOF > bbl.env
 export BBL_GCP_SERVICE_ACCOUNT_KEY='$(lpass show 3654688481222762882 --notes | gobosh int - --path /bbl_gcp_service_account_key_id)'
 export BBL_GCP_PROJECT_ID=cf-bosh-core
 export BBL_GCP_ZONE=us-central1-a
@@ -40,70 +42,68 @@ export BBL_GCP_REGION=us-central1
 export BBL_IAAS=gcp
 export ENV_NAME=$(hostname)
 EOF
-fi
+  fi
 
-# Download bosh-release if it doesn't exist
-BOSH_RELEASE_DIR=${WORK_DIR}/bosh-release
-mkdir -p $BOSH_RELEASE_DIR
-if [ ! -e ${BOSH_RELEASE_DIR}/bosh-dev-release.tgz ]; then
-  pushd $BOSH_RELEASE_DIR
-    # For latest 262.1, use: https://bosh.io/d/github.com/cloudfoundry/bosh?v=262.1
-    curl -L -J -o bosh-dev-release.tgz https://s3.amazonaws.com/bosh-compiled-release-tarballs/bosh-262.1-ubuntu-trusty-3421.9-20170621-055124-244370454-20170621055129.tgz?versionId=lxNGZVeHOlvxh4LyMgNxnHC8wczKDP70
+  # Download bosh-release if it doesn't exist
+  BOSH_RELEASE_DIR=${WORK_DIR}/bosh-release
+  mkdir -p $BOSH_RELEASE_DIR
+  if [ ! -e ${BOSH_RELEASE_DIR}/bosh-dev-release.tgz ]; then
+    pushd $BOSH_RELEASE_DIR
+      curl -L -J -o bosh-dev-release.tgz https://s3.amazonaws.com/bosh-compiled-release-tarballs/bosh-263.2.0-ubuntu-trusty-3445.7-20170915-052445-759948783-20170915052451.tgz?versionId=3kjVQuRK7JyrnbKEbKhLRi7qyo0wBXZJ
+      echo "37630c636a030454d55703cfdd495d733525353f  bosh-dev-release.tgz" | sha1sum -c
+    popd
+  fi
+
+  ENVS=$WORK_DIR/envs
+  mkdir -p $ENVS
+  pushd $ENVS
+    set +e
+    git init
+    set -e
   popd
-fi
 
-ENVS=$WORK_DIR/envs
-mkdir -p $ENVS
-pushd $ENVS
-  set +e
-  git init
-  set -e
-popd
+  source bbl.env
 
-source bbl.env
+  echo "### starting bbl-up..." # currently breaking.
+  SKIP_GIT=true \
+	  BOSH_RELEASE_PATH=${BOSH_RELEASE_DIR}/bosh-dev-release.tgz \
+	  ROOT_DIR=$WORK_DIR \
+	  BOSH_DEPLOYMENT_PATH=$DIR/../../bosh-deployment \
+	  $DIR/../ci/tasks/bbl-up.sh || \
+	  (echo "### bbl-up failed! should clean up creds.yml? ..."
+	  echo rm -f $BBL_STATE_DIR/creds.yml
+	  exit 1)
 
-echo "### starting bbl-up..." # currently breaking.
-SKIP_GIT=true \
-	BOSH_RELEASE_PATH=${BOSH_RELEASE_DIR}/bosh-dev-release.tgz \
-	ROOT_DIR=$WORK_DIR \
-	BOSH_DEPLOYMENT_PATH=$DIR/../../bosh-deployment \
-	$DIR/../ci/tasks/bbl-up.sh || \
-	(echo "### bbl-up failed! should clean up creds.yml? ..."
-        echo rm -f $BBL_STATE_DIR/creds.yml
-        rm -rf $tmppath
-        exit 1)
+  echo "### starting windows-specific tests..."
+  # windows specfic
+  fly -t production execute -x --privileged \
+    --config=$DIR/../ci/tasks/test-acceptance-windows.yml \
+    --inputs-from=bosh-dns-release/test-acceptance-windows \
+    --input=bosh-dns-release=$DIR/../ \
+    --input=envs=$ENVS
 
+  # nameserver-disabled
+  echo "### tests: nameserver-disabled"
+  fly -t production execute -x --privileged \
+    --config=$DIR/../ci/tasks/test-acceptance-windows-nameserver-disabled.yml \
+    --inputs-from=bosh-dns-release/test-acceptance-windows \
+    --input=bosh-dns-release=$DIR/../ \
+    --input=envs=$ENVS
 
-echo "### starting windows-specific tests..."
-# windows specfic
-fly -t production execute -x --privileged \
-  --config=$DIR/../ci/tasks/test-acceptance-windows.yml \
-  --inputs-from=bosh-dns-release/test-acceptance-windows \
-  --input=bosh-dns-release=$DIR/../ \
-  --input=envs=$ENVS
+  # shared
+  echo "### tests: shared"
+  fly -t production execute -x --privileged \
+    --config=$DIR/../ci/tasks/test-acceptance-windows-shared.yml \
+    --inputs-from=bosh-dns-release/test-acceptance-windows \
+    --input=bosh-dns-release=$DIR/../ \
+    --input=envs=$ENVS
 
-# nameserver-disabled
-echo "### tests: nameserver-disabled"
-fly -t production execute -x --privileged \
-  --config=$DIR/../ci/tasks/test-acceptance-windows-nameserver-disabled.yml \
-  --inputs-from=bosh-dns-release/test-acceptance-windows \
-  --input=bosh-dns-release=$DIR/../ \
-  --input=envs=$ENVS
+  SKIP_GIT=true \
+	  ROOT_DIR=$WORK_DIR \
+	  $DIR/../ci/tasks/bbl-destroy.sh
 
-# shared
-echo "### tests: shared"
-fly -t production execute -x --privileged \
-  --config=$DIR/../ci/tasks/test-acceptance-windows-shared.yml \
-  --inputs-from=bosh-dns-release/test-acceptance-windows \
-  --input=bosh-dns-release=$DIR/../ \
-  --input=envs=$ENVS
+  # Clean up creds.yml so that the next bbl-up will recreate certs for the new instances.
+  rm -f $BBL_STATE_DIR/creds.yml
+}
 
-SKIP_GIT=true \
-	ROOT_DIR=$WORK_DIR \
-	$DIR/../ci/tasks/bbl-destroy.sh
-
-# Clean up creds.yml so that the next bbl-up will recreate certs for the new instances.
-rm -f $BBL_STATE_DIR/creds.yml
-rm -rf $tmppath
-
-exit 0
+main $@
