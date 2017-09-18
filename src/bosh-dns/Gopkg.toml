@@ -31,4 +31,5 @@ required = ["github.com/onsi/ginkgo/ginkgo"]
 
 [[constraint]]
   name = "github.com/coredns/coredns"
-  version = "11.0.0"
+  source = "github.com/bosh-dep-forks/coredns"
+  branch = "bosh-develop"
