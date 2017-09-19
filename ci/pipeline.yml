@@ -106,6 +106,7 @@ jobs:
     - aggregate:
       - get: bosh-src
       - get: bosh-dns-release
+        resource: candidate-release
         trigger: true
         passed: [create-release]
       - get: candidate-warden-ubuntu-stemcell
@@ -159,9 +160,9 @@ jobs:
   plan:
     - aggregate:
       - get: bosh-dns-release
-        passed: [test-acceptance, brats-ubuntu, test-performance, test-acceptance-windows]
+        passed: [test-acceptance, test-performance, test-acceptance-windows]
       - get: candidate-release
-        passed: [test-acceptance, test-acceptance-windows]
+        passed: [test-acceptance, brats-ubuntu, test-acceptance-windows]
       - get: version
         params:
           bump: patch
