@@ -13,6 +13,7 @@ jobs:
   plan:
     - get: coredns
       trigger: true
+    - get: bosh-dns-release
     - task: test-cache
       file: bosh-dns-release/ci/tasks/test-cache.yml
 
