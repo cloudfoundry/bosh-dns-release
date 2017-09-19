@@ -29,9 +29,7 @@ bosh -n update-cloud-config ${TEST_CLOUD_CONFIG_PATH} -v network=director_networ
 
 bosh upload-stemcell bosh-candidate-stemcell/bosh-stemcell-*.tgz
 
-pushd $ROOT_DIR/bosh-dns-release
-   bosh create-release --force && bosh upload-release
-popd
+bosh upload-release $ROOT_DIR/candidate-release/*.tgz
 
 export GOPATH=$PWD/bosh-dns-release
 export PATH="${GOPATH}/bin":$PATH

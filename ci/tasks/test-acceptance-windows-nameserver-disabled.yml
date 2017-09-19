@@ -11,6 +11,7 @@ inputs:
   - name: bosh-dns-release
   - name: envs
   - name: bosh-candidate-stemcell-windows
+  - name: bosh-dns-release-tarball
 
 run:
   path: bosh-dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.sh

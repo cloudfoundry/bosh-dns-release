@@ -24,6 +24,17 @@ jobs:
     - task: test-unit-windows
       file: bosh-dns-release/ci/tasks/test-unit-windows.yml
 
+- name: create-release
+  plan:
+    - get: bosh-dns-release
+      trigger: true
+      passed: [test-unit, test-unit-windows]
+    - task: create
+      file: bosh-dns-release/ci/tasks/create-candidate.yml
+    - put: candidate-release
+      params:
+        file: "release/bosh-dns-dev-release.tgz"
+
 - name: test-performance
   public: true
   serial: true
@@ -32,7 +43,7 @@ jobs:
       trigger: true
     - get: bosh-dns-release
       trigger: true
-      passed: [test-unit]
+      passed: [create-release]
     - task: test-performance
       tags: ["dns-performance"]
       privileged: true
@@ -44,13 +55,16 @@ jobs:
   public: true
   serial: true
   plan:
-    - get: every-2h
-      trigger: true
-    - get: bosh-dns-release
-      trigger: true
-      passed: [test-unit]
-    - get: bosh-candidate-stemcell
-    - get: bosh-candidate-release
+    - aggregate:
+      - get: every-2h
+        trigger: true
+      - get: bosh-dns-release
+        passed: [create-release]
+      - get: bosh-candidate-stemcell
+      - get: bosh-candidate-release
+      - get: candidate-release
+        trigger: true
+        passed: [create-release]
     - task: test-acceptance
       privileged: true
       file: bosh-dns-release/ci/tasks/test-acceptance.yml
@@ -61,16 +75,20 @@ jobs:
   serial_groups:
   - windows-acceptance-env
   plan:
-    - get: every-2h
-      trigger: true
-    - get: bosh-dns-release
-      trigger: true
-      passed: [test-unit-windows]
-    - get: envs
-    - get: bosh-deployment
-    - get: gcp-linux-stemcell
-    - get: bosh-candidate-stemcell-windows
-    - get: bosh-candidate-release
+    - aggregate:
+      - get: every-2h
+        trigger: true
+      - get: bosh-dns-release
+        trigger: true
+        passed: [create-release]
+      - get: envs
+      - get: bosh-deployment
+      - get: gcp-linux-stemcell
+      - get: bosh-candidate-stemcell-windows
+      - get: bosh-candidate-release
+      - get: candidate-release
+        trigger: true
+        passed: [create-release]
     - task: windows
       file: bosh-dns-release/ci/tasks/test-acceptance-windows.yml
     - task: windows-nameserver-disabled
@@ -88,7 +106,7 @@ jobs:
       - get: bosh-src
       - get: bosh-dns-release
         trigger: true
-        passed: [test-unit]
+        passed: [create-release]
       - get: candidate-warden-ubuntu-stemcell
         resource: bosh-candidate-stemcell
       - get: bosh-release
@@ -101,7 +119,6 @@ jobs:
         BOSH_DIRECTOR_RELEASE_VERSION: "latest"
         DNS_RELEASE_FILE_PATH: "dns-release"
         DNS_RELEASE_VERSION: "create"
-
 
 - name: bbl-up
   serial: true
@@ -137,12 +154,37 @@ jobs:
         params:
           repository: envs
 
+- name: finalize-release
+  plan:
+    - aggregate:
+      - get: bosh-dns-release
+        passed: [test-acceptance, brats-ubuntu, test-performance, test-acceptance-windows]
+      - get: candidate-release
+        passed: [test-acceptance, test-acceptance-windows]
+      - get: version
+        params:
+          bump: patch
+    - task: finalize-release
+      file: bosh-dns-release/ci/tasks/finalize-release.yml
+      params:
+        BLOBSTORE_ACCESS_KEY_ID: {{release_blobs_access_key_id}}
+        BLOBSTORE_SECRET_ACCESS_KEY: {{release_blobs_secret_access_key}}
+    - put: version
+      params:
+        file: bumped-version/number
+    - put: bosh-dns-release
+      params:
+        repository: final-bosh-dns-release
+        tag: /tmp/build/put/tag/tag-name
+        annotate: /tmp/build/put/tag/annotate-msg
+
 resources:
 - name: bosh-dns-release
   type: git
   source:
-    uri: https://github.com/cloudfoundry/bosh-dns-release
-    branch: master
+    uri: git@github.com:cloudfoundry/bosh-dns-release
+    branch: publish-releases
+    private_key: {{github_deployment_key}}
     ignore_paths:
     - ci/docker
 
@@ -151,6 +193,22 @@ resources:
   source:
     uri: https://github.com/bosh-dep-forks/coredns.git
     branch: bosh-develop
+
+- name: version
+  type: semver
+  source:
+    bucket: {{candidate_release_bucket}}
+    key: version
+    access_key_id: {{candidate_release_access_key_id}}
+    secret_access_key: {{candidate_release_secret_access_key}}
+
+- name: candidate-release
+  type: s3
+  source:
+    bucket: {{candidate_release_bucket}}
+    access_key_id: {{candidate_release_access_key_id}}
+    secret_access_key: {{candidate_release_secret_access_key}}
+    versioned_file: "bosh-dns-dev-release.tgz"
 
 - name: bosh-src
   type: git

@@ -9,6 +9,7 @@ image_resource:
 
 inputs:
   - name: bosh-dns-release
+  - name: candidate-release
   - name: envs
   - name: bosh-candidate-stemcell-windows
   - name: gcp-linux-stemcell

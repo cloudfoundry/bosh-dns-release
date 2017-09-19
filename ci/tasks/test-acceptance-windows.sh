@@ -11,9 +11,7 @@ bosh -n upload-stemcell $ROOT_DIR/bosh-candidate-stemcell-windows/*.tgz
 
 export BOSH_DEPLOYMENT=bosh-dns-windows-acceptance
 
-pushd $ROOT_DIR/bosh-dns-release
-   bosh create-release --force && bosh upload-release --rebase
-popd
+bosh upload-release $ROOT_DIR/candidate-release/*.tgz
 
 bosh -n deploy $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/windows-acceptance-manifest.yml \
   -v health_server_port=2345 \

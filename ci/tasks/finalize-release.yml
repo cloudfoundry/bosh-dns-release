@@ -1,0 +1,25 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: bosh/bosh-dns-release
+    tag: acceptance-tests
+
+inputs:
+  - name: bosh-dns-release
+  - name: candidate-release
+  - name: version
+
+outputs:
+  - name: bumped-version
+  - name: final-bosh-dns-release
+  - name: tag
+
+params:
+  BLOBSTORE_ACCESS_KEY_ID: replace-me
+  BLOBSTORE_SECRET_ACCESS_KEY: replace-me
+
+run:
+  path: bosh-dns-release/ci/tasks/finalize-release.sh

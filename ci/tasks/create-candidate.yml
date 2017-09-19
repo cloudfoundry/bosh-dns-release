@@ -9,11 +9,9 @@ image_resource:
 
 inputs:
   - name: bosh-dns-release
-  - name: candidate-release
-  - name: bosh-candidate-stemcell
-  - name: bosh-candidate-release
 
-params: []
+outputs:
+  - name: release
 
 run:
-  path: bosh-dns-release/ci/tasks/test-acceptance.sh
+  path: bosh-dns-release/ci/tasks/create-candidate.sh
