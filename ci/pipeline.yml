@@ -183,7 +183,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/bosh-dns-release
-    branch: publish-releases
+    branch: master
     private_key: {{github_deployment_key}}
     ignore_paths:
     - ci/docker
