@@ -38,6 +38,17 @@ jobs:
       build: "repo/ci/docker/acceptance-tests-windows"
     get_params:
       skip_download: true
+- name: build-unit-tests-image
+  public: true
+  serial: true
+  plan:
+  - get: repo
+    trigger: true
+  - put: unit-tests-image
+    params:
+      build: "repo/ci/docker/unit-tests"
+    get_params:
+      skip_download: true
 resources:
 - name: repo
   type: git
@@ -50,6 +61,14 @@ resources:
   type: docker-image
   source:
     repository: bosh/main-bosh-docker
+- name: unit-tests-image
+  type: docker-image
+  source:
+    repository: bosh/bosh-dns-release
+    tag: performance-tests
+    email: {{dockerhub_email}}
+    username: {{dockerhub_username}}
+    password: {{dockerhub_password}}
 - name: performance-tests-image
   type: docker-image
   source:
