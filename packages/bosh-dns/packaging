@@ -1,13 +1,10 @@
 set -eu
 
 mkdir -p "${BOSH_INSTALL_TARGET}/bin"
-
-export GOROOT="/var/vcap/packages/golang"
-export GOPATH="${BOSH_COMPILE_TARGET}/.gopath"
-export PATH="${GOROOT}/bin:${PATH}"
+source /var/vcap/packages/golang-1.8-linux/bosh/compile.env
 
 mkdir -p "${GOPATH}/src"
-mv * "${GOPATH}/src"
+mv bosh-dns "${GOPATH}/src"
 
 go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns" "bosh-dns/dns"
 go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns-nameserverconfig" "bosh-dns/dns/nameserverconfig"

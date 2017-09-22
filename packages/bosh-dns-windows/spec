@@ -2,7 +2,7 @@
 name: bosh-dns-windows
 
 dependencies:
-- golang-windows
+- golang-1.8-windows
 
 files:
 - bosh-dns/healthcheck/**/*

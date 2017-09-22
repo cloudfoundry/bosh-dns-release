@@ -18,9 +18,10 @@ export TEST_TARGET_OS="windows"
 export TEST_CLOUD_CONFIG_PATH="/tmp/cloud-config.yml"
 ${BOSH_BINARY_PATH} cloud-config > ${TEST_CLOUD_CONFIG_PATH}
 
-export GOROOT="/var/vcap/packages/golang"
-export GOPATH="/var/vcap/packages/acceptance-tests"
-export PATH="$GOROOT/bin:${GOPATH}/bin:${PATH}"
+source /var/vcap/packages/golang-1.8-linux/bosh/runtime.env
+
+mkdir -p $GOPATH/src
+cp -R /var/vcap/packages/acceptance-tests/src/bosh-dns $GOPATH/src/bosh-dns
 
 go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
