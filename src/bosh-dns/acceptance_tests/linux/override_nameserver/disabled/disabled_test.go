@@ -21,7 +21,7 @@ var _ = Describe("dns job: override_nameserver", func() {
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(session, 10*time.Second).Should(gexec.Exit())
+				Eventually(session, 20*time.Second).Should(gexec.Exit())
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring("status: NXDOMAIN"))
 				time.Sleep(400 * time.Millisecond)
