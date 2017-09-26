@@ -65,7 +65,7 @@ resources:
   type: docker-image
   source:
     repository: bosh/bosh-dns-release
-    tag: performance-tests
+    tag: unit-tests
     email: {{dockerhub_email}}
     username: {{dockerhub_username}}
     password: {{dockerhub_password}}
