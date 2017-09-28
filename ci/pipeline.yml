@@ -112,6 +112,8 @@ jobs:
       - get: candidate-warden-ubuntu-stemcell
         resource: bosh-candidate-stemcell
       - get: bosh-release
+    - task: prepare-brats
+      file: bosh-dns-release/ci/tasks/prepare-brats.yml
     - task: test-brats
       file: bosh-src/ci/tasks/test-brats.yml
       tags: ["worker-brats"]

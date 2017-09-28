@@ -1,0 +1,20 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: bosh/bosh-dns-release
+    tag: acceptance-tests
+
+inputs:
+  - name: bosh-dns-release
+  - name: bosh-src
+  - name: bosh-release
+
+outputs:
+  - name: bosh-src
+    path: bosh-src-output
+
+run:
+  path: bosh-dns-release/ci/tasks/prepare-brats.sh
