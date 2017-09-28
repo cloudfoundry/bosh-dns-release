@@ -14,7 +14,7 @@ var _ = Describe("wait", func() {
 		command := exec.Command(pathToBinary, `--timeout=100ms`, `--checkDomain=google.com.`)
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session).Should(gexec.Exit(0), "running wait command failed: exit status non-zero")
 	})
 
 	It("fails when the check fails", func() {
