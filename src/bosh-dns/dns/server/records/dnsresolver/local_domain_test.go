@@ -129,8 +129,8 @@ var _ = Describe("LocalDomain", func() {
 
 			BeforeEach(func() {
 				recordSet = records.RecordSet{
-					Records: []records.Record{
-						{
+					Records: []*records.Record{
+						&records.Record{
 							ID:         "my-instance",
 							Group:      "my-group",
 							Network:    "my-network",
@@ -138,7 +138,7 @@ var _ = Describe("LocalDomain", func() {
 							IP:         "123.123.123.123",
 							Domain:     "bosh.",
 						},
-						{
+						&records.Record{
 							ID:         "my-instance",
 							Group:      "my-group",
 							Network:    "my-network",
@@ -146,7 +146,7 @@ var _ = Describe("LocalDomain", func() {
 							IP:         "127.0.0.1",
 							Domain:     "bosh.",
 						},
-						{
+						&records.Record{
 							ID:         "my-instance",
 							Group:      "my-group",
 							Network:    "my-network",
@@ -154,7 +154,7 @@ var _ = Describe("LocalDomain", func() {
 							IP:         "127.0.0.2",
 							Domain:     "bosh.",
 						},
-						{
+						&records.Record{
 							ID:         "my-instance",
 							Group:      "my-group",
 							Network:    "my-network",
@@ -162,7 +162,7 @@ var _ = Describe("LocalDomain", func() {
 							IP:         "127.0.0.3",
 							Domain:     "bosh.",
 						},
-						{
+						&records.Record{
 							ID:         "my-instance",
 							Group:      "my-group",
 							Network:    "my-network",
@@ -170,7 +170,7 @@ var _ = Describe("LocalDomain", func() {
 							IP:         "127.0.0.4",
 							Domain:     "bosh.",
 						},
-						{
+						&records.Record{
 							ID:         "my-instance",
 							Group:      "my-group",
 							Network:    "my-network",
@@ -178,7 +178,7 @@ var _ = Describe("LocalDomain", func() {
 							IP:         "127.0.0.5",
 							Domain:     "bosh.",
 						},
-						{
+						&records.Record{
 							ID:         "my-instance",
 							Group:      "my-group",
 							Network:    "my-network",

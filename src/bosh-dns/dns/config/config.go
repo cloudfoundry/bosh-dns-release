@@ -3,11 +3,11 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"strings"
 	"time"
-	"fmt"
 )
 
 type Config struct {

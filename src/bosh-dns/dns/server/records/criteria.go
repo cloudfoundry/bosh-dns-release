@@ -3,58 +3,55 @@ package records
 import (
 	"errors"
 	"regexp"
+	"strings"
 )
 
 var keyValueRegex = regexp.MustCompile("(a|i|s)([0-9]+)")
+var groupRegex = regexp.MustCompile("^g-([0-9]+)$")
 
 type criteria map[string][]string
 
-func parseCriteria(query string) (criteria, error) {
+func parseCriteria(firstSegment, groupSegment, instanceGroupName, network, deployment, domain string) (criteria, error) {
 	criteriaMap := make(criteria)
 
-	querySections := keyValueRegex.FindAllStringSubmatch(query, -1)
-	if querySections == nil {
-		return nil, errors.New("illegal dns query")
-	}
-	for _, q := range querySections {
-		key := q[1]
-		values, ok := criteriaMap[key]
-		if !ok {
-			values = []string{}
+	if strings.HasPrefix(firstSegment, "q-") {
+		query := strings.TrimPrefix(firstSegment, "q-")
+		querySections := keyValueRegex.FindAllStringSubmatch(query, -1)
+		if querySections == nil {
+			return nil, errors.New("illegal dns query")
 		}
+		for _, q := range querySections {
+			criteriaMap.appendCriteria(q[1], q[2])
+		}
+	} else {
+		criteriaMap.appendCriteria("instanceName", firstSegment)
+	}
 
-		criteriaMap[key] = append(values, q[2])
+	groupMatches := groupRegex.FindAllStringSubmatch(groupSegment, -1)
+	if groupMatches != nil {
+		criteriaMap.appendCriteria("g", groupMatches[0][1])
+	}
+	if instanceGroupName != "" {
+		criteriaMap.appendCriteria("instanceGroupName", instanceGroupName)
+	}
+	if network != "" {
+		criteriaMap.appendCriteria("network", network)
+	}
+	if deployment != "" {
+		criteriaMap.appendCriteria("deployment", deployment)
+	}
+	if domain != "" {
+		criteriaMap.appendCriteria("domain", domain)
 	}
 
 	return criteriaMap, nil
 }
 
-func (c criteria) isAllowed(r Record) bool {
-	for key, values := range c {
-		if !matchesCriterion(r, key, values) {
-			return false
-		}
-	}
-	return true
-}
-
-func matchesCriterion(r Record, key string, values []string) bool {
-	var recordValue string
-	switch key {
-	case "a":
-		recordValue = r.AZID
-	case "i":
-		recordValue = r.InstanceIndex
-	case "s":
-		return true
-	default:
-		return false
+func (c criteria) appendCriteria(key, value string) {
+	values, ok := c[key]
+	if !ok {
+		values = []string{}
 	}
 
-	for _, v := range values {
-		if recordValue == v {
-			return true
-		}
-	}
-	return false
+	c[key] = append(values, value)
 }

@@ -110,14 +110,14 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = recordsFile.Write([]byte(fmt.Sprint(`{
-				"record_keys": ["id", "instance_group", "az", "az_id","network", "deployment", "ip", "domain"],
+				"record_keys": ["id", "instance_group", "group_ids", "az", "az_id","network", "deployment", "ip", "domain"],
 				"record_infos": [
-					["my-instance", "my-group", "az1", "1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
-					["my-instance-1", "my-group", "az2", "2", "my-network", "my-deployment", "127.0.0.2", "bosh"],
-					["my-instance-2", "my-group", "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "bosh"],
-					["my-instance-1", "my-group", "az1", "1", "my-network", "my-deployment", "127.0.0.2", "foo"],
-					["my-instance-2", "my-group", "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "foo"],
-					["primer-instance", "primer-group", "az1", "1", "primer-network", "primer-deployment", "127.0.0.254", "primer"]
+					["my-instance", "my-group", ["7"], "az1", "1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
+					["my-instance-1", "my-group", ["7"], "az2", "2", "my-network", "my-deployment", "127.0.0.2", "bosh"],
+					["my-instance-2", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "bosh"],
+					["my-instance-1", "my-group", ["7"], "az1", "1", "my-network", "my-deployment", "127.0.0.2", "foo"],
+					["my-instance-2", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "foo"],
+					["primer-instance", "primer-group", ["9"], "az1", "1", "primer-network", "primer-deployment", "127.0.0.254", "primer"]
 				]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
@@ -369,9 +369,6 @@ var _ = Describe("main", func() {
 			})
 
 			Context("domains from records.json", func() {
-				BeforeEach(func() {
-				})
-
 				It("can interpret AZ-specific queries", func() {
 					m.SetQuestion("q-a1s0.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 
@@ -414,6 +411,52 @@ var _ = Describe("main", func() {
 
 					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
 					Expect(answer.(*dns.A).A.String()).To(Equal("127.0.0.2"))
+				})
+
+				It("can interpret abbreviated group encoding", func() {
+					By("understanding q- queries", func() {
+						m.SetQuestion("q-a1s0.g-7.foo.", dns.TypeA)
+
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer := r.Answer[0]
+						header := answer.Header()
+
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Authoritative).To(BeTrue())
+						Expect(r.RecursionAvailable).To(BeFalse())
+
+						Expect(header.Rrtype).To(Equal(dns.TypeA))
+						Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+						Expect(header.Ttl).To(Equal(uint32(0)))
+
+						Expect(answer.(*dns.A).A.String()).To(Equal("127.0.0.2"))
+					})
+
+					By("understanding specific instance hosts", func() {
+						m.SetQuestion("my-instance-1.g-7.foo.", dns.TypeA)
+
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer := r.Answer[0]
+						header := answer.Header()
+
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Authoritative).To(BeTrue())
+						Expect(r.RecursionAvailable).To(BeFalse())
+
+						Expect(header.Rrtype).To(Equal(dns.TypeA))
+						Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+						Expect(header.Ttl).To(Equal(uint32(0)))
+
+						Expect(answer.(*dns.A).A.String()).To(Equal("127.0.0.2"))
+					})
 				})
 
 				It("responds to A queries for foo. with content from the record API", func() {

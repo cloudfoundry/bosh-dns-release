@@ -31,9 +31,9 @@ var _ = Describe("HealthyRecordSet", func() {
 		shutdownChan = make(chan struct{})
 
 		innerRecordSet = records.RecordSet{
-			Records: []records.Record{
-				{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.123", Domain: "d."},
-				{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.246", Domain: "d."},
+			Records: []*records.Record{
+				&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.123", Domain: "d."},
+				&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.246", Domain: "d."},
 			},
 		}
 		fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
@@ -64,9 +64,10 @@ var _ = Describe("HealthyRecordSet", func() {
 			for i := 1; i <= 5; i++ {
 				ip := fmt.Sprintf("123.123.123.%d", i)
 				innerRecordSet = records.RecordSet{
-					Records: []records.Record{
-						{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: ip, Domain: "d."},
+					Records: []*records.Record{
+						&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: ip, Domain: "d."},
 					},
+					Domains: []string{"d."},
 				}
 				fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
 
@@ -150,9 +151,9 @@ var _ = Describe("HealthyRecordSet", func() {
 		BeforeEach(func() {
 			recordSet.Resolve("i.g.n.d.d.")
 			innerRecordSet = records.RecordSet{
-				Records: []records.Record{
-					{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.123", Domain: "d."},
-					{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.5", Domain: "d."},
+				Records: []*records.Record{
+					&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.123", Domain: "d."},
+					&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.5", Domain: "d."},
 				},
 			}
 			fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
@@ -182,9 +183,9 @@ var _ = Describe("HealthyRecordSet", func() {
 	Context("when the ips not under a tracked domain change", func() {
 		BeforeEach(func() {
 			innerRecordSet = records.RecordSet{
-				Records: []records.Record{
-					{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.123", Domain: "d."},
-					{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.5", Domain: "d."},
+				Records: []*records.Record{
+					&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.123", Domain: "d."},
+					&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.5", Domain: "d."},
 				},
 			}
 			fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
@@ -211,10 +212,10 @@ var _ = Describe("HealthyRecordSet", func() {
 
 	Describe("limiting tracked domains", func() {
 		BeforeEach(func() {
-			innerRecordSet = records.RecordSet{Records: []records.Record{}}
+			innerRecordSet = records.RecordSet{Records: []*records.Record{}}
 
 			for i := 0; i < 10; i++ {
-				innerRecordSet.Records = append(innerRecordSet.Records, records.Record{
+				innerRecordSet.Records = append(innerRecordSet.Records, &records.Record{
 					ID:         fmt.Sprintf("i%d", i),
 					Group:      "g",
 					Network:    "n",
