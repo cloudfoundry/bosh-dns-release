@@ -105,6 +105,9 @@ jobs:
   - do:
     - aggregate:
       - get: bosh-src
+      - get: bosh-dns-release-src
+        resource: bosh-dns-release
+        passed: [create-release]
       - get: bosh-dns-release
         resource: candidate-release
         trigger: true
@@ -113,7 +116,9 @@ jobs:
         resource: bosh-candidate-stemcell
       - get: bosh-release
     - task: prepare-brats
-      file: bosh-dns-release/ci/tasks/prepare-brats.yml
+      file: bosh-dns-release-src/ci/tasks/prepare-brats.yml
+      input_mapping:
+        bosh-dns-release: bosh-dns-release-src
     - task: test-brats
       file: bosh-src/ci/tasks/test-brats.yml
       tags: ["worker-brats"]
@@ -219,8 +224,6 @@ resources:
   source:
     uri: https://github.com/cloudfoundry/bosh
     branch: master
-    ignore_paths:
-    - ci/docker
 
 - name: bosh-release
   type: bosh-io-release
