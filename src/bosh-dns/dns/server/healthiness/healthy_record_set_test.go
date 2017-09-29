@@ -30,12 +30,12 @@ var _ = Describe("HealthyRecordSet", func() {
 		fakeRecordSetRepo.SubscribeReturns(subscriptionChan)
 		shutdownChan = make(chan struct{})
 
-		innerRecordSet = records.RecordSet{
-			Records: []*records.Record{
+		innerRecordSet = records.NewRecordSet(
+			[]*records.Record{
 				&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.123", Domain: "d."},
 				&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.246", Domain: "d."},
 			},
-		}
+		)
 		fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
 		recordSet = healthiness.NewHealthyRecordSet(fakeRecordSetRepo, fakeHealthWatcher, 5, shutdownChan)
 	})
@@ -63,12 +63,11 @@ var _ = Describe("HealthyRecordSet", func() {
 		It("refreshes the record when notified", func() {
 			for i := 1; i <= 5; i++ {
 				ip := fmt.Sprintf("123.123.123.%d", i)
-				innerRecordSet = records.RecordSet{
-					Records: []*records.Record{
+				innerRecordSet = records.NewRecordSet(
+					[]*records.Record{
 						&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: ip, Domain: "d."},
 					},
-					Domains: []string{"d."},
-				}
+				)
 				fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
 
 				subscriptionChan <- true
@@ -150,12 +149,12 @@ var _ = Describe("HealthyRecordSet", func() {
 	Context("when the ips under a tracked domain change", func() {
 		BeforeEach(func() {
 			recordSet.Resolve("i.g.n.d.d.")
-			innerRecordSet = records.RecordSet{
-				Records: []*records.Record{
+			innerRecordSet = records.NewRecordSet(
+				[]*records.Record{
 					&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.123", Domain: "d."},
 					&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.5", Domain: "d."},
 				},
-			}
+			)
 			fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
 
 			Expect(fakeHealthWatcher.IsHealthyCallCount()).To(Equal(2))
@@ -182,12 +181,12 @@ var _ = Describe("HealthyRecordSet", func() {
 
 	Context("when the ips not under a tracked domain change", func() {
 		BeforeEach(func() {
-			innerRecordSet = records.RecordSet{
-				Records: []*records.Record{
+			innerRecordSet = records.NewRecordSet(
+				[]*records.Record{
 					&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.123", Domain: "d."},
 					&records.Record{ID: "i", Group: "g", Network: "n", Deployment: "d", IP: "123.123.123.5", Domain: "d."},
 				},
-			}
+			)
 			fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
 
 			Expect(fakeHealthWatcher.IsHealthyCallCount()).To(Equal(0))
@@ -212,10 +211,10 @@ var _ = Describe("HealthyRecordSet", func() {
 
 	Describe("limiting tracked domains", func() {
 		BeforeEach(func() {
-			innerRecordSet = records.RecordSet{Records: []*records.Record{}}
+			var innerRecords []*records.Record
 
 			for i := 0; i < 10; i++ {
-				innerRecordSet.Records = append(innerRecordSet.Records, &records.Record{
+				innerRecords = append(innerRecords, &records.Record{
 					ID:         fmt.Sprintf("i%d", i),
 					Group:      "g",
 					Network:    "n",
@@ -224,6 +223,7 @@ var _ = Describe("HealthyRecordSet", func() {
 					Domain:     "d.",
 				})
 			}
+			innerRecordSet = records.NewRecordSet(innerRecords)
 
 			fakeRecordSetRepo.GetReturns(innerRecordSet, nil)
 			subscriptionChan <- true

@@ -30,76 +30,76 @@ type RecordSet struct {
 	initialized     bool
 }
 
-func (r *RecordSet) loadUp() {
-	if !r.initialized {
-		r.ByAzId = make(map[string]recordGroup)
-		r.ByInstanceIndex = make(map[string]recordGroup)
-		r.ByGroupID = make(map[string]recordGroup)
-		r.ByInstanceGroup = make(map[string]recordGroup)
-		r.ByNetwork = make(map[string]recordGroup)
-		r.ByDeployment = make(map[string]recordGroup)
-		r.ByInstanceName = make(map[string]recordGroup)
-		r.ByDomain = make(map[string]recordGroup)
+func NewRecordSet(records []*Record) RecordSet {
+	r := RecordSet{}
+	r.ByAzId = make(map[string]recordGroup)
+	r.ByInstanceIndex = make(map[string]recordGroup)
+	r.ByGroupID = make(map[string]recordGroup)
+	r.ByInstanceGroup = make(map[string]recordGroup)
+	r.ByNetwork = make(map[string]recordGroup)
+	r.ByDeployment = make(map[string]recordGroup)
+	r.ByInstanceName = make(map[string]recordGroup)
+	r.ByDomain = make(map[string]recordGroup)
+	r.Records = records
 
-		domains := make(map[string]struct{})
-		for _, record := range r.Records {
-			if r.ByAzId[record.AZID] == nil {
-				r.ByAzId[record.AZID] = make(recordGroup)
-			}
-			if r.ByInstanceIndex[record.InstanceIndex] == nil {
-				r.ByInstanceIndex[record.InstanceIndex] = make(recordGroup)
-			}
-
-			r.ByAzId[record.AZID][record] = struct{}{}
-			r.ByInstanceIndex[record.InstanceIndex][record] = struct{}{}
-
-			for _, groupID := range record.GroupIDs {
-				if r.ByGroupID[groupID] == nil {
-					r.ByGroupID[groupID] = make(recordGroup)
-				}
-				r.ByGroupID[groupID][record] = struct{}{}
-			}
-
-			if r.ByInstanceGroup[record.Group] == nil {
-				r.ByInstanceGroup[record.Group] = make(recordGroup)
-			}
-			r.ByInstanceGroup[record.Group][record] = struct{}{}
-
-			if r.ByNetwork[record.Network] == nil {
-				r.ByNetwork[record.Network] = make(recordGroup)
-			}
-			r.ByNetwork[record.Network][record] = struct{}{}
-
-			if r.ByDeployment[record.Deployment] == nil {
-				r.ByDeployment[record.Deployment] = make(recordGroup)
-			}
-			r.ByDeployment[record.Deployment][record] = struct{}{}
-
-			if r.ByInstanceName[record.ID] == nil {
-				r.ByInstanceName[record.ID] = make(recordGroup)
-			}
-			r.ByInstanceName[record.ID][record] = struct{}{}
-			domains[record.Domain] = struct{}{}
-
-			if r.ByDomain[record.Domain] == nil {
-				r.ByDomain[record.Domain] = make(recordGroup)
-			}
-			r.ByDomain[record.Domain][record] = struct{}{}
-
-			domains[record.Domain] = struct{}{}
+	domains := make(map[string]struct{})
+	for _, record := range r.Records {
+		if r.ByAzId[record.AZID] == nil {
+			r.ByAzId[record.AZID] = make(recordGroup)
 		}
-		for domain := range domains {
-			r.Domains = append(r.Domains, domain)
+		if r.ByInstanceIndex[record.InstanceIndex] == nil {
+			r.ByInstanceIndex[record.InstanceIndex] = make(recordGroup)
 		}
+
+		r.ByAzId[record.AZID][record] = struct{}{}
+		r.ByInstanceIndex[record.InstanceIndex][record] = struct{}{}
+
+		for _, groupID := range record.GroupIDs {
+			if r.ByGroupID[groupID] == nil {
+				r.ByGroupID[groupID] = make(recordGroup)
+			}
+			r.ByGroupID[groupID][record] = struct{}{}
+		}
+
+		if r.ByInstanceGroup[record.Group] == nil {
+			r.ByInstanceGroup[record.Group] = make(recordGroup)
+		}
+		r.ByInstanceGroup[record.Group][record] = struct{}{}
+
+		if r.ByNetwork[record.Network] == nil {
+			r.ByNetwork[record.Network] = make(recordGroup)
+		}
+		r.ByNetwork[record.Network][record] = struct{}{}
+
+		if r.ByDeployment[record.Deployment] == nil {
+			r.ByDeployment[record.Deployment] = make(recordGroup)
+		}
+		r.ByDeployment[record.Deployment][record] = struct{}{}
+
+		if r.ByInstanceName[record.ID] == nil {
+			r.ByInstanceName[record.ID] = make(recordGroup)
+		}
+		r.ByInstanceName[record.ID][record] = struct{}{}
+		domains[record.Domain] = struct{}{}
+
+		if r.ByDomain[record.Domain] == nil {
+			r.ByDomain[record.Domain] = make(recordGroup)
+		}
+		r.ByDomain[record.Domain][record] = struct{}{}
+
+		domains[record.Domain] = struct{}{}
 	}
-	r.initialized = true
+	for domain := range domains {
+		r.Domains = append(r.Domains, domain)
+	}
+
+	return r
 }
 
 func (r RecordSet) Resolve(fqdn string) ([]string, error) {
 	if net.ParseIP(fqdn) != nil {
 		return []string{fqdn}, nil
 	}
-	r.loadUp()
 
 	return r.resolveQuery(fqdn)
 }
@@ -257,7 +257,7 @@ func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
 	}
 
 	if tld == "" {
-		return []string{}, nil //fmt.Errorf(fmt.Sprintf("no possible TLDs for %#v; possible domains were %#v", fqdn, r.Domains))
+		return []string{}, nil
 	}
 
 	groupQuery := strings.TrimSuffix(segments[1], "."+tld)
@@ -283,7 +283,6 @@ func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
 	candidates := allRecords
 	candidates = candidates.intersect(r.recordFromAZs(filter["a"]))
 	candidates = candidates.intersect(r.recordFromInstanceIndices(filter["i"]))
-
 	candidates = candidates.intersect(r.recordFromGroup(filter["g"]))
 	candidates = candidates.intersect(r.recordFromNetwork(filter["network"]))
 	candidates = candidates.intersect(r.recordFromInstanceGroupName(filter["instanceGroupName"]))
@@ -298,7 +297,6 @@ func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
 }
 
 func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
-	s := RecordSet{}
 	swap := struct {
 		Keys  []string        `json:"record_keys"`
 		Infos [][]interface{} `json:"record_infos"`
@@ -309,8 +307,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		return RecordSet{}, err
 	}
 
-	s.Records = make([]*Record, 0, len(swap.Infos))
-	s.Domains = []string{}
+	records := make([]*Record, 0, len(swap.Infos))
 
 	idIndex := -1
 	groupIndex := -1
@@ -382,11 +379,10 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		assertStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger)
 		assertStringIntegerValue(&record.InstanceIndex, info, instanceIndexIndex, "instance_index", index, logger)
 
-		s.Records = append(s.Records, &record)
+		records = append(records, &record)
 	}
-	s.loadUp()
 
-	return s, nil
+	return NewRecordSet(records), nil
 }
 
 func assertStringIntegerValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
