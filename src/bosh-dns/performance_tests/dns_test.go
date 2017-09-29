@@ -101,7 +101,15 @@ var _ = Describe("DNS", func() {
 
 			records := []string{}
 			for _, record := range recordSet.Records {
-				records = append(records, record.Fqdn(true))
+				composed := fmt.Sprintf(
+					"%s.%s.%s.%s.%s",
+					record.ID,
+					record.Group,
+					record.Network,
+					record.Deployment,
+					record.Domain,
+				)
+				records = append(records, composed)
 			}
 			picker = &zp.ZoneFilePicker{Domains: records}
 			label = "local zones"
