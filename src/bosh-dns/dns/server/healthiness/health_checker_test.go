@@ -54,6 +54,13 @@ var _ = Describe("HealthChecker", func() {
 				Expect(fakeClient.GetCallCount()).To(Equal(1))
 				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://%s:8081/health", ip)))
 			})
+
+			It("brackets IPv6 addresses", func() {
+				ip := "2601:0646:0102:0095:0000:0000:0000:0024"
+				Expect(healthChecker.GetStatus(ip)).To(BeTrue())
+				Expect(fakeClient.GetCallCount()).To(Equal(1))
+				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://[%s]:8081/health", ip)))
+			})
 		})
 
 		Context("when unhealthy", func() {

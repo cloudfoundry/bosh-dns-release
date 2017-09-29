@@ -1,19 +1,17 @@
 package dnsresolver_test
 
 import (
-	. "bosh-dns/dns/server/records/dnsresolver"
-
-	"bosh-dns/dns/server/records"
+	"errors"
+	"net"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"errors"
-	"net"
-
 	"bosh-dns/dns/server/internal/internalfakes"
+	"bosh-dns/dns/server/records"
+	. "bosh-dns/dns/server/records/dnsresolver"
 	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 )
 
@@ -257,8 +255,9 @@ var _ = Describe("LocalDomain", func() {
 			})
 		})
 
-		It("returns A records based off of the records data", func() {
-			fakeRecordSet.ResolveReturns([]string{"123.123.123.123", "123.123.123.246"}, nil)
+		It("returns only A records (no AAAA records) when the queried for A records", func() {
+			fakeRecordSet.ResolveReturns([]string{
+				"123.123.123.123", "2601:0646:0102:0095:0000:0000:0000:0025", "123.123.123.246"}, nil)
 
 			req := &dns.Msg{}
 			req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeA)
@@ -288,6 +287,87 @@ var _ = Describe("LocalDomain", func() {
 			Expect(header.Ttl).To(Equal(uint32(0)))
 			Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
 			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.246"))
+
+			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+		})
+
+		It("returns only AAAA records (no A records) when the queried for AAAA records", func() {
+			fakeRecordSet.ResolveReturns([]string{
+				"2601:0646:0102:0095:0000:0000:0000:0026", "123.123.123.246", "2601:0646:0102:0095:0000:0000:0000:0024"}, nil)
+
+			req := &dns.Msg{}
+			req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeAAAA)
+			responseMsg := localDomain.Resolve(
+				[]string{"instance-id.group-1.network-name.deployment-name.bosh."},
+				fakeWriter,
+				req,
+			)
+
+			answers := responseMsg.Answer
+			Expect(answers).To(HaveLen(2))
+
+			answer := answers[0]
+			header := answer.Header()
+			Expect(header.Name).To(Equal("instance-id-answer.group-1.network-name.deployment-name.bosh."))
+			Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
+			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+			Expect(header.Ttl).To(Equal(uint32(0)))
+			Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
+			Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::26"))
+
+			answer = answers[1]
+			header = answer.Header()
+			Expect(header.Name).To(Equal("instance-id-answer.group-1.network-name.deployment-name.bosh."))
+			Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
+			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+			Expect(header.Ttl).To(Equal(uint32(0)))
+			Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
+			Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::24"))
+
+			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+		})
+
+		It("returns both A and AAAA records when the queried for ANY records", func() {
+			fakeRecordSet.ResolveReturns([]string{
+				"2601:0646:0102:0095:0000:0000:0000:0026", "123.123.123.246", "2601:0646:0102:0095:0000:0000:0000:0024"}, nil)
+
+			req := &dns.Msg{}
+			req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeANY)
+			responseMsg := localDomain.Resolve(
+				[]string{"instance-id.group-1.network-name.deployment-name.bosh."},
+				fakeWriter,
+				req,
+			)
+
+			answers := responseMsg.Answer
+			Expect(answers).To(HaveLen(3))
+
+			answer := answers[0]
+			header := answer.Header()
+			Expect(header.Name).To(Equal("instance-id-answer.group-1.network-name.deployment-name.bosh."))
+			Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
+			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+			Expect(header.Ttl).To(Equal(uint32(0)))
+			Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
+			Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::26"))
+
+			answer = answers[1]
+			header = answer.Header()
+			Expect(header.Name).To(Equal("instance-id-answer.group-1.network-name.deployment-name.bosh."))
+			Expect(header.Rrtype).To(Equal(dns.TypeA))
+			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+			Expect(header.Ttl).To(Equal(uint32(0)))
+			Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.246"))
+
+			answer = answers[2]
+			header = answer.Header()
+			Expect(header.Name).To(Equal("instance-id-answer.group-1.network-name.deployment-name.bosh."))
+			Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
+			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+			Expect(header.Ttl).To(Equal(uint32(0)))
+			Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
+			Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::24"))
 
 			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
 		})
