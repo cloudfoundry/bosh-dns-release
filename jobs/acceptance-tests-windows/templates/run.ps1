@@ -7,15 +7,9 @@ go.exe install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
 Push-Location "${env:GOPATH}\src\bosh-dns\acceptance_tests\windows"
 
-$cache_test_flag = <%=
-  if p('properties_to_test.os_caching_enabled')
-    "--skip=TAG:os-cache-disabled"
-  else
-    "--skip=TAG:os-cache-enabled"
-  end
-%>
+$env:OS_DNS_CACHE = "<%= p('properties_to_test.os_caching_enabled') %>"
 
-ginkgo -randomizeAllSpecs -randomizeSuites -race <%= p('suites') %> $cache_test_flag
+ginkgo -randomizeAllSpecs -randomizeSuites -race <%= p('suites') %>
 
 Pop-Location
 
