@@ -44,4 +44,32 @@ var _ = Describe("windows tests", func() {
 			Expect(session.Out.Contents()).To(ContainSubstring("Name       : upcheck.bosh-dns"))
 		})
 	})
+
+	Context("when enabling system level caching TAG:os-cache-disabled", func() {
+		It("caches dns recursed dns entries for the duration of the TTL", func() {
+			cmd := exec.Command("powershell.exe", "-Command", "Get-Service -Dnscache | FormatList")
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session).Should(gexec.Exit(0))
+
+			output := string(session.Out.Contents())
+			Expect(output).To(MatchRegexp(`Status\w*:\w*Stopped`))
+			Expect(output).To(MatchRegexp(`CanStop\w*:\w*False`))
+		})
+	})
+
+	Context("when enabling system level caching TAG:os-cache-enabled", func() {
+		It("caches dns recursed dns entries for the duration of the TTL", func() {
+			cmd := exec.Command("powershell.exe", "-Command", "Get-Service -Dnscache | FormatList")
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session).Should(gexec.Exit(0))
+
+			output := string(session.Out.Contents())
+			Expect(output).To(MatchRegexp(`Status\w*:\w*Running`))
+			Expect(output).To(MatchRegexp(`CanStop\w*:\w*True`))
+		})
+	})
 })

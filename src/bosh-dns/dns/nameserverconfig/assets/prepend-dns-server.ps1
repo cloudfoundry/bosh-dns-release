@@ -24,8 +24,6 @@ try {
   if($servers[0] -ne $DNSAddress) {
       Write-Error "Failed to set '${DNSAddress}' as the first dns client server address"
   }
-
-  Get-Service Dnscache | Stop-Service -PassThru | Set-Service -StartupType disabled
 } catch {
   $Host.UI.WriteErrorLine($_.Exception.Message)
   Exit 1
