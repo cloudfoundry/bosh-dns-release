@@ -43,6 +43,10 @@ properties:
     description: "Configure ourselves as the system nameserver (e.g. network server addresses will be watched and overwritten)"
     default: true
 
+  enable_os_dns_caching:
+    description: "allow the Windows dns caching service to remain in operation on this VM"
+    default: false
+
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"
     default: []
