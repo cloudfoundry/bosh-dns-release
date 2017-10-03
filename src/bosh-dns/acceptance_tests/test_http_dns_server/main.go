@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 )
 
 func main() {
 	http.HandleFunc("/", func(responseWriter http.ResponseWriter, req *http.Request) {
+		var responseJSON string
+		queryValues, err := url.ParseQuery(req.URL.RawQuery)
 
-		if req.URL.RawQuery != "type=1&name=app-id.internal.local." &&
-			req.URL.RawQuery != "type=1&name=large-id.internal.local." {
+		if err != nil {
 			panic(fmt.Sprintf("Unexpected query '%s'", req.URL.RawQuery))
 		}
 
-		var responseJSON string
-		if req.URL.RawQuery == "type=1&name=app-id.internal.local." {
+		if queryValues.Get("type") == "1" && queryValues.Get("name") == "app-id.internal.local." {
 			responseJSON = `{
 					"Status": 0,
 					"TC": false,
@@ -42,7 +43,7 @@ func main() {
 					"Additional": [ ],
 					"edns_client_subnet": "12.34.56.78/0"
 				}`
-		} else {
+		} else if queryValues.Get("type") == "1" && queryValues.Get("name") == "large-id.internal.local."{
 			responseJSON = `{
 					"Status": 0,
 					"TC": false,
@@ -141,6 +142,8 @@ func main() {
 					"Additional": [ ],
 					"edns_client_subnet": "12.34.56.78/0"
 				}`
+		} else {
+			panic(fmt.Sprintf("Unexpected query '%s'", req.URL.RawQuery))
 		}
 
 		responseWriter.Write([]byte(responseJSON))
