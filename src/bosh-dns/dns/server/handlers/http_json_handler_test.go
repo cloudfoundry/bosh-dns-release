@@ -15,14 +15,8 @@ import (
 	"github.com/onsi/gomega/ghttp"
 )
 
-func startJsonServerWithHandler(handlerFunc http.HandlerFunc) *ghttp.Server {
-	server := ghttp.NewUnstartedServer()
-	server.AppendHandlers(handlerFunc)
-	server.HTTPTestServer.Start()
-	return server
-}
-
 var _ = Describe("HttpJsonHandler", func() {
+
 	var (
 		handler            HTTPJSONHandler
 		server             *ghttp.Server
@@ -37,7 +31,9 @@ var _ = Describe("HttpJsonHandler", func() {
 	})
 
 	JustBeforeEach(func() {
-		server = startJsonServerWithHandler(fakeServerResponse)
+		server = ghttp.NewUnstartedServer()
+		server.AppendHandlers(fakeServerResponse)
+		server.HTTPTestServer.Start()
 		handler = NewHTTPJSONHandler(server.URL(), fakeLogger)
 	})
 
@@ -48,14 +44,44 @@ var _ = Describe("HttpJsonHandler", func() {
 	Context("successful requests", func() {
 		BeforeEach(func() {
 			fakeServerResponse = ghttp.CombineHandlers(
-				ghttp.VerifyRequest("GET", "/ips/app-id.internal-domain."),
-				ghttp.RespondWith(http.StatusOK, `{"ips":["192.168.0.1", "192.168.0.4"]}`),
-			)
+				ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=28"),
+				ghttp.RespondWith(http.StatusOK, `{
+  "Status": 0,
+  "TC": true,
+  "RD": true,
+  "RA": true,
+  "AD": false,
+  "CD": false,
+  "Question":
+  [
+    {
+      "name": "app-id.internal-domain.",
+      "type": 28
+    }
+  ],
+  "Answer":
+  [
+    {
+      "name": "app-id.internal-domain.",
+      "type": 1,
+      "TTL": 1526,
+      "data": "192.168.0.1"
+    },
+    {
+      "name": "app-id.internal-domain.",
+      "type": 28,
+      "TTL": 224,
+      "data": "::1"
+    }
+  ],
+  "Additional": [ ],
+  "edns_client_subnet": "12.34.56.78/0"
+}`))
 		})
 
 		It("returns a DNS response based on answer given by backend server", func() {
 			req := &dns.Msg{}
-			req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+			req.SetQuestion("app-id.internal-domain.", dns.TypeAAAA)
 
 			handler.ServeDNS(fakeWriter, req)
 
@@ -64,27 +90,27 @@ var _ = Describe("HttpJsonHandler", func() {
 			Expect(resp.Question).To(Equal(req.Question))
 			Expect(resp.Rcode).To(Equal(dns.RcodeSuccess))
 			Expect(resp.Authoritative).To(BeTrue())
-			Expect(resp.RecursionAvailable).ToNot(BeTrue())
-
+			Expect(resp.RecursionAvailable).To(BeFalse())
+			Expect(resp.Truncated).To(BeTrue())
 			Expect(resp.Answer).To(HaveLen(2))
 			Expect(resp.Answer[0]).To(Equal(&dns.A{
 				Hdr: dns.RR_Header{
 					Name:   "app-id.internal-domain.",
 					Rrtype: dns.TypeA,
 					Class:  dns.ClassINET,
-					Ttl:    0,
+					Ttl:    1526,
 				},
-				A: net.IPv4(192, 168, 0, 1),
+				A: net.ParseIP("192.168.0.1"),
 			}))
 
 			Expect(resp.Answer[1]).To(Equal(&dns.A{
 				Hdr: dns.RR_Header{
 					Name:   "app-id.internal-domain.",
-					Rrtype: dns.TypeA,
+					Rrtype: dns.TypeAAAA,
 					Class:  dns.ClassINET,
-					Ttl:    0,
+					Ttl:    224,
 				},
-				A: net.IPv4(192, 168, 0, 4),
+				A: net.ParseIP("::1"),
 			}))
 		})
 
@@ -151,8 +177,8 @@ var _ = Describe("HttpJsonHandler", func() {
 	Context("when the http server response is malformed", func() {
 		BeforeEach(func() {
 			fakeServerResponse = ghttp.CombineHandlers(
-				ghttp.VerifyRequest("GET", "/ips/app-id.internal-domain."),
-				ghttp.RespondWith(http.StatusOK, `{"ips": garbage`),
+				ghttp.VerifyRequest("GET", "/"),
+				ghttp.RespondWith(http.StatusOK, `{  garbage`),
 			)
 		})
 
@@ -187,8 +213,8 @@ var _ = Describe("HttpJsonHandler", func() {
 	Context("when the http server responds with non-200", func() {
 		BeforeEach(func() {
 			fakeServerResponse = ghttp.CombineHandlers(
-				ghttp.VerifyRequest("GET", "/ips/app-id.internal-domain."),
-				ghttp.RespondWith(http.StatusNotFound, `{"ips":[]}`),
+				ghttp.VerifyRequest("GET", "/"),
+				ghttp.RespondWith(http.StatusNotFound, ""),
 			)
 		})
 

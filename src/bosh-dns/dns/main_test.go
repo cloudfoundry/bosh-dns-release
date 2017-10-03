@@ -149,8 +149,33 @@ var _ = Describe("main", func() {
 
 			httpJSONServer = ghttp.NewUnstartedServer()
 			httpJSONServer.AppendHandlers(ghttp.CombineHandlers(
-				ghttp.VerifyRequest("GET", "/ips/app-id.internal-domain."),
-				ghttp.RespondWith(http.StatusOK, `{"ips":["192.168.0.1", "192.168.0.4"]}`),
+				ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=255"),
+				ghttp.RespondWith(http.StatusOK, `{
+  "Status": 0,
+  "TC": false,
+  "RD": true,
+  "RA": true,
+  "AD": false,
+  "CD": false,
+  "Question":
+  [
+    {
+      "name": "app-id.internal-domain.",
+      "type": 28
+    }
+  ],
+  "Answer":
+  [
+    {
+      "name": "app-id.internal-domain.",
+      "type": 1,
+      "TTL": 1526,
+      "data": "192.168.0.1"
+    }
+  ],
+  "Additional": [ ],
+  "edns_client_subnet": "12.34.56.78/0"
+}`),
 			),
 			)
 			httpJSONServer.HTTPTestServer.Start()
@@ -535,9 +560,7 @@ var _ = Describe("main", func() {
 
 			Context("http json domains", func() {
 				It("does something", func() {
-					c := &dns.Client{
-						Net: "udp",
-					}
+					c := &dns.Client{Net: "tcp"}
 
 					m := &dns.Msg{}
 
@@ -546,13 +569,10 @@ var _ = Describe("main", func() {
 
 					Expect(err).NotTo(HaveOccurred())
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(r.Answer).To(HaveLen(2))
+					Expect(r.Answer).To(HaveLen(1))
 
 					answer0 := r.Answer[0].(*dns.A)
 					Expect(answer0.A.String()).To(Equal("192.168.0.1"))
-
-					answer1 := r.Answer[1].(*dns.A)
-					Expect(answer1.A.String()).To(Equal("192.168.0.4"))
 				})
 			})
 		})

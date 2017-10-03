@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"net"
 
+	"net/url"
+	"strconv"
+
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
@@ -18,8 +21,16 @@ type HTTPJSONHandler struct {
 	logTag  string
 }
 
-type ipsResponse struct {
-	IPs []string `json:ips`
+type Answer struct {
+	Name   string `json:"name"`
+	RRType uint16 `json:"type"`
+	TTL    uint32 `json:"TTL"`
+	Data   string `json:"data"`
+}
+
+type httpDNSMessage struct {
+	Truncated bool     `json:"TC"`
+	Answer    []Answer `json:"Answer"`
 }
 
 func NewHTTPJSONHandler(address string, logger logger.Logger) HTTPJSONHandler {
@@ -51,7 +62,13 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 		return responseMsg
 	}
 
-	url := fmt.Sprintf("%s/ips/%s", h.address, request.Question[0].Name)
+	question := request.Question[0]
+	url := fmt.Sprintf("%s/?type=%s&name=%s",
+		h.address,
+		strconv.Itoa(int(question.Qtype)),
+		url.QueryEscape(question.Name),
+	)
+
 	httpResponse, err := h.client.Get(url)
 	if err != nil {
 		h.logger.Error(h.logTag, "Error connecting to '%s': %v", h.address, err)
@@ -65,7 +82,7 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 		return responseMsg
 	}
 
-	ipsResponsePayload := &ipsResponse{}
+	httpDNSMessage := &httpDNSMessage{}
 	bytes, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
 		h.logger.Error(h.logTag, "failed to read response message '%s': %v", string(bytes), err)
@@ -73,22 +90,23 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 		return responseMsg
 	}
 
-	err = json.Unmarshal(bytes, ipsResponsePayload)
+	err = json.Unmarshal(bytes, httpDNSMessage)
 	if err != nil {
 		h.logger.Error(h.logTag, "failed to unmarshal response message '%s': %v", string(bytes), err)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
 		return responseMsg
 	}
 
-	for _, ip := range ipsResponsePayload.IPs {
+	responseMsg.Truncated = httpDNSMessage.Truncated
+	for _, answer := range httpDNSMessage.Answer {
 		responseMsg.Answer = append(responseMsg.Answer, &dns.A{
 			Hdr: dns.RR_Header{
-				Name:   request.Question[0].Name,
-				Rrtype: dns.TypeA,
+				Name:   question.Name,
+				Rrtype: answer.RRType,
 				Class:  dns.ClassINET,
-				Ttl:    0,
+				Ttl:    answer.TTL,
 			},
-			A: net.ParseIP(ip),
+			A: net.ParseIP(answer.Data),
 		})
 	}
 
