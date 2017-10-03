@@ -141,7 +141,7 @@ var _ = Describe("HttpJsonHandler", func() {
 			tag, template, args := fakeLogger.ErrorArgsForCall(0)
 			Expect(tag).To(Equal("HTTPJSONHandler"))
 			msg := fmt.Sprintf(template, args...)
-			Expect(msg).To(ContainSubstring("Error connecting to 'bogus-address': "))
+			Expect(msg).To(ContainSubstring("error connecting to 'bogus-address': "))
 			Expect(msg).To(ContainSubstring("Performing GET request"))
 		})
 

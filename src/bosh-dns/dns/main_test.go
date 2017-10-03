@@ -559,7 +559,7 @@ var _ = Describe("main", func() {
 			})
 
 			Context("http json domains", func() {
-				It("does something", func() {
+				It("serves the addresses from the http server", func() {
 					c := &dns.Client{Net: "tcp"}
 
 					m := &dns.Msg{}

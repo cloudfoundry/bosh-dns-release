@@ -76,13 +76,13 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	httpResponse, err := h.client.Get(url)
 
 	if err != nil {
-		h.logger.Error(h.logTag, "Error connecting to '%s': %v", h.address, err)
+		h.logger.Error(h.logTag, "error connecting to '%s': %v", h.address, err)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
 		return responseMsg
 	}
 
 	if httpResponse.StatusCode != 200 {
-		h.logger.Error(h.logTag, "Non successful response from server '%s': %v", h.address, httpResponse)
+		h.logger.Error(h.logTag, "non successful response from server '%s': %v", h.address, httpResponse)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
 		return responseMsg
 	}

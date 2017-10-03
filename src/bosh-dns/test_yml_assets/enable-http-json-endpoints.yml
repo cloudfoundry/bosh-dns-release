@@ -1,0 +1,6 @@
+---
+
+- path: /instance_groups/0/jobs/1/properties?/http_json_endpoints
+  type: replace
+  value:
+    "internal.local.": ((http_json_server_address))

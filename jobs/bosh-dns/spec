@@ -49,9 +49,10 @@ properties:
   override_nameserver:
     description: "Configure ourselves as the system nameserver (e.g. /etc/resolv.conf will be watched and overwritten)"
     default: true
-  
+
   http_json_endpoints:
     description: "Hash of domain key to endpoints"
+    default: {}
     example:
       internal.domain.: http://endpoint
 
