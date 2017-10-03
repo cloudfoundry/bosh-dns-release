@@ -46,25 +46,39 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	responseMsg.Authoritative = true
 	responseMsg.RecursionAvailable = false
 	responseMsg.SetReply(request)
-	responseMsg.SetRcode(request, dns.RcodeSuccess)
 
 	if len(request.Question) == 0 {
 		return responseMsg
 	}
-	url := fmt.Sprintf("%s/ips/%s", h.address, request.Question[0].Name)
 
+	url := fmt.Sprintf("%s/ips/%s", h.address, request.Question[0].Name)
 	httpResponse, err := h.client.Get(url)
-	if err != nil || httpResponse.StatusCode != 200 {
+	if err != nil {
 		h.logger.Error(h.logTag, "Error connecting to '%s': %v", h.address, err)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
 		return responseMsg
 	}
+
+	if httpResponse.StatusCode != 200 {
+		h.logger.Error(h.logTag, "Non successful response from server '%s': %v", h.address, httpResponse)
+		responseMsg.SetRcode(request, dns.RcodeServerFailure)
+		return responseMsg
+	}
+
 	ipsResponsePayload := &ipsResponse{}
 	bytes, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		panic("err")
+		h.logger.Error(h.logTag, "failed to read response message '%s': %v", string(bytes), err)
+		responseMsg.SetRcode(request, dns.RcodeServerFailure)
+		return responseMsg
 	}
-	json.Unmarshal(bytes, ipsResponsePayload)
+
+	err = json.Unmarshal(bytes, ipsResponsePayload)
+	if err != nil {
+		h.logger.Error(h.logTag, "failed to unmarshal response message '%s': %v", string(bytes), err)
+		responseMsg.SetRcode(request, dns.RcodeServerFailure)
+		return responseMsg
+	}
 
 	for _, ip := range ipsResponsePayload.IPs {
 		responseMsg.Answer = append(responseMsg.Answer, &dns.A{
@@ -77,5 +91,7 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 			A: net.ParseIP(ip),
 		})
 	}
+
+	responseMsg.SetRcode(request, dns.RcodeSuccess)
 	return responseMsg
 }

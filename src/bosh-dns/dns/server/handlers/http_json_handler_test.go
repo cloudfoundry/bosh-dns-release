@@ -45,7 +45,7 @@ var _ = Describe("HttpJsonHandler", func() {
 		server.Close()
 	})
 
-	Context("successful requets", func() {
+	Context("successful requests", func() {
 		BeforeEach(func() {
 			fakeServerResponse = ghttp.CombineHandlers(
 				ghttp.VerifyRequest("GET", "/ips/app-id.internal-domain."),
@@ -99,7 +99,7 @@ var _ = Describe("HttpJsonHandler", func() {
 		})
 	})
 
-	Context("when it cannot reach the client", func() {
+	Context("when it cannot reach the http server", func() {
 		JustBeforeEach(func() {
 			handler = NewHTTPJSONHandler("bogus-address", fakeLogger)
 		})
@@ -133,7 +133,7 @@ var _ = Describe("HttpJsonHandler", func() {
 		})
 	})
 
-	Context("when it cannot write the message", func() {
+	Context("when it cannot write the response message", func() {
 		BeforeEach(func() {
 			fakeWriter.WriteMsgReturns(errors.New("failed to write message"))
 		})
@@ -148,7 +148,43 @@ var _ = Describe("HttpJsonHandler", func() {
 		})
 	})
 
-	Context("when the server responds with non-200", func() {
+	Context("when the http server response is malformed", func() {
+		BeforeEach(func() {
+			fakeServerResponse = ghttp.CombineHandlers(
+				ghttp.VerifyRequest("GET", "/ips/app-id.internal-domain."),
+				ghttp.RespondWith(http.StatusOK, `{"ips": garbage`),
+			)
+		})
+
+		It("Returns a serve fail response", func() {
+			req := &dns.Msg{}
+			req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+			handler.ServeDNS(fakeWriter, req)
+
+			Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+			resp := fakeWriter.WriteMsgArgsForCall(0)
+			Expect(resp.Question).To(Equal(req.Question))
+			Expect(resp.Rcode).To(Equal(dns.RcodeServerFailure))
+			Expect(resp.Authoritative).To(BeTrue())
+			Expect(resp.RecursionAvailable).ToNot(BeTrue())
+
+			Expect(resp.Answer).To(HaveLen(0))
+		})
+
+		It("logs the error", func() {
+			req := &dns.Msg{}
+			req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+			handler.ServeDNS(fakeWriter, req)
+
+			Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
+			tag, template, args := fakeLogger.ErrorArgsForCall(0)
+			Expect(tag).To(Equal("HTTPJSONHandler"))
+			msg := fmt.Sprintf(template, args...)
+			Expect(msg).To(ContainSubstring("failed to unmarshal response message"))
+		})
+	})
+
+	Context("when the http server responds with non-200", func() {
 		BeforeEach(func() {
 			fakeServerResponse = ghttp.CombineHandlers(
 				ghttp.VerifyRequest("GET", "/ips/app-id.internal-domain."),
