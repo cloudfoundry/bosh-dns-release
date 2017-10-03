@@ -98,10 +98,12 @@ var _ = Describe("main", func() {
 			recordsFilePath string
 			checkInterval   string
 			httpJSONServer  *ghttp.Server
+			httpJSONCachingEnabled bool
 		)
 
 		BeforeEach(func() {
 			checkInterval = "100ms"
+			httpJSONCachingEnabled = false
 		})
 
 		JustBeforeEach(func() {
@@ -195,6 +197,9 @@ var _ = Describe("main", func() {
 				},
 				"handlers": []map[string]interface{}{{
 					"domain": "internal-domain.",
+					"cache": map[string]interface{}{
+						"enabled": httpJSONCachingEnabled,
+					},
 					"source": map[string]interface{}{
 						"type": "http",
 						"url":  httpJSONServer.URL(),
@@ -577,6 +582,40 @@ var _ = Describe("main", func() {
 
 					answer0 := r.Answer[0].(*dns.A)
 					Expect(answer0.A.String()).To(Equal("192.168.0.1"))
+				})
+
+				Context("when caching is enabled", func() {
+					BeforeEach(func() {
+						httpJSONCachingEnabled = true
+					})
+
+					It("should return cached answers", func() {
+						c := &dns.Client{Net: "tcp"}
+
+						m := &dns.Msg{}
+
+						m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer0 := r.Answer[0].(*dns.A)
+						Expect(answer0.A.String()).To(Equal("192.168.0.1"))
+
+						m = &dns.Msg{}
+
+						m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+						r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer0 = r.Answer[0].(*dns.A)
+						Expect(answer0.A.String()).To(Equal("192.168.0.1"))
+					})
 				})
 			})
 		})

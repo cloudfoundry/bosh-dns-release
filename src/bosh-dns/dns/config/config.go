@@ -28,6 +28,7 @@ type Config struct {
 type Handler struct {
 	Domain string `json:"domain"`
 	Source Source `json:"source"`
+	Cache  Cache  `json:"cache"`
 }
 
 type Source struct {

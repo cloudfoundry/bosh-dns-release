@@ -115,7 +115,12 @@ func mainExitCode() int {
 
 	for _, handler := range config.Handlers {
 		if handler.Source.Type == "http" {
-			handlers.AddHandler(mux, clock, handler.Domain, handlers.NewHTTPJSONHandler(handler.Source.URL, logger), logger)
+			var dnsHandler dns.Handler
+			dnsHandler = handlers.NewHTTPJSONHandler(handler.Source.URL, logger)
+			if handler.Cache.Enabled {
+				dnsHandler =  handlers.NewCachingDNSHandler(dnsHandler)
+			}
+			handlers.AddHandler(mux, clock, handler.Domain, dnsHandler, logger)
 		}
 	}
 
