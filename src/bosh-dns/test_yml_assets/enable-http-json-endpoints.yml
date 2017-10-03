@@ -1,6 +1,9 @@
 ---
 
-- path: /instance_groups/0/jobs/1/properties?/http_json_endpoints
+- path: /instance_groups/0/jobs/1/properties?/handlers
   type: replace
   value:
-    "internal.local.": ((http_json_server_address))
+    - domain: internal.local.
+      source:
+        type: http
+        url: ((http_json_server_address))

@@ -193,9 +193,13 @@ var _ = Describe("main", func() {
 					"private_key_file": "../healthcheck/assets/test_certs/test_client.key",
 					"check_interval":   checkInterval,
 				},
-				"http_json_endpoints": map[string]string{
-					"internal-domain.": httpJSONServer.URL(),
-				},
+				"handlers": []map[string]interface{}{{
+					"domain": "internal-domain.",
+					"source": map[string]interface{}{
+						"type": "http",
+						"url":  httpJSONServer.URL(),
+					},
+				}},
 			})
 			Expect(err).NotTo(HaveOccurred())
 			cmd = newCommandWithConfig(string(configContents))

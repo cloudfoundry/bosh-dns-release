@@ -20,10 +20,19 @@ type Config struct {
 	AliasFilesGlob  string   `json:"alias_files_glob"`
 	UpcheckDomains  []string `json:"upcheck_domains"`
 
-	Health HealthConfig `json:"health"`
-	Cache  Cache        `json:"cache"`
+	Health   HealthConfig `json:"health"`
+	Cache    Cache        `json:"cache"`
+	Handlers []Handler    `json:"handlers"`
+}
 
-	HTTPJSONEndpoints map[string]string `json:"http_json_endpoints"`
+type Handler struct {
+	Domain string `json:"domain"`
+	Source Source `json:"source"`
+}
+
+type Source struct {
+	Type string `json:"type"`
+	URL  string `json:"url,omitempty"`
 }
 
 type HealthConfig struct {

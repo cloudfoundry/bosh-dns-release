@@ -43,7 +43,7 @@ func main() {
 		responseWriter.Write([]byte(responseJSON))
 	})
 
-	listener, err := net.Listen("tcp", "172.17.0.1:8081")
+	listener, err := net.Listen("tcp", "0.0.0.0:8081")
 	if err != nil {
 		panic(err)
 	}

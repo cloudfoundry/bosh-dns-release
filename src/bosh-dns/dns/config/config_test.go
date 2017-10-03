@@ -66,9 +66,13 @@ var _ = Describe("Config", func() {
 			"cache": map[string]interface{}{
 				"enabled": true,
 			},
-			"http_json_endpoints": map[string]string{
-				"http.tld.": "http.server.address",
-			},
+			"handlers": []map[string]interface{}{{
+				"domain": "some.tld.",
+				"source": map[string]interface{}{
+					"type": "http",
+					"url":  "http.server.address",
+				},
+			}},
 		})
 		configFilePath := writeConfigFile(string(configContents))
 
@@ -101,8 +105,14 @@ var _ = Describe("Config", func() {
 			Cache: config.Cache{
 				Enabled: true,
 			},
-			HTTPJSONEndpoints: map[string]string{
-				"http.tld.": "http.server.address",
+			Handlers: []config.Handler{
+				{
+					Domain: "some.tld.",
+					Source: config.Source{
+						Type: "http",
+						URL:  "http.server.address",
+					},
+				},
 			},
 		}))
 	})
