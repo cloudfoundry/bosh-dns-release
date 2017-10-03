@@ -9,11 +9,14 @@ import (
 func main() {
 	http.HandleFunc("/", func(responseWriter http.ResponseWriter, req *http.Request) {
 
-		if req.URL.RawQuery != "type=1&name=app-id.internal.local." {
-			panic(fmt.Sprintf("Expected query 'type=1&name=app-id.internal.local.' Actual: '%s'", req.URL.RawQuery))
+		if req.URL.RawQuery != "type=1&name=app-id.internal.local." &&
+			req.URL.RawQuery != "type=1&name=large-id.internal.local." {
+			panic(fmt.Sprintf("Unexpected query '%s'", req.URL.RawQuery))
 		}
 
-		responseJSON := `{
+		var responseJSON string
+		if req.URL.RawQuery == "type=1&name=app-id.internal.local." {
+			responseJSON = `{
 					"Status": 0,
 					"TC": false,
 					"RD": true,
@@ -39,6 +42,106 @@ func main() {
 					"Additional": [ ],
 					"edns_client_subnet": "12.34.56.78/0"
 				}`
+		} else {
+			responseJSON = `{
+					"Status": 0,
+					"TC": false,
+					"RD": true,
+					"RA": true,
+					"AD": false,
+					"CD": false,
+					"Question":
+					[
+						{
+							"name": "large-id.internal.local.",
+							"type": 1
+						}
+					],
+					"Answer":
+					[
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 1526,
+							"data": "192.168.0.1"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 1526,
+							"data": "192.168.0.2"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 1526,
+							"data": "192.168.0.3"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.4"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.5"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.6"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.7"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.8"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.9"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.10"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.11"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.12"
+						},
+						{
+							"name": "large-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.13"
+						}
+					],
+					"Additional": [ ],
+					"edns_client_subnet": "12.34.56.78/0"
+				}`
+		}
 
 		responseWriter.Write([]byte(responseJSON))
 	})
