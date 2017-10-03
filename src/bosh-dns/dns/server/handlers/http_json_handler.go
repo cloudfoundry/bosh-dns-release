@@ -54,7 +54,7 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	url := fmt.Sprintf("%s/ips/%s", h.address, request.Question[0].Name)
 
 	httpResponse, err := h.client.Get(url)
-	if err != nil {
+	if err != nil || httpResponse.StatusCode != 200 {
 		h.logger.Error(h.logTag, "Error connecting to '%s': %v", h.address, err)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
 		return responseMsg
