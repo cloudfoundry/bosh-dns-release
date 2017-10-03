@@ -12,6 +12,7 @@ import (
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
+	"bosh-dns/dns/server/records/dnsresolver"
 )
 
 type HTTPJSONHandler struct {
@@ -47,6 +48,9 @@ func NewHTTPJSONHandler(address string, logger logger.Logger) HTTPJSONHandler {
 
 func (h HTTPJSONHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns.Msg) {
 	responseMsg := h.buildResponse(request)
+
+	dnsresolver.TruncateIfNeeded(responseWriter, responseMsg)
+
 	if err := responseWriter.WriteMsg(responseMsg); err != nil {
 		h.logger.Error(h.logTag, err.Error())
 	}
@@ -63,13 +67,14 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	}
 
 	question := request.Question[0]
+
 	url := fmt.Sprintf("%s/?type=%s&name=%s",
 		h.address,
 		strconv.Itoa(int(question.Qtype)),
 		url.QueryEscape(question.Name),
 	)
-
 	httpResponse, err := h.client.Get(url)
+
 	if err != nil {
 		h.logger.Error(h.logTag, "Error connecting to '%s': %v", h.address, err)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)

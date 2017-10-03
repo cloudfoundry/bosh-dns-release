@@ -46,37 +46,37 @@ var _ = Describe("HttpJsonHandler", func() {
 			fakeServerResponse = ghttp.CombineHandlers(
 				ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=28"),
 				ghttp.RespondWith(http.StatusOK, `{
-  "Status": 0,
-  "TC": true,
-  "RD": true,
-  "RA": true,
-  "AD": false,
-  "CD": false,
-  "Question":
-  [
-    {
-      "name": "app-id.internal-domain.",
-      "type": 28
-    }
-  ],
-  "Answer":
-  [
-    {
-      "name": "app-id.internal-domain.",
-      "type": 1,
-      "TTL": 1526,
-      "data": "192.168.0.1"
-    },
-    {
-      "name": "app-id.internal-domain.",
-      "type": 28,
-      "TTL": 224,
-      "data": "::1"
-    }
-  ],
-  "Additional": [ ],
-  "edns_client_subnet": "12.34.56.78/0"
-}`))
+					"Status": 0,
+					"TC": false,
+					"RD": true,
+					"RA": true,
+					"AD": false,
+					"CD": false,
+					"Question":
+					[
+						{
+							"name": "app-id.internal-domain.",
+							"type": 28
+						}
+					],
+					"Answer":
+					[
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 1526,
+							"data": "192.168.0.1"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 28,
+							"TTL": 224,
+							"data": "::1"
+						}
+					],
+					"Additional": [ ],
+					"edns_client_subnet": "12.34.56.78/0"
+				}`))
 		})
 
 		It("returns a DNS response based on answer given by backend server", func() {
@@ -91,7 +91,7 @@ var _ = Describe("HttpJsonHandler", func() {
 			Expect(resp.Rcode).To(Equal(dns.RcodeSuccess))
 			Expect(resp.Authoritative).To(BeTrue())
 			Expect(resp.RecursionAvailable).To(BeFalse())
-			Expect(resp.Truncated).To(BeTrue())
+			Expect(resp.Truncated).To(BeFalse())
 			Expect(resp.Answer).To(HaveLen(2))
 			Expect(resp.Answer[0]).To(Equal(&dns.A{
 				Hdr: dns.RR_Header{
@@ -116,7 +116,9 @@ var _ = Describe("HttpJsonHandler", func() {
 
 		Context("when there are no questions", func() {
 			It("returns rcode success", func() {
-				handler.ServeDNS(fakeWriter, &dns.Msg{})
+				msg := &dns.Msg{}
+				handler.ServeDNS(fakeWriter, msg)
+
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
 				Expect(message.Authoritative).To(Equal(true))
@@ -182,7 +184,7 @@ var _ = Describe("HttpJsonHandler", func() {
 			)
 		})
 
-		It("Returns a serve fail response", func() {
+		It("returns a serve fail response", func() {
 			req := &dns.Msg{}
 			req.SetQuestion("app-id.internal-domain.", dns.TypeA)
 			handler.ServeDNS(fakeWriter, req)
@@ -218,7 +220,7 @@ var _ = Describe("HttpJsonHandler", func() {
 			)
 		})
 
-		It("Returns a serve fail response", func() {
+		It("returns a serve fail response", func() {
 			req := &dns.Msg{}
 			req.SetQuestion("app-id.internal-domain.", dns.TypeA)
 			handler.ServeDNS(fakeWriter, req)
@@ -231,6 +233,171 @@ var _ = Describe("HttpJsonHandler", func() {
 			Expect(resp.RecursionAvailable).ToNot(BeTrue())
 
 			Expect(resp.Answer).To(HaveLen(0))
+		})
+	})
+
+	Context("when the https server message is truncated", func() {
+		BeforeEach(func() {
+			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
+			fakeServerResponse = ghttp.CombineHandlers(
+				ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=1"),
+				ghttp.RespondWith(http.StatusOK, `{
+					"Status": 0,
+					"TC": true,
+					"RD": true,
+					"RA": true,
+					"AD": false,
+					"CD": false,
+					"Question":
+					[
+						{
+							"name": "app-id.internal-domain.",
+							"type": 28
+						}
+					],
+					"Answer":
+					[
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 1526,
+							"data": "192.168.0.1"
+						}
+					],
+					"Additional": [ ],
+					"edns_client_subnet": "12.34.56.78/0"
+				}`))
+		})
+
+		It("returns a truncated dns message", func() {
+			req := &dns.Msg{}
+			req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+			handler.ServeDNS(fakeWriter, req)
+
+			Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+			resp := fakeWriter.WriteMsgArgsForCall(0)
+			Expect(resp.Rcode).To(Equal(dns.RcodeSuccess))
+			Expect(resp.Truncated).To(BeTrue())
+			Expect(resp.Question).To(Equal(req.Question))
+			Expect(resp.Answer).To(HaveLen(1))
+		})
+	})
+
+	Context("when the non truncated http server reponse message is too large to fit in dns message", func() {
+		BeforeEach(func() {
+			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
+			fakeServerResponse = ghttp.CombineHandlers(
+				ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=1"),
+				ghttp.RespondWith(http.StatusOK, `{
+					"Status": 0,
+					"TC": false,
+					"RD": true,
+					"RA": true,
+					"AD": false,
+					"CD": false,
+					"Question":
+					[
+						{
+							"name": "app-id.internal-domain.",
+							"type": 28
+						}
+					],
+					"Answer": [
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 1526,
+							"data": "192.168.0.1"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 1526,
+							"data": "192.168.0.2"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 1526,
+							"data": "192.168.0.3"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.4"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.5"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.6"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.7"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.8"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.9"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.10"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.11"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.12"
+						},
+						{
+							"name": "app-id.internal-domain.",
+							"type": 1,
+							"TTL": 224,
+							"data": "192.168.0.13"
+						}
+					],
+					"Additional": [ ],
+					"edns_client_subnet": "12.34.56.78/0"
+				}`))
+		})
+
+		It("truncates the answers to fit", func() {
+			req := &dns.Msg{}
+			req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+			handler.ServeDNS(fakeWriter, req)
+
+			Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+			resp := fakeWriter.WriteMsgArgsForCall(0)
+			Expect(resp.Rcode).To(Equal(dns.RcodeSuccess))
+			Expect(resp.Truncated).To(BeTrue())
+			Expect(resp.Question).To(Equal(req.Question))
+			Expect(resp.Answer).To(HaveLen(12))
 		})
 	})
 })
