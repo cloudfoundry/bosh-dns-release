@@ -22,6 +22,8 @@ type Config struct {
 
 	Health HealthConfig `json:"health"`
 	Cache  Cache        `json:"cache"`
+
+	HTTPJSONEndpoints map[string]string `json:"http_json_endpoints"`
 }
 
 type HealthConfig struct {

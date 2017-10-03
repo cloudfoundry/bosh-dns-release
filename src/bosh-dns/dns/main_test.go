@@ -97,6 +97,7 @@ var _ = Describe("main", func() {
 			aliasesDir      string
 			recordsFilePath string
 			checkInterval   string
+			httpJSONServer  *ghttp.Server
 		)
 
 		BeforeEach(func() {
@@ -146,6 +147,13 @@ var _ = Describe("main", func() {
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
+			httpJSONServer = ghttp.NewUnstartedServer()
+			httpJSONServer.AppendHandlers(ghttp.CombineHandlers(
+				ghttp.VerifyRequest("GET", "/ips/app-id.internal-domain."),
+				ghttp.RespondWith(http.StatusOK, `{"ips":["192.168.0.1", "192.168.0.4"]}`),
+			),
+			)
+			httpJSONServer.HTTPTestServer.Start()
 			configContents, err := json.Marshal(map[string]interface{}{
 				"address":          listenAddress,
 				"port":             listenPort,
@@ -159,6 +167,9 @@ var _ = Describe("main", func() {
 					"certificate_file": "../healthcheck/assets/test_certs/test_client.pem",
 					"private_key_file": "../healthcheck/assets/test_certs/test_client.key",
 					"check_interval":   checkInterval,
+				},
+				"http_json_endpoints": map[string]string{
+					"internal-domain.": httpJSONServer.URL(),
 				},
 			})
 			Expect(err).NotTo(HaveOccurred())
@@ -189,6 +200,8 @@ var _ = Describe("main", func() {
 			}
 
 			Expect(os.RemoveAll(aliasesDir)).To(Succeed())
+
+			httpJSONServer.Close()
 		})
 
 		DescribeTable("it responds to DNS requests",
@@ -517,6 +530,29 @@ var _ = Describe("main", func() {
 
 						return answer.(*dns.A).A.String()
 					}).Should(Equal("127.0.0.3"))
+				})
+			})
+
+			Context("http json domains", func() {
+				It("does something", func() {
+					c := &dns.Client{
+						Net: "udp",
+					}
+
+					m := &dns.Msg{}
+
+					m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Answer).To(HaveLen(2))
+
+					answer0 := r.Answer[0].(*dns.A)
+					Expect(answer0.A.String()).To(Equal("192.168.0.1"))
+
+					answer1 := r.Answer[1].(*dns.A)
+					Expect(answer1.A.String()).To(Equal("192.168.0.4"))
 				})
 			})
 		})

@@ -112,6 +112,9 @@ func mainExitCode() int {
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordsRepo, mux, discoveryHandler)
 
 	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
+	for domain, endpoint := range config.HTTPJSONEndpoints {
+		handlers.AddHandler(mux, clock, domain, handlers.NewHTTPJSONHandler(endpoint, logger), logger)
+	}
 
 	upchecks := []server.Upcheck{}
 	for _, upcheckDomain := range config.UpcheckDomains {
