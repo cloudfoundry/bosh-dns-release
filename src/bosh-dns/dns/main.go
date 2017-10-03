@@ -112,6 +112,7 @@ func mainExitCode() int {
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordsRepo, mux, discoveryHandler)
 
 	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
+
 	for _, handler := range config.Handlers {
 		if handler.Source.Type == "http" {
 			handlers.AddHandler(mux, clock, handler.Domain, handlers.NewHTTPJSONHandler(handler.Source.URL, logger), logger)

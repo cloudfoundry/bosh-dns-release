@@ -1,4 +1,14 @@
 <%=
+handlers = p('handlers')
+handlers.each do |handler|
+    if handler["domain"].nil?
+      raise "expected a domain for handler #{handler}"
+    end
+    if handler.fetch("source", {})["type"].nil?
+      raise "expected a type for handler #{handler}"
+    end
+end
+
 {
   address: p('address'),
   port: p('port'),
