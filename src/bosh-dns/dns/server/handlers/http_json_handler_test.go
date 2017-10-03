@@ -90,7 +90,7 @@ var _ = Describe("HttpJsonHandler", func() {
 			Expect(resp.Question).To(Equal(req.Question))
 			Expect(resp.Rcode).To(Equal(dns.RcodeSuccess))
 			Expect(resp.Authoritative).To(BeTrue())
-			Expect(resp.RecursionAvailable).To(BeFalse())
+			Expect(resp.RecursionAvailable).To(BeTrue())
 			Expect(resp.Truncated).To(BeFalse())
 			Expect(resp.Answer).To(HaveLen(2))
 			Expect(resp.Answer[0]).To(Equal(&dns.A{
@@ -121,8 +121,8 @@ var _ = Describe("HttpJsonHandler", func() {
 
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(false))
+				Expect(message.Authoritative).To(BeTrue())
+				Expect(message.RecursionAvailable).To(BeTrue())
 			})
 		})
 	})
@@ -155,7 +155,7 @@ var _ = Describe("HttpJsonHandler", func() {
 			Expect(resp.Question).To(Equal(req.Question))
 			Expect(resp.Rcode).To(Equal(dns.RcodeServerFailure))
 			Expect(resp.Authoritative).To(BeTrue())
-			Expect(resp.RecursionAvailable).ToNot(BeTrue())
+			Expect(resp.RecursionAvailable).To(BeTrue())
 
 			Expect(resp.Answer).To(HaveLen(0))
 		})
@@ -194,7 +194,7 @@ var _ = Describe("HttpJsonHandler", func() {
 			Expect(resp.Question).To(Equal(req.Question))
 			Expect(resp.Rcode).To(Equal(dns.RcodeServerFailure))
 			Expect(resp.Authoritative).To(BeTrue())
-			Expect(resp.RecursionAvailable).ToNot(BeTrue())
+			Expect(resp.RecursionAvailable).To(BeTrue())
 
 			Expect(resp.Answer).To(HaveLen(0))
 		})
@@ -230,7 +230,7 @@ var _ = Describe("HttpJsonHandler", func() {
 			Expect(resp.Question).To(Equal(req.Question))
 			Expect(resp.Rcode).To(Equal(dns.RcodeServerFailure))
 			Expect(resp.Authoritative).To(BeTrue())
-			Expect(resp.RecursionAvailable).ToNot(BeTrue())
+			Expect(resp.RecursionAvailable).To(BeTrue())
 
 			Expect(resp.Answer).To(HaveLen(0))
 		})
@@ -395,6 +395,7 @@ var _ = Describe("HttpJsonHandler", func() {
 			Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 			resp := fakeWriter.WriteMsgArgsForCall(0)
 			Expect(resp.Rcode).To(Equal(dns.RcodeSuccess))
+			Expect(resp.RecursionAvailable).To(BeTrue())
 			Expect(resp.Truncated).To(BeTrue())
 			Expect(resp.Question).To(Equal(req.Question))
 			Expect(resp.Answer).To(HaveLen(12))

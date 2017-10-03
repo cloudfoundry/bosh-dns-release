@@ -59,7 +59,7 @@ func (h HTTPJSONHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dn
 func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	responseMsg := new(dns.Msg)
 	responseMsg.Authoritative = true
-	responseMsg.RecursionAvailable = false
+	responseMsg.RecursionAvailable = true
 	responseMsg.SetReply(request)
 
 	if len(request.Question) == 0 {

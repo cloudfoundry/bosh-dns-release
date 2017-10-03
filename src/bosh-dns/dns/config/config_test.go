@@ -47,7 +47,7 @@ var _ = Describe("Config", func() {
 		upcheckDomains = []string{"upcheck.domain.", "health2.bosh."}
 	})
 
-	FIt("returns config from a config file", func() {
+	It("returns config from a config file", func() {
 		configContents, err := json.Marshal(map[string]interface{}{
 			"address":          listenAddress,
 			"port":             listenPort,
