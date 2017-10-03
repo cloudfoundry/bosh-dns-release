@@ -53,7 +53,7 @@ func NewFailoverRecursorPool(recursors []string) RecursorPool {
 
 func (q *failoverRecursorPool) PerformStrategically(work func(string) error) error {
 	if len(q.recursors) == 0 {
-		return errors.New("no recursors configured")
+		return NoRecursorsError{}
 	}
 
 	offset := atomic.LoadUint64(&q.preferredRecursorIndex)

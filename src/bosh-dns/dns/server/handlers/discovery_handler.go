@@ -8,23 +8,23 @@ import (
 )
 
 type DiscoveryHandler struct {
-	logger      logger.Logger
-	logTag      string
-	localDomain dnsresolver.LocalDomain
+	logger             logger.Logger
+	logTag             string
+	localDomain        dnsresolver.LocalDomain
+	recursionAvailable bool
 }
 
-func NewDiscoveryHandler(logger logger.Logger, localDomain dnsresolver.LocalDomain) DiscoveryHandler {
+func NewDiscoveryHandler(logger logger.Logger, localDomain dnsresolver.LocalDomain, recursionAvailable bool) DiscoveryHandler {
 	return DiscoveryHandler{
-		logger:      logger,
-		logTag:      "DiscoveryHandler",
-		localDomain: localDomain,
+		logger:             logger,
+		logTag:             "DiscoveryHandler",
+		localDomain:        localDomain,
+		recursionAvailable: recursionAvailable,
 	}
 }
 
 func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, requestMsg *dns.Msg) {
 	responseMsg := &dns.Msg{}
-	responseMsg.Authoritative = true
-	responseMsg.RecursionAvailable = false
 
 	if len(requestMsg.Question) > 0 {
 		switch requestMsg.Question[0].Qtype {
@@ -36,6 +36,9 @@ func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, requestMsg
 			responseMsg.SetRcode(requestMsg, dns.RcodeServerFailure)
 		}
 	}
+
+	responseMsg.Authoritative = true
+	responseMsg.RecursionAvailable = d.recursionAvailable
 
 	if err := responseWriter.WriteMsg(responseMsg); err != nil {
 		d.logger.Error(d.logTag, err.Error())

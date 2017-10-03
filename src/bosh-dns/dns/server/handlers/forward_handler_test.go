@@ -49,6 +49,32 @@ var _ = Describe("ForwardHandler", func() {
 			var recursionHandler handlers.ForwardHandler
 			var msg *dns.Msg
 			BeforeEach(func() {
+				recursionHandler = handlers.NewForwardHandler([]string{}, fakeExchangerFactory, fakeClock, fakeLogger)
+				msg = &dns.Msg{}
+				msg.SetQuestion("example.com.", dns.TypeANY)
+			})
+
+			It("indicates that there are no recursers availible", func() {
+				recursionHandler.ServeDNS(fakeWriter, msg)
+				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+
+				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
+				tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
+				Expect(tag).To(Equal("ForwardHandler"))
+				Expect(logMsg).To(Equal("handlers.ForwardHandler Request [255] [example.com.] 2 [no recursors configured] 0ns"))
+
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Question).To(Equal(msg.Question))
+				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+				Expect(message.Authoritative).To(Equal(false))
+				Expect(message.RecursionAvailable).To(Equal(false))
+			})
+		})
+
+		Context("when no working recursors are configured", func() {
+			var recursionHandler handlers.ForwardHandler
+			var msg *dns.Msg
+			BeforeEach(func() {
 				fakeExchanger.ExchangeReturns(nil, 0, errors.New("first recursor failed to reply"))
 				recursionHandler = handlers.NewForwardHandler([]string{"blah"}, fakeExchangerFactory, fakeClock, fakeLogger)
 				msg = &dns.Msg{}
