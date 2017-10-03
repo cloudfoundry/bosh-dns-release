@@ -4,18 +4,19 @@ name: bosh-dns
 templates:
   aliases.json.erb: dns/aliases.json
   bosh_dns_ctl.erb: bin/bosh_dns_ctl
-  bosh_dns_resolvconf_ctl.erb: bin/bosh_dns_resolvconf_ctl
   bosh_dns_health_ctl.erb: bin/bosh_dns_health_ctl
-  post-start.erb: bin/post-start
+  bosh_dns_resolvconf_ctl.erb: bin/bosh_dns_resolvconf_ctl
+  client.crt.erb: config/certs/client.crt
+  client.key.erb: config/certs/client.key
+  client_ca.crt.erb: config/certs/client_ca.crt
   config.json.erb: config/config.json
   health_server_config.json.erb: config/health_server_config.json
-  server.key.erb: config/certs/server.key
-  server.crt.erb: config/certs/server.crt
-  server_ca.crt.erb: config/certs/server_ca.crt
-  client.key.erb: config/certs/client.key
-  client.crt.erb: config/certs/client.crt
-  client_ca.crt.erb: config/certs/client_ca.crt
+  is-system-resolver.erb: bin/is-system-resolver
+  post-start.erb: bin/post-start
   pre-start.erb: bin/pre-start
+  server.crt.erb: config/certs/server.crt
+  server.key.erb: config/certs/server.key
+  server_ca.crt.erb: config/certs/server_ca.crt
   wait.erb: bin/wait
 
 packages:
