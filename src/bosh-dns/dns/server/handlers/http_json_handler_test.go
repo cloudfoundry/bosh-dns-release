@@ -283,7 +283,7 @@ var _ = Describe("HttpJsonHandler", func() {
 		})
 	})
 
-	Context("when the non truncated http server reponse message is too large to fit in dns message", func() {
+	Context("when the non truncated http server response message is too large to fit in dns message", func() {
 		BeforeEach(func() {
 			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
 			fakeServerResponse = ghttp.CombineHandlers(

@@ -68,10 +68,14 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 
 	question := request.Question[0]
 
-	url := fmt.Sprintf("%s/?type=%s&name=%s",
+	queryParams := url.Values{
+		"type": []string{strconv.Itoa(int(question.Qtype))},
+		"name": []string{question.Name},
+	}.Encode()
+
+	url := fmt.Sprintf("%s/?%s",
 		h.address,
-		strconv.Itoa(int(question.Qtype)),
-		url.QueryEscape(question.Name),
+		queryParams,
 	)
 	httpResponse, err := h.client.Get(url)
 
