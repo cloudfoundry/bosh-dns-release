@@ -79,7 +79,7 @@ var _ = Describe("RecursorPool", func() {
 
 		Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 		tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
-		Expect(logMsg).To(ContainSubstring("-----------> starting preference: one\n"))
+		Expect(logMsg).To(ContainSubstring("starting preference: one\n"))
 		Expect(tag).To(Equal("FailoverRecursor"))
 
 		Expect(recursorAttempts[0]).To(Equal(10))
@@ -113,11 +113,11 @@ var _ = Describe("RecursorPool", func() {
 
 			Expect(fakeLogger.InfoCallCount()).To(Equal(3))
 			_, logMsg, _ := fakeLogger.InfoArgsForCall(0)
-			Expect(logMsg).To(ContainSubstring("-----------> starting preference: one\n"))
+			Expect(logMsg).To(ContainSubstring("starting preference: one\n"))
 			_, logMsg, _ = fakeLogger.InfoArgsForCall(1)
-			Expect(logMsg).To(ContainSubstring("-----------> shifting recursor preference: two\n"))
+			Expect(logMsg).To(ContainSubstring("shifting recursor preference: two\n"))
 			_, logMsg, _ = fakeLogger.InfoArgsForCall(2)
-			Expect(logMsg).To(ContainSubstring("-----------> shifting recursor preference: three\n"))
+			Expect(logMsg).To(ContainSubstring("shifting recursor preference: three\n"))
 
 			Expect(recursorAttempts[0]).To(BeNumerically("<", recursorAttempts[2]))
 			Expect(recursorAttempts[1]).To(BeNumerically("<", recursorAttempts[2]))
@@ -137,9 +137,9 @@ var _ = Describe("RecursorPool", func() {
 
 			Expect(fakeLogger.InfoCallCount()).To(Equal(2))
 			_, logMsg, _ := fakeLogger.InfoArgsForCall(0)
-			Expect(logMsg).To(ContainSubstring("-----------> starting preference: one\n"))
+			Expect(logMsg).To(ContainSubstring("starting preference: one\n"))
 			_, logMsg, _ = fakeLogger.InfoArgsForCall(1)
-			Expect(logMsg).To(ContainSubstring("-----------> shifting recursor preference: two\n"))
+			Expect(logMsg).To(ContainSubstring("shifting recursor preference: two\n"))
 
 			Expect(recursorAttempts[0]).To(BeNumerically("<", recursorAttempts[1]))
 			Expect(recursorAttempts[2]).To(Equal(0))
