@@ -1,8 +1,11 @@
-package internal
+package handlers
 
 import (
 	"errors"
+	"fmt"
 	"sync/atomic"
+
+	"github.com/cloudfoundry/bosh-utils/logger"
 )
 
 const (
@@ -10,6 +13,7 @@ const (
 	FAIL_TOLERANCE_THRESHOLD = 5
 )
 
+//go:generate counterfeiter . RecursorPool
 type RecursorPool interface {
 	PerformStrategically(func(string) error) error
 }
@@ -17,6 +21,8 @@ type RecursorPool interface {
 type failoverRecursorPool struct {
 	preferredRecursorIndex uint64
 
+	logger    logger.Logger
+	logTag    string
 	recursors []recursorWithHistory
 }
 
@@ -26,7 +32,7 @@ type recursorWithHistory struct {
 	failCount  int32
 }
 
-func NewFailoverRecursorPool(recursors []string) RecursorPool {
+func NewFailoverRecursorPool(recursors []string, logger logger.Logger) RecursorPool {
 	recursorsWithHistory := []recursorWithHistory{}
 
 	if recursors == nil {
@@ -45,9 +51,15 @@ func NewFailoverRecursorPool(recursors []string) RecursorPool {
 			failCount:  0,
 		})
 	}
+	logTag := "FailoverRecursor"
+	if len(recursorsWithHistory) > 0 {
+		logger.Info(logTag, fmt.Sprintf("-----------> starting preference: %s\n", recursorsWithHistory[0].name))
+	}
 	return &failoverRecursorPool{
 		recursors:              recursorsWithHistory,
 		preferredRecursorIndex: 0,
+		logger:                 logger,
+		logTag:                 logTag,
 	}
 }
 
@@ -78,6 +90,8 @@ func (q *failoverRecursorPool) PerformStrategically(work func(string) error) err
 
 func (q *failoverRecursorPool) shiftPreference() {
 	atomic.AddUint64(&q.preferredRecursorIndex, 1)
+	index := q.preferredRecursorIndex % uint64(len(q.recursors))
+	q.logger.Info(q.logTag, fmt.Sprintf("-----------> shifting recursor preference: %s\n", q.recursors[index].name))
 }
 
 func (q *failoverRecursorPool) registerResult(index int, wasError bool) int32 {

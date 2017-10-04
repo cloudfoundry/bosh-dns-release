@@ -16,16 +16,17 @@ func ConfigureRecursors(reader RecursorReader, shuffler StringShuffler, dnsConfi
 		return nil
 	}
 
+	recursors := dnsConfig.Recursors
+
 	if len(dnsConfig.Recursors) <= 0 {
-		recursors, err := reader.Get()
+		var err error
+		recursors, err = reader.Get()
 		if err != nil {
 			return err
 		}
-
-		recursors = shuffler.Shuffle(recursors)
-
-		dnsConfig.Recursors = recursors
 	}
+
+	dnsConfig.Recursors = shuffler.Shuffle(recursors)
 
 	return nil
 }

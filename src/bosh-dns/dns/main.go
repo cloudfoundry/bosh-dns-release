@@ -122,7 +122,8 @@ func mainExitCode() int {
 		upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("%s:%d", config.Address, config.Port), upcheckDomain, "tcp"))
 	}
 
-	forwardHandler := handlers.NewForwardHandler(config.Recursors, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), clock, logger)
+	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, logger)
+	forwardHandler := handlers.NewForwardHandler(recursorPool, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), clock, logger)
 	if config.Cache.Enabled {
 		mux.Handle(".", handlers.NewCachingDNSHandler(forwardHandler))
 	} else {

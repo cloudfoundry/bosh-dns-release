@@ -8,15 +8,13 @@ import (
 
 	"code.cloudfoundry.org/clock"
 
-	"bosh-dns/dns/server/handlers/internal"
-
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
 
 type ForwardHandler struct {
 	clock            clock.Clock
-	recursors        internal.RecursorPool
+	recursors        RecursorPool
 	exchangerFactory ExchangerFactory
 	logger           logger.Logger
 	logTag           string
@@ -27,16 +25,15 @@ type Exchanger interface {
 	Exchange(*dns.Msg, string) (*dns.Msg, time.Duration, error)
 }
 
-//go:generate counterfeiter . Cache
 type Cache interface {
 	Get(req *dns.Msg) *dns.Msg
 	Write(req, answer *dns.Msg)
 	GetExpired(*dns.Msg) *dns.Msg
 }
 
-func NewForwardHandler(recursors []string, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger) ForwardHandler {
+func NewForwardHandler(recursors RecursorPool, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger) ForwardHandler {
 	return ForwardHandler{
-		recursors:        internal.NewFailoverRecursorPool(recursors),
+		recursors:        recursors,
 		exchangerFactory: exchangerFactory,
 		clock:            clock,
 		logger:           logger,
