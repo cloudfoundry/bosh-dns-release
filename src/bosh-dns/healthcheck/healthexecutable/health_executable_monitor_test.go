@@ -112,6 +112,8 @@ var _ = Describe("HealthExecutableMonitor", func() {
 
 	Context("when shutting down", func() {
 		It("stops calling the executables", func() {
+			Eventually(clock.WatcherCount).Should(Equal(1))
+
 			close(signal)
 			signal = nil
 

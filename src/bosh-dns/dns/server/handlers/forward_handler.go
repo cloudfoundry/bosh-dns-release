@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bosh-dns/dns/server/handlers/internal"
 	"fmt"
 	"net"
 	"strings"
@@ -21,6 +22,7 @@ type ForwardHandler struct {
 }
 
 //go:generate counterfeiter . Exchanger
+
 type Exchanger interface {
 	Exchange(*dns.Msg, string) (*dns.Msg, time.Duration, error)
 }

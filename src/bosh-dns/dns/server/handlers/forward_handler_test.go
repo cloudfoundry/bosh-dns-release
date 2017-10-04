@@ -9,6 +9,7 @@ import (
 
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/handlersfakes"
+	"bosh-dns/dns/server/handlers/internal"
 	"bosh-dns/dns/server/internal/internalfakes"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
@@ -56,10 +57,10 @@ var _ = Describe("ForwardHandler", func() {
 			recursionHandler = handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger)
 		})
 
-		Context("when the recursor fails to reply", func() {
+		Context("when there are no recursors configured", func() {
 			var msg *dns.Msg
 			BeforeEach(func() {
-				recursionHandler = handlers.NewForwardHandler([]string{}, fakeExchangerFactory, fakeClock, fakeLogger)
+				fakeRecursorPool.PerformStrategicallyReturns(internal.NoRecursorsError{})
 				msg = &dns.Msg{}
 				msg.SetQuestion("example.com.", dns.TypeANY)
 			})
@@ -82,8 +83,8 @@ var _ = Describe("ForwardHandler", func() {
 		})
 
 		Context("when no working recursors are configured", func() {
-			var recursionHandler handlers.ForwardHandler
 			var msg *dns.Msg
+
 			BeforeEach(func() {
 				fakeExchanger.ExchangeReturns(nil, 0, errors.New("first recursor failed to reply"))
 				msg = &dns.Msg{}

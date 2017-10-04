@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bosh-dns/dns/server/handlers/internal"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -9,8 +10,8 @@ import (
 )
 
 const (
-	FAIL_HISTORY_LENGTH      = 25
-	FAIL_TOLERANCE_THRESHOLD = 5
+	FailHistoryLength    = 25
+	FailHistoryThreshold = 5
 )
 
 //go:generate counterfeiter . RecursorPool
@@ -41,8 +42,8 @@ func NewFailoverRecursorPool(recursors []string, logger logger.Logger) RecursorP
 	}
 
 	for _, name := range recursors {
-		failBuffer := make(chan bool, FAIL_HISTORY_LENGTH)
-		for i := 0; i < FAIL_HISTORY_LENGTH; i++ {
+		failBuffer := make(chan bool, FailHistoryLength)
+		for i := 0; i < FailHistoryLength; i++ {
 			failBuffer <- false
 		}
 
@@ -66,7 +67,7 @@ func NewFailoverRecursorPool(recursors []string, logger logger.Logger) RecursorP
 
 func (q *failoverRecursorPool) PerformStrategically(work func(string) error) error {
 	if len(q.recursors) == 0 {
-		return NoRecursorsError{}
+		return internal.NoRecursorsError{}
 	}
 
 	offset := atomic.LoadUint64(&q.preferredRecursorIndex)
@@ -81,7 +82,7 @@ func (q *failoverRecursorPool) PerformStrategically(work func(string) error) err
 		}
 
 		failures := q.registerResult(index, true)
-		if i == 0 && failures >= FAIL_TOLERANCE_THRESHOLD {
+		if i == 0 && failures >= FailHistoryThreshold {
 			q.shiftPreference()
 		}
 	}
@@ -104,11 +105,11 @@ func (q *failoverRecursorPool) registerResult(index int, wasError bool) int32 {
 	change := int32(0)
 
 	if oldestResult {
-		change -= 1
+		change--
 	}
 
 	if wasError {
-		change += 1
+		change++
 	}
 
 	return atomic.AddInt32(&failingRecursor.failCount, change)
