@@ -41,6 +41,8 @@ func (d LocalDomain) Resolve(questionDomains []string, responseWriter dns.Respon
 	responseMsg := &dns.Msg{}
 	responseMsg.Answer = answers
 	responseMsg.SetRcode(requestMsg, rCode)
+	responseMsg.Authoritative = true
+	responseMsg.RecursionAvailable = false
 
 	d.trimIfNeeded(responseWriter, responseMsg)
 
