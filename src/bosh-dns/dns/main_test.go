@@ -773,7 +773,7 @@ var _ = Describe("main", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session, "5s").Should(gexec.Exit(1))
 			Eventually(session.Out).Should(gbytes.Say("[main].*ERROR - timed out waiting for server to bind"))
 		})
 
