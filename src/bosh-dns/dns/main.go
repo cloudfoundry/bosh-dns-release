@@ -106,8 +106,10 @@ func mainExitCode() int {
 	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
 	healthyRecordSet := healthiness.NewHealthyRecordSet(recordsRepo, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown)
 
+	recursionAvailable := len(config.Recursors) != 0
+
 	localDomain := dnsresolver.NewLocalDomain(logger, healthyRecordSet, shuffle.New())
-	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
+	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain, recursionAvailable)
 
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordsRepo, mux, discoveryHandler)
 

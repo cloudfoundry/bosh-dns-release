@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bosh-dns/dns/server/handlers/internal"
 	"fmt"
 	"net"
 	"strings"
@@ -73,7 +74,12 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 	})
 
 	if err != nil {
-		r.writeNoResponseMessage(responseWriter, request)
+		recursionAvailable := true
+		if _, ok := err.(internal.NoRecursorsError); ok {
+			recursionAvailable = false
+		}
+
+		r.writeNoResponseMessage(responseWriter, request, recursionAvailable)
 		r.logRecursor(before, request, dns.RcodeServerFailure, err.Error())
 	}
 }
@@ -125,10 +131,10 @@ func (ForwardHandler) network(responseWriter dns.ResponseWriter) string {
 	return network
 }
 
-func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter, req *dns.Msg) {
+func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter, req *dns.Msg, recursionAvailable bool) {
 	responseMessage := &dns.Msg{}
 	responseMessage.SetReply(req)
-	responseMessage.RecursionAvailable = true
+	responseMessage.RecursionAvailable = recursionAvailable
 	responseMessage.Authoritative = false
 	responseMessage.SetRcode(req, dns.RcodeServerFailure)
 	if err := responseWriter.WriteMsg(responseMessage); err != nil {

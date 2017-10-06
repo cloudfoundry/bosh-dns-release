@@ -382,7 +382,7 @@ var _ = Describe("main", func() {
 
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 					Expect(r.Authoritative).To(BeTrue())
-					Expect(r.RecursionAvailable).To(BeFalse())
+					Expect(r.RecursionAvailable).To(BeTrue())
 
 					Expect(header.Rrtype).To(Equal(dns.TypeA))
 					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
@@ -403,7 +403,7 @@ var _ = Describe("main", func() {
 
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 					Expect(r.Authoritative).To(BeTrue())
-					Expect(r.RecursionAvailable).To(BeFalse())
+					Expect(r.RecursionAvailable).To(BeTrue())
 
 					Expect(header.Rrtype).To(Equal(dns.TypeA))
 					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
@@ -427,7 +427,7 @@ var _ = Describe("main", func() {
 
 						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 						Expect(r.Authoritative).To(BeTrue())
-						Expect(r.RecursionAvailable).To(BeFalse())
+						Expect(r.RecursionAvailable).To(BeTrue())
 
 						Expect(header.Rrtype).To(Equal(dns.TypeA))
 						Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
@@ -449,7 +449,7 @@ var _ = Describe("main", func() {
 
 						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 						Expect(r.Authoritative).To(BeTrue())
-						Expect(r.RecursionAvailable).To(BeFalse())
+						Expect(r.RecursionAvailable).To(BeTrue())
 
 						Expect(header.Rrtype).To(Equal(dns.TypeA))
 						Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
@@ -472,7 +472,7 @@ var _ = Describe("main", func() {
 
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 					Expect(r.Authoritative).To(BeTrue())
-					Expect(r.RecursionAvailable).To(BeFalse())
+					Expect(r.RecursionAvailable).To(BeTrue())
 
 					Expect(header.Rrtype).To(Equal(dns.TypeA))
 					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
@@ -641,7 +641,7 @@ var _ = Describe("main", func() {
 		})
 	})
 
-	Context("when recursing has been enabled", func() {
+	Context("when specific recursors have been configured", func() {
 		var (
 			cmd     *exec.Cmd
 			session *gexec.Session

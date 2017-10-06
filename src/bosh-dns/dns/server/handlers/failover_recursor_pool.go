@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bosh-dns/dns/server/handlers/internal"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -66,7 +67,7 @@ func NewFailoverRecursorPool(recursors []string, logger logger.Logger) RecursorP
 
 func (q *failoverRecursorPool) PerformStrategically(work func(string) error) error {
 	if len(q.recursors) == 0 {
-		return errors.New("no recursors configured")
+		return internal.NoRecursorsError{}
 	}
 
 	offset := atomic.LoadUint64(&q.preferredRecursorIndex)
