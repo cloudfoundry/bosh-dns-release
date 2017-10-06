@@ -55,12 +55,11 @@ properties:
     default: []
     example:
       - domain: local.internal.
-        caching:
+        cache:
           enabled: true
         source:
           type: http
           url: http://some.endpoint.local
-          tls: ...
 
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"

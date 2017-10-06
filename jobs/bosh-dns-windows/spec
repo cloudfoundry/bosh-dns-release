@@ -47,10 +47,16 @@ properties:
     description: "allow the Windows dns caching service to remain in operation on this VM"
     default: false
 
-  http_json_endpoints:
-    description: "Hash of domain key to endpoints"
+  handlers:
+    description: "Array of handler configurations"
+    default: []
     example:
-      internal.domain.: http://endpoint
+      - domain: local.internal.
+        cache:
+          enabled: true
+        source:
+          type: http
+          url: http://some.endpoint.local
 
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"
