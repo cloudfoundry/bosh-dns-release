@@ -148,132 +148,56 @@ func (r RecordSet) allRecords() recordGroup {
 	return records
 }
 
-func (r RecordSet) recordFromGroup(groupIDs []string) recordGroup {
-	if len(groupIDs) == 0 {
+func (r RecordSet) recordsFrom(sources []string, groupFunc func(RecordSet) map[string]recordGroup) recordGroup {
+	if len(sources) == 0 {
 		return r.allRecords()
 	}
 
-	unionedGroups := make(recordGroup)
-	for _, groupID := range groupIDs {
-		unionedGroups = unionedGroups.union(r.byGroupID[groupID])
+	unionedRecords := make(recordGroup)
+	for _, source := range sources {
+		unionedRecords = unionedRecords.union(groupFunc(r)[source])
 	}
-	return unionedGroups
+	return unionedRecords
 }
 
-func (r RecordSet) recordFromInstanceIndices(idxs []string) recordGroup {
-	if len(idxs) == 0 {
-		return r.allRecords()
-	}
-
-	unionedIdxs := make(recordGroup)
-	for _, idx := range idxs {
-		unionedIdxs = unionedIdxs.union(r.byInstanceIndex[idx])
-	}
-	return unionedIdxs
+func (r RecordSet) recordsFromGroup(groupIDs []string) recordGroup {
+	return r.recordsFrom(groupIDs, func(rs RecordSet) map[string]recordGroup { return r.byGroupID })
 }
 
-func (r RecordSet) recordFromAZs(azs []string) recordGroup {
-	if len(azs) == 0 {
-		return r.allRecords()
-	}
-
-	unionedAzs := make(recordGroup)
-	for _, az := range azs {
-		unionedAzs = unionedAzs.union(r.byAzId[az])
-	}
-	return unionedAzs
+func (r RecordSet) recordsFromInstanceIndices(idxs []string) recordGroup {
+	return r.recordsFrom(idxs, func(rs RecordSet) map[string]recordGroup { return r.byInstanceIndex })
 }
 
-func (r RecordSet) recordFromGlobalIndex(globalIndexes []string) recordGroup {
-	if len(globalIndexes) == 0 {
-		return r.allRecords()
-	}
-
-	unionedGlobalIndexes := make(recordGroup)
-	for _, globalIndex := range globalIndexes {
-		unionedGlobalIndexes = unionedGlobalIndexes.union(r.byGlobalIndex[globalIndex])
-	}
-	return unionedGlobalIndexes
+func (r RecordSet) recordsFromAZs(azs []string) recordGroup {
+	return r.recordsFrom(azs, func(rs RecordSet) map[string]recordGroup { return r.byAzId })
 }
 
-func (r RecordSet) recordFromNetworkID(networkIDs []string) recordGroup {
-	if len(networkIDs) == 0 {
-		return r.allRecords()
-	}
-
-	unionedNetworkIDs := make(recordGroup)
-	for _, globalIndex := range networkIDs {
-		unionedNetworkIDs = unionedNetworkIDs.union(r.byNetworkID[globalIndex])
-	}
-	return unionedNetworkIDs
+func (r RecordSet) recordsFromGlobalIndex(globalIndexes []string) recordGroup {
+	return r.recordsFrom(globalIndexes, func(rs RecordSet) map[string]recordGroup { return r.byGlobalIndex })
 }
 
-func (r RecordSet) recordFromNetwork(networks []string) recordGroup {
-	if len(networks) == 0 {
-		return r.allRecords()
-	}
-
-	unionedNetworks := make(recordGroup)
-	for _, network := range networks {
-		unionedNetworks = unionedNetworks.union(r.byNetwork[network])
-	}
-	return unionedNetworks
+func (r RecordSet) recordsFromNetworkID(networkIDs []string) recordGroup {
+	return r.recordsFrom(networkIDs, func(rs RecordSet) map[string]recordGroup { return r.byNetworkID })
 }
 
-func (r RecordSet) recordFromInstanceGroupName(instanceGroupNames []string) recordGroup {
-	if len(instanceGroupNames) == 0 {
-		return r.allRecords()
-	}
-
-	unionedIgNames := make(recordGroup)
-	for _, names := range instanceGroupNames {
-		unionedIgNames = unionedIgNames.union(r.byInstanceGroup[names])
-	}
-	return unionedIgNames
+func (r RecordSet) recordsFromNetwork(networks []string) recordGroup {
+	return r.recordsFrom(networks, func(rs RecordSet) map[string]recordGroup { return r.byNetwork })
 }
 
-func (r RecordSet) recordFromDeployment(deployments []string) recordGroup {
-	if len(deployments) == 0 {
-		return r.allRecords()
-	}
-
-	unionedDeployments := make(recordGroup)
-	for _, deployment := range deployments {
-		unionedDeployments = unionedDeployments.union(r.byDeployment[deployment])
-	}
-	return unionedDeployments
+func (r RecordSet) recordsFromInstanceGroupName(instanceGroupNames []string) recordGroup {
+	return r.recordsFrom(instanceGroupNames, func(rs RecordSet) map[string]recordGroup { return r.byInstanceGroup })
 }
 
-func (r RecordSet) recordFromInstanceName(instanceNames []string) recordGroup {
-	if len(instanceNames) == 0 {
-		return r.allRecords()
-	}
-
-	unionedInstanceNames := make(recordGroup)
-	for _, instanceName := range instanceNames {
-		instances := []Record{}
-		for r, _ := range r.byInstanceName[instanceName] {
-			instances = append(instances, *r)
-		}
-		unionedInstanceNames = unionedInstanceNames.union(r.byInstanceName[instanceName])
-	}
-	return unionedInstanceNames
+func (r RecordSet) recordsFromDeployment(deployments []string) recordGroup {
+	return r.recordsFrom(deployments, func(rs RecordSet) map[string]recordGroup { return r.byDeployment })
 }
 
-func (r RecordSet) recordFromDomain(domains []string) recordGroup {
-	if len(domains) == 0 {
-		return r.allRecords()
-	}
+func (r RecordSet) recordsFromInstanceName(instanceNames []string) recordGroup {
+	return r.recordsFrom(instanceNames, func(rs RecordSet) map[string]recordGroup { return r.byInstanceName })
+}
 
-	unionedDomains := make(recordGroup)
-	for _, domain := range domains {
-		instances := []Record{}
-		for r, _ := range r.byDomain[domain] {
-			instances = append(instances, *r)
-		}
-		unionedDomains = unionedDomains.union(r.byDomain[domain])
-	}
-	return unionedDomains
+func (r RecordSet) recordsFromDomain(domains []string) recordGroup {
+	return r.recordsFrom(domains, func(rs RecordSet) map[string]recordGroup { return r.byDomain })
 }
 
 func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
@@ -318,16 +242,16 @@ func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
 	allRecords := r.allRecords()
 
 	candidates := allRecords
-	candidates = candidates.intersect(r.recordFromGlobalIndex(filter["m"]))
-	candidates = candidates.intersect(r.recordFromNetworkID(filter["n"]))
-	candidates = candidates.intersect(r.recordFromAZs(filter["a"]))
-	candidates = candidates.intersect(r.recordFromInstanceIndices(filter["i"]))
-	candidates = candidates.intersect(r.recordFromGroup(filter["g"]))
-	candidates = candidates.intersect(r.recordFromNetwork(filter["network"]))
-	candidates = candidates.intersect(r.recordFromInstanceGroupName(filter["instanceGroupName"]))
-	candidates = candidates.intersect(r.recordFromDeployment(filter["deployment"]))
-	candidates = candidates.intersect(r.recordFromInstanceName(filter["instanceName"]))
-	candidates = candidates.intersect(r.recordFromDomain(filter["domain"]))
+	candidates = candidates.intersect(r.recordsFromGlobalIndex(filter["m"]))
+	candidates = candidates.intersect(r.recordsFromNetworkID(filter["n"]))
+	candidates = candidates.intersect(r.recordsFromAZs(filter["a"]))
+	candidates = candidates.intersect(r.recordsFromInstanceIndices(filter["i"]))
+	candidates = candidates.intersect(r.recordsFromGroup(filter["g"]))
+	candidates = candidates.intersect(r.recordsFromNetwork(filter["network"]))
+	candidates = candidates.intersect(r.recordsFromInstanceGroupName(filter["instanceGroupName"]))
+	candidates = candidates.intersect(r.recordsFromDeployment(filter["deployment"]))
+	candidates = candidates.intersect(r.recordsFromInstanceName(filter["instanceName"]))
+	candidates = candidates.intersect(r.recordsFromDomain(filter["domain"]))
 
 	for record := range candidates {
 		ips = append(ips, (*record).IP)
