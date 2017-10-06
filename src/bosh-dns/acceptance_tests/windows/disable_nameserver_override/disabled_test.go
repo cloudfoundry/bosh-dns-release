@@ -3,15 +3,18 @@
 package disable_nameserver_override_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"os/exec"
-
-	"strings"
 	"time"
 
+	"bosh-dns/dns/manager"
+
+	"github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/system"
+
 	"github.com/onsi/gomega/gexec"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("dns job: disable_nameserver_override", func() {
@@ -27,37 +30,36 @@ var _ = Describe("dns job: disable_nameserver_override", func() {
 		})
 
 		Context("external processes changing dns servers", func() {
-			var existingDNS string
+			var (
+				existingDNS string
+				man         manager.DNSManager
+			)
 
 			BeforeEach(func() {
-				cmd := exec.Command("powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1")
-				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				logger := logger.NewLogger(logger.LevelDebug)
+				cmdRunner := system.NewExecCmdRunner(logger)
+				fs := system.NewOsFileSystem(logger)
+				man = manager.NewWindowsManager(cmdRunner, fs)
 
-				existingDNS = strings.SplitN(string(session.Out.Contents()), "\r\n", 2)[0]
+				addresses, err := man.Read()
+				Expect(err).NotTo(HaveOccurred())
+				existingDNS = addresses[0]
 			})
 
 			AfterEach(func() {
-				cmd := exec.Command("powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/prepend-dns-server.ps1", "-DNSAddress", existingDNS)
-				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				err := man.SetPrimary(existingDNS)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 			})
 
 			It("does not rewrite the nameserver configuration to our dns server", func() {
-				cmd := exec.Command("powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/prepend-dns-server.ps1", "-DNSAddress", "192.0.2.100")
-				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				err := man.SetPrimary("192.0.2.100")
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 				Consistently(func() string {
-					cmd := exec.Command("powershell.exe", "/var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1")
-					session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+					addresses, err := man.Read()
 					Expect(err).NotTo(HaveOccurred())
-					Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
-					return strings.SplitN(string(session.Out.Contents()), "\r\n", 2)[0]
+					return addresses[0]
 				}, 15*time.Second, time.Second*2).Should(Equal("192.0.2.100"))
 			})
 		})

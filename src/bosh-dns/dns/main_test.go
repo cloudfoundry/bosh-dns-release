@@ -6,10 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/config"
-	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
 	"os/exec"
@@ -33,6 +30,10 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/ghttp"
 	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("main", func() {
@@ -46,13 +47,6 @@ var _ = Describe("main", func() {
 		var err error
 		listenPort, err = getFreePort()
 		Expect(err).NotTo(HaveOccurred())
-
-		if runtime.GOOS == "windows" {
-			err := os.MkdirAll("/var/vcap/packages/bosh-dns-windows/bin", os.ModePerm)
-			Expect(err).ToNot(HaveOccurred())
-			err = ioutil.WriteFile("/var/vcap/packages/bosh-dns-windows/bin/list-server-addresses.ps1", []byte(""), os.ModePerm)
-			Expect(err).NotTo(HaveOccurred())
-		}
 	})
 
 	Describe("flags", func() {
