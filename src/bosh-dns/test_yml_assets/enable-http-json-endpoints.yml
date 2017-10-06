@@ -1,0 +1,9 @@
+---
+
+- path: /instance_groups/0/jobs/1/properties?/handlers
+  type: replace
+  value:
+    - domain: internal.local.
+      source:
+        type: http
+        url: ((http_json_server_address))

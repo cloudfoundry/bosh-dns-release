@@ -24,6 +24,7 @@ func TestAcceptance(t *testing.T) {
 
 var (
 	pathToTestRecursorServer string
+	pathToTestHTTPDNSServer  string
 	boshBinaryPath           string
 	allDeployedInstances     []instanceInfo
 	boshDeployment           string
@@ -44,6 +45,9 @@ var _ = BeforeSuite(func() {
 
 	var err error
 	pathToTestRecursorServer, err = gexec.Build("bosh-dns/acceptance_tests/test_recursor")
+	Expect(err).NotTo(HaveOccurred())
+
+	pathToTestHTTPDNSServer, err = gexec.Build("bosh-dns/acceptance_tests/test_http_dns_server")
 	Expect(err).NotTo(HaveOccurred())
 })
 

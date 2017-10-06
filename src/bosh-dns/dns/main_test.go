@@ -91,10 +91,13 @@ var _ = Describe("main", func() {
 			aliasesDir      string
 			recordsFilePath string
 			checkInterval   string
+			httpJSONServer  *ghttp.Server
+			httpJSONCachingEnabled bool
 		)
 
 		BeforeEach(func() {
 			checkInterval = "100ms"
+			httpJSONCachingEnabled = false
 		})
 
 		JustBeforeEach(func() {
@@ -140,6 +143,38 @@ var _ = Describe("main", func() {
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
+			httpJSONServer = ghttp.NewUnstartedServer()
+			httpJSONServer.AppendHandlers(ghttp.CombineHandlers(
+				ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=255"),
+				ghttp.RespondWith(http.StatusOK, `{
+  "Status": 0,
+  "TC": false,
+  "RD": true,
+  "RA": true,
+  "AD": false,
+  "CD": false,
+  "Question":
+  [
+    {
+      "name": "app-id.internal-domain.",
+      "type": 28
+    }
+  ],
+  "Answer":
+  [
+    {
+      "name": "app-id.internal-domain.",
+      "type": 1,
+      "TTL": 1526,
+      "data": "192.168.0.1"
+    }
+  ],
+  "Additional": [ ],
+  "edns_client_subnet": "12.34.56.78/0"
+}`),
+			),
+			)
+			httpJSONServer.HTTPTestServer.Start()
 			configContents, err := json.Marshal(map[string]interface{}{
 				"address":          listenAddress,
 				"port":             listenPort,
@@ -154,6 +189,16 @@ var _ = Describe("main", func() {
 					"private_key_file": "../healthcheck/assets/test_certs/test_client.key",
 					"check_interval":   checkInterval,
 				},
+				"handlers": []map[string]interface{}{{
+					"domain": "internal-domain.",
+					"cache": map[string]interface{}{
+						"enabled": httpJSONCachingEnabled,
+					},
+					"source": map[string]interface{}{
+						"type": "http",
+						"url":  httpJSONServer.URL(),
+					},
+				}},
 			})
 			Expect(err).NotTo(HaveOccurred())
 			cmd = newCommandWithConfig(string(configContents))
@@ -183,6 +228,8 @@ var _ = Describe("main", func() {
 			}
 
 			Expect(os.RemoveAll(aliasesDir)).To(Succeed())
+
+			httpJSONServer.Close()
 		})
 
 		DescribeTable("it responds to DNS requests",
@@ -511,6 +558,58 @@ var _ = Describe("main", func() {
 
 						return answer.(*dns.A).A.String()
 					}).Should(Equal("127.0.0.3"))
+				})
+			})
+
+			Context("http json domains", func() {
+				It("serves the addresses from the http server", func() {
+					c := &dns.Client{Net: "tcp"}
+
+					m := &dns.Msg{}
+
+					m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Answer).To(HaveLen(1))
+
+					answer0 := r.Answer[0].(*dns.A)
+					Expect(answer0.A.String()).To(Equal("192.168.0.1"))
+				})
+
+				Context("when caching is enabled", func() {
+					BeforeEach(func() {
+						httpJSONCachingEnabled = true
+					})
+
+					It("should return cached answers", func() {
+						c := &dns.Client{Net: "tcp"}
+
+						m := &dns.Msg{}
+
+						m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer0 := r.Answer[0].(*dns.A)
+						Expect(answer0.A.String()).To(Equal("192.168.0.1"))
+
+						m = &dns.Msg{}
+
+						m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+						r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer0 = r.Answer[0].(*dns.A)
+						Expect(answer0.A.String()).To(Equal("192.168.0.1"))
+					})
 				})
 			})
 		})

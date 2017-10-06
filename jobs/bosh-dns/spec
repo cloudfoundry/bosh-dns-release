@@ -51,6 +51,17 @@ properties:
     description: "Configure ourselves as the system nameserver (e.g. /etc/resolv.conf will be watched and overwritten)"
     default: true
 
+  handlers:
+    description: "Array of handler configurations"
+    default: []
+    example:
+      - domain: local.internal.
+        cache:
+          enabled: true
+        source:
+          type: http
+          url: http://some.endpoint.local
+
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"
     default: []

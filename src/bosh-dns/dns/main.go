@@ -115,6 +115,17 @@ func mainExitCode() int {
 
 	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
 
+	for _, handler := range config.Handlers {
+		if handler.Source.Type == "http" {
+			var dnsHandler dns.Handler
+			dnsHandler = handlers.NewHTTPJSONHandler(handler.Source.URL, logger)
+			if handler.Cache.Enabled {
+				dnsHandler =  handlers.NewCachingDNSHandler(dnsHandler)
+			}
+			handlers.AddHandler(mux, clock, handler.Domain, dnsHandler, logger)
+		}
+	}
+
 	upchecks := []server.Upcheck{}
 	for _, upcheckDomain := range config.UpcheckDomains {
 		handlers.AddHandler(mux, clock, upcheckDomain, handlers.NewUpcheckHandler(logger), logger)

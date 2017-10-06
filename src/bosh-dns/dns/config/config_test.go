@@ -66,6 +66,16 @@ var _ = Describe("Config", func() {
 			"cache": map[string]interface{}{
 				"enabled": true,
 			},
+			"handlers": []map[string]interface{}{{
+				"domain": "some.tld.",
+				"cache": map[string]interface{}{
+					"enabled": true,
+				},
+				"source": map[string]interface{}{
+					"type": "http",
+					"url":  "http.server.address",
+				},
+			}},
 		})
 		configFilePath := writeConfigFile(string(configContents))
 
@@ -97,6 +107,18 @@ var _ = Describe("Config", func() {
 			},
 			Cache: config.Cache{
 				Enabled: true,
+			},
+			Handlers: []config.Handler{
+				{
+					Domain: "some.tld.",
+					Cache: config.Cache{
+						Enabled: true,
+					},
+					Source: config.Source{
+						Type: "http",
+						URL:  "http.server.address",
+					},
+				},
 			},
 		}))
 	})
