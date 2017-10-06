@@ -21,29 +21,28 @@ type RecordSet struct {
 	Records         []*Record
 	byGlobalIndex   map[string]recordGroup
 	byNetworkID     map[string]recordGroup
-	ByAzId          map[string]recordGroup
-	ByInstanceIndex map[string]recordGroup
-	ByInstanceGroup map[string]recordGroup
-	ByNetwork       map[string]recordGroup
-	ByDeployment    map[string]recordGroup
-	ByGroupID       map[string]recordGroup
-	ByInstanceName  map[string]recordGroup
-	ByDomain        map[string]recordGroup
-	initialized     bool
+	byAzId          map[string]recordGroup
+	byInstanceIndex map[string]recordGroup
+	byInstanceGroup map[string]recordGroup
+	byNetwork       map[string]recordGroup
+	byDeployment    map[string]recordGroup
+	byGroupID       map[string]recordGroup
+	byInstanceName  map[string]recordGroup
+	byDomain        map[string]recordGroup
 }
 
 func NewRecordSet(records []*Record) RecordSet {
 	r := RecordSet{}
 	r.byGlobalIndex = make(map[string]recordGroup)
 	r.byNetworkID = make(map[string]recordGroup)
-	r.ByAzId = make(map[string]recordGroup)
-	r.ByInstanceIndex = make(map[string]recordGroup)
-	r.ByGroupID = make(map[string]recordGroup)
-	r.ByInstanceGroup = make(map[string]recordGroup)
-	r.ByNetwork = make(map[string]recordGroup)
-	r.ByDeployment = make(map[string]recordGroup)
-	r.ByInstanceName = make(map[string]recordGroup)
-	r.ByDomain = make(map[string]recordGroup)
+	r.byAzId = make(map[string]recordGroup)
+	r.byInstanceIndex = make(map[string]recordGroup)
+	r.byGroupID = make(map[string]recordGroup)
+	r.byInstanceGroup = make(map[string]recordGroup)
+	r.byNetwork = make(map[string]recordGroup)
+	r.byDeployment = make(map[string]recordGroup)
+	r.byInstanceName = make(map[string]recordGroup)
+	r.byDomain = make(map[string]recordGroup)
 	r.Records = records
 
 	domains := make(map[string]struct{})
@@ -58,48 +57,48 @@ func NewRecordSet(records []*Record) RecordSet {
 		}
 		r.byNetworkID[record.NetworkID][record] = struct{}{}
 
-		if r.ByAzId[record.AZID] == nil {
-			r.ByAzId[record.AZID] = make(recordGroup)
+		if r.byAzId[record.AZID] == nil {
+			r.byAzId[record.AZID] = make(recordGroup)
 		}
-		if r.ByInstanceIndex[record.InstanceIndex] == nil {
-			r.ByInstanceIndex[record.InstanceIndex] = make(recordGroup)
+		if r.byInstanceIndex[record.InstanceIndex] == nil {
+			r.byInstanceIndex[record.InstanceIndex] = make(recordGroup)
 		}
 
-		r.ByAzId[record.AZID][record] = struct{}{}
-		r.ByInstanceIndex[record.InstanceIndex][record] = struct{}{}
+		r.byAzId[record.AZID][record] = struct{}{}
+		r.byInstanceIndex[record.InstanceIndex][record] = struct{}{}
 
 		for _, groupID := range record.GroupIDs {
-			if r.ByGroupID[groupID] == nil {
-				r.ByGroupID[groupID] = make(recordGroup)
+			if r.byGroupID[groupID] == nil {
+				r.byGroupID[groupID] = make(recordGroup)
 			}
-			r.ByGroupID[groupID][record] = struct{}{}
+			r.byGroupID[groupID][record] = struct{}{}
 		}
 
-		if r.ByInstanceGroup[record.Group] == nil {
-			r.ByInstanceGroup[record.Group] = make(recordGroup)
+		if r.byInstanceGroup[record.Group] == nil {
+			r.byInstanceGroup[record.Group] = make(recordGroup)
 		}
-		r.ByInstanceGroup[record.Group][record] = struct{}{}
+		r.byInstanceGroup[record.Group][record] = struct{}{}
 
-		if r.ByNetwork[record.Network] == nil {
-			r.ByNetwork[record.Network] = make(recordGroup)
+		if r.byNetwork[record.Network] == nil {
+			r.byNetwork[record.Network] = make(recordGroup)
 		}
-		r.ByNetwork[record.Network][record] = struct{}{}
+		r.byNetwork[record.Network][record] = struct{}{}
 
-		if r.ByDeployment[record.Deployment] == nil {
-			r.ByDeployment[record.Deployment] = make(recordGroup)
+		if r.byDeployment[record.Deployment] == nil {
+			r.byDeployment[record.Deployment] = make(recordGroup)
 		}
-		r.ByDeployment[record.Deployment][record] = struct{}{}
+		r.byDeployment[record.Deployment][record] = struct{}{}
 
-		if r.ByInstanceName[record.ID] == nil {
-			r.ByInstanceName[record.ID] = make(recordGroup)
+		if r.byInstanceName[record.ID] == nil {
+			r.byInstanceName[record.ID] = make(recordGroup)
 		}
-		r.ByInstanceName[record.ID][record] = struct{}{}
+		r.byInstanceName[record.ID][record] = struct{}{}
 		domains[record.Domain] = struct{}{}
 
-		if r.ByDomain[record.Domain] == nil {
-			r.ByDomain[record.Domain] = make(recordGroup)
+		if r.byDomain[record.Domain] == nil {
+			r.byDomain[record.Domain] = make(recordGroup)
 		}
-		r.ByDomain[record.Domain][record] = struct{}{}
+		r.byDomain[record.Domain][record] = struct{}{}
 
 		domains[record.Domain] = struct{}{}
 	}
@@ -156,7 +155,7 @@ func (r RecordSet) recordFromGroup(groupIDs []string) recordGroup {
 
 	unionedGroups := make(recordGroup)
 	for _, groupID := range groupIDs {
-		unionedGroups = unionedGroups.union(r.ByGroupID[groupID])
+		unionedGroups = unionedGroups.union(r.byGroupID[groupID])
 	}
 	return unionedGroups
 }
@@ -168,7 +167,7 @@ func (r RecordSet) recordFromInstanceIndices(idxs []string) recordGroup {
 
 	unionedIdxs := make(recordGroup)
 	for _, idx := range idxs {
-		unionedIdxs = unionedIdxs.union(r.ByInstanceIndex[idx])
+		unionedIdxs = unionedIdxs.union(r.byInstanceIndex[idx])
 	}
 	return unionedIdxs
 }
@@ -180,7 +179,7 @@ func (r RecordSet) recordFromAZs(azs []string) recordGroup {
 
 	unionedAzs := make(recordGroup)
 	for _, az := range azs {
-		unionedAzs = unionedAzs.union(r.ByAzId[az])
+		unionedAzs = unionedAzs.union(r.byAzId[az])
 	}
 	return unionedAzs
 }
@@ -216,7 +215,7 @@ func (r RecordSet) recordFromNetwork(networks []string) recordGroup {
 
 	unionedNetworks := make(recordGroup)
 	for _, network := range networks {
-		unionedNetworks = unionedNetworks.union(r.ByNetwork[network])
+		unionedNetworks = unionedNetworks.union(r.byNetwork[network])
 	}
 	return unionedNetworks
 }
@@ -228,7 +227,7 @@ func (r RecordSet) recordFromInstanceGroupName(instanceGroupNames []string) reco
 
 	unionedIgNames := make(recordGroup)
 	for _, names := range instanceGroupNames {
-		unionedIgNames = unionedIgNames.union(r.ByInstanceGroup[names])
+		unionedIgNames = unionedIgNames.union(r.byInstanceGroup[names])
 	}
 	return unionedIgNames
 }
@@ -240,7 +239,7 @@ func (r RecordSet) recordFromDeployment(deployments []string) recordGroup {
 
 	unionedDeployments := make(recordGroup)
 	for _, deployment := range deployments {
-		unionedDeployments = unionedDeployments.union(r.ByDeployment[deployment])
+		unionedDeployments = unionedDeployments.union(r.byDeployment[deployment])
 	}
 	return unionedDeployments
 }
@@ -253,10 +252,10 @@ func (r RecordSet) recordFromInstanceName(instanceNames []string) recordGroup {
 	unionedInstanceNames := make(recordGroup)
 	for _, instanceName := range instanceNames {
 		instances := []Record{}
-		for r, _ := range r.ByInstanceName[instanceName] {
+		for r, _ := range r.byInstanceName[instanceName] {
 			instances = append(instances, *r)
 		}
-		unionedInstanceNames = unionedInstanceNames.union(r.ByInstanceName[instanceName])
+		unionedInstanceNames = unionedInstanceNames.union(r.byInstanceName[instanceName])
 	}
 	return unionedInstanceNames
 }
@@ -269,10 +268,10 @@ func (r RecordSet) recordFromDomain(domains []string) recordGroup {
 	unionedDomains := make(recordGroup)
 	for _, domain := range domains {
 		instances := []Record{}
-		for r, _ := range r.ByDomain[domain] {
+		for r, _ := range r.byDomain[domain] {
 			instances = append(instances, *r)
 		}
-		unionedDomains = unionedDomains.union(r.ByDomain[domain])
+		unionedDomains = unionedDomains.union(r.byDomain[domain])
 	}
 	return unionedDomains
 }
