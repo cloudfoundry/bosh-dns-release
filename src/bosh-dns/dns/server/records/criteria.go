@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var keyValueRegex = regexp.MustCompile("(a|i|s)([0-9]+)")
+var keyValueRegex = regexp.MustCompile("(a|i|s|m|n)([0-9]+)")
 var groupRegex = regexp.MustCompile("^g-([0-9]+)$")
 
 type criteria map[string][]string

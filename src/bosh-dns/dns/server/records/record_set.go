@@ -19,6 +19,8 @@ type recordGroup map[*Record]struct{}
 type RecordSet struct {
 	Domains         []string
 	Records         []*Record
+	byGlobalIndex   map[string]recordGroup
+	byNetworkID     map[string]recordGroup
 	ByAzId          map[string]recordGroup
 	ByInstanceIndex map[string]recordGroup
 	ByInstanceGroup map[string]recordGroup
@@ -32,6 +34,8 @@ type RecordSet struct {
 
 func NewRecordSet(records []*Record) RecordSet {
 	r := RecordSet{}
+	r.byGlobalIndex = make(map[string]recordGroup)
+	r.byNetworkID = make(map[string]recordGroup)
 	r.ByAzId = make(map[string]recordGroup)
 	r.ByInstanceIndex = make(map[string]recordGroup)
 	r.ByGroupID = make(map[string]recordGroup)
@@ -44,6 +48,16 @@ func NewRecordSet(records []*Record) RecordSet {
 
 	domains := make(map[string]struct{})
 	for _, record := range r.Records {
+		if r.byGlobalIndex[record.GlobalIndex] == nil {
+			r.byGlobalIndex[record.GlobalIndex] = make(recordGroup)
+		}
+		r.byGlobalIndex[record.GlobalIndex][record] = struct{}{}
+
+		if r.byNetworkID[record.NetworkID] == nil {
+			r.byNetworkID[record.NetworkID] = make(recordGroup)
+		}
+		r.byNetworkID[record.NetworkID][record] = struct{}{}
+
 		if r.ByAzId[record.AZID] == nil {
 			r.ByAzId[record.AZID] = make(recordGroup)
 		}
@@ -171,6 +185,30 @@ func (r RecordSet) recordFromAZs(azs []string) recordGroup {
 	return unionedAzs
 }
 
+func (r RecordSet) recordFromGlobalIndex(globalIndexes []string) recordGroup {
+	if len(globalIndexes) == 0 {
+		return r.allRecords()
+	}
+
+	unionedGlobalIndexes := make(recordGroup)
+	for _, globalIndex := range globalIndexes {
+		unionedGlobalIndexes = unionedGlobalIndexes.union(r.byGlobalIndex[globalIndex])
+	}
+	return unionedGlobalIndexes
+}
+
+func (r RecordSet) recordFromNetworkID(networkIDs []string) recordGroup {
+	if len(networkIDs) == 0 {
+		return r.allRecords()
+	}
+
+	unionedNetworkIDs := make(recordGroup)
+	for _, globalIndex := range networkIDs {
+		unionedNetworkIDs = unionedNetworkIDs.union(r.byNetworkID[globalIndex])
+	}
+	return unionedNetworkIDs
+}
+
 func (r RecordSet) recordFromNetwork(networks []string) recordGroup {
 	if len(networks) == 0 {
 		return r.allRecords()
@@ -281,6 +319,8 @@ func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
 	allRecords := r.allRecords()
 
 	candidates := allRecords
+	candidates = candidates.intersect(r.recordFromGlobalIndex(filter["m"]))
+	candidates = candidates.intersect(r.recordFromNetworkID(filter["n"]))
 	candidates = candidates.intersect(r.recordFromAZs(filter["a"]))
 	candidates = candidates.intersect(r.recordFromInstanceIndices(filter["i"]))
 	candidates = candidates.intersect(r.recordFromGroup(filter["g"]))
@@ -310,8 +350,10 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 	records := make([]*Record, 0, len(swap.Infos))
 
 	idIndex := -1
+	globalIndexIndex := -1
 	groupIndex := -1
 	networkIndex := -1
+	networkIDIndex := -1
 	deploymentIndex := -1
 	ipIndex := -1
 	domainIndex := -1
@@ -323,12 +365,16 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		switch k {
 		case "id":
 			idIndex = i
+		case "global_index":
+			globalIndexIndex = i
 		case "instance_group":
 			groupIndex = i
 		case "group_ids":
 			groupIdsIndex = i
 		case "network":
 			networkIndex = i
+		case "network_id":
+			networkIDIndex = i
 		case "deployment":
 			deploymentIndex = i
 		case "ip":
@@ -354,7 +400,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		}
 
 		var domainIndexStr string
-		if !assertStringValue(&domainIndexStr, info, domainIndex, "domain", index, logger) {
+		if !requiredStringValue(&domainIndexStr, info, domainIndex, "domain", index, logger) {
 			continue
 		}
 
@@ -362,21 +408,26 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 
 		record := Record{Domain: domain}
 
-		if !assertStringValue(&record.ID, info, idIndex, "id", index, logger) {
+		if !requiredStringValue(&record.ID, info, idIndex, "id", index, logger) {
 			continue
-		} else if !assertStringValue(&record.Group, info, groupIndex, "group", index, logger) {
+		} else if !requiredStringValue(&record.Group, info, groupIndex, "group", index, logger) {
 			continue
-		} else if !assertStringValue(&record.Network, info, networkIndex, "network", index, logger) {
+		} else if !requiredStringValue(&record.Network, info, networkIndex, "network", index, logger) {
 			continue
-		} else if !assertStringValue(&record.Deployment, info, deploymentIndex, "deployment", index, logger) {
+		} else if !requiredStringValue(&record.Deployment, info, deploymentIndex, "deployment", index, logger) {
 			continue
-		} else if !assertStringValue(&record.IP, info, ipIndex, "ip", index, logger) {
+		} else if !requiredStringValue(&record.IP, info, ipIndex, "ip", index, logger) {
 			continue
-		} else if !assertStringArrayOfStringValue(&record.GroupIDs, info, groupIdsIndex, "group_ids", index, logger) {
+		} else if !optionalStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger) {
+			continue
+		} else if !optionalStringValue(&record.NetworkID, info, networkIDIndex, "network_id", index, logger) {
+			continue
+		} else if !optionalStringValue(&record.GlobalIndex, info, globalIndexIndex, "global_index", index, logger) {
+			continue
+		} else if groupIdsIndex >= 0 && !assertStringArrayOfStringValue(&record.GroupIDs, info, groupIdsIndex, "group_ids", index, logger) {
 			continue
 		}
 
-		assertStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger)
 		assertStringIntegerValue(&record.InstanceIndex, info, instanceIndexIndex, "instance_index", index, logger)
 
 		records = append(records, &record)
@@ -399,11 +450,7 @@ func assertStringIntegerValue(field *string, info []interface{}, fieldIdx int, f
 	return ok
 }
 
-func assertStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
-	if fieldIdx < 0 {
-		return false
-	}
-
+func convertToStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
 	var ok bool
 	*field, ok = info[fieldIdx].(string)
 
@@ -414,12 +461,27 @@ func assertStringValue(field *string, info []interface{}, fieldIdx int, fieldNam
 	return ok
 }
 
-func assertStringArrayOfStringValue(field *[]string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
-	if fieldIdx < 0 {
-		// *field = []string{}
-		return true
+func optionalStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
+	if fieldIdx >= 0 {
+		if info[fieldIdx] == nil {
+			info[fieldIdx] = ""
+			return true
+		}
+		return convertToStringValue(field, info, fieldIdx, fieldName, infoIdx, logger)
 	}
 
+	return true
+}
+
+func requiredStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
+	if fieldIdx < 0 {
+		return false
+	}
+
+	return convertToStringValue(field, info, fieldIdx, fieldName, infoIdx, logger)
+}
+
+func assertStringArrayOfStringValue(field *[]string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
 	var ok bool
 	var intermediateField []interface{}
 
