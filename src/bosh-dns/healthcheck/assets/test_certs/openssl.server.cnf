@@ -23,3 +23,4 @@ subjectAltName = @alt_names
 [ alt_names ]
 IP.1 = 127.0.0.1
 DNS.1 = localhost
+DNS.2 = health.bosh-dns
