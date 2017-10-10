@@ -69,7 +69,7 @@ var _ = Describe("FsRepoPerformance", func() {
 			median := values[len(values)/2]
 			mutex.Unlock()
 
-			Expect(median).To(BeNumerically("<", 0.005))
+			Expect(median).To(BeNumerically("<", 0.01))
 		})
 
 		It("should have a median response time less than 0.01 ms with periodic writes", func() {
@@ -102,7 +102,7 @@ var _ = Describe("FsRepoPerformance", func() {
 			median := values[len(values)/2]
 			mutex.Unlock()
 
-			Expect(median).To(BeNumerically("<", 0.005))
+			Expect(median).To(BeNumerically("<", 0.01))
 		})
 	})
 })
