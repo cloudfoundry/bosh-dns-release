@@ -19,7 +19,7 @@ type recordGroup map[*Record]struct{}
 type RecordSet struct {
 	Domains         []string
 	Records         []*Record
-	byGlobalIndex   map[string]recordGroup
+	byNumId   map[string]recordGroup
 	byNetworkID     map[string]recordGroup
 	byAzId          map[string]recordGroup
 	byInstanceIndex map[string]recordGroup
@@ -33,7 +33,7 @@ type RecordSet struct {
 
 func NewRecordSet(records []*Record) RecordSet {
 	r := RecordSet{}
-	r.byGlobalIndex = make(map[string]recordGroup)
+	r.byNumId = make(map[string]recordGroup)
 	r.byNetworkID = make(map[string]recordGroup)
 	r.byAzId = make(map[string]recordGroup)
 	r.byInstanceIndex = make(map[string]recordGroup)
@@ -47,10 +47,10 @@ func NewRecordSet(records []*Record) RecordSet {
 
 	domains := make(map[string]struct{})
 	for _, record := range r.Records {
-		if r.byGlobalIndex[record.GlobalIndex] == nil {
-			r.byGlobalIndex[record.GlobalIndex] = make(recordGroup)
+		if r.byNumId[record.NumId] == nil {
+			r.byNumId[record.NumId] = make(recordGroup)
 		}
-		r.byGlobalIndex[record.GlobalIndex][record] = struct{}{}
+		r.byNumId[record.NumId][record] = struct{}{}
 
 		if r.byNetworkID[record.NetworkID] == nil {
 			r.byNetworkID[record.NetworkID] = make(recordGroup)
@@ -172,8 +172,8 @@ func (r RecordSet) recordsFromAZs(azs []string) recordGroup {
 	return r.recordsFrom(azs, func(rs RecordSet) map[string]recordGroup { return r.byAzId })
 }
 
-func (r RecordSet) recordsFromGlobalIndex(globalIndexes []string) recordGroup {
-	return r.recordsFrom(globalIndexes, func(rs RecordSet) map[string]recordGroup { return r.byGlobalIndex })
+func (r RecordSet) recordsFromNumId(numIds []string) recordGroup {
+	return r.recordsFrom(numIds, func(rs RecordSet) map[string]recordGroup { return r.byNumId })
 }
 
 func (r RecordSet) recordsFromNetworkID(networkIDs []string) recordGroup {
@@ -242,7 +242,7 @@ func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
 	allRecords := r.allRecords()
 
 	candidates := allRecords
-	candidates = candidates.intersect(r.recordsFromGlobalIndex(filter["m"]))
+	candidates = candidates.intersect(r.recordsFromNumId(filter["m"]))
 	candidates = candidates.intersect(r.recordsFromNetworkID(filter["n"]))
 	candidates = candidates.intersect(r.recordsFromAZs(filter["a"]))
 	candidates = candidates.intersect(r.recordsFromInstanceIndices(filter["i"]))
@@ -273,7 +273,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 	records := make([]*Record, 0, len(swap.Infos))
 
 	idIndex := -1
-	globalIndexIndex := -1
+	numIdIndex := -1
 	groupIndex := -1
 	networkIndex := -1
 	networkIDIndex := -1
@@ -288,8 +288,8 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		switch k {
 		case "id":
 			idIndex = i
-		case "global_index":
-			globalIndexIndex = i
+		case "num_id":
+			numIdIndex = i
 		case "instance_group":
 			groupIndex = i
 		case "group_ids":
@@ -345,7 +345,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 			continue
 		} else if !optionalStringValue(&record.NetworkID, info, networkIDIndex, "network_id", index, logger) {
 			continue
-		} else if !optionalStringValue(&record.GlobalIndex, info, globalIndexIndex, "global_index", index, logger) {
+		} else if !optionalStringValue(&record.NumId, info, numIdIndex, "num_id", index, logger) {
 			continue
 		} else if groupIdsIndex >= 0 && !assertStringArrayOfStringValue(&record.GroupIDs, info, groupIdsIndex, "group_ids", index, logger) {
 			continue

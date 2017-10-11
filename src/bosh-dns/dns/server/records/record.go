@@ -2,7 +2,7 @@ package records
 
 type Record struct {
 	ID            string
-	GlobalIndex   string
+	NumId         string
 	Group         string
 	GroupIDs      []string
 	Network       string

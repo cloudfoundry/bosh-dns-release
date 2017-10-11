@@ -35,7 +35,7 @@ var _ = Describe("RecordSet", func() {
 			func(invalidJson string, logValueIdx int, logValueName string, logExpectedType string) {
 				jsonBytes := []byte(fmt.Sprintf(`
 		{
-			"record_keys": ["id", "global_index", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
+			"record_keys": ["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
 			"record_infos": [
 			["instance0", "2", "my-group", ["3"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "my-domain", 1],
 				%s
@@ -67,7 +67,7 @@ var _ = Describe("RecordSet", func() {
 			Entry("Group IDs is not an array of string", `["instance1", "3", "my-group", {"6":3}, "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 3, "group_ids", "array of string"),
 			Entry("Group IDs is not an array of string", `["instance1", "3", "my-group", [3], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 3, "group_ids", "array of string"),
 
-			Entry("Global Index is not a string", `["instance1", {"instance_id": "instance_id"}, "my-group", ["6"], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 1, "global_index", "string"),
+			Entry("Global Index is not a string", `["instance1", {"instance_id": "instance_id"}, "my-group", ["6"], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 1, "num_id", "string"),
 			Entry("Network ID is not a string", `["instance1", "4", "my-group", ["6"], "z3", "3", "my-network", {"network": "invalid"}, "my-deployment", "123.123.123.126", "my-domain", 0]`, 7, "network_id", "string"),
 		)
 
@@ -253,7 +253,7 @@ var _ = Describe("RecordSet", func() {
 			jsonBytes := []byte(`
 			{
 				"record_keys":
-					["id", "global_index", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
+					["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
 				"record_infos": [
 					["instance0", "0", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "my-domain", 1],
 					["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", "my-domain", 2],
@@ -572,7 +572,7 @@ var _ = Describe("RecordSet", func() {
 	Describe("CreateFromJSON", func() {
 		BeforeEach(func() {
 			jsonBytes := []byte(`{
-				"record_keys": ["id", "global_index", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
+				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
 				"record_infos": [
 					["instance0", "0", "my-group", "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "withadot."],
 					["instance1", "1", "my-group", "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", "nodot"],
@@ -592,7 +592,7 @@ var _ = Describe("RecordSet", func() {
 			Expect(recordSet.Domains).To(ConsistOf("withadot.", "nodot.", "domain."))
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
 				ID:          "instance0",
-				GlobalIndex: "0",
+				NumId: "0",
 				Group:       "my-group",
 				Network:     "my-network",
 				NetworkID:   "1",
@@ -603,7 +603,7 @@ var _ = Describe("RecordSet", func() {
 			})))
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
 				ID:          "instance1",
-				GlobalIndex: "1",
+				NumId: "1",
 				Group:       "my-group",
 				Network:     "my-network",
 				NetworkID:   "1",
@@ -617,7 +617,7 @@ var _ = Describe("RecordSet", func() {
 		It("includes records with null azs", func() {
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
 				ID:          "instance2",
-				GlobalIndex: "2",
+				NumId: "2",
 				Group:       "my-group",
 				Network:     "my-network",
 				NetworkID:   "1",
@@ -628,7 +628,7 @@ var _ = Describe("RecordSet", func() {
 			})))
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
 				ID:          "instance4",
-				GlobalIndex: "4",
+				NumId: "4",
 				Group:       "my-group",
 				Network:     "my-network",
 				NetworkID:   "1",
@@ -642,7 +642,7 @@ var _ = Describe("RecordSet", func() {
 		It("includes records with null instance indexes", func() {
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
 				ID:            "instance3",
-				GlobalIndex:   "3",
+				NumId:   "3",
 				Group:         "my-group",
 				Network:       "my-network",
 				NetworkID:     "1",
@@ -657,7 +657,7 @@ var _ = Describe("RecordSet", func() {
 		It("includes records with no value for network_id", func() {
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
 				ID:            "instance5",
-				GlobalIndex:   "5",
+				NumId:   "5",
 				Group:         "my-group",
 				Network:       "my-network",
 				NetworkID:     "",
@@ -669,10 +669,10 @@ var _ = Describe("RecordSet", func() {
 			})))
 		})
 
-		It("includes records with no value for global_index", func() {
+		It("includes records with no value for num_id", func() {
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
 				ID:            "instance6",
-				GlobalIndex:   "",
+				NumId:   "",
 				Group:         "my-group",
 				Network:       "my-network",
 				NetworkID:     "1",
