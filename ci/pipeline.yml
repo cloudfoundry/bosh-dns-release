@@ -74,6 +74,10 @@ jobs:
   serial_groups:
   - windows-acceptance-env
   plan:
+  - ensure:
+      task: clean-up
+      file: bosh-dns-release/ci/tasks/clean-up.yml
+    do:
     - aggregate:
       - get: bosh-dns-release
         trigger: true
@@ -92,8 +96,6 @@ jobs:
       file: bosh-dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
     - task: windows-shared
       file: bosh-dns-release/ci/tasks/test-acceptance-windows-shared.yml
-    - task: clean-up
-      file: bosh-dns-release/ci/tasks/clean-up.yml
 
 - name: brats-ubuntu
   serial: true
