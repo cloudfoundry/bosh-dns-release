@@ -48,7 +48,9 @@ var _ = Describe("recursor", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
 			output := string(session.Out.Contents())
 			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 			Expect(output).To(MatchRegexp("example.com.\\s+0\\s+IN\\s+A\\s+10\\.10\\.10\\.10"))
@@ -78,7 +80,10 @@ var _ = Describe("recursor", func() {
 				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 			})
@@ -91,7 +96,9 @@ var _ = Describe("recursor", func() {
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 			})
@@ -105,7 +112,10 @@ var _ = Describe("recursor", func() {
 				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 			})
@@ -118,7 +128,9 @@ var _ = Describe("recursor", func() {
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring("status: SERVFAIL"))
 			})
@@ -132,7 +144,10 @@ var _ = Describe("recursor", func() {
 				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 270, AUTHORITY: 0, ADDITIONAL: 0"))
 				Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 9156"))
@@ -146,7 +161,9 @@ var _ = Describe("recursor", func() {
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 270, AUTHORITY: 0, ADDITIONAL: 0"))
 				Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 9156"))
@@ -161,7 +178,10 @@ var _ = Describe("recursor", func() {
 				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 512, AUTHORITY: 0, ADDITIONAL: 0"))
 				Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 7224"))
@@ -175,7 +195,9 @@ var _ = Describe("recursor", func() {
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 512, AUTHORITY: 0, ADDITIONAL: 0"))
 				Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 7224"))
@@ -190,7 +212,10 @@ var _ = Describe("recursor", func() {
 				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd ra; QUERY: 1, ANSWER: 20, AUTHORITY: 0, ADDITIONAL: 0"))
 				Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 989"))
@@ -204,7 +229,9 @@ var _ = Describe("recursor", func() {
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd ra; QUERY: 1, ANSWER: 20, AUTHORITY: 0, ADDITIONAL: 0"))
 				Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 989"))
@@ -219,7 +246,10 @@ var _ = Describe("recursor", func() {
 				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0"))
 				Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 104"))
@@ -233,7 +263,9 @@ var _ = Describe("recursor", func() {
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0"))
 				Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 104"))
@@ -245,7 +277,9 @@ var _ = Describe("recursor", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
 			output := string(session.Out.Contents())
 			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 			Expect(output).To(MatchRegexp("example.com.\\s+0\\s+IN\\s+A\\s+10\\.10\\.10\\.10"))
@@ -275,7 +309,9 @@ var _ = Describe("recursor", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
 			output := string(session.Out.Contents())
 			re := regexp.MustCompile("\\s+(\\d+)\\s+IN\\s+A\\s+127\\.0\\.0\\.(\\d+)")
 			matches := re.FindStringSubmatch(output)
@@ -289,7 +325,10 @@ var _ = Describe("recursor", func() {
 				)
 				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session).Should(gexec.Exit(0))
+
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
 				output = string(session.Out.Contents())
 
 				matches = re.FindStringSubmatch(output)
@@ -305,7 +344,10 @@ var _ = Describe("recursor", func() {
 			)
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
+
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
 			output = string(session.Out.Contents())
 			matches = re.FindStringSubmatch(output)
 			Expect(matches[2]).To(Equal("2"))

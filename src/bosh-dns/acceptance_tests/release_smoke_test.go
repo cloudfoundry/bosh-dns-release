@@ -41,7 +41,9 @@ var _ = Describe("Integration", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
 			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
 			Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 			Eventually(session.Out).Should(gbytes.Say(
@@ -58,7 +60,9 @@ var _ = Describe("Integration", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
 			output := string(session.Out.Contents())
 			Expect(output).To(ContainSubstring("Got answer:"))
 			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
@@ -75,7 +79,9 @@ var _ = Describe("Integration", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
 			output := string(session.Out.Contents())
 			Expect(output).To(ContainSubstring("Got answer:"))
 			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
@@ -88,7 +94,9 @@ var _ = Describe("Integration", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
 			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
 			Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
 
@@ -100,7 +108,9 @@ var _ = Describe("Integration", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
 			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
 			Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 
@@ -137,7 +147,9 @@ var _ = Describe("Integration", func() {
 			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
 
 			output = string(session.Out.Contents())
 			Expect(output).To(ContainSubstring("Got answer:"))
@@ -165,7 +177,9 @@ var _ = Describe("Integration", func() {
 				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
 
 				output = string(session.Out.Contents())
 

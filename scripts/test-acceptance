@@ -4,10 +4,18 @@ set -e -o pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+tarball_dir=$(mktemp -d)
+pushd $tarball_dir
+  git init
+popd
+
+bosh create-release --force --tarball=${tarball_dir}/bosh-dns-release.tgz
+
 # workers exits 1 if not logged in
 fly -t production workers || fly -t production login
 
 fly -t production execute -x --privileged \
   --config=./ci/tasks/test-acceptance.yml \
   --inputs-from=bosh-dns-release/test-acceptance \
+  --input=candidate-release=${tarball_dir} \
   --input=bosh-dns-release=$DIR/../

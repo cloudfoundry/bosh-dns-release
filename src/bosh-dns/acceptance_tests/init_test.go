@@ -79,6 +79,13 @@ func noRecursorsOpsFile() string {
 	}
 }
 
+func jsonServerAddress() string {
+	if testTargetOS == "windows" {
+		return "http://10.0.31.191:8081"
+	}
+	return "http://172.17.0.1:8081"
+}
+
 func setupLocalRecursorOpsFile() string {
 	if testTargetOS == "windows" {
 		return "add-test-dns-nameservers-windows"
