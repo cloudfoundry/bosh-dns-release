@@ -17,6 +17,8 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
+const testRecursorAddress = "@127.0.0.1"
+
 var _ = Describe("recursor", func() {
 	var (
 		recursorSession *gexec.Session
@@ -39,7 +41,10 @@ var _ = Describe("recursor", func() {
 		})
 
 		It("fowards queries to the configured recursors on port 53", func() {
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A example.com @%s", firstInstance.IP), " ")...)
+			cmd := exec.Command("dig",
+				"-t", "A",
+				"example.com", fmt.Sprintf("@%s", firstInstance.IP),
+			)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -67,28 +72,37 @@ var _ = Describe("recursor", func() {
 
 		It("returns success when receiving a truncated responses from a recursor", func() {
 			By("ensuring the test recursor is returning truncated messages", func() {
-				cmd := exec.Command("dig", strings.Split("+ignore +notcp -p 9955 -t A truncated-recursor.com. @127.0.0.1", " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp", "-p", "9955", "-t", "A",
+					"truncated-recursor.com.", testRecursorAddress,
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 				output := string(session.Out.Contents())
-				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 			})
 
 			By("ensuring the dns release returns a successful truncated recursed answer", func() {
-				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp -t A truncated-recursor.com. @%s", firstInstance.IP), " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp", "-t", "A",
+					"truncated-recursor.com.", fmt.Sprintf("@%s", firstInstance.IP),
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 				output := string(session.Out.Contents())
-				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
 			})
 		})
 
 		It("timeouts when recursor takes longer than configured recursor_timeout", func() {
 			By("ensuring the test recursor is working", func() {
-				cmd := exec.Command("dig", strings.Split("+ignore +notcp -p 9955 -t A slow-recursor.com. @127.0.0.1", " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp", "-p", "9955",
+					"-t", "A", "slow-recursor.com.", testRecursorAddress,
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
@@ -97,7 +111,10 @@ var _ = Describe("recursor", func() {
 			})
 
 			By("ensuring the dns release returns a error due to recursor timing out", func() {
-				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp -t A slow-recursor.com. @%s", firstInstance.IP), " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp", "-t", "A", "slow-recursor.com.",
+					fmt.Sprintf("@%s", firstInstance.IP),
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -109,7 +126,10 @@ var _ = Describe("recursor", func() {
 
 		It("forwards large UDP EDNS messages", func() {
 			By("ensuring the test recursor is returning messages", func() {
-				cmd := exec.Command("dig", strings.Split("+ignore +notcp +bufsize=65535 -p 9955 udp-9k-message.com. @127.0.0.1", " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp", "+bufsize=65535", "-p", "9955",
+					"udp-9k-message.com.", testRecursorAddress,
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
@@ -119,7 +139,10 @@ var _ = Describe("recursor", func() {
 			})
 
 			By("ensuring the dns release returns a successful trucated recursed answer", func() {
-				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp +bufsize=65535 udp-9k-message.com. @%s", firstInstance.IP), " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp", "+bufsize=65535",
+					"udp-9k-message.com.", fmt.Sprintf("@%s", firstInstance.IP),
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -132,7 +155,10 @@ var _ = Describe("recursor", func() {
 
 		It("compresses message responses that are larger than requested UDPSize", func() {
 			By("ensuring the test recursor is returning messages", func() {
-				cmd := exec.Command("dig", strings.Split("+ignore +notcp +bufsize=16384 -p 9955 compressed-ip-truncated-recursor-large.com. @127.0.0.1", " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp", "+bufsize=16384", "-p", "9955",
+					"compressed-ip-truncated-recursor-large.com.", testRecursorAddress,
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
@@ -142,7 +168,10 @@ var _ = Describe("recursor", func() {
 			})
 
 			By("ensuring the dns release returns a successful compressed recursed answer", func() {
-				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp +bufsize=16384 compressed-ip-truncated-recursor-large.com. @%s", firstInstance.IP), " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp", "+bufsize=16384",
+					"compressed-ip-truncated-recursor-large.com.", fmt.Sprintf("@%s", firstInstance.IP),
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -153,32 +182,41 @@ var _ = Describe("recursor", func() {
 			})
 		})
 
-		It("forwards large dns answers even if udp response size is larger than 512", func() { // this test drove out the UDPSize on the client produced in the ClientExchangeFactory
+		It("forwards large dns answers even if udp response size is larger than 512", func() {
 			By("ensuring the test recursor is returning messages", func() {
-				cmd := exec.Command("dig", strings.Split("+ignore +notcp -p 9955 ip-truncated-recursor-large.com. @127.0.0.1", " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp", "-p", "9955",
+					"ip-truncated-recursor-large.com.", testRecursorAddress,
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 				output := string(session.Out.Contents())
-				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd; QUERY: 1, ANSWER: 20, AUTHORITY: 0, ADDITIONAL: 0"))
+				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd ra; QUERY: 1, ANSWER: 20, AUTHORITY: 0, ADDITIONAL: 0"))
 				Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 989"))
 			})
 
 			By("ensuring the dns release returns a successful trucated recursed answer", func() {
-				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp ip-truncated-recursor-large.com. @%s", firstInstance.IP), " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp",
+					"ip-truncated-recursor-large.com.", fmt.Sprintf("@%s", firstInstance.IP),
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 				output := string(session.Out.Contents())
-				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd; QUERY: 1, ANSWER: 20, AUTHORITY: 0, ADDITIONAL: 0"))
+				Expect(output).To(ContainSubstring(";; flags: qr aa tc rd ra; QUERY: 1, ANSWER: 20, AUTHORITY: 0, ADDITIONAL: 0"))
 				Expect(output).To(ContainSubstring("MSG SIZE  rcvd: 989"))
 			})
 		})
 
 		It("does not bother to compress messages that are smaller than 512", func() {
 			By("ensuring the test recursor is returning messages", func() {
-				cmd := exec.Command("dig", strings.Split("+ignore +bufsize=1 +notcp -p 9955 recursor-small.com. @127.0.0.1", " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+bufsize=1", "+notcp", "-p", "9955",
+					"recursor-small.com.", testRecursorAddress,
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
@@ -188,7 +226,10 @@ var _ = Describe("recursor", func() {
 			})
 
 			By("ensuring the dns release returns a successful trucated recursed answer", func() {
-				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+ignore +notcp recursor-small.com. @%s", firstInstance.IP), " ")...)
+				cmd := exec.Command("dig",
+					"+ignore", "+notcp",
+					"recursor-small.com.", fmt.Sprintf("@%s", firstInstance.IP),
+				)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -227,7 +268,10 @@ var _ = Describe("recursor", func() {
 		})
 
 		It("caches dns recursed dns entries for the duration of the TTL", func() {
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+notcp always-different-with-timeout-example.com. @%s", firstInstance.IP), " ")...)
+			cmd := exec.Command("dig",
+				"+notcp", "always-different-with-timeout-example.com.",
+				fmt.Sprintf("@%s", firstInstance.IP),
+			)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -239,7 +283,10 @@ var _ = Describe("recursor", func() {
 			Expect(matches[2]).To(Equal("1"))
 
 			Consistently(func() string {
-				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+notcp always-different-with-timeout-example.com. @%s", firstInstance.IP), " ")...)
+				cmd := exec.Command("dig",
+					"+notcp", "always-different-with-timeout-example.com.",
+					fmt.Sprintf("@%s", firstInstance.IP),
+				)
 				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
@@ -252,7 +299,10 @@ var _ = Describe("recursor", func() {
 			}, "4s", "1s").Should(Equal("1"))
 			time.Sleep(1 * time.Second)
 
-			cmd = exec.Command("dig", strings.Split(fmt.Sprintf("+notcp always-different-with-timeout-example.com. @%s", firstInstance.IP), " ")...)
+			cmd = exec.Command("dig",
+				"+notcp", "always-different-with-timeout-example.com.",
+				fmt.Sprintf("@%s", firstInstance.IP),
+			)
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(0))

@@ -9,7 +9,6 @@ import (
 
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/handlersfakes"
-	"bosh-dns/dns/server/handlers/internal"
 	"bosh-dns/dns/server/internal/internalfakes"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
@@ -60,7 +59,7 @@ var _ = Describe("ForwardHandler", func() {
 		Context("when there are no recursors configured", func() {
 			var msg *dns.Msg
 			BeforeEach(func() {
-				fakeRecursorPool.PerformStrategicallyReturns(internal.NoRecursorsError{})
+				fakeRecursorPool.PerformStrategicallyReturns(errors.New("no recursors configured"))
 				msg = &dns.Msg{}
 				msg.SetQuestion("example.com.", dns.TypeANY)
 			})
@@ -104,7 +103,7 @@ var _ = Describe("ForwardHandler", func() {
 				Expect(message.Question).To(Equal(msg.Question))
 				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
 				Expect(message.Authoritative).To(Equal(false))
-				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(false))
 			})
 
 			Context("when the message fails to write", func() {
@@ -340,7 +339,7 @@ var _ = Describe("ForwardHandler", func() {
 						Expect(message.Question).To(Equal(msg.Question))
 						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
 						Expect(message.Authoritative).To(Equal(false))
-						Expect(message.RecursionAvailable).To(Equal(true))
+						Expect(message.RecursionAvailable).To(Equal(false))
 					})
 				})
 			})

@@ -37,23 +37,7 @@ var _ = Describe("DiscoveryHandler", func() {
 			}
 
 			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
-			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler), true)
-		})
-
-		Context("when recursion is not available", func() {
-			BeforeEach(func() {
-				discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler), false)
-			})
-
-			Context("when there are no questions", func() {
-				It("returns rcode success", func() {
-					discoveryHandler.ServeDNS(fakeWriter, &dns.Msg{})
-					message := fakeWriter.WriteMsgArgsForCall(0)
-					Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(message.Authoritative).To(Equal(true))
-					Expect(message.RecursionAvailable).To(Equal(false))
-				})
-			})
+			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler))
 		})
 
 		Context("when there are no questions", func() {
@@ -62,7 +46,7 @@ var _ = Describe("DiscoveryHandler", func() {
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
 				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(false))
 			})
 		})
 
@@ -75,7 +59,7 @@ var _ = Describe("DiscoveryHandler", func() {
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
 				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(false))
 			})
 
 			It("returns rcode success for aaaa questions", func() {
@@ -86,7 +70,7 @@ var _ = Describe("DiscoveryHandler", func() {
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
 				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(false))
 			})
 
 			It("returns rcode server failure for all other questions", func() {
@@ -97,7 +81,7 @@ var _ = Describe("DiscoveryHandler", func() {
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
 				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(false))
 			})
 
 			Context("when the question is an A or ANY record", func() {

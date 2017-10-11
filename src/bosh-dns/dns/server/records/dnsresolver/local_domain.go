@@ -39,6 +39,7 @@ func (d LocalDomain) Resolve(questionDomains []string, responseWriter dns.Respon
 	answers, rCode := d.resolve(requestMsg.Question[0].Name, questionDomains)
 
 	responseMsg := &dns.Msg{}
+	responseMsg.RecursionAvailable = true
 	responseMsg.Answer = answers
 	responseMsg.SetRcode(requestMsg, rCode)
 

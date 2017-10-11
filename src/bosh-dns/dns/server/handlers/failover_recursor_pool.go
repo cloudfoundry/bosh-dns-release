@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"bosh-dns/dns/server/handlers/internal"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -66,10 +65,6 @@ func NewFailoverRecursorPool(recursors []string, logger logger.Logger) RecursorP
 }
 
 func (q *failoverRecursorPool) PerformStrategically(work func(string) error) error {
-	if len(q.recursors) == 0 {
-		return internal.NoRecursorsError{}
-	}
-
 	offset := atomic.LoadUint64(&q.preferredRecursorIndex)
 	uintRecursorCount := uint64(len(q.recursors))
 
@@ -91,8 +86,8 @@ func (q *failoverRecursorPool) PerformStrategically(work func(string) error) err
 }
 
 func (q *failoverRecursorPool) shiftPreference() {
-	atomic.AddUint64(&q.preferredRecursorIndex, 1)
-	index := q.preferredRecursorIndex % uint64(len(q.recursors))
+	pri := atomic.AddUint64(&q.preferredRecursorIndex, 1)
+	index := pri % uint64(len(q.recursors))
 	q.logger.Info(q.logTag, fmt.Sprintf("shifting recursor preference: %s\n", q.recursors[index].name))
 }
 

@@ -29,7 +29,7 @@ func main() {
 		})
 
 		msg.Authoritative = true
-		msg.RecursionAvailable = false
+		msg.RecursionAvailable = true
 		msg.Truncated = true
 
 		msg.SetReply(req)
@@ -43,6 +43,7 @@ func main() {
 		msg := new(dns.Msg)
 		msg.SetReply(req)
 		msg.Authoritative = true
+		msg.RecursionAvailable = true
 		msg.Compress = false
 
 		if _, ok := resp.RemoteAddr().(*net.TCPAddr); ok {
@@ -82,6 +83,7 @@ func main() {
 		msg.SetReply(req)
 		msg.SetRcode(req, dns.RcodeSuccess)
 		msg.Authoritative = true
+		msg.RecursionAvailable = true
 
 		m1 := 512
 		for i := 0; i < m1; i++ {
@@ -115,6 +117,8 @@ func main() {
 		msg.SetReply(req)
 		msg.SetRcode(req, dns.RcodeSuccess)
 		msg.Authoritative = true
+		msg.RecursionAvailable = true
+
 		m1 := 2
 		for i := 0; i < m1; i++ {
 			aRec := &dns.A{
@@ -143,6 +147,8 @@ func main() {
 		msg.SetReply(req)
 		msg.SetRcode(req, dns.RcodeSuccess)
 		msg.Authoritative = true
+		msg.RecursionAvailable = true
+
 		aRec := &dns.A{
 			Hdr: dns.RR_Header{
 				Name:   req.Question[0].Name,
@@ -166,6 +172,7 @@ func main() {
 		msg.SetReply(req)
 		msg.SetRcode(req, dns.RcodeSuccess)
 		msg.Authoritative = true
+		msg.RecursionAvailable = true
 		msg.Compress = true
 
 		m1 := 512
@@ -208,7 +215,7 @@ func main() {
 		})
 
 		msg.Authoritative = true
-		msg.RecursionAvailable = false
+		msg.RecursionAvailable = true
 
 		msg.SetReply(req)
 
@@ -233,7 +240,7 @@ func main() {
 		nextAddress = nextAddress + 1
 
 		msg.Authoritative = true
-		msg.RecursionAvailable = false
+		msg.RecursionAvailable = true
 
 		msg.SetReply(req)
 

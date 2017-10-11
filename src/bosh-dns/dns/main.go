@@ -106,10 +106,8 @@ func mainExitCode() int {
 	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
 	healthyRecordSet := healthiness.NewHealthyRecordSet(recordsRepo, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown)
 
-	recursionAvailable := len(config.Recursors) != 0
-
 	localDomain := dnsresolver.NewLocalDomain(logger, healthyRecordSet, shuffle.New())
-	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain, recursionAvailable)
+	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordsRepo, mux, discoveryHandler)
 
@@ -120,7 +118,7 @@ func mainExitCode() int {
 			var dnsHandler dns.Handler
 			dnsHandler = handlers.NewHTTPJSONHandler(handler.Source.URL, logger)
 			if handler.Cache.Enabled {
-				dnsHandler =  handlers.NewCachingDNSHandler(dnsHandler)
+				dnsHandler = handlers.NewCachingDNSHandler(dnsHandler)
 			}
 			handlers.AddHandler(mux, clock, handler.Domain, dnsHandler, logger)
 		}

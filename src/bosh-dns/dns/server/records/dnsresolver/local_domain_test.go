@@ -84,6 +84,7 @@ var _ = Describe("LocalDomain", func() {
 			Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
 			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.246"))
 
+			Expect(responseMsg.RecursionAvailable).To(BeTrue())
 			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
 		})
 

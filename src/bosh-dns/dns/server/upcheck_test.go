@@ -122,7 +122,6 @@ var _ = Describe("Upcheck", func() {
 
 			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(MatchRegexp(`on %s:.*%s.*203\.0\.113\.1.*i/o timeout`, network, network))
 		},
 			Entry("when networking is udp", "udp"),
 			Entry("when networking is tcp", "tcp"),
