@@ -57,8 +57,6 @@ jobs:
   serial: true
   plan:
     - aggregate:
-      - get: every-2h
-        trigger: true
       - get: bosh-dns-release
         passed: [create-release]
       - get: bosh-candidate-stemcell
@@ -77,8 +75,6 @@ jobs:
   - windows-acceptance-env
   plan:
     - aggregate:
-      - get: every-2h
-        trigger: true
       - get: bosh-dns-release
         trigger: true
         passed: [create-release]
@@ -123,6 +119,8 @@ jobs:
       file: bosh-src/ci/tasks/test-brats.yml
       tags: ["worker-brats"]
       privileged: true
+      input_mapping:
+        dns-release: bosh-dns-release-src
       params:
         BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
         BOSH_DIRECTOR_RELEASE_VERSION: "latest"
@@ -265,10 +263,6 @@ resources:
     branch: master
     uri: git@github.com:cloudfoundry/dns-release-ci-envs.git
     private_key: {{envs_private_key}}
-
-- name: every-2h
-  type: time
-  source: {interval: 2h}
 
 - name: every-10m
   type: time
