@@ -84,7 +84,7 @@ var _ = Describe("Integration", func() {
 		})
 
 		It("finds and resolves aliases specified in other jobs on the same instance", func() {
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A A internal.alias. @%s", firstInstance.IP), " ")...)
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A internal.alias. @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -96,7 +96,7 @@ var _ = Describe("Integration", func() {
 		})
 
 		It("should resolve specified upcheck", func() {
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A A upcheck.bosh-dns. @%s", firstInstance.IP), " ")...)
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A upcheck.bosh-dns. @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
