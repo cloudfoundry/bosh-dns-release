@@ -87,7 +87,7 @@ var _ = Describe("DiscoveryHandler", func() {
 			Context("when the question is an A or ANY record", func() {
 				DescribeTable("returns an A record based off of the records data",
 					func(queryType uint16) {
-						fakeRecordSet.ResolveReturns([]string{"123.123.123.123"}, nil)
+						fakeRecordSet.ResolveReturns([]string{"123.123.123.123"}, true, nil)
 
 						m := &dns.Msg{}
 						m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", queryType)

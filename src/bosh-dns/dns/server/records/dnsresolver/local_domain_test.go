@@ -41,15 +41,15 @@ var _ = Describe("LocalDomain", func() {
 		})
 
 		It("returns responses from all the question domains", func() {
-			fakeRecordSet.ResolveStub = func(domain string) ([]string, error) {
+			fakeRecordSet.ResolveStub = func(domain string) ([]string, bool, error) {
 				switch domain {
 				case "instance-1.group-1.network-name.deployment-name.bosh.":
-					return []string{"123.123.123.123"}, nil
+					return []string{"123.123.123.123"}, true, nil
 				case "instance-2.group-2.network-name.deployment-name.bosh.":
-					return []string{"123.123.123.246"}, nil
+					return []string{"123.123.123.246"}, true, nil
 				}
 
-				return nil, errors.New("nope")
+				return nil, false, errors.New("nope")
 			}
 
 			req := &dns.Msg{}
@@ -90,15 +90,15 @@ var _ = Describe("LocalDomain", func() {
 		})
 
 		It("shuffles the answers", func() {
-			fakeRecordSet.ResolveStub = func(domain string) ([]string, error) {
+			fakeRecordSet.ResolveStub = func(domain string) ([]string, bool, error) {
 				switch domain {
 				case "instance-1.group-1.network-name.deployment-name.bosh.":
-					return []string{"123.123.123.123"}, nil
+					return []string{"123.123.123.123"}, true, nil
 				case "instance-2.group-1.network-name.deployment-name.bosh.":
-					return []string{"123.123.123.124"}, nil
+					return []string{"123.123.123.124"}, true, nil
 				}
 
-				return nil, errors.New("nope")
+				return nil, false, errors.New("nope")
 			}
 
 			fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
@@ -121,6 +121,99 @@ var _ = Describe("LocalDomain", func() {
 			Expect(answers[0].(*dns.A).A.String()).To(Equal("123.123.123.124"))
 			Expect(answers[1].(*dns.A).A.String()).To(Equal("123.123.123.123"))
 			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+		})
+
+		Context("when one domain is healthy and the other is unhealthy", func() {
+			It("only returns responses from the healthy domain", func() {
+				fakeRecordSet.ResolveStub = func(domain string) ([]string, bool, error) {
+					switch domain {
+					case "instance-1.group-1.network-name.deployment-name.bosh.":
+						return []string{"123.123.123.123"}, true, nil
+					case "instance-2.group-2.network-name.deployment-name.bosh.":
+						return []string{"123.123.123.246"}, false, nil
+					}
+
+					return nil, false, errors.New("nope")
+				}
+
+				req := &dns.Msg{}
+				req.SetQuestion("answer.bosh.", dns.TypeA)
+				responseMsg := localDomain.Resolve(
+					[]string{
+						"instance-1.group-1.network-name.deployment-name.bosh.",
+						"instance-2.group-2.network-name.deployment-name.bosh.",
+					},
+					fakeWriter,
+					req,
+				)
+
+				answers := responseMsg.Answer
+				Expect(answers).To(HaveLen(1))
+
+				answer := answers[0]
+				header := answer.Header()
+				Expect(header.Name).To(Equal("answer.bosh."))
+				Expect(header.Rrtype).To(Equal(dns.TypeA))
+				Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+				Expect(header.Ttl).To(Equal(uint32(0)))
+				Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+				Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.123"))
+
+				Expect(responseMsg.RecursionAvailable).To(BeTrue())
+				Expect(responseMsg.Authoritative).To(BeTrue())
+				Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+			})
+		})
+
+		Context("when all domains are unhealthy", func() {
+			It("returns responses from all domains", func() {
+				fakeRecordSet.ResolveStub = func(domain string) ([]string, bool, error) {
+					switch domain {
+					case "instance-1.group-1.network-name.deployment-name.bosh.":
+						return []string{"123.123.123.123"}, false, nil
+					case "instance-2.group-2.network-name.deployment-name.bosh.":
+						return []string{"123.123.123.246"}, false, nil
+					}
+
+					return nil, false, errors.New("nope")
+				}
+
+				req := &dns.Msg{}
+				req.SetQuestion("answer.bosh.", dns.TypeA)
+				responseMsg := localDomain.Resolve(
+					[]string{
+						"instance-1.group-1.network-name.deployment-name.bosh.",
+						"instance-2.group-2.network-name.deployment-name.bosh.",
+					},
+					fakeWriter,
+					req,
+				)
+
+				answers := responseMsg.Answer
+				Expect(answers).To(HaveLen(2))
+
+				answer := answers[0]
+				header := answer.Header()
+				Expect(header.Name).To(Equal("answer.bosh."))
+				Expect(header.Rrtype).To(Equal(dns.TypeA))
+				Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+				Expect(header.Ttl).To(Equal(uint32(0)))
+				Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+				Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.123"))
+
+				answer = answers[1]
+				header = answer.Header()
+				Expect(header.Name).To(Equal("answer.bosh."))
+				Expect(header.Rrtype).To(Equal(dns.TypeA))
+				Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+				Expect(header.Ttl).To(Equal(uint32(0)))
+				Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+				Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.246"))
+
+				Expect(responseMsg.RecursionAvailable).To(BeTrue())
+				Expect(responseMsg.Authoritative).To(BeTrue())
+				Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+			})
 		})
 
 		Context("when there are too many records to fit into 512 bytes", func() {
@@ -191,10 +284,10 @@ var _ = Describe("LocalDomain", func() {
 					},
 				}
 
-				fakeRecordSet.ResolveStub = func(domain string) ([]string, error) {
+				fakeRecordSet.ResolveStub = func(domain string) ([]string, bool, error) {
 					Expect(domain).To(Equal("my-instance.my-group.my-network.my-deployment.bosh."))
 
-					return []string{"123.123.123.123", "127.0.0.1", "127.0.0.2", "127.0.0.3", "127.0.0.4", "127.0.0.5", "127.0.0.6"}, nil
+					return []string{"123.123.123.123", "127.0.0.1", "127.0.0.2", "127.0.0.3", "127.0.0.4", "127.0.0.5", "127.0.0.6"}, true, nil
 				}
 				req = &dns.Msg{}
 				req.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
@@ -222,7 +315,7 @@ var _ = Describe("LocalDomain", func() {
 						for i := 0; i < 1000; i += 1 {
 							hugeSlice = append(hugeSlice, "123.123.123.123")
 						}
-						fakeRecordSet.ResolveReturns(hugeSlice, nil)
+						fakeRecordSet.ResolveReturns(hugeSlice, true, nil)
 					})
 
 					It("truncates the answers", func() {
@@ -260,7 +353,7 @@ var _ = Describe("LocalDomain", func() {
 		})
 
 		It("returns A records based off of the records data", func() {
-			fakeRecordSet.ResolveReturns([]string{"123.123.123.123", "123.123.123.246"}, nil)
+			fakeRecordSet.ResolveReturns([]string{"123.123.123.123", "123.123.123.246"}, true, nil)
 
 			req := &dns.Msg{}
 			req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeA)
@@ -298,7 +391,7 @@ var _ = Describe("LocalDomain", func() {
 			var dnsReturnCode int
 
 			BeforeEach(func() {
-				fakeRecordSet.ResolveReturns(nil, errors.New("i screwed up"))
+				fakeRecordSet.ResolveReturns(nil, false, errors.New("i screwed up"))
 
 				req := &dns.Msg{}
 				req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeA)

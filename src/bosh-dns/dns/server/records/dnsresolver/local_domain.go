@@ -23,7 +23,7 @@ type AnswerShuffler interface {
 //go:generate counterfeiter . RecordSet
 
 type RecordSet interface {
-	Resolve(domain string) ([]string, error)
+	Resolve(domain string) ([]string, bool, error)
 }
 
 func NewLocalDomain(logger logger.Logger, recordSet RecordSet, shuffler AnswerShuffler) LocalDomain {
@@ -51,9 +51,11 @@ func (d LocalDomain) Resolve(questionDomains []string, responseWriter dns.Respon
 
 func (d LocalDomain) resolve(answerDomain string, questionDomains []string) ([]dns.RR, int) {
 	answers := []dns.RR{}
+	healthyAnswers := []dns.RR{}
+	unhealthyAnswers := []dns.RR{}
 
 	for _, questionDomain := range questionDomains {
-		ips, err := d.recordSet.Resolve(questionDomain)
+		ips, healthy, err := d.recordSet.Resolve(questionDomain)
 		if err != nil {
 			d.logger.Error(d.logTag, "failed to get ip addresses: %v", err)
 			return nil, dns.RcodeFormatError
@@ -70,8 +72,18 @@ func (d LocalDomain) resolve(answerDomain string, questionDomains []string) ([]d
 				A: net.ParseIP(ip),
 			}
 
-			answers = append(answers, answer)
+			if healthy == true {
+				healthyAnswers = append(healthyAnswers, answer)
+			} else {
+				unhealthyAnswers = append(unhealthyAnswers, answer)
+			}
 		}
+	}
+
+	if len(healthyAnswers) > 0 {
+		answers = healthyAnswers
+	} else {
+		answers = unhealthyAnswers
 	}
 
 	return d.shuffler.Shuffle(answers), dns.RcodeSuccess

@@ -7,24 +7,26 @@ import (
 )
 
 type FakeRecordSet struct {
-	ResolveStub        func(domain string) ([]string, error)
+	ResolveStub        func(domain string) ([]string, bool, error)
 	resolveMutex       sync.RWMutex
 	resolveArgsForCall []struct {
 		domain string
 	}
 	resolveReturns struct {
 		result1 []string
-		result2 error
+		result2 bool
+		result3 error
 	}
 	resolveReturnsOnCall map[int]struct {
 		result1 []string
-		result2 error
+		result2 bool
+		result3 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRecordSet) Resolve(domain string) ([]string, error) {
+func (fake *FakeRecordSet) Resolve(domain string) ([]string, bool, error) {
 	fake.resolveMutex.Lock()
 	ret, specificReturn := fake.resolveReturnsOnCall[len(fake.resolveArgsForCall)]
 	fake.resolveArgsForCall = append(fake.resolveArgsForCall, struct {
@@ -36,9 +38,9 @@ func (fake *FakeRecordSet) Resolve(domain string) ([]string, error) {
 		return fake.ResolveStub(domain)
 	}
 	if specificReturn {
-		return ret.result1, ret.result2
+		return ret.result1, ret.result2, ret.result3
 	}
-	return fake.resolveReturns.result1, fake.resolveReturns.result2
+	return fake.resolveReturns.result1, fake.resolveReturns.result2, fake.resolveReturns.result3
 }
 
 func (fake *FakeRecordSet) ResolveCallCount() int {
@@ -53,26 +55,29 @@ func (fake *FakeRecordSet) ResolveArgsForCall(i int) string {
 	return fake.resolveArgsForCall[i].domain
 }
 
-func (fake *FakeRecordSet) ResolveReturns(result1 []string, result2 error) {
+func (fake *FakeRecordSet) ResolveReturns(result1 []string, result2 bool, result3 error) {
 	fake.ResolveStub = nil
 	fake.resolveReturns = struct {
 		result1 []string
-		result2 error
-	}{result1, result2}
+		result2 bool
+		result3 error
+	}{result1, result2, result3}
 }
 
-func (fake *FakeRecordSet) ResolveReturnsOnCall(i int, result1 []string, result2 error) {
+func (fake *FakeRecordSet) ResolveReturnsOnCall(i int, result1 []string, result2 bool, result3 error) {
 	fake.ResolveStub = nil
 	if fake.resolveReturnsOnCall == nil {
 		fake.resolveReturnsOnCall = make(map[int]struct {
 			result1 []string
-			result2 error
+			result2 bool
+			result3 error
 		})
 	}
 	fake.resolveReturnsOnCall[i] = struct {
 		result1 []string
-		result2 error
-	}{result1, result2}
+		result2 bool
+		result3 error
+	}{result1, result2, result3}
 }
 
 func (fake *FakeRecordSet) Invocations() map[string][][]interface{} {

@@ -48,7 +48,7 @@ var _ = Describe("HealthyRecordSet", func() {
 	})
 
 	It("fails when passing in a bad domain", func() {
-		_, err := recordSet.Resolve("q-%%%")
+		_, _, err := recordSet.Resolve("q-%%%")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -72,7 +72,7 @@ var _ = Describe("HealthyRecordSet", func() {
 
 				subscriptionChan <- true
 				Eventually(fakeRecordSetRepo.GetCallCount).Should(Equal(1 + i))
-				ips, err := recordSet.Resolve("i.g.n.d.d.")
+				ips, _, err := recordSet.Resolve("i.g.n.d.d.")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(ips).To(ConsistOf(ip))
 			}
@@ -92,7 +92,7 @@ var _ = Describe("HealthyRecordSet", func() {
 			It("keeps the old recordset", func() {
 				subscriptionChan <- true
 				Eventually(fakeRecordSetRepo.GetCallCount).Should(BeNumerically(">", 1))
-				ips, err := recordSet.Resolve("i.g.n.d.d.")
+				ips, _, err := recordSet.Resolve("i.g.n.d.d.")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.246"))
 			})
@@ -104,9 +104,9 @@ var _ = Describe("HealthyRecordSet", func() {
 			})
 
 			It("returns all ips", func() {
-				ips, err := recordSet.Resolve("i.g.n.d.d.")
+				ips, healthy, err := recordSet.Resolve("i.g.n.d.d.")
 				Expect(err).NotTo(HaveOccurred())
-
+				Expect(healthy).To(BeTrue())
 				Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.246"))
 			})
 		})
@@ -126,9 +126,9 @@ var _ = Describe("HealthyRecordSet", func() {
 		})
 
 		It("returns only the healthy ips", func() {
-			ips, err := recordSet.Resolve("i.g.n.d.d.")
+			ips, healthy, err := recordSet.Resolve("i.g.n.d.d.")
 			Expect(err).NotTo(HaveOccurred())
-
+			Expect(healthy).To(BeTrue())
 			Expect(ips).To(ConsistOf("123.123.123.123"))
 		})
 	})
@@ -139,9 +139,9 @@ var _ = Describe("HealthyRecordSet", func() {
 		})
 
 		It("returns all ips", func() {
-			ips, err := recordSet.Resolve("i.g.n.d.d.")
+			ips, healthy, err := recordSet.Resolve("i.g.n.d.d.")
 			Expect(err).NotTo(HaveOccurred())
-
+			Expect(healthy).To(BeFalse())
 			Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.246"))
 		})
 	})
@@ -163,7 +163,7 @@ var _ = Describe("HealthyRecordSet", func() {
 		})
 
 		It("returns the new ones", func() {
-			ips, err := recordSet.Resolve("i.g.n.d.d.")
+			ips, _, err := recordSet.Resolve("i.g.n.d.d.")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.5"))
 		})
@@ -195,7 +195,7 @@ var _ = Describe("HealthyRecordSet", func() {
 		})
 
 		It("returns the new ones", func() {
-			ips, err := recordSet.Resolve("i.g.n.d.d.")
+			ips, _, err := recordSet.Resolve("i.g.n.d.d.")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.5"))
 		})

@@ -119,14 +119,14 @@ func (hrs *HealthyRecordSet) untrackDomain(removedDomain string) {
 	}
 }
 
-func (hrs *HealthyRecordSet) Resolve(fqdn string) ([]string, error) {
+func (hrs *HealthyRecordSet) Resolve(fqdn string) ([]string, bool, error) {
 	hrs.recordSetMutex.RLock()
 	recordSet := hrs.recordSet
 	hrs.recordSetMutex.RUnlock()
 
 	ips, err := recordSet.Resolve(fqdn)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if removed := hrs.trackedDomains.Touch(fqdn); removed != "" {
@@ -153,8 +153,8 @@ func (hrs *HealthyRecordSet) Resolve(fqdn string) ([]string, error) {
 	}
 
 	if len(healthyIPs) == 0 {
-		return unhealthyIPs, nil
+		return unhealthyIPs, false, nil
 	}
 
-	return healthyIPs, nil
+	return healthyIPs, true, nil
 }
