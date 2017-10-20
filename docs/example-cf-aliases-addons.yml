@@ -1,0 +1,27 @@
+---
+addons:
+- name: bosh-dns
+  jobs:
+  - name: bosh-dns
+    release: bosh-dns
+    properties:
+      aliases:
+        "_.cell.service.cf.internal":                              ["_.diego-cell.default.cf.bosh"]         
+        "cloud-controller-ng.service.cf.internal":                 ["q-YWxs.api.default.cf.bosh"]           
+        "routing-api.service.cf.internal":                         ["q-YWxs.api.default.cf.bosh"]           
+        "blobstore.service.cf.internal":                           ["q-YWxs.blobstore.default.cf.bosh"]     
+        "cc-uploader.service.cf.internal":                         ["q-YWxs.cc-bridge.default.cf.bosh"]     
+        "consul.service.cf.internal":                              ["q-YWxs.consul.default.cf.bosh"]
+        "bbs.service.cf.internal":                                 ["q-YWxs.diego-bbs.default.cf.bosh"]     
+        "locket.service.cf.internal":                              ["q-YWxs.diego-bbs.default.cf.bosh"]     
+        "auctioneer.service.cf.internal":                          ["q-YWxs.diego-brain.default.cf.bosh"]   
+        "file-server.service.cf.internal":                         ["q-YWxs.diego-brain.default.cf.bosh"]   
+        "doppler.service.cf.internal":                             ["q-YWxs.doppler.default.cf.bosh"]       
+        "cf-etcd.service.cf.internal":                             ["q-YWxs.etcd.default.cf.bosh"]          
+        "etcd-0.cf-etcd.service.cf.internal":                      ["q-YWxs.etcd.default.cf.bosh"]          
+        "loggregator-trafficcontroller.service.cf.internal":       ["q-YWxs.log-api.default.cf.bosh"]       
+        "sql-db.service.cf.internal":                              ["q-YWxs.mysql.default.cf.bosh"]         
+        "policy-server.service.cf.internal":                       ["q-YWxs.policy-server.private.cf.bosh"] 
+        "gorouter.service.cf.internal":                            ["q-YWxs.router.default.cf.bosh"]        
+        "uaa.service.cf.internal":                                 ["q-YWxs.uaa.default.cf.bosh"]           
+        "_.doppler.service.cf.internal":                           ["q-YWxs.doppler.default.cf.bosh"]   
