@@ -37,9 +37,9 @@ var _ = Describe("DNS", func() {
 
 			TimeThresholds: timeThresholds,
 			VitalsThresholds: VitalsThresholds{
-				CPUMax:   20,
-				CPUPct99: 5,
-				MemMax:   25,
+				CPUMax:   50,
+				CPUPct99: 25,
+				MemMax:   30,
 			},
 
 			SuccessStatus: dns.RcodeSuccess,
@@ -84,7 +84,7 @@ var _ = Describe("DNS", func() {
 			TestDNSPerformance(TimeThresholds{
 				Max:   7540 * time.Millisecond,
 				Med:   1500 * time.Microsecond,
-				Pct90: 3 * time.Millisecond,
+				Pct90: 4 * time.Millisecond,
 				Pct95: 15 * time.Millisecond,
 			})
 		})
@@ -97,7 +97,7 @@ var _ = Describe("DNS", func() {
 			Expect(err).ToNot(HaveOccurred())
 			recordSet, err := records.CreateFromJSON(recordsJsonBytes, logger)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(recordSet.Records).To(HaveLen(2))
+			Expect(recordSet.Records).To(HaveLen(102))
 
 			records := []string{}
 			for _, record := range recordSet.Records {

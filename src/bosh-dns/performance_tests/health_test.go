@@ -34,7 +34,7 @@ var _ = Describe("Health Server", func() {
 			Workers:           workers,
 			RequestsPerSecond: requestsPerSecond,
 
-			ServerPID: healthSession.Command.Process.Pid,
+			ServerPID: healthSessions[0].Command.Process.Pid,
 
 			TimeThresholds: timeThresholds,
 			VitalsThresholds: VitalsThresholds{
