@@ -19,6 +19,14 @@ if ($? -eq $False) {
 $ErrorActionPreference = "Stop";
 trap { $host.SetShouldExit(1) }
 
+try {
+  Clear-DnsClientCache
+} catch {
+  $Host.UI.WriteErrorLine($_.Exception.Message)
+  Exit 1
+}
+
+
 <% if p('enable_os_dns_caching') %>
   try {
     $RegistryPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters"
@@ -31,8 +39,6 @@ trap { $host.SetShouldExit(1) }
         Write-Error "Error: Expected MaxNegativeCacheTtl to be '${ExpectedValue}', got '${Value.MaxNegativeCacheTtl}'"
       }
     }
-
-    Clear-DnsClientCache
   } catch {
     $Host.UI.WriteErrorLine($_.Exception.Message)
     Exit 1
