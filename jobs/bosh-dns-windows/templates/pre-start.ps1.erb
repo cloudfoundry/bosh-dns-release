@@ -1,13 +1,10 @@
 ﻿<% if p('health.enabled') %>
-try
-{
-    New-NetFirewallRule -DisplayName "bosh health server TCP" -Direction Inbound -LocalPort <%= p('health.server.port') %> -Protocol TCP
-}
-catch
-{
-    $Host.UI.WriteErrorLine($_.Exception.Message)
-    Exit 1
-}
+  try {
+      New-NetFirewallRule -DisplayName "bosh health server TCP" -Direction Inbound -LocalPort <%= p('health.server.port') %> -Protocol TCP
+  } catch {
+      $Host.UI.WriteErrorLine($_.Exception.Message)
+      Exit 1
+  }
 <% end %>
 
 Get-NetIPAddress -IPAddress <%= p('aliased_address') %>
@@ -21,29 +18,29 @@ if ($? -eq $False) {
 
 $ErrorActionPreference = "Stop";
 trap { $host.SetShouldExit(1) }
-try {
-  $RegistryPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters"
-  $ExpectedValue = 0
-  $Value = Get-ItemProperty -Path $RegistryPath
-  if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
-    Set-ItemProperty -Path $RegistryPath -Name MaxNegativeCacheTtl -Value $ExpectedValue -Type DWord
-    $Value = Get-ItemProperty -Path $RegistryPath
-    if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
-      Write-Error "Error: Expected MaxNegativeCacheTtl to be '${ExpectedValue}', got '${Value.MaxNegativeCacheTtl}'"
-    }
-  }
-
-  Clear-DnsClientCache
-} catch {
-  $Host.UI.WriteErrorLine($_.Exception.Message)
-  Exit 1
-}
 
 <% if p('enable_os_dns_caching') %>
+  try {
+    $RegistryPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters"
+    $ExpectedValue = 0
+    $Value = Get-ItemProperty -Path $RegistryPath
+    if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
+      Set-ItemProperty -Path $RegistryPath -Name MaxNegativeCacheTtl -Value $ExpectedValue -Type DWord
+      $Value = Get-ItemProperty -Path $RegistryPath
+      if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
+        Write-Error "Error: Expected MaxNegativeCacheTtl to be '${ExpectedValue}', got '${Value.MaxNegativeCacheTtl}'"
+      }
+    }
+
+    Clear-DnsClientCache
+  } catch {
+    $Host.UI.WriteErrorLine($_.Exception.Message)
+    Exit 1
+  }
+
   Get-Service Dnscache | Set-Service -StartupType automatic -PassThru | Start-Service
 <% else %>
   Get-Service Dnscache | Stop-Service -PassThru | Set-Service -StartupType disabled
 <% end %>
-
 
 Exit 0
