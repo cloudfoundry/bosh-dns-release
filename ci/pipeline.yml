@@ -51,6 +51,8 @@ jobs:
       file: bosh-dns-release/ci/tasks/test-performance.yml
       params:
         ZONES_JSON_HASH: {{zones_json_hash}}
+        DATADOG_API_KEY: {{datadog_api_key}}
+        DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-linux
 
 - name: test-acceptance
   public: true
