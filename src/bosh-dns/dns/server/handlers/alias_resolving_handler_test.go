@@ -96,6 +96,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 						&dns.A{A: net.IPv4(123, 123, 123, 246)},
 					},
 				}
+
 				requestMsg := &dns.Msg{
 					Question: []dns.Question{
 						{
@@ -105,6 +106,7 @@ var _ = Describe("AliasResolvingHandler", func() {
 						},
 					},
 				}
+
 				fakeDomainResolver.ResolveStub = func(resolutionNames []string, responseWriter dns.ResponseWriter, actualRequestMsg *dns.Msg) *dns.Msg {
 					Expect(resolutionNames).To(ConsistOf("5.a2_domain1.", "5.b2_domain1."))
 					Expect(actualRequestMsg).To(Equal(requestMsg))
