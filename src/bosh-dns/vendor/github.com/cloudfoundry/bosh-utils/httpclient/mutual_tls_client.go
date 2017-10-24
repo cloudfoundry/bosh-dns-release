@@ -19,7 +19,9 @@ func NewMutualTLSClient(identity tls.Certificate, caCertPool *x509.CertPool, ser
 	clientConfig.BuildNameToCertificate()
 	clientConfig.ServerName = serverName
 
-	transport := &http.Transport{TLSClientConfig: clientConfig}
+	transport := http.DefaultTransport.(*http.Transport)
+	transport.TLSClientConfig = clientConfig
+
 	return &http.Client{
 		Transport: transport,
 		Timeout:   10 * time.Second,

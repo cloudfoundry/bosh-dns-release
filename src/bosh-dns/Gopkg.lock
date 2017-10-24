@@ -35,7 +35,7 @@
   branch = "master"
   name = "github.com/cloudfoundry/bosh-utils"
   packages = ["errors","httpclient","logger","logger/fakes","logger/loggerfakes","retrystrategy","system","system/fakes","uuid"]
-  revision = "148a52cad58d6cb03d4f5c134bf484ea3fafd874"
+  revision = "eee079a008a7f06ea7514262c3ce79f6ee603337"
 
 [[projects]]
   branch = "master"
