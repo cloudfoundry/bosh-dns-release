@@ -31,6 +31,9 @@ var _ = Describe("Health Server", func() {
 		httpClient := setupSecureGet()
 
 		PerformanceTest{
+			Application: "health",
+			Context:     "health",
+
 			Workers:           workers,
 			RequestsPerSecond: requestsPerSecond,
 
@@ -38,9 +41,8 @@ var _ = Describe("Health Server", func() {
 
 			TimeThresholds: timeThresholds,
 			VitalsThresholds: VitalsThresholds{
-				CPUMax:   60,
 				CPUPct99: 60,
-				MemMax:   20,
+				MemPct99: 20,
 			},
 
 			SuccessStatus: http.StatusOK,

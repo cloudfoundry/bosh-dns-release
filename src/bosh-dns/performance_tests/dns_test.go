@@ -28,8 +28,10 @@ var _ = Describe("DNS", func() {
 		requestsPerSecond = 7
 	)
 
-	TestDNSPerformance := func(timeThresholds TimeThresholds) {
+	TestDNSPerformance := func(context string, timeThresholds TimeThresholds) {
 		PerformanceTest{
+			Application:       "dns",
+			Context:           context,
 			Workers:           workers,
 			RequestsPerSecond: requestsPerSecond,
 
@@ -37,9 +39,8 @@ var _ = Describe("DNS", func() {
 
 			TimeThresholds: timeThresholds,
 			VitalsThresholds: VitalsThresholds{
-				CPUMax:   50,
 				CPUPct99: 25,
-				MemMax:   30,
+				MemPct99: 30,
 			},
 
 			SuccessStatus: dns.RcodeSuccess,
@@ -61,6 +62,8 @@ var _ = Describe("DNS", func() {
 		It("handles DNS responses quickly for prod like zones", func() {
 			benchmarkTime := generateTimeHistogram(
 				PerformanceTest{
+					Application:       "dns",
+					Context:           "prod-like",
 					Workers:           workers,
 					RequestsPerSecond: requestsPerSecond,
 					WorkerFunc: func(resultChan chan<- Result) {
@@ -70,7 +73,7 @@ var _ = Describe("DNS", func() {
 					MakeParallelRequests(20 * time.Second),
 			)
 
-			TestDNSPerformance(TimeThresholdsFromBenchmark(benchmarkTime, 1.1))
+			TestDNSPerformance("prod-like", TimeThresholdsFromBenchmark(benchmarkTime, 1.1))
 		})
 	})
 
@@ -81,7 +84,7 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for upcheck zone", func() {
-			TestDNSPerformance(TimeThresholds{
+			TestDNSPerformance("upcheck", TimeThresholds{
 				Max:   7540 * time.Millisecond,
 				Med:   1500 * time.Microsecond,
 				Pct90: 4 * time.Millisecond,
@@ -116,7 +119,7 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for local zones", func() {
-			TestDNSPerformance(TimeThresholds{
+			TestDNSPerformance("local-zones", TimeThresholds{
 				Max:   7540 * time.Millisecond,
 				Med:   1500 * time.Microsecond,
 				Pct90: 3 * time.Millisecond,

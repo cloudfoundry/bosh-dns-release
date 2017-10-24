@@ -1,8 +1,12 @@
 package performance_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -25,9 +29,8 @@ type TimeThresholds struct {
 }
 
 type VitalsThresholds struct {
-	CPUMax   float64
 	CPUPct99 float64
-	MemMax   float64
+	MemPct99 float64
 }
 
 func TimeThresholdsFromBenchmark(benchmark metrics.Histogram, allowance float64) TimeThresholds {
@@ -40,6 +43,9 @@ func TimeThresholdsFromBenchmark(benchmark metrics.Histogram, allowance float64)
 }
 
 type PerformanceTest struct {
+	Application string
+	Context     string
+
 	Workers           int
 	RequestsPerSecond int
 
@@ -58,6 +64,43 @@ type PerformanceTest struct {
 func (p PerformanceTest) Setup() *PerformanceTest {
 	p.shutdown = make(chan struct{})
 	return &p
+}
+
+func (p *PerformanceTest) postDatadog(args ...interface{}) error {
+	apiKey := os.Getenv("DATADOG_API_KEY")
+	if apiKey == "" {
+		return nil
+	}
+
+	environment := os.Getenv("DATADOG_ENVIRONMENT_TAG")
+	if environment == "" {
+		panic("Need to set DATADOG_ENVIRONMENT_TAG to prevent creating bogus data buckets")
+	}
+
+	uri := fmt.Sprintf("https://app.datadoghq.com/api/v1/series?api_key=%s", apiKey)
+	metrics := []map[string]interface{}{}
+	for i := 0; i < len(args); i += 2 {
+		metrics = append(metrics, map[string]interface{}{
+			"metric": args[i],
+			"points": [][]interface{}{{time.Now().Unix(), args[i+1]}},
+			"type":   "gauge",
+			"tags": []string{
+				fmt.Sprintf("environment:%s", environment),
+				fmt.Sprintf("application:%s", p.Application),
+				fmt.Sprintf("context:%s", p.Context),
+			},
+		})
+	}
+
+	metric := map[string]interface{}{"series": metrics}
+
+	jsonContents, err := json.Marshal(metric)
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewBuffer(jsonContents)
+	_, err = http.Post(uri, "application/json", buf)
+	return err
 }
 
 func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result {
@@ -99,6 +142,9 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 	results := []Result{}
 	go func() {
 		for result := range resultChan {
+			go p.postDatadog(
+				"response-time", result.responseTime,
+			)
 			results = append(results, result)
 		}
 		close(doneChan)
@@ -153,13 +199,11 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	medTime := time.Duration(timeHistogram.Percentile(0.5))
 	pct90Time := time.Duration(timeHistogram.Percentile(0.9))
 	pct95Time := time.Duration(timeHistogram.Percentile(0.95))
-	maxTime := time.Duration(timeHistogram.Max())
 	printStatsForHistogram(timeHistogram, fmt.Sprintf("Handling latency for %s", label), "ms", 1000*1000)
 
-	memMax := float64(memHistogram.Max()) / (1024 * 1024)
+	mem99Pct := float64(memHistogram.Percentile(0.99)) / (1024 * 1024)
 	printStatsForHistogram(memHistogram, fmt.Sprintf("Server mem usage for %s", label), "MB", 1024*1024)
 
-	cpuMax := float64(cpuHistogram.Max()) / (1000 * 1000)
 	cpu99Pct := float64(cpuHistogram.Percentile(0.99)) / (1000 * 1000)
 	printStatsForHistogram(cpuHistogram, fmt.Sprintf("Server CPU usage for %s", label), "%", 1000*1000)
 
@@ -174,6 +218,7 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 		testFailures = append(testFailures,
 			fmt.Errorf("Success ratio %d/%d, giving percentage %.3f%%, is too low", successCount, len(results), 100*successPercentage))
 	}
+
 	if medTime > p.TimeThresholds.Med {
 		testFailures = append(testFailures,
 			fmt.Errorf("Median response time of %.3fms was greater than %.3fms benchmark",
@@ -192,25 +237,15 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 				float64(pct95Time)/float64(time.Millisecond),
 				float64(p.TimeThresholds.Pct95)/float64(time.Millisecond)))
 	}
-	if maxTime > p.TimeThresholds.Max {
-		testFailures = append(testFailures,
-			fmt.Errorf("Max response time of %.3fms was greater than %.3fms benchmark",
-				float64(maxTime/time.Millisecond),
-				float64(p.TimeThresholds.Max/time.Millisecond)))
-	}
-	if cpuMax > p.VitalsThresholds.CPUMax {
-		testFailures = append(testFailures,
-			fmt.Errorf("Max server CPU usage of %.2f%% was greater than %.2f%% ceiling", cpuMax, p.VitalsThresholds.CPUMax))
-	}
 
 	if cpu99Pct > p.VitalsThresholds.CPUPct99 {
 		testFailures = append(testFailures,
 			fmt.Errorf("99th percentile server CPU usage of %.2f%% was greater than %.2f%% ceiling", cpu99Pct, p.VitalsThresholds.CPUPct99))
 	}
 
-	if memMax > p.VitalsThresholds.MemMax {
+	if mem99Pct > p.VitalsThresholds.MemPct99 {
 		testFailures = append(testFailures,
-			fmt.Errorf("Max server memory usage of %.2fMB was greater than %.2fMB ceiling", memMax, p.VitalsThresholds.MemMax))
+			fmt.Errorf("99th percentile server memory usage of %.2fMB was greater than %.2fMB ceiling", mem99Pct, p.VitalsThresholds.MemPct99))
 	}
 
 	Expect(testFailures).To(BeEmpty())
@@ -248,6 +283,11 @@ func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Dura
 				cpuFloat := p.getProcessCPU()
 				cpuInt := cpuFloat * (1000 * 1000)
 				cpuHistogram.Update(int64(cpuInt))
+
+				go p.postDatadog(
+					"memory", mem.Resident,
+					"cpu", cpuInt,
+				)
 			}
 		}
 	}
