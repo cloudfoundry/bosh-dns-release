@@ -167,7 +167,7 @@ jobs:
   plan:
     - aggregate:
       - get: bosh-dns-release
-        passed: [test-acceptance, test-performance, test-acceptance-windows]
+        passed: [test-acceptance, test-acceptance-windows]
       - get: candidate-release
         passed: [test-acceptance, brats-ubuntu, test-acceptance-windows]
       - get: version
