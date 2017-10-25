@@ -20,8 +20,10 @@ import (
 )
 
 type Result struct {
-	status       int
-	responseTime time.Duration
+	status     int
+	value      interface{}
+	metricName string
+	time       int64
 }
 
 type TimeThresholds struct {
@@ -123,16 +125,25 @@ func (p *PerformanceTest) postDatadogEvent(title, text string) error {
 	return makeDataDogRequest("events", event)
 }
 
-func (p *PerformanceTest) postDatadog(args ...interface{}) error {
+type Series struct {
+	Metric string
+	Points []interface{}
+	Type   string
+	Tags   []string
+}
+
+type Items map[string][]Series
+
+func (p *PerformanceTest) postDatadog(r ...Result) error {
 	environment, gitSHA := validateDatadogEnvironment()
 
-	metrics := []map[string]interface{}{}
-	for i := 0; i < len(args); i += 2 {
-		metrics = append(metrics, map[string]interface{}{
-			"metric": args[i],
-			"points": [][]interface{}{{time.Now().Unix(), args[i+1]}},
-			"type":   "gauge",
-			"tags": []string{
+	metrics := []Series{}
+	for _, v := range r {
+		metrics = append(metrics, Series{
+			Metric: v.metricName,
+			Points: []interface{}{v.time, v.value},
+			Type:   "gauge",
+			Tags: []string{
 				fmt.Sprintf("environment:%s", environment),
 				fmt.Sprintf("application:%s", p.Application),
 				fmt.Sprintf("context:%s", p.Context),
@@ -141,7 +152,7 @@ func (p *PerformanceTest) postDatadog(args ...interface{}) error {
 		})
 	}
 
-	metric := map[string]interface{}{"series": metrics}
+	metric := Items{"series": metrics}
 
 	return makeDataDogRequest("series", metric)
 }
@@ -186,7 +197,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 
 	go func() {
 		for result := range resultChan {
-			p.postDatadog("response-time", result.responseTime)
+			p.postDatadog(result)
 			results = append(results, result)
 		}
 		close(doneChan)
@@ -329,8 +340,16 @@ func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Dura
 				cpuHistogram.Update(int64(cpuInt))
 
 				go p.postDatadog(
-					"memory", mem.Resident,
-					"cpu", cpuInt,
+					Result{
+						metricName: "memory",
+						value:      mem.Resident,
+						time:       time.Now().Unix(),
+					},
+					Result{
+						metricName: "cpu",
+						value:      cpuInt,
+						time:       time.Now().Unix(),
+					},
 				)
 			}
 		}
@@ -341,7 +360,7 @@ func generateTimeHistogram(results []Result) metrics.Histogram {
 	timeSample := metrics.NewExpDecaySample(len(results), 0.015)
 	timeHistogram := metrics.NewHistogram(timeSample)
 	for _, result := range results {
-		timeHistogram.Update(int64(result.responseTime))
+		timeHistogram.Update(result.value.(int64))
 	}
 	return timeHistogram
 }

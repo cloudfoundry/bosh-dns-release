@@ -146,7 +146,7 @@ func MakeDNSRequestUntilSuccessful(picker zp.ZonePicker, server string, result c
 		r, _, err := c.Exchange(m, server)
 		if err == nil {
 			responseTime := time.Since(startTime)
-			result <- Result{status: r.Rcode, responseTime: responseTime}
+			result <- Result{status: r.Rcode, time: time.Now().Unix(), metricName: "response_time", value: responseTime}
 			return
 		}
 	}

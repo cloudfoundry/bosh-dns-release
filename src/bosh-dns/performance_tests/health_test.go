@@ -72,9 +72,9 @@ func MakeHealthEndpointRequest(client *httpclient.HTTPClient, serverAddress stri
 
 	if err != nil {
 		fmt.Printf("Error hitting health endpoint: %s\n", err.Error())
-		hr <- Result{status: http.StatusRequestTimeout, responseTime: responseTime}
+		hr <- Result{status: http.StatusRequestTimeout, time: time.Now().Unix(), metricName: "response_time", value: responseTime}
 	} else {
-		hr <- Result{status: resp.StatusCode, responseTime: responseTime}
+		hr <- Result{status: resp.StatusCode, time: time.Now().Unix(), metricName: "response_time", value: responseTime}
 	}
 }
 
