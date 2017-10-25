@@ -18,7 +18,7 @@ var _ = Describe("ZoneFilePicker", func() {
 	Describe("NewZoneFilePickerFromFile", func() {
 		Context("when the given file is present", func() {
 			BeforeEach(func() {
-				file, err := ioutil.TempFile("/tmp", "dns_zone_data")
+				file, err := ioutil.TempFile("", "dns_zone_data")
 				Expect(err).ToNot(HaveOccurred())
 
 				zoneContents := []byte(`{"zones":["1.domain.","2.domain.","3.domain."]}`)
@@ -52,7 +52,7 @@ var _ = Describe("ZoneFilePicker", func() {
 	Describe("NextZone", func() {
 		Context("when the specified file is correctly populated", func() {
 			BeforeEach(func() {
-				file, err := ioutil.TempFile("/tmp", "dns_zone_data")
+				file, err := ioutil.TempFile("", "dns_zone_data")
 				Expect(err).ToNot(HaveOccurred())
 
 				zoneContents := []byte(`{"zones":["1.domain.","2.domain.","3.domain."]}`)
@@ -83,7 +83,7 @@ var _ = Describe("ZoneFilePicker", func() {
 
 		Context("when the specified file has only one zone", func() {
 			BeforeEach(func() {
-				file, err := ioutil.TempFile("/tmp", "dns_zone_data")
+				file, err := ioutil.TempFile("", "dns_zone_data")
 				Expect(err).ToNot(HaveOccurred())
 
 				zoneContents := []byte(`{"zones":["1.domain."]}`)
