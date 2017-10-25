@@ -126,10 +126,10 @@ func (p *PerformanceTest) postDatadogEvent(title, text string) error {
 }
 
 type Series struct {
-	Metric string        `json:"metric"`
-	Points []interface{} `json:"points"`
-	Type   string        `json:"type"`
-	Tags   []string      `json:"tags"`
+	Metric string          `json:"metric"`
+	Points [][]interface{} `json:"points"`
+	Type   string          `json:"type"`
+	Tags   []string        `json:"tags"`
 }
 
 type Items map[string][]Series
@@ -141,7 +141,7 @@ func (p *PerformanceTest) postDatadog(r ...Result) error {
 	for _, v := range r {
 		metrics = append(metrics, Series{
 			Metric: v.metricName,
-			Points: []interface{}{v.time, v.value},
+			Points: [][]interface{}{{v.time, v.value}},
 			Type:   "gauge",
 			Tags: []string{
 				fmt.Sprintf("environment:%s", environment),
