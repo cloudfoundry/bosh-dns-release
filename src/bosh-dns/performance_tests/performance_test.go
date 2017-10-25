@@ -183,11 +183,10 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 
 	doneChan := make(chan struct{})
 	results := []Result{}
+
 	go func() {
 		for result := range resultChan {
-			go p.postDatadog(
-				"response-time", result.responseTime,
-			)
+			p.postDatadog("response-time", result.responseTime)
 			results = append(results, result)
 		}
 		close(doneChan)
