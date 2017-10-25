@@ -104,11 +104,11 @@ func (p *PerformanceTest) postDatadogEvent(title, text string) error {
 	environment, gitSHA := validateDatadogEnvironment()
 
 	event := struct {
-		Title     string
-		Text      string
-		Priority  string
-		Tags      []string
-		AlertType string
+		Title     string   `json:"title"`
+		Text      string   `json:"text"`
+		Priority  string   `json:"priority"`
+		Tags      []string `json:"tags"`
+		AlertType string   `json:"alert_type"`
 	}{
 		Title:     title,
 		Text:      text,
@@ -126,10 +126,10 @@ func (p *PerformanceTest) postDatadogEvent(title, text string) error {
 }
 
 type Series struct {
-	Metric string
-	Points []interface{}
-	Type   string
-	Tags   []string
+	Metric string        `json:"metric"`
+	Points []interface{} `json:"points"`
+	Type   string        `json:"type"`
+	Tags   []string      `json:"tags"`
 }
 
 type Items map[string][]Series
@@ -360,7 +360,7 @@ func generateTimeHistogram(results []Result) metrics.Histogram {
 	timeSample := metrics.NewExpDecaySample(len(results), 0.015)
 	timeHistogram := metrics.NewHistogram(timeSample)
 	for _, result := range results {
-		timeHistogram.Update(result.value.(int64))
+		timeHistogram.Update(int64(result.value.(time.Duration)))
 	}
 	return timeHistogram
 }
