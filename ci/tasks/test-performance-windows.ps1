@@ -37,6 +37,8 @@ if (NeedsToInstallGo) {
     Write-Host "Successfully installed go version: $(go version)"
 }
 
+$GIT_SHA = Get-Content ".git\HEAD" -Raw
+
 cd $env:GOPATH/src/bosh-dns
 
 go.exe install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
