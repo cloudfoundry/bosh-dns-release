@@ -36,6 +36,7 @@ func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, requestMsg
 	}
 
 	responseMsg.Authoritative = true
+	responseMsg.RecursionAvailable = true
 
 	if err := responseWriter.WriteMsg(responseMsg); err != nil {
 		d.logger.Error(d.logTag, err.Error())

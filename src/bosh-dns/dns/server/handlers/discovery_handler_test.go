@@ -45,8 +45,8 @@ var _ = Describe("DiscoveryHandler", func() {
 				discoveryHandler.ServeDNS(fakeWriter, &dns.Msg{})
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(false))
+				Expect(message.Authoritative).To(BeTrue())
+				Expect(message.RecursionAvailable).To(BeTrue())
 			})
 		})
 
@@ -58,8 +58,8 @@ var _ = Describe("DiscoveryHandler", func() {
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(false))
+				Expect(message.Authoritative).To(BeTrue())
+				Expect(message.RecursionAvailable).To(BeTrue())
 			})
 
 			It("returns rcode success for aaaa questions", func() {
@@ -69,8 +69,8 @@ var _ = Describe("DiscoveryHandler", func() {
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(false))
+				Expect(message.Authoritative).To(BeTrue())
+				Expect(message.RecursionAvailable).To(BeTrue())
 			})
 
 			It("returns rcode server failure for all other questions", func() {
@@ -80,8 +80,8 @@ var _ = Describe("DiscoveryHandler", func() {
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
-				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(false))
+				Expect(message.Authoritative).To(BeTrue())
+				Expect(message.RecursionAvailable).To(BeTrue())
 			})
 
 			Context("when the question is an A or ANY record", func() {
@@ -96,9 +96,9 @@ var _ = Describe("DiscoveryHandler", func() {
 						responseMsg := fakeWriter.WriteMsgArgsForCall(0)
 
 						Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
-						Expect(responseMsg.Authoritative).To(Equal(true))
-						Expect(responseMsg.RecursionAvailable).To(Equal(true))
-						Expect(responseMsg.Truncated).To(Equal(false))
+						Expect(responseMsg.Authoritative).To(BeTrue())
+						Expect(responseMsg.RecursionAvailable).To(BeTrue())
+						Expect(responseMsg.Truncated).To(BeFalse())
 
 						Expect(responseMsg.Answer).To(HaveLen(1))
 
