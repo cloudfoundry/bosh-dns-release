@@ -37,7 +37,7 @@ if (NeedsToInstallGo) {
     Write-Host "Successfully installed go version: $(go version)"
 }
 
-$GIT_SHA = Get-Content ".git\HEAD" -Raw
+$GIT_SHA = Get-Content "bosh-dns-release\.git\HEAD" -Raw
 
 cd $env:GOPATH/src/bosh-dns
 
