@@ -77,6 +77,11 @@ func (p *PerformanceTest) postDatadog(args ...interface{}) error {
 		panic("Need to set DATADOG_ENVIRONMENT_TAG to prevent creating bogus data buckets")
 	}
 
+	gitSHA := os.Getenv("GIT_SHA")
+	if gitSHA == "" {
+		panic("Need to set GIT_SHA to correlate performance metric to release")
+	}
+
 	uri := fmt.Sprintf("https://app.datadoghq.com/api/v1/series?api_key=%s", apiKey)
 	metrics := []map[string]interface{}{}
 	for i := 0; i < len(args); i += 2 {
@@ -88,6 +93,7 @@ func (p *PerformanceTest) postDatadog(args ...interface{}) error {
 				fmt.Sprintf("environment:%s", environment),
 				fmt.Sprintf("application:%s", p.Application),
 				fmt.Sprintf("context:%s", p.Context),
+				fmt.Sprintf("sha:%s", gitSHA),
 			},
 		})
 	}

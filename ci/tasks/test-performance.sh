@@ -5,6 +5,7 @@ set -exu
 
 export GOPATH=$PWD/bosh-dns-release
 export PATH="${GOPATH}/bin":$PATH
+export GIT_SHA=$(cd $GOPATH && git rev-parse head)
 
 go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
