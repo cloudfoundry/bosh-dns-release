@@ -66,12 +66,7 @@ func (p PerformanceTest) Setup() *PerformanceTest {
 	return &p
 }
 
-func (p *PerformanceTest) postDatadog(args ...interface{}) error {
-	apiKey := os.Getenv("DATADOG_API_KEY")
-	if apiKey == "" {
-		return nil
-	}
-
+func validateDatadogEnvironment() (string, string) {
 	environment := os.Getenv("DATADOG_ENVIRONMENT_TAG")
 	if environment == "" {
 		panic("Need to set DATADOG_ENVIRONMENT_TAG to prevent creating bogus data buckets")
@@ -82,7 +77,55 @@ func (p *PerformanceTest) postDatadog(args ...interface{}) error {
 		panic("Need to set GIT_SHA to correlate performance metric to release")
 	}
 
-	uri := fmt.Sprintf("https://app.datadoghq.com/api/v1/series?api_key=%s", apiKey)
+	return environment, gitSHA
+}
+
+func makeDataDogRequest(endpoint string, content interface{}) error {
+	apiKey := os.Getenv("DATADOG_API_KEY")
+	if apiKey == "" {
+		panic("DATADOG_API_KEY is missing")
+	}
+
+	uri := fmt.Sprintf("https://app.datadoghq.com/api/v1/%s?api_key=%s", endpoint, apiKey)
+
+	jsonContents, err := json.Marshal(content)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer(jsonContents)
+	_, err = http.Post(uri, "application/json", buf)
+	return err
+}
+
+func (p *PerformanceTest) postDatadogEvent(title, text string) error {
+	environment, gitSHA := validateDatadogEnvironment()
+
+	event := struct {
+		Title     string
+		Text      string
+		Priority  string
+		Tags      []string
+		AlertType string
+	}{
+		Title:     title,
+		Text:      text,
+		Priority:  "normal",
+		AlertType: "info",
+		Tags: []string{
+			fmt.Sprintf("environment:%s", environment),
+			fmt.Sprintf("application:%s", p.Application),
+			fmt.Sprintf("context:%s", p.Context),
+			fmt.Sprintf("sha:%s", gitSHA),
+		},
+	}
+
+	return makeDataDogRequest("events", event)
+}
+
+func (p *PerformanceTest) postDatadog(args ...interface{}) error {
+	environment, gitSHA := validateDatadogEnvironment()
+
 	metrics := []map[string]interface{}{}
 	for i := 0; i < len(args); i += 2 {
 		metrics = append(metrics, map[string]interface{}{
@@ -100,13 +143,7 @@ func (p *PerformanceTest) postDatadog(args ...interface{}) error {
 
 	metric := map[string]interface{}{"series": metrics}
 
-	jsonContents, err := json.Marshal(metric)
-	if err != nil {
-		return err
-	}
-	buf := bytes.NewBuffer(jsonContents)
-	_, err = http.Post(uri, "application/json", buf)
-	return err
+	return makeDataDogRequest("series", metric)
 }
 
 func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result {
@@ -172,6 +209,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 }
 
 func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
+	p.postDatadogEvent("Starting performance test", "")
 	duration := time.Duration(durationInSeconds) * time.Second
 	resourcesInterval := time.Second / 2
 
@@ -254,6 +292,7 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 			fmt.Errorf("99th percentile server memory usage of %.2fMB was greater than %.2fMB ceiling", mem99Pct, p.VitalsThresholds.MemPct99))
 	}
 
+	p.postDatadogEvent("Finishing performance test", "")
 	Expect(testFailures).To(BeEmpty())
 }
 
