@@ -54,6 +54,22 @@ jobs:
         DATADOG_API_KEY: {{datadog_api_key}}
         DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-linux
 
+- name: test-performance-windows
+  public: true
+  serial: true
+  plan:
+    - get: every-10m
+      trigger: true
+    - get: bosh-dns-release
+      trigger: true
+      passed: [create-release]
+    - task: test-performance
+      file: bosh-dns-release/ci/tasks/test-performance-windows.yml
+      params:
+        ZONES_JSON_HASH: {{zones_json_hash}}
+        DATADOG_API_KEY: {{datadog_api_key}}
+        DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-windows
+
 - name: test-acceptance
   public: true
   serial: true
