@@ -86,12 +86,12 @@ var _ = Describe("main", func() {
 
 	Context("when the server starts successfully", func() {
 		var (
-			cmd             *exec.Cmd
-			session         *gexec.Session
-			aliasesDir      string
-			recordsFilePath string
-			checkInterval   string
-			httpJSONServer  *ghttp.Server
+			cmd                    *exec.Cmd
+			session                *gexec.Session
+			aliasesDir             string
+			recordsFilePath        string
+			checkInterval          string
+			httpJSONServer         *ghttp.Server
 			httpJSONCachingEnabled bool
 		)
 

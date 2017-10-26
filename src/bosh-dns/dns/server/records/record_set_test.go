@@ -591,58 +591,58 @@ var _ = Describe("RecordSet", func() {
 		It("normalizes domain names", func() {
 			Expect(recordSet.Domains).To(ConsistOf("withadot.", "nodot.", "domain."))
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:          "instance0",
-				NumId: "0",
-				Group:       "my-group",
-				Network:     "my-network",
-				NetworkID:   "1",
-				Deployment:  "my-deployment",
-				IP:          "123.123.123.123",
-				Domain:      "withadot.",
-				AZID:        "1",
+				ID:         "instance0",
+				NumId:      "0",
+				Group:      "my-group",
+				Network:    "my-network",
+				NetworkID:  "1",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.123",
+				Domain:     "withadot.",
+				AZID:       "1",
 			})))
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:          "instance1",
-				NumId: "1",
-				Group:       "my-group",
-				Network:     "my-network",
-				NetworkID:   "1",
-				Deployment:  "my-deployment",
-				IP:          "123.123.123.124",
-				Domain:      "nodot.",
-				AZID:        "2",
+				ID:         "instance1",
+				NumId:      "1",
+				Group:      "my-group",
+				Network:    "my-network",
+				NetworkID:  "1",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.124",
+				Domain:     "nodot.",
+				AZID:       "2",
 			})))
 		})
 
 		It("includes records with null azs", func() {
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:          "instance2",
-				NumId: "2",
-				Group:       "my-group",
-				Network:     "my-network",
-				NetworkID:   "1",
-				Deployment:  "my-deployment",
-				IP:          "123.123.123.125",
-				Domain:      "domain.",
-				AZID:        "",
+				ID:         "instance2",
+				NumId:      "2",
+				Group:      "my-group",
+				Network:    "my-network",
+				NetworkID:  "1",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.125",
+				Domain:     "domain.",
+				AZID:       "",
 			})))
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:          "instance4",
-				NumId: "4",
-				Group:       "my-group",
-				Network:     "my-network",
-				NetworkID:   "1",
-				Deployment:  "my-deployment",
-				IP:          "123.123.123.127",
-				Domain:      "domain.",
-				AZID:        "",
+				ID:         "instance4",
+				NumId:      "4",
+				Group:      "my-group",
+				Network:    "my-network",
+				NetworkID:  "1",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.127",
+				Domain:     "domain.",
+				AZID:       "",
 			})))
 		})
 
 		It("includes records with null instance indexes", func() {
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
 				ID:            "instance3",
-				NumId:   "3",
+				NumId:         "3",
 				Group:         "my-group",
 				Network:       "my-network",
 				NetworkID:     "1",
@@ -657,7 +657,7 @@ var _ = Describe("RecordSet", func() {
 		It("includes records with no value for network_id", func() {
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
 				ID:            "instance5",
-				NumId:   "5",
+				NumId:         "5",
 				Group:         "my-group",
 				Network:       "my-network",
 				NetworkID:     "",
@@ -672,7 +672,7 @@ var _ = Describe("RecordSet", func() {
 		It("includes records with no value for num_id", func() {
 			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
 				ID:            "instance6",
-				NumId:   "",
+				NumId:         "",
 				Group:         "my-group",
 				Network:       "my-network",
 				NetworkID:     "1",

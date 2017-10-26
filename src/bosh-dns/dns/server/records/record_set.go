@@ -19,7 +19,7 @@ type recordGroup map[*Record]struct{}
 type RecordSet struct {
 	Domains         []string
 	Records         []*Record
-	byNumId   map[string]recordGroup
+	byNumId         map[string]recordGroup
 	byNetworkID     map[string]recordGroup
 	byAzId          map[string]recordGroup
 	byInstanceIndex map[string]recordGroup

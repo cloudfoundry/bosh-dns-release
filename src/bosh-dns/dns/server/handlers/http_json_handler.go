@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"strconv"
 
+	"bosh-dns/dns/server/records/dnsresolver"
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
-	"bosh-dns/dns/server/records/dnsresolver"
 )
 
 type HTTPJSONHandler struct {
