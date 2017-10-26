@@ -22,7 +22,7 @@ var _ = Describe("DNS", func() {
 		picker zp.ZonePicker
 		label  string
 
-		dnsServerAddress  = "127.0.0.1:9953"
+		dnsServerAddress  = "127.0.0.2:9953"
 		durationInSeconds = 60 * 30
 		workers           = 10
 		requestsPerSecond = 7
