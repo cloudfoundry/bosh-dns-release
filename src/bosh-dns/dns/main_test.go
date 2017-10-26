@@ -279,7 +279,7 @@ var _ = Describe("main", func() {
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[one\.alias\.\] 0 \d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*INFO \- handlers\.DiscoveryHandler Request \[1\] \[one\.alias\.\] 0 \d+ns`))
 					})
 				})
 
@@ -300,7 +300,7 @@ var _ = Describe("main", func() {
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("10.11.12.13"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[ip\.alias\.\] 0 \d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*INFO \- handlers\.DiscoveryHandler Request \[1\] \[ip\.alias\.\] 0 \d+ns`))
 					})
 				})
 
@@ -325,7 +325,7 @@ var _ = Describe("main", func() {
 						ips := []string{response.Answer[0].(*dns.A).A.String(), response.Answer[1].(*dns.A).A.String()}
 						Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.3"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[internal\.alias\.\] 0 \d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*INFO \- handlers\.DiscoveryHandler Request \[1\] \[internal\.alias\.\] 0 \d+ns`))
 					})
 
 					Context("with a group alias", func() {
@@ -350,7 +350,7 @@ var _ = Describe("main", func() {
 							ips := []string{response.Answer[0].(*dns.A).A.String(), response.Answer[1].(*dns.A).A.String()}
 							Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.2"))
 
-							Eventually(session.Out).Should(gbytes.Say(`\[AliasResolvingHandler\].*INFO \- dnsresolver\.LocalDomain Request \[1\] \[group\.internal\.alias\.\] 0 \d+ns`))
+							Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*INFO \- handlers\.DiscoveryHandler Request \[1\] \[group\.internal\.alias\.\] 0 \d+ns`))
 						})
 					})
 				})

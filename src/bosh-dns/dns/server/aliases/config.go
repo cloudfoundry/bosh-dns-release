@@ -14,6 +14,7 @@ import (
 type Config struct {
 	aliases           map[string][]string
 	underscoreAliases map[string][]string
+	aliasHosts        []string
 }
 
 func NewConfig() Config {
@@ -40,6 +41,8 @@ func NewConfigFromMap(load map[string][]string) (Config, error) {
 			return config, err
 		}
 	}
+
+	config.aliasHosts = config.getAliasHosts()
 
 	return config, nil
 }
@@ -150,6 +153,8 @@ func (c Config) Merge(other Config) Config {
 		c.underscoreAliases[alias] = targets
 	}
 
+	c.aliasHosts = c.getAliasHosts()
+
 	return c
 }
 
@@ -195,4 +200,46 @@ func (c Config) reduce2(alias string, depth int) ([]string, error) {
 	}
 
 	return resolved, nil
+}
+
+func (c Config) AliasHosts() []string {
+	return c.aliasHosts
+}
+
+func (c Config) getAliasHosts() []string {
+	aliasHosts := []string{}
+	allHosts := c.allAliasHosts()
+
+	for host := range allHosts {
+		foundParentDomain := false
+
+		for comparisonHost := range allHosts {
+			if comparisonHost != host && dns.IsSubDomain(comparisonHost, host) {
+				foundParentDomain = true
+				break
+			}
+		}
+
+		if !foundParentDomain {
+			aliasHosts = append(aliasHosts, dns.Fqdn(host))
+		}
+	}
+
+	sort.Strings(aliasHosts)
+
+	return aliasHosts
+}
+
+func (c Config) allAliasHosts() map[string]bool {
+	allHosts := map[string]bool{}
+
+	for host := range c.aliases {
+		allHosts[host] = true
+	}
+
+	for host := range c.underscoreAliases {
+		allHosts[host] = true
+	}
+
+	return allHosts
 }

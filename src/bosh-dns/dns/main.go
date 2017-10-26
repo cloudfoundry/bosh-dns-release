@@ -141,17 +141,11 @@ func mainExitCode() int {
 		mux.Handle(".", forwardHandler)
 	}
 
-	aliasResolver, err := handlers.NewAliasResolvingHandler(mux, aliasConfiguration, localDomain, clock, logger)
-	if err != nil {
-		logger.Error(logTag, fmt.Sprintf("could not initiate alias resolving handler: %s", err.Error()))
-		return 1
-	}
-
 	bindAddress := fmt.Sprintf("%s:%d", config.Address, config.Port)
 	dnsServer := server.New(
 		[]server.DNSServer{
-			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: aliasResolver},
-			&dns.Server{Addr: bindAddress, Net: "udp", Handler: aliasResolver, UDPSize: 65535},
+			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: mux},
+			&dns.Server{Addr: bindAddress, Net: "udp", Handler: mux, UDPSize: 65535},
 		},
 		upchecks,
 		time.Duration(config.Timeout),

@@ -45,10 +45,9 @@ var _ = Describe("AliasedRecordSet", func() {
 	})
 
 	Describe("Domains", func() {
-		It("delegates down the the underlying record set", func() {
+		It("returns the aliases and underlying record sets domains", func() {
 			fakeRecordSet.DomainsReturns([]string{"a", "b"})
-			Expect(aliasSet.Domains()).To(Equal([]string{"a", "b"}))
-			Expect(fakeRecordSet.DomainsCallCount()).To(Equal(1))
+			Expect(aliasSet.Domains()).To(ConsistOf("a", "b", "alias1.", "alias2."))
 		})
 	})
 

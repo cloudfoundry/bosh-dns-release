@@ -307,4 +307,19 @@ var _ = Describe("Config", func() {
 			Expect(err.Error()).To(ContainSubstring("failed to resolve alias1.: recursion detected"))
 		})
 	})
+
+	Describe("AliasHosts", func() {
+		It("returns the set of hosts used by aliases", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"alias1":           {"1.1.1.1"},
+				"alias2":           {"1.1.1.2"},
+				"_.alias2":         {"1.1.1.3"},
+				"something.alias1": {"1.1.1.4"},
+				"a.b.c.":           {"1.1.1.5"},
+				"_.alias3":         {"1.1.1.6"},
+			})
+
+			Expect(c.AliasHosts()).To(ConsistOf("alias1.", "alias2.", "a.b.c.", "alias3."))
+		})
+	})
 })

@@ -46,5 +46,5 @@ func (a *AliasedRecordSet) Subscribe() <-chan bool {
 }
 
 func (a *AliasedRecordSet) Domains() []string {
-	return a.recordSet.Domains()
+	return append(a.recordSet.Domains(), a.config.AliasHosts()...)
 }
