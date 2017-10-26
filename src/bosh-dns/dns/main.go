@@ -105,12 +105,13 @@ func mainExitCode() int {
 
 	fileReader := records.NewFileReader(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
 	recordSet, err := records.NewRecordSet(fileReader, logger)
-	healthyRecordSet := healthiness.NewHealthyRecordSet(recordSet, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown)
+	aliasedRecordSet := aliases.NewAliasedRecordSet(recordSet, aliasConfiguration)
+	healthyRecordSet := healthiness.NewHealthyRecordSet(aliasedRecordSet, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown)
 
 	localDomain := dnsresolver.NewLocalDomain(logger, healthyRecordSet, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
-	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordSet, mux, discoveryHandler)
+	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, aliasedRecordSet, mux, discoveryHandler)
 
 	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
 
