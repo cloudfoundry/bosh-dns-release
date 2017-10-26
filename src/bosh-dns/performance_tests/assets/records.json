@@ -1,10 +1,6 @@
 {
   "records": [
     [
-      "127.0.0.1",
-      "800c1d38-6eba-4e4b-9662-a9fc66c7a8b1.dns.default.cf.bosh"
-    ],
-    [
       "127.0.0.2",
       "be2168f2-9fe1-4855-9cfe-6492611d4b78.dns.default.cf.bosh"
     ],

@@ -21,7 +21,7 @@ import (
 
 var _ = Describe("Health Server", func() {
 	var (
-		serverAddress     = "127.0.0.1:8853"
+		serverAddress     = "127.0.0.2:8853"
 		durationInSeconds = 60 * 30
 		workers           = 10
 		requestsPerSecond = 400

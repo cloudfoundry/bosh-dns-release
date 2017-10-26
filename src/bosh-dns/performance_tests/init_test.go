@@ -43,7 +43,7 @@ var _ = BeforeSuite(func() {
 
 	SetDefaultEventuallyTimeout(2 * time.Second)
 
-	for i := 1; i <= 102; i++ {
+	for i := 2; i <= 102; i++ {
 		startHealthServer(fmt.Sprintf("127.0.0.%d", i))
 	}
 
@@ -51,7 +51,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	dnsConfigContents, err := json.Marshal(map[string]interface{}{
-		"address":          "127.0.0.1",
+		"address":          "127.0.0.2",
 		"port":             dnsPort,
 		"records_file":     "assets/records.json",
 		"alias_files_glob": "assets/aliases.json",
@@ -84,7 +84,7 @@ var _ = BeforeSuite(func() {
 	m := new(dns.Msg)
 	m.SetQuestion("2d111fee-966f-48a1-95d0-0d57bad45a08.dns.default.cf.bosh", dns.TypeA)
 	for i := 0; i < 10; i++ {
-		r, _, err := c.Exchange(m, fmt.Sprintf("127.0.0.1:%d", dnsPort))
+		r, _, err := c.Exchange(m, fmt.Sprintf("127.0.0.2:%d", dnsPort))
 		if err == nil && r.Rcode == dns.RcodeSuccess {
 			break
 		}
@@ -96,7 +96,7 @@ func waitForServer(port int) error {
 	var err error
 	for i := 0; i < 20; i++ {
 		var c net.Conn
-		c, err = net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", strconv.Itoa(port)))
+		c, err = net.Dial("tcp", fmt.Sprintf("127.0.0.2:%s", strconv.Itoa(port)))
 		if err != nil {
 			time.Sleep(100 * time.Millisecond)
 			continue
