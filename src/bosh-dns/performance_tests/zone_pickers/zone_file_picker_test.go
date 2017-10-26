@@ -41,7 +41,7 @@ var _ = Describe("ZoneFilePicker", func() {
 
 		Context("when the given file is NOT present", func() {
 			It("returns a nil pointer and an error", func() {
-				picker, err := zone_pickers.NewZoneFilePickerFromFile(sourceFile)
+				picker, err := zone_pickers.NewZoneFilePickerFromFile("")
 				Expect(picker).To(BeNil())
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Creating zone picker"))
