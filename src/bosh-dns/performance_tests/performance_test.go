@@ -339,18 +339,20 @@ func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Dura
 				cpuInt := cpuFloat * (1000 * 1000)
 				cpuHistogram.Update(int64(cpuInt))
 
-				go p.postDatadog(
-					Result{
-						metricName: "memory",
-						value:      mem.Resident,
-						time:       time.Now().Unix(),
-					},
-					Result{
-						metricName: "cpu",
-						value:      cpuInt,
-						time:       time.Now().Unix(),
-					},
-				)
+				go func(t int64) {
+					p.postDatadog(
+						Result{
+							metricName: "memory",
+							value:      mem.Resident,
+							time:       t,
+						},
+						Result{
+							metricName: "cpu",
+							value:      cpuInt,
+							time:       t,
+						},
+					)
+				}(time.Now().Unix())
 			}
 		}
 	}
