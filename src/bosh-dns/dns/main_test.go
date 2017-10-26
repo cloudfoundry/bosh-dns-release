@@ -456,7 +456,7 @@ var _ = Describe("main", func() {
 
 				It("can interpret abbreviated group encoding", func() {
 					By("understanding q- queries", func() {
-						m.SetQuestion("q-a1s0.g-7.foo.", dns.TypeA)
+						m.SetQuestion("q-a1s0.q-g7.foo.", dns.TypeA)
 
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
@@ -478,7 +478,7 @@ var _ = Describe("main", func() {
 					})
 
 					By("understanding specific instance hosts", func() {
-						m.SetQuestion("my-instance-1.g-7.foo.", dns.TypeA)
+						m.SetQuestion("my-instance-1.q-g7.foo.", dns.TypeA)
 
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())

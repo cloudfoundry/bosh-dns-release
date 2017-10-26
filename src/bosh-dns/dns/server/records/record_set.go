@@ -203,7 +203,7 @@ func (r RecordSet) recordsFromDomain(domains []string) recordGroup {
 func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
 	var ips []string
 
-	segments := strings.SplitN(fqdn, ".", 2) // [q-s0, g-7.x.y.bosh]
+	segments := strings.SplitN(fqdn, ".", 2) // [q-s0, q-g7.x.y.bosh]
 
 	if len(segments) < 2 {
 		return ips, errors.New("domain is malformed")

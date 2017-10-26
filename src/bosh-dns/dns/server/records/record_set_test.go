@@ -279,7 +279,7 @@ var _ = Describe("RecordSet", func() {
 			})
 
 			It("interprets short group queries the same way", func() {
-				ips, err := recordSet.Resolve("q-s0.g-1.my-domain.")
+				ips, err := recordSet.Resolve("q-s0.q-g1.my-domain.")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(ips).To(HaveLen(4))
 				Expect(ips).To(ContainElement("123.123.123.123"))
@@ -290,7 +290,7 @@ var _ = Describe("RecordSet", func() {
 		})
 
 		It("can find specific instances using short group queries", func() {
-			ips, err := recordSet.Resolve("instance0.g-1.my-domain.")
+			ips, err := recordSet.Resolve("instance0.q-g1.my-domain.")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ips).To(HaveLen(1))
 			Expect(ips).To(ContainElement("123.123.123.123"))
