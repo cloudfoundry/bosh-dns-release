@@ -18,8 +18,10 @@ import (
 
 const logTag string = "RecordsRepo"
 
-type RecordSetProvider interface {
-	Get() (RecordSet, error)
+//go:generate counterfeiter . FileReader
+
+type FileReader interface {
+	Get() ([]byte, error)
 	Subscribe() <-chan bool
 }
 
@@ -31,13 +33,13 @@ type autoUpdatingRepo struct {
 	logger          logger.Logger
 	rwlock          *sync.RWMutex
 	cacheStat       os.FileInfo
-	cache           *RecordSet
+	cache           []byte
 	cacheErr        error
 
 	subscribers []chan bool
 }
 
-func NewRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Clock, logger logger.Logger, shutdownChan chan struct{}) RecordSetProvider {
+func NewFileReader(recordsFilePath string, fileSys system.FileSystem, clock clock.Clock, logger logger.Logger, shutdownChan chan struct{}) FileReader {
 	repo := &autoUpdatingRepo{
 		recordsFilePath: recordsFilePath,
 		fileSystem:      fileSys,
@@ -48,8 +50,8 @@ func NewRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Cloc
 		subscribers: []chan bool{},
 	}
 
-	_, records, err := repo.needNewFromDisk()
-	repo.atomicallyUpdateCache(&records, err)
+	_, fileContents, err := repo.needNewFromDisk()
+	repo.atomicallyUpdateCache(fileContents, err)
 
 	if repo.cacheErr != nil {
 		logger.Error(logTag, fmt.Sprintf("Unable to open records file at: %s", recordsFilePath))
@@ -65,7 +67,7 @@ func NewRepo(recordsFilePath string, fileSys system.FileSystem, clock clock.Cloc
 
 				newData, data, err := repo.needNewFromDisk()
 				if newData && err == nil {
-					repo.atomicallyUpdateCache(&data, err)
+					repo.atomicallyUpdateCache(data, err)
 					for _, c := range repo.subscribers {
 						c <- true
 					}
@@ -83,55 +85,47 @@ func (r *autoUpdatingRepo) Subscribe() <-chan bool {
 	return c
 }
 
-func (r *autoUpdatingRepo) needNewFromDisk() (needsNew bool, set RecordSet, err error) {
-	needsNew = false
-
-	var newStat os.FileInfo
-	newStat, err = r.fileSystem.Stat(r.recordsFilePath)
+func (r *autoUpdatingRepo) needNewFromDisk() (bool, []byte, error) {
+	newStat, err := r.fileSystem.Stat(r.recordsFilePath)
 	if err != nil {
-		err = bosherr.Errorf("Error stating records file '%s': %s", r.recordsFilePath, err.Error())
-		return
+		return false, nil, bosherr.Errorf("Error stating records file '%s': %s", r.recordsFilePath, err.Error())
 	}
 
 	if reflect.DeepEqual(r.cacheStat, newStat) {
-		return
-	} else {
-		needsNew = true
+		return false, nil, nil
 	}
 
 	var buf []byte
 	buf, err = r.fileSystem.ReadFile(r.recordsFilePath)
 	if err != nil {
-		return
+		return true, nil, err
 	}
 
 	r.cacheStat = newStat
 
-	set, err = CreateFromJSON(buf, r.logger)
-
-	return
+	return true, buf, nil
 }
 
-func (r *autoUpdatingRepo) Get() (RecordSet, error) {
+func (r *autoUpdatingRepo) Get() ([]byte, error) {
 	setPtr, err := r.atomicallyFetchCache()
 	if setPtr == nil || err != nil {
-		return RecordSet{}, err
+		return nil, err
 	}
 
-	return *setPtr, nil
+	return setPtr, nil
 }
 
-func (r *autoUpdatingRepo) atomicallyUpdateCache(set *RecordSet, err error) {
+func (r *autoUpdatingRepo) atomicallyUpdateCache(cachedFileContents []byte, err error) {
 	r.rwlock.Lock()
-	r.cache = set
+	r.cache = cachedFileContents
 	r.cacheErr = err
 	r.rwlock.Unlock()
 }
 
-func (r *autoUpdatingRepo) atomicallyFetchCache() (set *RecordSet, err error) {
+func (r *autoUpdatingRepo) atomicallyFetchCache() ([]byte, error) {
 	r.rwlock.RLock()
-	set = r.cache
-	err = r.cacheErr
+	set := r.cache
+	err := r.cacheErr
 	r.rwlock.RUnlock()
-	return
+	return set, err
 }

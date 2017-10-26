@@ -12,7 +12,6 @@ import (
 	"net"
 	"time"
 
-	"bosh-dns/dns/server/internal/internalfakes"
 	"bosh-dns/dns/server/serverfakes"
 
 	. "github.com/onsi/ginkgo"
@@ -211,12 +210,6 @@ var _ = Describe("Server", func() {
 		})
 
 		Context("upchecking", func() {
-			var fakeConn *internalfakes.FakeConn
-
-			BeforeEach(func() {
-				fakeConn = &internalfakes.FakeConn{}
-			})
-
 			Context("when both servers are up", func() {
 				It("proceeds through upchecks", func() {
 					dnsServerFinished := make(chan error)

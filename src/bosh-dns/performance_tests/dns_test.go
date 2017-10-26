@@ -7,14 +7,15 @@ import (
 
 	"bosh-dns/dns/server/records"
 
+	"code.cloudfoundry.org/clock"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"fmt"
-	"io/ioutil"
 
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 var _ = Describe("DNS", func() {
@@ -94,11 +95,16 @@ var _ = Describe("DNS", func() {
 	})
 
 	Describe("using local bosh dns records", func() {
+		var (
+			signal chan struct{}
+		)
+
 		BeforeEach(func() {
+			signal = make(chan struct{})
 			logger := &fakes.FakeLogger{}
-			recordsJsonBytes, err := ioutil.ReadFile("assets/records.json")
-			Expect(err).ToNot(HaveOccurred())
-			recordSet, err := records.CreateFromJSON(recordsJsonBytes, logger)
+			fs := boshsys.NewOsFileSystem(logger)
+			recordSetReader := records.NewFileReader("assets/records.json", fs, clock.NewClock(), logger, signal)
+			recordSet, err := records.NewRecordSet(recordSetReader, logger)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(recordSet.Records).To(HaveLen(102))
 
@@ -116,6 +122,10 @@ var _ = Describe("DNS", func() {
 			}
 			picker = &zp.ZoneFilePicker{Domains: records}
 			label = "local zones"
+		})
+
+		AfterEach(func() {
+			close(signal)
 		})
 
 		It("handles DNS responses quickly for local zones", func() {

@@ -2,6 +2,8 @@ package records_test
 
 import (
 	"bosh-dns/dns/server/records"
+	"bosh-dns/dns/server/records/recordsfakes"
+	"errors"
 	"strings"
 
 	"fmt"
@@ -22,18 +24,269 @@ func dereferencer(r []*records.Record) []records.Record {
 }
 
 var _ = Describe("RecordSet", func() {
-	var err error
-	var recordSet records.RecordSet
-	var fakeLogger *fakes.FakeLogger
+	var (
+		recordSet  *records.RecordSet
+		fakeLogger *fakes.FakeLogger
+		fileReader *recordsfakes.FakeFileReader
+	)
 
 	BeforeEach(func() {
 		fakeLogger = &fakes.FakeLogger{}
+		fileReader = &recordsfakes.FakeFileReader{}
 	})
 
-	Context("the records json contains invalid info lines", func() {
-		DescribeTable("one of the info lines contains an object",
-			func(invalidJson string, logValueIdx int, logValueName string, logExpectedType string) {
-				jsonBytes := []byte(fmt.Sprintf(`
+	Describe("NewRecordSet", func() {
+		BeforeEach(func() {
+			jsonBytes := []byte(`{
+				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
+				"record_infos": [
+					["instance0", "0", "my-group", "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "withadot."],
+					["instance1", "1", "my-group", "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", "nodot"],
+					["instance2", "2", "my-group", "az3", null, "my-network", "1", "my-deployment", "123.123.123.125", "domain."],
+					["instance3", "3", "my-group", null, "3", "my-network", "1", "my-deployment", "123.123.123.126", "domain."],
+					["instance4", "4", "my-group", null, null, "my-network", "1", "my-deployment", "123.123.123.127", "domain."],
+					["instance5", "5", "my-group", null, null, "my-network", null, "my-deployment", "123.123.123.128", "domain."],
+					["instance6", null, "my-group", null, null, "my-network", "1", "my-deployment", "123.123.123.129", "domain."]
+				]
+			}`)
+			fileReader.GetReturns(jsonBytes, nil)
+
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
+
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("normalizes domain names", func() {
+			Expect(recordSet.Domains()).To(ConsistOf("withadot.", "nodot.", "domain."))
+			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
+				ID:         "instance0",
+				NumId:      "0",
+				Group:      "my-group",
+				Network:    "my-network",
+				NetworkID:  "1",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.123",
+				Domain:     "withadot.",
+				AZID:       "1",
+			})))
+			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
+				ID:         "instance1",
+				NumId:      "1",
+				Group:      "my-group",
+				Network:    "my-network",
+				NetworkID:  "1",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.124",
+				Domain:     "nodot.",
+				AZID:       "2",
+			})))
+		})
+
+		It("includes records with null azs", func() {
+			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
+				ID:         "instance2",
+				NumId:      "2",
+				Group:      "my-group",
+				Network:    "my-network",
+				NetworkID:  "1",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.125",
+				Domain:     "domain.",
+				AZID:       "",
+			})))
+			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
+				ID:         "instance4",
+				NumId:      "4",
+				Group:      "my-group",
+				Network:    "my-network",
+				NetworkID:  "1",
+				Deployment: "my-deployment",
+				IP:         "123.123.123.127",
+				Domain:     "domain.",
+				AZID:       "",
+			})))
+		})
+
+		It("includes records with null instance indexes", func() {
+			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
+				ID:            "instance3",
+				NumId:         "3",
+				Group:         "my-group",
+				Network:       "my-network",
+				NetworkID:     "1",
+				Deployment:    "my-deployment",
+				IP:            "123.123.123.126",
+				Domain:        "domain.",
+				AZID:          "3",
+				InstanceIndex: "",
+			})))
+		})
+
+		It("includes records with no value for network_id", func() {
+			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
+				ID:            "instance5",
+				NumId:         "5",
+				Group:         "my-group",
+				Network:       "my-network",
+				NetworkID:     "",
+				Deployment:    "my-deployment",
+				IP:            "123.123.123.128",
+				Domain:        "domain.",
+				AZID:          "",
+				InstanceIndex: "",
+			})))
+		})
+
+		It("includes records with no value for num_id", func() {
+			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
+				ID:            "instance6",
+				NumId:         "",
+				Group:         "my-group",
+				Network:       "my-network",
+				NetworkID:     "1",
+				Deployment:    "my-deployment",
+				IP:            "123.123.123.129",
+				Domain:        "domain.",
+				AZID:          "",
+				InstanceIndex: "",
+			})))
+		})
+	})
+
+	Describe("Domains", func() {
+		It("returns the domains", func() {
+			jsonBytes := []byte(`{
+				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
+				"record_infos": [
+					["instance0", "0", "my-group", "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "withadot."],
+					["instance1", "1", "my-group", "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", "nodot"],
+					["instance2", "2", "my-group", "az3", null, "my-network", "1", "my-deployment", "123.123.123.125", "domain."]
+				]
+			}`)
+			fileReader.GetReturns(jsonBytes, nil)
+
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(recordSet.Domains()).To(ConsistOf("withadot.", "nodot.", "domain."))
+		})
+	})
+
+	Describe("auto refreshing records", func() {
+		var (
+			subscriptionChan chan bool
+		)
+
+		BeforeEach(func() {
+			subscriptionChan = make(chan bool, 1)
+			fileReader.SubscribeReturns(subscriptionChan)
+
+			jsonBytes := []byte(`{
+				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
+				"record_infos": [
+					["instance0", "0", "my-group", "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "bosh."]
+				]
+			}`)
+			fileReader.GetReturns(jsonBytes, nil)
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
+			Expect(err).ToNot(HaveOccurred())
+
+			ips, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ips).To(Equal([]string{"123.123.123.123"}))
+		})
+
+		Context("when updating to valid json", func() {
+			var (
+				subscribers []<-chan bool
+			)
+
+			BeforeEach(func() {
+				jsonBytes := []byte(`{
+				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
+				"record_infos": [
+					["instance0", "0", "my-group", "az1", "1", "my-network", "1", "my-deployment", "234.234.234.234", "bosh."]
+				]
+			}`)
+				fileReader.GetReturns(jsonBytes, nil)
+				subscriptionChan <- true
+				subscribers = append(subscribers, recordSet.Subscribe())
+				subscribers = append(subscribers, recordSet.Subscribe())
+			})
+
+			It("updates its set of records", func() {
+				Eventually(func() []string {
+					ips, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
+					Expect(err).NotTo(HaveOccurred())
+					return ips
+				}).Should(Equal([]string{"234.234.234.234"}))
+			})
+
+			It("notifies its own subscribers", func() {
+				for _, subscriber := range subscribers {
+					Eventually(subscriber).Should(Receive(BeTrue()))
+				}
+			})
+		})
+
+		Context("when the subscription is closed", func() {
+			var (
+				subscribers []<-chan bool
+			)
+
+			BeforeEach(func() {
+				subscribers = append(subscribers, recordSet.Subscribe())
+				subscribers = append(subscribers, recordSet.Subscribe())
+				close(subscriptionChan)
+			})
+
+			It("closes all subscribers", func() {
+				for _, subscriber := range subscribers {
+					Eventually(subscriber).Should(BeClosed())
+				}
+			})
+		})
+
+		Context("when updating to invalid json", func() {
+			BeforeEach(func() {
+				jsonBytes := []byte(`<invalid>json</invalid>`)
+				fileReader.GetReturns(jsonBytes, nil)
+				subscriptionChan <- true
+			})
+
+			It("keeps the original set of records", func() {
+				Consistently(func() []string {
+					ips, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
+					Expect(err).NotTo(HaveOccurred())
+					return ips
+				}).Should(Equal([]string{"123.123.123.123"}))
+			})
+		})
+
+		Context("when failing to read the file", func() {
+			BeforeEach(func() {
+				fileReader.GetReturns(nil, errors.New("no read"))
+				subscriptionChan <- true
+			})
+
+			It("keeps the original set of records", func() {
+				Consistently(func() []string {
+					ips, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
+					Expect(err).NotTo(HaveOccurred())
+					return ips
+				}).Should(Equal([]string{"123.123.123.123"}))
+			})
+		})
+	})
+
+	Context("when FileReader returns JSON", func() {
+		Context("the records json contains invalid info lines", func() {
+			DescribeTable("one of the info lines contains an object",
+				func(invalidJson string, logValueIdx int, logValueName string, logExpectedType string) {
+					jsonBytes := []byte(fmt.Sprintf(`
 		{
 			"record_keys": ["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
 			"record_infos": [
@@ -43,37 +296,40 @@ var _ = Describe("RecordSet", func() {
 		}
 				`, invalidJson))
 
-				recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
-				Expect(err).ToNot(HaveOccurred())
+					fileReader.GetReturns(jsonBytes, nil)
 
-				ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
-				Expect(err).ToNot(HaveOccurred())
-				Expect(ips).To(HaveLen(1))
-				Expect(ips).To(ContainElement("123.123.123.123"))
+					var err error
+					recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
+					Expect(err).ToNot(HaveOccurred())
 
-				Expect(fakeLogger.WarnCallCount()).To(Equal(1))
-				logTag, _, logArgs := fakeLogger.WarnArgsForCall(0)
-				Expect(logTag).To(Equal("RecordSet"))
-				Expect(logArgs[0]).To(Equal(logValueIdx))
-				Expect(logArgs[1]).To(Equal(logValueName))
-				Expect(logArgs[2]).To(Equal(1))
-				Expect(logArgs[3]).To(Equal(logExpectedType))
-			},
-			Entry("Domain is not a string", `["instance1", "3", "my-group", ["6"], "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", { "foo": "bar" }, 2]`, 10, "domain", "string"),
-			Entry("ID is not a string", `[{"id": "id"}, "3", "my-group", ["6"], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 0, "id", "string"),
-			Entry("Group is not a string", `["instance1", "3", {"my-group": "my-group"}, ["6"], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 2, "group", "string"),
-			Entry("Network is not a string", `["instance1", "3", "my-group", ["6"], "z3", "3", {"network": "my-network"}, "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 6, "network", "string"),
-			Entry("Deployment is not a string", `["instance1", "3", "my-group", ["6"], "z3", "3", "my-network", "1", {"deployment": "my-deployment" }, "123.123.123.126", "my-domain", 0]`, 8, "deployment", "string"),
-			Entry("Group IDs is not an array of string", `["instance1", "3", "my-group", {"6":3}, "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 3, "group_ids", "array of string"),
-			Entry("Group IDs is not an array of string", `["instance1", "3", "my-group", [3], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 3, "group_ids", "array of string"),
+					ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(ips).To(HaveLen(1))
+					Expect(ips).To(ContainElement("123.123.123.123"))
 
-			Entry("Global Index is not a string", `["instance1", {"instance_id": "instance_id"}, "my-group", ["6"], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 1, "num_id", "string"),
-			Entry("Network ID is not a string", `["instance1", "4", "my-group", ["6"], "z3", "3", "my-network", {"network": "invalid"}, "my-deployment", "123.123.123.126", "my-domain", 0]`, 7, "network_id", "string"),
-		)
+					Expect(fakeLogger.WarnCallCount()).To(Equal(1))
+					logTag, _, logArgs := fakeLogger.WarnArgsForCall(0)
+					Expect(logTag).To(Equal("RecordSet"))
+					Expect(logArgs[0]).To(Equal(logValueIdx))
+					Expect(logArgs[1]).To(Equal(logValueName))
+					Expect(logArgs[2]).To(Equal(1))
+					Expect(logArgs[3]).To(Equal(logExpectedType))
+				},
+				Entry("Domain is not a string", `["instance1", "3", "my-group", ["6"], "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", { "foo": "bar" }, 2]`, 10, "domain", "string"),
+				Entry("ID is not a string", `[{"id": "id"}, "3", "my-group", ["6"], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 0, "id", "string"),
+				Entry("Group is not a string", `["instance1", "3", {"my-group": "my-group"}, ["6"], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 2, "group", "string"),
+				Entry("Network is not a string", `["instance1", "3", "my-group", ["6"], "z3", "3", {"network": "my-network"}, "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 6, "network", "string"),
+				Entry("Deployment is not a string", `["instance1", "3", "my-group", ["6"], "z3", "3", "my-network", "1", {"deployment": "my-deployment" }, "123.123.123.126", "my-domain", 0]`, 8, "deployment", "string"),
+				Entry("Group IDs is not an array of string", `["instance1", "3", "my-group", {"6":3}, "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 3, "group_ids", "array of string"),
+				Entry("Group IDs is not an array of string", `["instance1", "3", "my-group", [3], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 3, "group_ids", "array of string"),
 
-		Context("the columns do not match", func() {
-			BeforeEach(func() {
-				jsonBytes := []byte(`
+				Entry("Global Index is not a string", `["instance1", {"instance_id": "instance_id"}, "my-group", ["6"], "z3", "3", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 0]`, 1, "num_id", "string"),
+				Entry("Network ID is not a string", `["instance1", "4", "my-group", ["6"], "z3", "3", "my-network", {"network": "invalid"}, "my-deployment", "123.123.123.126", "my-domain", 0]`, 7, "network_id", "string"),
+			)
+
+			Context("the columns do not match", func() {
+				BeforeEach(func() {
+					jsonBytes := []byte(`
 			{
 				"record_keys": ["id", "instance_group", "az", "az_id", "network", "deployment", "ip", "domain", "instance_index"],
 				"record_infos": [
@@ -83,168 +339,190 @@ var _ = Describe("RecordSet", func() {
 				]
 			}
 			`)
-				recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
 
-				Expect(err).ToNot(HaveOccurred())
+					fileReader.GetReturns(jsonBytes, nil)
+
+					var err error
+					recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
+
+					Expect(err).ToNot(HaveOccurred())
+				})
+
+				It("does not blow up, logs the invalid record, and returns the info that was parsed correctly", func() {
+					ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).ToNot(HaveOccurred())
+					Expect(ips).To(HaveLen(2))
+					Expect(ips).To(ContainElement("123.123.123.123"))
+					Expect(ips).To(ContainElement("123.123.123.126"))
+					Expect(fakeLogger.WarnCallCount()).To(Equal(1))
+				})
 			})
 
-			It("does not blow up, logs the invalid record, and returns the info that was parsed correctly", func() {
-				ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
-				Expect(err).ToNot(HaveOccurred())
-				Expect(ips).To(HaveLen(2))
-				Expect(ips).To(ContainElement("123.123.123.123"))
-				Expect(ips).To(ContainElement("123.123.123.126"))
-				Expect(fakeLogger.WarnCallCount()).To(Equal(1))
-			})
-		})
-
-		DescribeTable("missing required columns", func(column string) {
-			recordKeys := map[string]string{
-				"id":             "id",
-				"instance_group": "instance_group",
-				"network":        "network",
-				"deployment":     "deployment",
-				"ip":             "ip",
-				"domain":         "domain",
-			}
-			delete(recordKeys, column)
-			keys := []string{}
-			values := []string{}
-			for k, v := range recordKeys {
-				keys = append(keys, fmt.Sprintf(`"%s"`, k))
-				values = append(values, fmt.Sprintf(`"%s"`, v))
-			}
-			jsonBytes := []byte(fmt.Sprintf(`{
+			DescribeTable("missing required columns", func(column string) {
+				recordKeys := map[string]string{
+					"id":             "id",
+					"instance_group": "instance_group",
+					"network":        "network",
+					"deployment":     "deployment",
+					"ip":             "ip",
+					"domain":         "domain",
+				}
+				delete(recordKeys, column)
+				keys := []string{}
+				values := []string{}
+				for k, v := range recordKeys {
+					keys = append(keys, fmt.Sprintf(`"%s"`, k))
+					values = append(values, fmt.Sprintf(`"%s"`, v))
+				}
+				jsonBytes := []byte(fmt.Sprintf(`{
 				"record_keys": [%s],
 				"record_infos": [[%s]]
 			}`, strings.Join(keys, ","), strings.Join(values, ",")))
-			recordSet, err := records.CreateFromJSON(jsonBytes, fakeLogger)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(recordSet.Records).To(BeEmpty())
-		},
-			Entry("missing id", "id"),
-			Entry("missing instance_group", "instance_group"),
-			Entry("missing network", "network"),
-			Entry("missing deployment", "deployment"),
-			Entry("missing ip", "ip"),
-			Entry("missing domain", "domain"),
-		)
 
-		It("includes records that are well-formed but missing individual group_ids values", func() {
-			jsonBytes := []byte(`{
+				fileReader.GetReturns(jsonBytes, nil)
+
+				var err error
+				recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(recordSet.Records).To(BeEmpty())
+			},
+				Entry("missing id", "id"),
+				Entry("missing instance_group", "instance_group"),
+				Entry("missing network", "network"),
+				Entry("missing deployment", "deployment"),
+				Entry("missing ip", "ip"),
+				Entry("missing domain", "domain"),
+			)
+
+			It("includes records that are well-formed but missing individual group_ids values", func() {
+				jsonBytes := []byte(`{
 					"record_keys": ["id", "instance_group", "group_ids", "network", "deployment", "ip", "domain"],
 					"record_infos": [
 						["id", "instance_group", [], "network", "deployment", "ip", "domain"]
 					]
 				}`)
-			recordSet, err := records.CreateFromJSON(jsonBytes, fakeLogger)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(recordSet.Records).ToNot(BeEmpty())
-		})
+				fileReader.GetReturns(jsonBytes, nil)
 
-		It("allows for a missing az_id", func() {
-			recordKeys := map[string]interface{}{
-				"id":             "id",
-				"instance_group": "instance_group",
-				"group_ids":      []string{"3"},
-				"network":        "network",
-				"deployment":     "deployment",
-				"ip":             "ip",
-				"domain":         "domain",
-				"instance_index": 1,
-			}
-			keys := []string{}
-			values := []string{}
-			for k, v := range recordKeys {
-				keys = append(keys, fmt.Sprintf(`"%s"`, k))
-				switch typed := v.(type) {
-				case int:
-					values = append(values, fmt.Sprintf(`%d`, typed))
-				case string:
-					values = append(values, fmt.Sprintf(`"%s"`, typed))
-				case []string:
-					values = append(values, fmt.Sprintf(`["%s"]`, typed[0]))
+				var err error
+				recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(recordSet.Records).ToNot(BeEmpty())
+			})
+
+			It("allows for a missing az_id", func() {
+				recordKeys := map[string]interface{}{
+					"id":             "id",
+					"instance_group": "instance_group",
+					"group_ids":      []string{"3"},
+					"network":        "network",
+					"deployment":     "deployment",
+					"ip":             "ip",
+					"domain":         "domain",
+					"instance_index": 1,
 				}
-			}
-			jsonBytes := []byte(fmt.Sprintf(`{
+				keys := []string{}
+				values := []string{}
+				for k, v := range recordKeys {
+					keys = append(keys, fmt.Sprintf(`"%s"`, k))
+					switch typed := v.(type) {
+					case int:
+						values = append(values, fmt.Sprintf(`%d`, typed))
+					case string:
+						values = append(values, fmt.Sprintf(`"%s"`, typed))
+					case []string:
+						values = append(values, fmt.Sprintf(`["%s"]`, typed[0]))
+					}
+				}
+				jsonBytes := []byte(fmt.Sprintf(`{
 				"record_keys": [%s],
 				"record_infos": [[%s]]
 			}`, strings.Join(keys, ","), strings.Join(values, ",")))
-			recordSet, err := records.CreateFromJSON(jsonBytes, fakeLogger)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(recordSet.Records).NotTo(BeEmpty())
+				fileReader.GetReturns(jsonBytes, nil)
 
-			Expect(recordSet.Records[0].AZID).To(Equal(""))
-		})
+				var err error
+				recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(recordSet.Records).NotTo(BeEmpty())
 
-		It("allows for a missing instance_index when the header is missing", func() {
-			recordKeys := map[string]interface{}{
-				"id":             "id",
-				"instance_group": "instance_group",
-				"group_ids":      []string{"3"},
-				"network":        "network",
-				"deployment":     "deployment",
-				"ip":             "ip",
-				"domain":         "domain",
-				"az_id":          "az_id",
-			}
-			keys := []string{}
-			values := []string{}
-			for k, v := range recordKeys {
-				keys = append(keys, fmt.Sprintf(`"%s"`, k))
-				switch typed := v.(type) {
-				case int:
-					values = append(values, fmt.Sprintf(`%d`, typed))
-				case string:
-					values = append(values, fmt.Sprintf(`"%s"`, typed))
-				case []string:
-					values = append(values, fmt.Sprintf(`["%s"]`, typed[0]))
+				Expect(recordSet.Records[0].AZID).To(Equal(""))
+			})
+
+			It("allows for a missing instance_index when the header is missing", func() {
+				recordKeys := map[string]interface{}{
+					"id":             "id",
+					"instance_group": "instance_group",
+					"group_ids":      []string{"3"},
+					"network":        "network",
+					"deployment":     "deployment",
+					"ip":             "ip",
+					"domain":         "domain",
+					"az_id":          "az_id",
 				}
-			}
-			jsonBytes := []byte(fmt.Sprintf(`{
+				keys := []string{}
+				values := []string{}
+				for k, v := range recordKeys {
+					keys = append(keys, fmt.Sprintf(`"%s"`, k))
+					switch typed := v.(type) {
+					case int:
+						values = append(values, fmt.Sprintf(`%d`, typed))
+					case string:
+						values = append(values, fmt.Sprintf(`"%s"`, typed))
+					case []string:
+						values = append(values, fmt.Sprintf(`["%s"]`, typed[0]))
+					}
+				}
+				jsonBytes := []byte(fmt.Sprintf(`{
 				"record_keys": [%s],
 				"record_infos": [[%s]]
 			}`, strings.Join(keys, ","), strings.Join(values, ",")))
-			recordSet, err := records.CreateFromJSON(jsonBytes, fakeLogger)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(recordSet.Records).NotTo(BeEmpty())
+				fileReader.GetReturns(jsonBytes, nil)
 
-			Expect(recordSet.Records[0].InstanceIndex).To(Equal(""))
-		})
+				var err error
+				recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(recordSet.Records).NotTo(BeEmpty())
 
-		It("allows for a missing group_ids when the header is missing", func() {
-			recordKeys := map[string]interface{}{
-				"id":             "id",
-				"instance_group": "instance_group",
-				"instance_index": 0,
-				"network":        "network",
-				"deployment":     "deployment",
-				"ip":             "ip",
-				"domain":         "domain",
-				"az_id":          "az_id",
-			}
-			keys := []string{}
-			values := []string{}
-			for k, v := range recordKeys {
-				keys = append(keys, fmt.Sprintf(`"%s"`, k))
-				switch typed := v.(type) {
-				case int:
-					values = append(values, fmt.Sprintf(`%d`, typed))
-				case string:
-					values = append(values, fmt.Sprintf(`"%s"`, typed))
-				case []string:
-					values = append(values, fmt.Sprintf(`["%s"]`, typed[0]))
+				Expect(recordSet.Records[0].InstanceIndex).To(Equal(""))
+			})
+
+			It("allows for a missing group_ids when the header is missing", func() {
+				recordKeys := map[string]interface{}{
+					"id":             "id",
+					"instance_group": "instance_group",
+					"instance_index": 0,
+					"network":        "network",
+					"deployment":     "deployment",
+					"ip":             "ip",
+					"domain":         "domain",
+					"az_id":          "az_id",
 				}
-			}
-			jsonBytes := []byte(fmt.Sprintf(`{
+				keys := []string{}
+				values := []string{}
+				for k, v := range recordKeys {
+					keys = append(keys, fmt.Sprintf(`"%s"`, k))
+					switch typed := v.(type) {
+					case int:
+						values = append(values, fmt.Sprintf(`%d`, typed))
+					case string:
+						values = append(values, fmt.Sprintf(`"%s"`, typed))
+					case []string:
+						values = append(values, fmt.Sprintf(`["%s"]`, typed[0]))
+					}
+				}
+				jsonBytes := []byte(fmt.Sprintf(`{
 				"record_keys": [%s],
 				"record_infos": [[%s]]
 			}`, strings.Join(keys, ","), strings.Join(values, ",")))
-			recordSet, err := records.CreateFromJSON(jsonBytes, fakeLogger)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(recordSet.Records).NotTo(BeEmpty())
+				fileReader.GetReturns(jsonBytes, nil)
 
-			Expect(recordSet.Records[0].GroupIDs).To(BeEmpty())
+				var err error
+				recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(recordSet.Records).NotTo(BeEmpty())
+
+				Expect(recordSet.Records[0].GroupIDs).To(BeEmpty())
+			})
 		})
 	})
 
@@ -263,7 +541,10 @@ var _ = Describe("RecordSet", func() {
 				]
 			}
 			`)
-			recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
+			fileReader.GetReturns(jsonBytes, nil)
+
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -440,8 +721,10 @@ var _ = Describe("RecordSet", func() {
 				]
 			}
 			`)
-				recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
+				fileReader.GetReturns(jsonBytes, nil)
 
+				var err error
+				recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -506,7 +789,10 @@ var _ = Describe("RecordSet", func() {
 				]
 			}
 			`)
-			recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
+			fileReader.GetReturns(jsonBytes, nil)
+
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -517,6 +803,7 @@ var _ = Describe("RecordSet", func() {
 			Expect(ips).To(HaveLen(1))
 		})
 	})
+
 	Context("when there are records matching the specified fqdn", func() {
 		BeforeEach(func() {
 			jsonBytes := []byte(`
@@ -528,8 +815,10 @@ var _ = Describe("RecordSet", func() {
 	]
 }
 			`)
-			recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
+			fileReader.GetReturns(jsonBytes, nil)
 
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -569,122 +858,6 @@ var _ = Describe("RecordSet", func() {
 		})
 	})
 
-	Describe("CreateFromJSON", func() {
-		BeforeEach(func() {
-			jsonBytes := []byte(`{
-				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
-				"record_infos": [
-					["instance0", "0", "my-group", "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "withadot."],
-					["instance1", "1", "my-group", "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", "nodot"],
-					["instance2", "2", "my-group", "az3", null, "my-network", "1", "my-deployment", "123.123.123.125", "domain."],
-					["instance3", "3", "my-group", null, "3", "my-network", "1", "my-deployment", "123.123.123.126", "domain."],
-					["instance4", "4", "my-group", null, null, "my-network", "1", "my-deployment", "123.123.123.127", "domain."],
-					["instance5", "5", "my-group", null, null, "my-network", null, "my-deployment", "123.123.123.128", "domain."],
-					["instance6", null, "my-group", null, null, "my-network", "1", "my-deployment", "123.123.123.129", "domain."]
-				]
-			}`)
-			recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
-
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("normalizes domain names", func() {
-			Expect(recordSet.Domains).To(ConsistOf("withadot.", "nodot.", "domain."))
-			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:         "instance0",
-				NumId:      "0",
-				Group:      "my-group",
-				Network:    "my-network",
-				NetworkID:  "1",
-				Deployment: "my-deployment",
-				IP:         "123.123.123.123",
-				Domain:     "withadot.",
-				AZID:       "1",
-			})))
-			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:         "instance1",
-				NumId:      "1",
-				Group:      "my-group",
-				Network:    "my-network",
-				NetworkID:  "1",
-				Deployment: "my-deployment",
-				IP:         "123.123.123.124",
-				Domain:     "nodot.",
-				AZID:       "2",
-			})))
-		})
-
-		It("includes records with null azs", func() {
-			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:         "instance2",
-				NumId:      "2",
-				Group:      "my-group",
-				Network:    "my-network",
-				NetworkID:  "1",
-				Deployment: "my-deployment",
-				IP:         "123.123.123.125",
-				Domain:     "domain.",
-				AZID:       "",
-			})))
-			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:         "instance4",
-				NumId:      "4",
-				Group:      "my-group",
-				Network:    "my-network",
-				NetworkID:  "1",
-				Deployment: "my-deployment",
-				IP:         "123.123.123.127",
-				Domain:     "domain.",
-				AZID:       "",
-			})))
-		})
-
-		It("includes records with null instance indexes", func() {
-			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:            "instance3",
-				NumId:         "3",
-				Group:         "my-group",
-				Network:       "my-network",
-				NetworkID:     "1",
-				Deployment:    "my-deployment",
-				IP:            "123.123.123.126",
-				Domain:        "domain.",
-				AZID:          "3",
-				InstanceIndex: "",
-			})))
-		})
-
-		It("includes records with no value for network_id", func() {
-			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:            "instance5",
-				NumId:         "5",
-				Group:         "my-group",
-				Network:       "my-network",
-				NetworkID:     "",
-				Deployment:    "my-deployment",
-				IP:            "123.123.123.128",
-				Domain:        "domain.",
-				AZID:          "",
-				InstanceIndex: "",
-			})))
-		})
-
-		It("includes records with no value for num_id", func() {
-			Expect(recordSet.Records).To(WithTransform(dereferencer, ContainElement(records.Record{
-				ID:            "instance6",
-				NumId:         "",
-				Group:         "my-group",
-				Network:       "my-network",
-				NetworkID:     "1",
-				Deployment:    "my-deployment",
-				IP:            "123.123.123.129",
-				Domain:        "domain.",
-				AZID:          "",
-				InstanceIndex: "",
-			})))
-		})
-	})
-
 	Context("when the records json includes instance_index", func() {
 		BeforeEach(func() {
 			jsonBytes := []byte(`{
@@ -694,8 +867,10 @@ var _ = Describe("RecordSet", func() {
 					["instance1", "my-group", "az2", "1", "my-network", "my-deployment", "123.123.123.124", "domain.", 1]
 				]
 			}`)
-			recordSet, err = records.CreateFromJSON(jsonBytes, fakeLogger)
+			fileReader.GetReturns(jsonBytes, nil)
 
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, fakeLogger)
 			Expect(err).ToNot(HaveOccurred())
 		})
 

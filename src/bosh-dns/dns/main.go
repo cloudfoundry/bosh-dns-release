@@ -103,13 +103,14 @@ func mainExitCode() int {
 
 	shutdown := make(chan struct{})
 
-	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
-	healthyRecordSet := healthiness.NewHealthyRecordSet(recordsRepo, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown)
+	fileReader := records.NewFileReader(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
+	recordSet, err := records.NewRecordSet(fileReader, logger)
+	healthyRecordSet := healthiness.NewHealthyRecordSet(recordSet, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown)
 
 	localDomain := dnsresolver.NewLocalDomain(logger, healthyRecordSet, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
-	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordsRepo, mux, discoveryHandler)
+	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordSet, mux, discoveryHandler)
 
 	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
 

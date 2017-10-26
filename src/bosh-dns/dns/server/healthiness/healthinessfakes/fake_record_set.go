@@ -3,20 +3,21 @@ package healthinessfakes
 
 import (
 	"bosh-dns/dns/server/healthiness"
-	"bosh-dns/dns/server/records"
 	"sync"
 )
 
-type FakeRecordSetRepo struct {
-	GetStub        func() (records.RecordSet, error)
-	getMutex       sync.RWMutex
-	getArgsForCall []struct{}
-	getReturns     struct {
-		result1 records.RecordSet
+type FakeRecordSet struct {
+	ResolveStub        func(domain string) ([]string, error)
+	resolveMutex       sync.RWMutex
+	resolveArgsForCall []struct {
+		domain string
+	}
+	resolveReturns struct {
+		result1 []string
 		result2 error
 	}
-	getReturnsOnCall map[int]struct {
-		result1 records.RecordSet
+	resolveReturnsOnCall map[int]struct {
+		result1 []string
 		result2 error
 	}
 	SubscribeStub        func() <-chan bool
@@ -32,50 +33,58 @@ type FakeRecordSetRepo struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRecordSetRepo) Get() (records.RecordSet, error) {
-	fake.getMutex.Lock()
-	ret, specificReturn := fake.getReturnsOnCall[len(fake.getArgsForCall)]
-	fake.getArgsForCall = append(fake.getArgsForCall, struct{}{})
-	fake.recordInvocation("Get", []interface{}{})
-	fake.getMutex.Unlock()
-	if fake.GetStub != nil {
-		return fake.GetStub()
+func (fake *FakeRecordSet) Resolve(domain string) ([]string, error) {
+	fake.resolveMutex.Lock()
+	ret, specificReturn := fake.resolveReturnsOnCall[len(fake.resolveArgsForCall)]
+	fake.resolveArgsForCall = append(fake.resolveArgsForCall, struct {
+		domain string
+	}{domain})
+	fake.recordInvocation("Resolve", []interface{}{domain})
+	fake.resolveMutex.Unlock()
+	if fake.ResolveStub != nil {
+		return fake.ResolveStub(domain)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.getReturns.result1, fake.getReturns.result2
+	return fake.resolveReturns.result1, fake.resolveReturns.result2
 }
 
-func (fake *FakeRecordSetRepo) GetCallCount() int {
-	fake.getMutex.RLock()
-	defer fake.getMutex.RUnlock()
-	return len(fake.getArgsForCall)
+func (fake *FakeRecordSet) ResolveCallCount() int {
+	fake.resolveMutex.RLock()
+	defer fake.resolveMutex.RUnlock()
+	return len(fake.resolveArgsForCall)
 }
 
-func (fake *FakeRecordSetRepo) GetReturns(result1 records.RecordSet, result2 error) {
-	fake.GetStub = nil
-	fake.getReturns = struct {
-		result1 records.RecordSet
+func (fake *FakeRecordSet) ResolveArgsForCall(i int) string {
+	fake.resolveMutex.RLock()
+	defer fake.resolveMutex.RUnlock()
+	return fake.resolveArgsForCall[i].domain
+}
+
+func (fake *FakeRecordSet) ResolveReturns(result1 []string, result2 error) {
+	fake.ResolveStub = nil
+	fake.resolveReturns = struct {
+		result1 []string
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeRecordSetRepo) GetReturnsOnCall(i int, result1 records.RecordSet, result2 error) {
-	fake.GetStub = nil
-	if fake.getReturnsOnCall == nil {
-		fake.getReturnsOnCall = make(map[int]struct {
-			result1 records.RecordSet
+func (fake *FakeRecordSet) ResolveReturnsOnCall(i int, result1 []string, result2 error) {
+	fake.ResolveStub = nil
+	if fake.resolveReturnsOnCall == nil {
+		fake.resolveReturnsOnCall = make(map[int]struct {
+			result1 []string
 			result2 error
 		})
 	}
-	fake.getReturnsOnCall[i] = struct {
-		result1 records.RecordSet
+	fake.resolveReturnsOnCall[i] = struct {
+		result1 []string
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeRecordSetRepo) Subscribe() <-chan bool {
+func (fake *FakeRecordSet) Subscribe() <-chan bool {
 	fake.subscribeMutex.Lock()
 	ret, specificReturn := fake.subscribeReturnsOnCall[len(fake.subscribeArgsForCall)]
 	fake.subscribeArgsForCall = append(fake.subscribeArgsForCall, struct{}{})
@@ -90,20 +99,20 @@ func (fake *FakeRecordSetRepo) Subscribe() <-chan bool {
 	return fake.subscribeReturns.result1
 }
 
-func (fake *FakeRecordSetRepo) SubscribeCallCount() int {
+func (fake *FakeRecordSet) SubscribeCallCount() int {
 	fake.subscribeMutex.RLock()
 	defer fake.subscribeMutex.RUnlock()
 	return len(fake.subscribeArgsForCall)
 }
 
-func (fake *FakeRecordSetRepo) SubscribeReturns(result1 <-chan bool) {
+func (fake *FakeRecordSet) SubscribeReturns(result1 <-chan bool) {
 	fake.SubscribeStub = nil
 	fake.subscribeReturns = struct {
 		result1 <-chan bool
 	}{result1}
 }
 
-func (fake *FakeRecordSetRepo) SubscribeReturnsOnCall(i int, result1 <-chan bool) {
+func (fake *FakeRecordSet) SubscribeReturnsOnCall(i int, result1 <-chan bool) {
 	fake.SubscribeStub = nil
 	if fake.subscribeReturnsOnCall == nil {
 		fake.subscribeReturnsOnCall = make(map[int]struct {
@@ -115,11 +124,11 @@ func (fake *FakeRecordSetRepo) SubscribeReturnsOnCall(i int, result1 <-chan bool
 	}{result1}
 }
 
-func (fake *FakeRecordSetRepo) Invocations() map[string][][]interface{} {
+func (fake *FakeRecordSet) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.getMutex.RLock()
-	defer fake.getMutex.RUnlock()
+	fake.resolveMutex.RLock()
+	defer fake.resolveMutex.RUnlock()
 	fake.subscribeMutex.RLock()
 	defer fake.subscribeMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
@@ -129,7 +138,7 @@ func (fake *FakeRecordSetRepo) Invocations() map[string][][]interface{} {
 	return copiedInvocations
 }
 
-func (fake *FakeRecordSetRepo) recordInvocation(key string, args []interface{}) {
+func (fake *FakeRecordSet) recordInvocation(key string, args []interface{}) {
 	fake.invocationsMutex.Lock()
 	defer fake.invocationsMutex.Unlock()
 	if fake.invocations == nil {
@@ -141,4 +150,4 @@ func (fake *FakeRecordSetRepo) recordInvocation(key string, args []interface{}) 
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ healthiness.RecordSetRepo = new(FakeRecordSetRepo)
+var _ healthiness.RecordSet = new(FakeRecordSet)
