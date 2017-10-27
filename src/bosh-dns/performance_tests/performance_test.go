@@ -196,10 +196,20 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 	results := []Result{}
 
 	requestPerSecondTicker := time.NewTicker(time.Duration(1 * time.Second))
-	successCount := 0
 	go func() {
+		successCount := 0
 		for {
 			select {
+			case result, ok := <-resultChan:
+				if ok == false {
+					close(doneChan)
+					return
+				}
+				if result.status == p.SuccessStatus {
+					successCount += 1
+				}
+				p.postDatadog(result)
+				results = append(results, result)
 			case <-p.shutdown:
 				return
 			case <-requestPerSecondTicker.C:
@@ -213,17 +223,6 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 				successCount = 0
 			}
 		}
-	}()
-
-	go func() {
-		for result := range resultChan {
-			if result.status == p.SuccessStatus {
-				successCount += 1
-			}
-			p.postDatadog(result)
-			results = append(results, result)
-		}
-		close(doneChan)
 	}()
 
 	wg.Add(p.Workers)
