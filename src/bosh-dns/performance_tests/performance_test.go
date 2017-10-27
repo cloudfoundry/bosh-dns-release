@@ -196,7 +196,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 	results := []Result{}
 
 	dataDogDoneChan := make(chan struct{})
-	dataDogResults := make(chan []Result)
+	dataDogResults := make(chan []Result, p.RequestsPerSecond*int(duration/time.Second))
 
 	requestPerSecondTicker := time.NewTicker(time.Duration(1 * time.Second))
 	go func() {
@@ -207,7 +207,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 			case result, ok := <-resultChan:
 				if ok == false {
 					close(doneChan)
-					close(dataDogDoneChan)
+					close(dataDogResults)
 					return
 				}
 				if result.status == p.SuccessStatus {
@@ -216,8 +216,6 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 				totalRequestsPerSecond++
 				dataDogResults <- []Result{result}
 				results = append(results, result)
-			case <-p.shutdown:
-				return
 			case <-requestPerSecondTicker.C:
 				vals := []Result{
 					{
