@@ -221,7 +221,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 					{
 						status:     0,
 						value:      successCount,
-						metricName: "succesful_requests_per_second",
+						metricName: "successful_requests_per_second",
 						time:       time.Now().Unix(),
 					},
 					{
