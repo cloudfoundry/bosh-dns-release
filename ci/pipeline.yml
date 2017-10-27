@@ -263,6 +263,7 @@ resources:
 - name: bosh-candidate-stemcell-windows
   type: s3
   source:
+    region_name: us-east-2
     bucket: bosh-windows-stemcells-production
     regexp: light-bosh-stemcell-(.+)-google-kvm-windows2012R2-go_agent.tgz
 
