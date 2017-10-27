@@ -195,8 +195,31 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 	doneChan := make(chan struct{})
 	results := []Result{}
 
+	requestPerSecondTicker := time.NewTicker(time.Duration(1 * time.Second))
+	successCount := 0
+	go func() {
+		for {
+			select {
+			case <-p.shutdown:
+				return
+			case <-requestPerSecondTicker.C:
+				val := Result{
+					status:     0,
+					value:      successCount,
+					metricName: "succesfulRequestsPerSecond",
+					time:       time.Now().Unix(),
+				}
+				p.postDatadog(val)
+				successCount = 0
+			}
+		}
+	}()
+
 	go func() {
 		for result := range resultChan {
+			if result.status == p.SuccessStatus {
+				successCount += 1
+			}
 			p.postDatadog(result)
 			results = append(results, result)
 		}
