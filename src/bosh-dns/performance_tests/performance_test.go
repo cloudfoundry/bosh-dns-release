@@ -198,6 +198,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 	requestPerSecondTicker := time.NewTicker(time.Duration(1 * time.Second))
 	go func() {
 		successCount := 0
+		totalRequestsPerSecond := 0
 		for {
 			select {
 			case result, ok := <-resultChan:
@@ -208,19 +209,28 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 				if result.status == p.SuccessStatus {
 					successCount += 1
 				}
+				totalRequestsPerSecond++
 				p.postDatadog(result)
 				results = append(results, result)
 			case <-p.shutdown:
 				return
 			case <-requestPerSecondTicker.C:
-				val := Result{
-					status:     0,
-					value:      successCount,
-					metricName: "succesfulRequestsPerSecond",
-					time:       time.Now().Unix(),
-				}
-				p.postDatadog(val)
+				vals := []Result{
+					{
+						status:     0,
+						value:      successCount,
+						metricName: "succesful_requests_per_second",
+						time:       time.Now().Unix(),
+					},
+					{
+						status:     0,
+						value:      totalRequestsPerSecond,
+						metricName: "total_requests_per_second",
+						time:       time.Now().Unix(),
+					}}
+				p.postDatadog(vals...)
 				successCount = 0
+				totalRequestsPerSecond = 0
 			}
 		}
 	}()
