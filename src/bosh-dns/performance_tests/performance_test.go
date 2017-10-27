@@ -210,7 +210,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 					successCount += 1
 				}
 				totalRequestsPerSecond++
-				p.postDatadog(result)
+				go p.postDatadog(result)
 				results = append(results, result)
 			case <-p.shutdown:
 				return
@@ -228,7 +228,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 						metricName: "total_requests_per_second",
 						time:       time.Now().Unix(),
 					}}
-				p.postDatadog(vals...)
+				go p.postDatadog(vals...)
 				successCount = 0
 				totalRequestsPerSecond = 0
 			}
