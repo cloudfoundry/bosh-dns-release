@@ -157,96 +157,104 @@ func (p *PerformanceTest) postDatadog(r ...Result) error {
 	return makeDataDogRequest("series", metric)
 }
 
-func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result {
-	wg := &sync.WaitGroup{}
-	resultChan := make(chan Result, p.RequestsPerSecond)
-
-	workerFunc := func(wg *sync.WaitGroup, maxRequestsPerSecond float64) {
-		buffer := make(chan struct{}, 2*int(math.Ceil(maxRequestsPerSecond)))
-		ticker := time.NewTicker(time.Duration(float64(time.Second) / maxRequestsPerSecond))
-		buffer <- struct{}{}
-
-		defer func() {
-			wg.Done()
-			ticker.Stop()
-		}()
-
-		go func() {
-			for {
-				select {
-				case <-p.shutdown:
-					return
-				case <-ticker.C:
-					buffer <- struct{}{}
-				}
+func (p *PerformanceTest) resultsProcessor(
+	dataDogResults chan []Result,
+	resultChan chan Result,
+	results *[]Result,
+) {
+	requestPerSecondTicker := time.NewTicker(time.Duration(1 * time.Second))
+	successCount := 0
+	totalRequestsPerSecond := 0
+	for {
+		select {
+		case result, ok := <-resultChan:
+			if ok == false {
+				close(dataDogResults)
+				return
 			}
-		}()
+			if result.status == p.SuccessStatus {
+				successCount += 1
+			}
+			totalRequestsPerSecond++
+			dataDogResults <- []Result{result}
+			*results = append(*results, result)
+		case <-requestPerSecondTicker.C:
+			vals := []Result{
+				{
+					status:     0,
+					value:      successCount,
+					metricName: "successful_requests_per_second",
+					time:       time.Now().Unix(),
+				},
+				{
+					status:     0,
+					value:      totalRequestsPerSecond,
+					metricName: "total_requests_per_second",
+					time:       time.Now().Unix(),
+				}}
+			dataDogResults <- vals
+			successCount = 0
+			totalRequestsPerSecond = 0
+		}
+	}
+}
 
+func (p *PerformanceTest) processDatadogResults(
+	dataDogDoneChan chan struct{},
+	dataDogResults chan []Result,
+) {
+	for results := range dataDogResults {
+		p.postDatadog(results...)
+	}
+	close(dataDogDoneChan)
+}
+
+func (p *PerformanceTest) scheduleWork(resultChan chan Result, wg *sync.WaitGroup, maxRequestsPerSecond float64) {
+	buffer := make(chan struct{}, 2*int(math.Ceil(maxRequestsPerSecond)))
+	ticker := time.NewTicker(time.Duration(float64(time.Second) / maxRequestsPerSecond))
+	buffer <- struct{}{}
+
+	defer func() {
+		wg.Done()
+		ticker.Stop()
+	}()
+
+	go func() {
 		for {
 			select {
 			case <-p.shutdown:
 				return
-			case <-buffer:
-				p.WorkerFunc(resultChan)
+			case <-ticker.C:
+				buffer <- struct{}{}
 			}
 		}
-	}
+	}()
 
-	doneChan := make(chan struct{})
+	for {
+		select {
+		case <-p.shutdown:
+			return
+		case <-buffer:
+			p.WorkerFunc(resultChan)
+		}
+	}
+}
+
+func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result {
+	wg := &sync.WaitGroup{}
+	resultChan := make(chan Result, p.RequestsPerSecond)
+
 	results := []Result{}
 
 	dataDogDoneChan := make(chan struct{})
 	dataDogResults := make(chan []Result, p.RequestsPerSecond*int(duration/time.Second))
 
-	requestPerSecondTicker := time.NewTicker(time.Duration(1 * time.Second))
-	go func() {
-		successCount := 0
-		totalRequestsPerSecond := 0
-		for {
-			select {
-			case result, ok := <-resultChan:
-				if ok == false {
-					close(doneChan)
-					close(dataDogResults)
-					return
-				}
-				if result.status == p.SuccessStatus {
-					successCount += 1
-				}
-				totalRequestsPerSecond++
-				dataDogResults <- []Result{result}
-				results = append(results, result)
-			case <-requestPerSecondTicker.C:
-				vals := []Result{
-					{
-						status:     0,
-						value:      successCount,
-						metricName: "successful_requests_per_second",
-						time:       time.Now().Unix(),
-					},
-					{
-						status:     0,
-						value:      totalRequestsPerSecond,
-						metricName: "total_requests_per_second",
-						time:       time.Now().Unix(),
-					}}
-				dataDogResults <- vals
-				successCount = 0
-				totalRequestsPerSecond = 0
-			}
-		}
-	}()
-
-	go func() {
-		for results := range dataDogResults {
-			p.postDatadog(results...)
-		}
-		close(dataDogDoneChan)
-	}()
+	go p.resultsProcessor(dataDogResults, resultChan, &results)
+	go p.processDatadogResults(dataDogDoneChan, dataDogResults)
 
 	wg.Add(p.Workers)
 	for i := 0; i < p.Workers; i++ {
-		go workerFunc(wg, float64(p.RequestsPerSecond)/float64(p.Workers))
+		go p.scheduleWork(resultChan, wg, float64(p.RequestsPerSecond)/float64(p.Workers))
 	}
 
 	time.Sleep(duration)
@@ -254,7 +262,6 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 
 	wg.Wait()
 	close(resultChan)
-	<-doneChan
 	<-dataDogDoneChan
 
 	return results
