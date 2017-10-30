@@ -15,6 +15,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/StackExchange/wmi"
+  packages = ["."]
+  revision = "ea383cf3ba6ec950874b8486cd72356d007c768f"
+
+[[projects]]
+  branch = "master"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
   revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
@@ -38,12 +44,6 @@
   revision = "8ce5b43e556417540d3d22ded90eabf591222416"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/cloudfoundry/gosigar"
-  packages = ["."]
-  revision = "d9ee2f6269aeeed93de1cb3ed3ea03b80e82221e"
-
-[[projects]]
   branch = "bosh-develop"
   name = "github.com/coredns/coredns"
   packages = ["core/dnsserver","middleware","middleware/cache","middleware/cache/freq","middleware/etcd/msg","middleware/metrics/vars","middleware/pkg/cache","middleware/pkg/dnsutil","middleware/pkg/edns","middleware/pkg/rcode","middleware/pkg/response","middleware/pkg/trace","pb","request"]
@@ -55,6 +55,12 @@
   name = "github.com/flynn/go-shlex"
   packages = ["."]
   revision = "3f9db97f856818214da2e1057f8ad84803971cff"
+
+[[projects]]
+  name = "github.com/go-ole/go-ole"
+  packages = [".","oleutil"]
+  revision = "0e87ea779d9deb219633b828a023b32e1244dd57"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -147,6 +153,18 @@
   revision = "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
 
 [[projects]]
+  name = "github.com/shirou/gopsutil"
+  packages = ["cpu","host","internal/common","mem","net","process"]
+  revision = "6e221c482653ef05c9f6a7bf71ddceea0e40bac5"
+  version = "v2.17.09"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shirou/w32"
+  packages = ["."]
+  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context","html","html/atom","html/charset","http2","http2/hpack","idna","internal/timeseries","lex/httplex","proxy","trace"]
@@ -155,7 +173,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = ["unix","windows"]
   revision = "6faef541c73732f438fb660a212750a9ba9f9362"
 
 [[projects]]
@@ -185,6 +203,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ccbe49d515ac74e5c7f191543e63b0765977f44e3bf0f2619cf7c59733efd8de"
+  inputs-digest = "3b11c2dfd1705b8c7f0e749e90e14ff947b5409ca382fb4817faea7c1fdeaf3a"
   solver-name = "gps-cdcl"
   solver-version = 1
