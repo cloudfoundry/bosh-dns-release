@@ -167,10 +167,9 @@ func (p *PerformanceTest) resultsProcessor(
 	totalRequestsPerSecond := 0
 	for {
 		select {
-		case result, ok := <-resultChan:
-			if ok == false {
-				return
-			}
+		case <-p.shutdown:
+			return
+		case result := <-resultChan:
 			if result.status == p.SuccessStatus {
 				successCount += 1
 			}
@@ -276,7 +275,6 @@ func (p *PerformanceTest) MakeParallelRequests(duration, resourcesInterval time.
 	close(p.shutdown)
 
 	wg.Wait()
-	close(resultChan)
 	<-resourceMeasurementDone
 	close(dataDogResults)
 	<-dataDogDoneChan
