@@ -253,12 +253,15 @@ func (p *PerformanceTest) scheduleWork(resultChan chan Result, wg *sync.WaitGrou
 
 func (p *PerformanceTest) MakeParallelRequests(duration, resourcesInterval time.Duration, cpuHistogram, memHistogram metrics.Histogram) []Result {
 	wg := &sync.WaitGroup{}
-	resultChan := make(chan Result, p.RequestsPerSecond)
+	resultChan := make(chan Result, p.RequestsPerSecond*int(duration/time.Second))
 
 	results := []Result{}
 
 	dataDogDoneChan := make(chan struct{})
-	dataDogResults := make(chan Result, p.RequestsPerSecond*int(duration/time.Second))
+
+	measurementResultsPerSecond := 2 * int(duration/resourcesInterval)
+	resultsPerSecond := p.RequestsPerSecond*int(duration/time.Second)*2 + measurementResultsPerSecond
+	dataDogResults := make(chan Result, resultsPerSecond)
 
 	resourceMeasurementDone := make(chan struct{})
 
