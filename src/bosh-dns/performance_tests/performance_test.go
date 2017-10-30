@@ -161,6 +161,7 @@ func (p *PerformanceTest) resultsProcessor(
 	dataDogResults chan Result,
 	resultChan chan Result,
 	results *[]Result,
+	resultsProcessorDone chan struct{},
 ) {
 	requestPerSecondTicker := time.NewTicker(time.Duration(1 * time.Second))
 	successCount := 0
@@ -168,6 +169,7 @@ func (p *PerformanceTest) resultsProcessor(
 	for {
 		select {
 		case <-p.shutdown:
+			close(resultsProcessorDone)
 			return
 		case result := <-resultChan:
 			if result.status == p.SuccessStatus {
@@ -253,20 +255,23 @@ func (p *PerformanceTest) scheduleWork(resultChan chan Result, wg *sync.WaitGrou
 
 func (p *PerformanceTest) MakeParallelRequests(duration, resourcesInterval time.Duration, cpuHistogram, memHistogram metrics.Histogram) []Result {
 	wg := &sync.WaitGroup{}
-	resultChan := make(chan Result, p.RequestsPerSecond*int(duration/time.Second))
+
+	resultChan := make(chan Result, p.RequestsPerSecond)
 
 	results := []Result{}
 
 	dataDogDoneChan := make(chan struct{})
+	resultsProcessorDone := make(chan struct{})
 
-	measurementResultsPerSecond := 2 * int(duration/resourcesInterval)
-	resultsPerSecond := p.RequestsPerSecond*int(duration/time.Second)*2 + measurementResultsPerSecond
-	dataDogResults := make(chan Result, resultsPerSecond)
+	measurementResultsCount := 2 * int(duration/resourcesInterval)
+
+	totalResultCount := (p.RequestsPerSecond+2)*int(duration/time.Second) + measurementResultsCount
+	dataDogResults := make(chan Result, totalResultCount)
 
 	resourceMeasurementDone := make(chan struct{})
 
 	go p.measureResourceUtilization(resourcesInterval, cpuHistogram, memHistogram, dataDogResults, resourceMeasurementDone)
-	go p.resultsProcessor(dataDogResults, resultChan, &results)
+	go p.resultsProcessor(dataDogResults, resultChan, &results, resultsProcessorDone)
 	go p.processDatadogResults(dataDogDoneChan, dataDogResults)
 
 	wg.Add(p.Workers)
@@ -279,6 +284,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration, resourcesInterval time.
 
 	wg.Wait()
 	<-resourceMeasurementDone
+	<-resultsProcessorDone
 	close(dataDogResults)
 	<-dataDogDoneChan
 
