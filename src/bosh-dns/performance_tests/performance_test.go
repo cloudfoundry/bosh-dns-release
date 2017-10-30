@@ -158,7 +158,7 @@ func (p *PerformanceTest) postDatadog(r ...Result) error {
 }
 
 func (p *PerformanceTest) resultsProcessor(
-	dataDogResults chan []Result,
+	dataDogResults chan Result,
 	resultChan chan Result,
 	results *[]Result,
 ) {
@@ -176,23 +176,21 @@ func (p *PerformanceTest) resultsProcessor(
 				successCount += 1
 			}
 			totalRequestsPerSecond++
-			dataDogResults <- []Result{result}
+			dataDogResults <- result
 			*results = append(*results, result)
 		case <-requestPerSecondTicker.C:
-			vals := []Result{
-				{
-					status:     0,
-					value:      successCount,
-					metricName: "successful_requests_per_second",
-					time:       time.Now().Unix(),
-				},
-				{
-					status:     0,
-					value:      totalRequestsPerSecond,
-					metricName: "total_requests_per_second",
-					time:       time.Now().Unix(),
-				}}
-			dataDogResults <- vals
+			dataDogResults <- Result{
+				status:     0,
+				value:      successCount,
+				metricName: "successful_requests_per_second",
+				time:       time.Now().Unix(),
+			}
+			dataDogResults <- Result{
+				status:     0,
+				value:      totalRequestsPerSecond,
+				metricName: "total_requests_per_second",
+				time:       time.Now().Unix(),
+			}
 			successCount = 0
 			totalRequestsPerSecond = 0
 		}
@@ -201,12 +199,27 @@ func (p *PerformanceTest) resultsProcessor(
 
 func (p *PerformanceTest) processDatadogResults(
 	dataDogDoneChan chan struct{},
-	dataDogResults chan []Result,
+	dataDogResults chan Result,
 ) {
-	for results := range dataDogResults {
-		p.postDatadog(results...)
+	chunkedResults := make(chan []Result)
+	go func() {
+		for chunk := range chunkedResults {
+			p.postDatadog(chunk...)
+		}
+		close(dataDogDoneChan)
+	}()
+	thisChunk := []Result{}
+	i := 1
+	for result := range dataDogResults {
+		if i%200 == 0 {
+			chunkedResults <- thisChunk
+			thisChunk = []Result{}
+		}
+		thisChunk = append(thisChunk, result)
+		i++
 	}
-	close(dataDogDoneChan)
+	chunkedResults <- thisChunk
+	close(chunkedResults)
 }
 
 func (p *PerformanceTest) scheduleWork(resultChan chan Result, wg *sync.WaitGroup, maxRequestsPerSecond float64) {
@@ -247,7 +260,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 	results := []Result{}
 
 	dataDogDoneChan := make(chan struct{})
-	dataDogResults := make(chan []Result, p.RequestsPerSecond*int(duration/time.Second))
+	dataDogResults := make(chan Result, p.RequestsPerSecond*int(duration/time.Second))
 
 	go p.resultsProcessor(dataDogResults, resultChan, &results)
 	go p.processDatadogResults(dataDogDoneChan, dataDogResults)
