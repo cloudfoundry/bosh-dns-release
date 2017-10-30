@@ -11,6 +11,7 @@ import (
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	metrics "github.com/rcrowley/go-metrics"
 
 	"fmt"
 
@@ -61,6 +62,17 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for prod like zones", func() {
+			duration := time.Duration(durationInSeconds) * time.Second
+			resourcesInterval := time.Second / 2
+
+			cpuSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
+			cpuHistogram := metrics.NewHistogram(cpuSample)
+			metrics.Register("CPU Usage", cpuHistogram)
+
+			memSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
+			memHistogram := metrics.NewHistogram(memSample)
+			metrics.Register("Mem Usage", memHistogram)
+
 			benchmarkTime := generateTimeHistogram(
 				PerformanceTest{
 					Application:       "dns",
@@ -71,7 +83,7 @@ var _ = Describe("DNS", func() {
 						MakeDNSRequestUntilSuccessful(picker, "34.194.75.123:53", resultChan)
 					},
 				}.Setup().
-					MakeParallelRequests(20 * time.Second),
+					MakeParallelRequests(20*time.Second, resourcesInterval, cpuHistogram, memHistogram),
 			)
 
 			TestDNSPerformance("prod-like", TimeThresholdsFromBenchmark(benchmarkTime, 1.1))

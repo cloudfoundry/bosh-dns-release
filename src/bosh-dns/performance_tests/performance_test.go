@@ -169,7 +169,6 @@ func (p *PerformanceTest) resultsProcessor(
 		select {
 		case result, ok := <-resultChan:
 			if ok == false {
-				close(dataDogResults)
 				return
 			}
 			if result.status == p.SuccessStatus {
@@ -253,7 +252,7 @@ func (p *PerformanceTest) scheduleWork(resultChan chan Result, wg *sync.WaitGrou
 	}
 }
 
-func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result {
+func (p *PerformanceTest) MakeParallelRequests(duration, resourcesInterval time.Duration, cpuHistogram, memHistogram metrics.Histogram) []Result {
 	wg := &sync.WaitGroup{}
 	resultChan := make(chan Result, p.RequestsPerSecond)
 
@@ -262,6 +261,9 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 	dataDogDoneChan := make(chan struct{})
 	dataDogResults := make(chan Result, p.RequestsPerSecond*int(duration/time.Second))
 
+	resourceMeasurementDone := make(chan struct{})
+
+	go p.measureResourceUtilization(resourcesInterval, cpuHistogram, memHistogram, dataDogResults, resourceMeasurementDone)
 	go p.resultsProcessor(dataDogResults, resultChan, &results)
 	go p.processDatadogResults(dataDogDoneChan, dataDogResults)
 
@@ -275,6 +277,8 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 
 	wg.Wait()
 	close(resultChan)
+	<-resourceMeasurementDone
+	close(dataDogResults)
 	<-dataDogDoneChan
 
 	return results
@@ -282,6 +286,7 @@ func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result 
 
 func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	p.postDatadogEvent("Starting performance test", "")
+
 	duration := time.Duration(durationInSeconds) * time.Second
 	resourcesInterval := time.Second / 2
 
@@ -293,11 +298,7 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	memHistogram := metrics.NewHistogram(memSample)
 	metrics.Register("Mem Usage", memHistogram)
 
-	done := make(chan struct{})
-	go p.measureResourceUtilization(resourcesInterval, cpuHistogram, memHistogram, done)
-
-	results := p.MakeParallelRequests(duration)
-	<-done
+	results := p.MakeParallelRequests(duration, resourcesInterval, cpuHistogram, memHistogram)
 
 	timeHistogram := generateTimeHistogram(results)
 
@@ -382,7 +383,8 @@ func (p *PerformanceTest) getProcessCPU() float64 {
 	return percent
 }
 
-func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Duration, cpuHistogram, memHistogram metrics.Histogram, done chan<- struct{}) {
+func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Duration, cpuHistogram, memHistogram metrics.Histogram, dataDogResults chan Result, done chan<- struct{}) {
+
 	ticker := time.NewTicker(resourcesInterval)
 	defer func() {
 		ticker.Stop()
@@ -401,20 +403,16 @@ func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Dura
 				cpuInt := cpuFloat * (1000 * 1000)
 				cpuHistogram.Update(int64(cpuInt))
 
-				go func(t int64) {
-					p.postDatadog(
-						Result{
-							metricName: "memory",
-							value:      mem.Resident,
-							time:       t,
-						},
-						Result{
-							metricName: "cpu",
-							value:      cpuInt,
-							time:       t,
-						},
-					)
-				}(time.Now().Unix())
+				dataDogResults <- Result{
+					metricName: "memory",
+					value:      mem.Resident,
+					time:       time.Now().Unix(),
+				}
+				dataDogResults <- Result{
+					metricName: "cpu",
+					value:      cpuInt,
+					time:       time.Now().Unix(),
+				}
 			}
 		}
 	}
