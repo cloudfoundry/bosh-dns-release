@@ -7,9 +7,6 @@ import (
 	"math"
 	"net/http"
 	"os"
-	"os/exec"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -377,17 +374,13 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 }
 
 func (p *PerformanceTest) getProcessCPU() float64 {
-	cmd := exec.Command("ps", []string{"-p", strconv.Itoa(p.ServerPID), "-o", "%cpu"}...)
-	output, err := cmd.CombinedOutput()
+	pCpu := &sigar.ProcCpu{}
+	err := pCpu.Get(p.ServerPID)
 	if err != nil {
-		panic(string(output) + err.Error())
+		panic(err.Error())
 	}
 
-	percentString := strings.TrimSpace(strings.Split(string(output), "\n")[1])
-	percent, err := strconv.ParseFloat(percentString, 64)
-	Expect(err).ToNot(HaveOccurred())
-
-	return percent
+	return pCpu.Percent * 100.0
 }
 
 func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Duration, cpuHistogram, memHistogram metrics.Histogram, dataDogResults chan Result, done chan<- struct{}) {

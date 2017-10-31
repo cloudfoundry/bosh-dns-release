@@ -41,7 +41,7 @@
   branch = "master"
   name = "github.com/cloudfoundry/gosigar"
   packages = ["."]
-  revision = "d9ee2f6269aeeed93de1cb3ed3ea03b80e82221e"
+  revision = "444b64dfa812ef6ebb9306fe261678d046a010e1"
 
 [[projects]]
   branch = "bosh-develop"

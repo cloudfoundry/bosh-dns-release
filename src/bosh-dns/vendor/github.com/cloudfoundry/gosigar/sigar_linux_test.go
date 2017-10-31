@@ -2,6 +2,10 @@ package sigar
 
 import (
 	"io/ioutil"
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -61,8 +65,8 @@ var _ = Describe("sigarLinux", func() {
 				err := ioutil.WriteFile(statFile, statContents, 0644)
 				Expect(err).ToNot(HaveOccurred())
 
-				concreteSigar := &ConcreteSigar{}
-				cpuUsages, stop := concreteCollectCpuStats(500 * time.Millisecond)
+				concrete := &ConcreteSigar{}
+				cpuUsages, stop := concrete.CollectCpuStats(500 * time.Millisecond)
 
 				Expect(<-cpuUsages).To(Equal(Cpu{
 					User:    uint64(25),
@@ -95,7 +99,7 @@ var _ = Describe("sigarLinux", func() {
 		})
 	})
 
-	Describe("Mem", func() {
+	Describe("Mem without MemAvailable", func() {
 		var meminfoFile string
 		BeforeEach(func() {
 			meminfoFile = procd + "/meminfo"
@@ -155,6 +159,144 @@ DirectMap2M:      333824 kB
 
 			Expect(mem.Total).To(BeNumerically("==", 374256*1024))
 			Expect(mem.Free).To(BeNumerically("==", 274460*1024))
+			Expect(mem.ActualFree).To(BeNumerically("==", 322872*1024))
+			Expect(mem.ActualUsed).To(BeNumerically("==", 51384*1024))
+		})
+	})
+
+	Describe("Mem with MemAvailable", func() {
+		var meminfoFile string
+		BeforeEach(func() {
+			meminfoFile = procd + "/meminfo"
+
+			meminfoContents := `
+MemTotal:       35008180 kB
+MemFree:          487816 kB
+MemAvailable:   20913400 kB
+Buffers:          249244 kB
+Cached:          5064684 kB
+SwapCached:       158628 kB
+Active:         10974348 kB
+Inactive:        7441132 kB
+Active(anon):    7921056 kB
+Inactive(anon):  5192512 kB
+Active(file):    3053292 kB
+Inactive(file):  2248620 kB
+Unevictable:           4 kB
+Mlocked:               4 kB
+SwapTotal:      35013660 kB
+SwapFree:       33981728 kB
+Dirty:               652 kB
+Writeback:             0 kB
+AnonPages:      12975584 kB
+Mapped:           341188 kB
+Shmem:             12280 kB
+Slab:           15754916 kB
+SReclaimable:   15534604 kB
+SUnreclaim:       220312 kB
+KernelStack:       42960 kB
+PageTables:        52744 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    52517748 kB
+Committed_AS:   22939984 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:           0 kB
+VmallocChunk:          0 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:  11448320 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+DirectMap4k:      667520 kB
+DirectMap2M:    34983936 kB
+`
+			err := ioutil.WriteFile(meminfoFile, []byte(meminfoContents), 0444)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("returns correct memory info", func() {
+			mem := Mem{}
+			err := mem.Get()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(mem.Total).To(BeNumerically("==", 35008180*1024))
+			Expect(mem.Free).To(BeNumerically("==", 487816*1024))
+			Expect(mem.ActualFree).To(BeNumerically("==", 20913400*1024))
+			Expect(mem.ActualUsed).To(BeNumerically("==", 14094780*1024))
+		})
+	})
+
+	Describe("ProcCpu", func() {
+		var cpuGenerator *exec.Cmd
+		var noCpuGenerator *exec.Cmd
+
+		BeforeEach(func() {
+			Procd = "/proc"
+			cpuGenerator = exec.Command("cat", "/dev/zero", ">", "/dev/null")
+			if err := cpuGenerator.Start(); err != nil {
+				panic("failed to start cpu generator")
+			}
+
+			noCpuGenerator = exec.Command("cat")
+			if err := noCpuGenerator.Start(); err != nil {
+				panic("failed to start no cpu generator")
+			}
+		})
+
+		AfterEach(func() {
+			cpuGenerator.Process.Signal(os.Interrupt)
+			noCpuGenerator.Process.Signal(os.Interrupt)
+		})
+
+		It("calculates percentage and agrees with ps", func() {
+			time.Sleep(time.Second) // High CPU process needs a second to spool up
+
+			pCpu := &ProcCpu{}
+
+			cmd := exec.Command("ps", []string{"-p", strconv.Itoa(cpuGenerator.Process.Pid), "-o", "%cpu"}...)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				panic(string(output) + err.Error())
+			}
+
+			err = pCpu.Get(cpuGenerator.Process.Pid)
+			Expect(err).ToNot(HaveOccurred())
+
+			percentString := strings.TrimSpace(strings.Split(string(output), "\n")[1])
+			percent, err := strconv.ParseFloat(percentString, 64)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(pCpu.Percent).To(BeNumerically("~", percent/100.0, 0.1))
+		})
+
+		It("does not conflate multiple processes", func() {
+			time.Sleep(time.Second) // High CPU process needs a second to spool up
+
+			pCpu := &ProcCpu{}
+
+			err := pCpu.Get(cpuGenerator.Process.Pid)
+			Expect(err).ToNot(HaveOccurred())
+
+			cmd := exec.Command("ps", []string{"-p", strconv.Itoa(noCpuGenerator.Process.Pid), "-o", "%cpu"}...)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				panic(string(output) + err.Error())
+			}
+
+			err = pCpu.Get(noCpuGenerator.Process.Pid)
+			Expect(err).ToNot(HaveOccurred())
+
+			percentString := strings.TrimSpace(strings.Split(string(output), "\n")[1])
+			percent, err := strconv.ParseFloat(percentString, 64)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(pCpu.Percent).To(BeNumerically("~", percent/100.0, 0.02))
 		})
 	})
 
