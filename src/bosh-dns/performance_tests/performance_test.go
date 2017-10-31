@@ -56,6 +56,7 @@ type PerformanceTest struct {
 	SuccessStatus int
 
 	WorkerFunc func(chan<- Result)
+	procCpu    *sigar.ProcCpu
 
 	shutdown chan struct{}
 }
@@ -373,8 +374,15 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	Expect(testFailures).To(BeEmpty())
 }
 
+func (p *PerformanceTest) getProcCpu() *sigar.ProcCpu {
+	if p.procCpu == nil {
+		p.procCpu = &sigar.ProcCpu{}
+	}
+	return p.procCpu
+}
+
 func (p *PerformanceTest) getProcessCPU() float64 {
-	pCpu := &sigar.ProcCpu{}
+	pCpu := p.getProcCpu()
 	err := pCpu.Get(p.ServerPID)
 	if err != nil {
 		panic(err.Error())
