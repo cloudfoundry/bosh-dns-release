@@ -75,8 +75,8 @@ var _ = Describe("DNS", func() {
 
 			benchmarkTime := generateTimeHistogram(
 				PerformanceTest{
-					Application:       "dns",
-					Context:           "prod-like",
+					Application:       "dns-benchmark",
+					Context:           "benchmark",
 					Workers:           workers,
 					RequestsPerSecond: requestsPerSecond,
 					WorkerFunc: func(resultChan chan<- Result) {
