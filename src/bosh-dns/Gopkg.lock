@@ -57,10 +57,10 @@
   revision = "3f9db97f856818214da2e1057f8ad84803971cff"
 
 [[projects]]
-  branch = "master"
   name = "github.com/go-ole/go-ole"
   packages = [".","oleutil"]
-  revision = "2ecd927eaf828c4fc088fae349b28eed1480ff56"
+  revision = "0e87ea779d9deb219633b828a023b32e1244dd57"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -203,6 +203,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bb658af8dac60814671404788de877c207d8470543ed177afb503ddae749326b"
+  inputs-digest = "3b11c2dfd1705b8c7f0e749e90e14ff947b5409ca382fb4817faea7c1fdeaf3a"
   solver-name = "gps-cdcl"
   solver-version = 1

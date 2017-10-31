@@ -28,11 +28,8 @@ required = ["github.com/onsi/ginkgo/ginkgo"]
   branch = "master"
   name = "code.cloudfoundry.org/workpool"
 
+
 [[constraint]]
   name = "github.com/coredns/coredns"
   source = "github.com/bosh-dep-forks/coredns"
   branch = "bosh-develop"
-
-[[override]]
-  name = "github.com/go-ole/go-ole"
-  branch = "master"
