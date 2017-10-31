@@ -42,7 +42,7 @@ var _ = Describe("DNS", func() {
 			TimeThresholds: timeThresholds,
 			VitalsThresholds: VitalsThresholds{
 				CPUPct99: 25,
-				MemPct99: 30,
+				MemPct99: 32,
 			},
 
 			SuccessStatus: dns.RcodeSuccess,
