@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
+	sigar "github.com/cloudfoundry/gosigar"
 	. "github.com/onsi/gomega"
-	"github.com/shirou/gopsutil/process"
 
 	metrics "github.com/rcrowley/go-metrics"
 )
@@ -397,39 +397,29 @@ func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Dura
 		ticker.Stop()
 		close(done)
 	}()
-	process, err := process.NewProcess(int32(p.ServerPID))
-	if err != nil {
-		panic("Unable to monitor process")
-	}
 
 	for {
 		select {
 		case <-p.shutdown:
 			return
 		case <-ticker.C:
-			usedMemory, err := process.MemoryInfo()
-			if err != nil {
-				panic(err)
-			}
-			memHistogram.Update(int64(usedMemory.RSS))
+			mem := sigar.ProcMem{}
+			if err := mem.Get(p.ServerPID); err == nil {
+				memHistogram.Update(int64(mem.Resident))
+				cpuFloat := p.getProcessCPU()
+				cpuInt := cpuFloat * (1000 * 1000)
+				cpuHistogram.Update(int64(cpuInt))
 
-			usedCPU, err := process.CPUPercent()
-			if err != nil {
-				panic(err)
-			}
-			cpuFloat := usedCPU
-			cpuInt := cpuFloat * (1000 * 1000)
-			cpuHistogram.Update(int64(cpuInt))
-
-			dataDogResults <- Result{
-				metricName: "memory",
-				value:      usedMemory.RSS,
-				time:       time.Now().Unix(),
-			}
-			dataDogResults <- Result{
-				metricName: "cpu",
-				value:      cpuInt,
-				time:       time.Now().Unix(),
+				dataDogResults <- Result{
+					metricName: "memory",
+					value:      mem.Resident,
+					time:       time.Now().Unix(),
+				}
+				dataDogResults <- Result{
+					metricName: "cpu",
+					value:      cpuInt,
+					time:       time.Now().Unix(),
+				}
 			}
 		}
 	}
