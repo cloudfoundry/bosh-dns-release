@@ -7,7 +7,6 @@ import (
 	"math"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	sigar "github.com/cloudfoundry/gosigar"
@@ -220,13 +219,12 @@ func (p *PerformanceTest) processDatadogResults(
 	close(chunkedResults)
 }
 
-func (p *PerformanceTest) scheduleWork(resultChan chan Result, wg *sync.WaitGroup, maxRequestsPerSecond float64) {
+func (p *PerformanceTest) scheduleWork(resultChan chan Result, maxRequestsPerSecond float64) {
 	buffer := make(chan struct{}, 2*int(math.Ceil(maxRequestsPerSecond)))
 	ticker := time.NewTicker(time.Duration(float64(time.Second) / maxRequestsPerSecond))
 	buffer <- struct{}{}
 
 	defer func() {
-		wg.Done()
 		ticker.Stop()
 	}()
 
@@ -252,8 +250,6 @@ func (p *PerformanceTest) scheduleWork(resultChan chan Result, wg *sync.WaitGrou
 }
 
 func (p *PerformanceTest) MakeParallelRequests(duration, resourcesInterval time.Duration, cpuHistogram, memHistogram metrics.Histogram) []Result {
-	wg := &sync.WaitGroup{}
-
 	resultChan := make(chan Result, p.RequestsPerSecond)
 
 	results := []Result{}
@@ -272,15 +268,13 @@ func (p *PerformanceTest) MakeParallelRequests(duration, resourcesInterval time.
 	go p.resultsProcessor(dataDogResults, resultChan, &results, resultsProcessorDone)
 	go p.processDatadogResults(dataDogDoneChan, dataDogResults)
 
-	wg.Add(p.Workers)
 	for i := 0; i < p.Workers; i++ {
-		go p.scheduleWork(resultChan, wg, float64(p.RequestsPerSecond)/float64(p.Workers))
+		go p.scheduleWork(resultChan, float64(p.RequestsPerSecond)/float64(p.Workers))
 	}
 
 	time.Sleep(duration)
 	close(p.shutdown)
 
-	wg.Wait()
 	<-resourceMeasurementDone
 	<-resultsProcessorDone
 	close(dataDogResults)
