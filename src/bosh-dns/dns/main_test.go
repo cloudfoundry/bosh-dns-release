@@ -865,7 +865,7 @@ var _ = Describe("main", func() {
 			cmd := newCommandWithConfig(fmt.Sprintf(`{
 				"address": "%s",
 				"port": %d,
-				"upcheck_domains":["upcheck.bosh-dns."],
+				"upcheck_domains": ["upcheck.bosh-dns."],
 				"timeout": "0s"
 			}`, listenAddress, listenPort))
 
@@ -874,6 +874,28 @@ var _ = Describe("main", func() {
 
 			Eventually(session, "5s").Should(gexec.Exit(1))
 			Eventually(session.Out).Should(gbytes.Say("[main].*ERROR - timed out waiting for server to bind"))
+		})
+
+		It("exits 1 and logs a helpful error message when the config contains an unknown handler source type", func() {
+			cmd := newCommandWithConfig(fmt.Sprintf(`{
+				"address": "%s",
+				"port": %d,
+				"upcheck_domains": ["upcheck.bosh-dns."],
+				"handlers": [
+					{
+						"domain": "internal.domain.",
+						"source": {
+							"type": "mistyped_dns"
+						}
+					}
+				]
+			}`, listenAddress, listenPort))
+
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session, "5s").Should(gexec.Exit(1))
+			Eventually(session.Out).Should(gbytes.Say("[main].*ERROR - Unexpected handler source type: mistyped_dns"))
 		})
 
 		It("exits 1 and logs a message when the globbed config files contain a broken alias config", func() {

@@ -123,6 +123,9 @@ func mainExitCode() int {
 				dnsHandler = handlers.NewCachingDNSHandler(dnsHandler)
 			}
 			handlers.AddHandler(mux, clock, handler.Domain, dnsHandler, logger)
+		} else {
+			logger.Error(logTag, fmt.Sprintf("Unexpected handler source type: %s", handler.Source.Type))
+			return 1
 		}
 	}
 
