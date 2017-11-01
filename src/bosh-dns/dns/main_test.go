@@ -40,12 +40,16 @@ var _ = Describe("main", func() {
 	var (
 		listenAddress string
 		listenPort    int
+		recursorPort  int
 	)
 
 	BeforeEach(func() {
 		listenAddress = "127.0.0.1"
 		var err error
 		listenPort, err = getFreePort()
+		Expect(err).NotTo(HaveOccurred())
+
+		recursorPort, err = getFreePort()
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -86,18 +90,18 @@ var _ = Describe("main", func() {
 
 	Context("when the server starts successfully", func() {
 		var (
-			cmd                    *exec.Cmd
-			session                *gexec.Session
-			aliasesDir             string
-			recordsFilePath        string
-			checkInterval          string
-			httpJSONServer         *ghttp.Server
-			httpJSONCachingEnabled bool
+			cmd                   *exec.Cmd
+			session               *gexec.Session
+			aliasesDir            string
+			recordsFilePath       string
+			checkInterval         string
+			httpJSONServer        *ghttp.Server
+			handlerCachingEnabled bool
 		)
 
 		BeforeEach(func() {
 			checkInterval = "100ms"
-			httpJSONCachingEnabled = false
+			handlerCachingEnabled = false
 		})
 
 		JustBeforeEach(func() {
@@ -189,16 +193,30 @@ var _ = Describe("main", func() {
 					"private_key_file": "../healthcheck/assets/test_certs/test_client.key",
 					"check_interval":   checkInterval,
 				},
-				"handlers": []map[string]interface{}{{
-					"domain": "internal-domain.",
-					"cache": map[string]interface{}{
-						"enabled": httpJSONCachingEnabled,
+				"handlers": []map[string]interface{}{
+					{
+						"domain": "internal-domain.",
+						"cache": map[string]interface{}{
+							"enabled": handlerCachingEnabled,
+						},
+						"source": map[string]interface{}{
+							"type": "http",
+							"url":  httpJSONServer.URL(),
+						},
 					},
-					"source": map[string]interface{}{
-						"type": "http",
-						"url":  httpJSONServer.URL(),
+					{
+						"domain": "recursor.internal.",
+						"cache": map[string]interface{}{
+							"enabled": handlerCachingEnabled,
+						},
+						"source": map[string]interface{}{
+							"type": "dns",
+							"recursors": []string{
+								fmt.Sprintf("127.0.0.1:%d", recursorPort),
+							},
+						},
 					},
-				}},
+				},
 			})
 			Expect(err).NotTo(HaveOccurred())
 			cmd = newCommandWithConfig(string(configContents))
@@ -580,7 +598,7 @@ var _ = Describe("main", func() {
 
 				Context("when caching is enabled", func() {
 					BeforeEach(func() {
-						httpJSONCachingEnabled = true
+						handlerCachingEnabled = true
 					})
 
 					It("should return cached answers", func() {
@@ -609,6 +627,141 @@ var _ = Describe("main", func() {
 
 						answer0 = r.Answer[0].(*dns.A)
 						Expect(answer0.A.String()).To(Equal("192.168.0.1"))
+					})
+				})
+			})
+
+			Context("recursion", func() {
+				var server *dns.Server
+
+				BeforeEach(func() {
+					server = &dns.Server{Addr: fmt.Sprintf("0.0.0.0:%d", recursorPort), Net: "tcp", UDPSize: 65535}
+					dns.HandleFunc("test-target.recursor.internal", func(resp dns.ResponseWriter, req *dns.Msg) {
+						msg := new(dns.Msg)
+
+						msg.Answer = append(msg.Answer, &dns.A{
+							Hdr: dns.RR_Header{
+								Name:   req.Question[0].Name,
+								Rrtype: dns.TypeA,
+								Class:  dns.ClassINET,
+								Ttl:    30,
+							},
+							A: net.ParseIP("192.0.2.100"),
+						})
+
+						msg.Authoritative = true
+						msg.RecursionAvailable = true
+
+						msg.SetReply(req)
+						err := resp.WriteMsg(msg)
+						if err != nil {
+							Expect(err).NotTo(HaveOccurred())
+						}
+					})
+
+					go server.ListenAndServe()
+				})
+
+				AfterEach(func() {
+					server.Shutdown()
+				})
+
+				It("serves local recursor", func() {
+					c := &dns.Client{Net: "tcp"}
+
+					m := &dns.Msg{}
+
+					m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Answer).To(HaveLen(1))
+
+					answer0 := r.Answer[0].(*dns.A)
+					Expect(answer0.A.String()).To(Equal("192.0.2.100"))
+				})
+
+				Context("when caching is enabled", func() {
+					BeforeEach(func() {
+						handlerCachingEnabled = true
+					})
+
+					It("serves cached responses for local recursor", func() {
+						c := &dns.Client{Net: "tcp"}
+
+						m := &dns.Msg{}
+
+						// query the live server
+						m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer0 := r.Answer[0].(*dns.A)
+						Expect(answer0.A.String()).To(Equal("192.0.2.100"))
+
+						// make sure the server is really shut down
+						server.Shutdown()
+						Eventually(func() error {
+							m = &dns.Msg{}
+							m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+							_, _, err = c.Exchange(m, fmt.Sprintf("127.0.0.1:%d", recursorPort))
+							return err
+						}, "5s").Should(HaveOccurred())
+
+						// do the same request again and get it from cache
+						m = &dns.Msg{}
+
+						m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+						r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer0 = r.Answer[0].(*dns.A)
+						Expect(answer0.A.String()).To(Equal("192.0.2.100"))
+					})
+				})
+
+				Context("when caching is disabled", func() {
+					It("is unable to lookup recursing answers", func() {
+						c := &dns.Client{Net: "tcp"}
+
+						m := &dns.Msg{}
+
+						// query the live server
+						m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer0 := r.Answer[0].(*dns.A)
+						Expect(answer0.A.String()).To(Equal("192.0.2.100"))
+
+						// make sure the server is really shut down
+						server.Shutdown()
+						Eventually(func() error {
+							m = &dns.Msg{}
+							m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+							_, _, err = c.Exchange(m, fmt.Sprintf("127.0.0.1:%d", recursorPort))
+							return err
+						}, "5s").Should(HaveOccurred())
+
+						// do the same request again and get it from cache
+						m = &dns.Msg{}
+
+						m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+						r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(r.Answer).To(HaveLen(0))
 					})
 				})
 			})
@@ -895,7 +1048,29 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session, "5s").Should(gexec.Exit(1))
-			Eventually(session.Out).Should(gbytes.Say("[main].*ERROR - Unexpected handler source type: mistyped_dns"))
+			Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - Configuring handler for "internal.domain.": Unexpected handler source type: mistyped_dns`))
+		})
+
+		It("exits 1 and logs a helpful error message when the dns handler section doesnt contain recursors", func() {
+			cmd := newCommandWithConfig(fmt.Sprintf(`{
+				"address": "%s",
+				"port": %d,
+				"upcheck_domains": ["upcheck.bosh-dns."],
+				"handlers": [
+					{
+						"domain": "internal.domain.",
+						"source": {
+							"type": "dns"
+						}
+					}
+				]
+			}`, listenAddress, listenPort))
+
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session, "5s").Should(gexec.Exit(1))
+			Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - Configuring handler for "internal.domain.": No recursors present`))
 		})
 
 		It("exits 1 and logs a message when the globbed config files contain a broken alias config", func() {

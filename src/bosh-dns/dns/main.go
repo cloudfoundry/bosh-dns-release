@@ -115,18 +115,31 @@ func mainExitCode() int {
 
 	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
 
-	for _, handler := range config.Handlers {
-		if handler.Source.Type == "http" {
-			var dnsHandler dns.Handler
-			dnsHandler = handlers.NewHTTPJSONHandler(handler.Source.URL, logger)
-			if handler.Cache.Enabled {
-				dnsHandler = handlers.NewCachingDNSHandler(dnsHandler)
+	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
+
+	for _, handlerConfig := range config.Handlers {
+		var handler dns.Handler
+
+		if handlerConfig.Source.Type == "http" {
+			handler = handlers.NewHTTPJSONHandler(handlerConfig.Source.URL, logger)
+		} else if handlerConfig.Source.Type == "dns" {
+			if len(handlerConfig.Source.Recursors) == 0 {
+				logger.Error(logTag, fmt.Sprintf(`Configuring handler for "%s": No recursors present`, handlerConfig.Domain))
+				return 1
 			}
-			handlers.AddHandler(mux, clock, handler.Domain, dnsHandler, logger)
+
+			recursorPool := handlers.NewFailoverRecursorPool(handlerConfig.Source.Recursors, logger)
+			handler = handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
 		} else {
-			logger.Error(logTag, fmt.Sprintf("Unexpected handler source type: %s", handler.Source.Type))
+			logger.Error(logTag, fmt.Sprintf(`Configuring handler for "%s": Unexpected handler source type: %s`, handlerConfig.Domain, handlerConfig.Source.Type))
 			return 1
 		}
+
+		if handlerConfig.Cache.Enabled {
+			handler = handlers.NewCachingDNSHandler(handler)
+		}
+
+		handlers.AddHandler(mux, clock, handlerConfig.Domain, handler, logger)
 	}
 
 	upchecks := []server.Upcheck{}
@@ -137,7 +150,7 @@ func mainExitCode() int {
 	}
 
 	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, logger)
-	forwardHandler := handlers.NewForwardHandler(recursorPool, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), clock, logger)
+	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
 	if config.Cache.Enabled {
 		mux.Handle(".", handlers.NewCachingDNSHandler(forwardHandler))
 	} else {
