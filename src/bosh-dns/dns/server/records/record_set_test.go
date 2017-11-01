@@ -14,10 +14,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func dereferencer(r []*records.Record) []records.Record {
+func dereferencer(r []records.Record) []records.Record {
 	out := []records.Record{}
-	for _, pointer := range r {
-		out = append(out, *pointer)
+	for _, record := range r {
+		out = append(out, record)
 	}
 
 	return out
