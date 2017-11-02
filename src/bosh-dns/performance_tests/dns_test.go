@@ -25,7 +25,7 @@ var _ = Describe("DNS", func() {
 		label  string
 
 		dnsServerAddress  = "127.0.0.2:9953"
-		durationInSeconds = 60 * 30
+		durationInSeconds = 60 * 10
 		workers           = 10
 		requestsPerSecond = 7
 	)
