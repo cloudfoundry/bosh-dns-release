@@ -40,8 +40,8 @@
 [[projects]]
   branch = "master"
   name = "github.com/cloudfoundry/gosigar"
-  packages = ["."]
-  revision = "444b64dfa812ef6ebb9306fe261678d046a010e1"
+  packages = [".","sys/windows"]
+  revision = "6ce1f0695dabb41475a8841fa1584afce1c34af7"
 
 [[projects]]
   branch = "bosh-develop"
@@ -117,6 +117,12 @@
   revision = "19228380402d05fb5d36f64b6b2327eab2cf650c"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   name = "github.com/prometheus/client_golang"
   packages = ["prometheus"]
   revision = "c5b7fccd204277076155f10851dad72b76a49317"
@@ -155,7 +161,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = ["unix","windows"]
   revision = "6faef541c73732f438fb660a212750a9ba9f9362"
 
 [[projects]]
