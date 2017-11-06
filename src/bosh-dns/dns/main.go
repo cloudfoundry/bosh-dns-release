@@ -128,7 +128,7 @@ func mainExitCode() int {
 				return 1
 			}
 
-			recursorPool := handlers.NewFailoverRecursorPool(handlerConfig.Source.Recursors, logger)
+			recursorPool := handlers.NewFailoverRecursorPool(stringShuffler.Shuffle(handlerConfig.Source.Recursors), logger)
 			handler = handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
 		} else {
 			logger.Error(logTag, fmt.Sprintf(`Configuring handler for "%s": Unexpected handler source type: %s`, handlerConfig.Domain, handlerConfig.Source.Type))
