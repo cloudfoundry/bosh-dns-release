@@ -23,6 +23,7 @@ jobs:
     - get: bosh-dns-release
       trigger: true
     - task: test-unit-windows
+      timeout: 1h
       file: bosh-dns-release/ci/tasks/test-unit-windows.yml
 
 - name: create-release
@@ -65,6 +66,7 @@ jobs:
       passed: [create-release]
     - task: test-performance
       file: bosh-dns-release/ci/tasks/test-performance-windows.yml
+      timeout: 1h
       params:
         ZONES_JSON_HASH: {{zones_json_hash}}
         DATADOG_API_KEY: {{datadog_api_key}}
@@ -110,10 +112,13 @@ jobs:
         passed: [create-release]
     - task: windows
       file: bosh-dns-release/ci/tasks/test-acceptance-windows.yml
+      timeout: 1h
     - task: windows-nameserver-disabled
       file: bosh-dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
+      timeout: 1h
     - task: windows-shared
       file: bosh-dns-release/ci/tasks/test-acceptance-windows-shared.yml
+      timeout: 1h
 
 - name: brats-ubuntu
   serial: true
