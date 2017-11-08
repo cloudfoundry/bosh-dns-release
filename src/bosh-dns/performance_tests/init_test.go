@@ -32,7 +32,7 @@ var (
 	dnsPort          = 9953
 )
 
-var _ = BeforeSuite(func() {
+func setupServers() {
 	healthSessions = []*gexec.Session{}
 	var err error
 	healthServerPath, err = gexec.Build("bosh-dns/healthcheck")
@@ -90,7 +90,7 @@ var _ = BeforeSuite(func() {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-})
+}
 
 func waitForServer(port int) error {
 	var err error
@@ -144,7 +144,7 @@ func startHealthServer(addr string) {
 	)
 }
 
-var _ = AfterSuite(func() {
+func shutdownServers() {
 	for _, healthSession := range healthSessions {
 		if healthSession != nil && healthSession.Command.Process != nil {
 			Eventually(healthSession.Kill()).Should(gexec.Exit())
@@ -155,5 +155,10 @@ var _ = AfterSuite(func() {
 		Eventually(dnsSession.Kill()).Should(gexec.Exit())
 	}
 
+	healthSessions = []*gexec.Session{}
+	dnsSession = nil
+}
+
+var _ = AfterSuite(func() {
 	gexec.CleanupBuildArtifacts()
 })

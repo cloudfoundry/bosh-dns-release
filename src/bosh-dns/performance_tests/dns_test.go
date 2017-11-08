@@ -30,6 +30,14 @@ var _ = Describe("DNS", func() {
 		requestsPerSecond = 7
 	)
 
+	BeforeEach(func() {
+		setupServers()
+	})
+
+	AfterEach(func() {
+		shutdownServers()
+	})
+
 	TestDNSPerformance := func(context string, timeThresholds TimeThresholds) {
 		PerformanceTest{
 			Application:       "dns",

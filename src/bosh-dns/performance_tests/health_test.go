@@ -27,6 +27,14 @@ var _ = Describe("Health Server", func() {
 		requestsPerSecond = 400
 	)
 
+	BeforeEach(func() {
+		setupServers()
+	})
+
+	AfterEach(func() {
+		shutdownServers()
+	})
+
 	TestHealthPerformance := func(timeThresholds TimeThresholds) {
 		httpClient := setupSecureGet()
 
