@@ -2,6 +2,7 @@ package healthclient
 
 import (
 	"crypto/tls"
+	"errors"
 	"io/ioutil"
 	"time"
 
@@ -33,11 +34,38 @@ func NewHealthClient(caCert []byte, cert tls.Certificate, logger boshlog.Logger)
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	client := httpclient.NewMutualTLSClient(cert, caCertPool, "health.bosh-dns")
+	client := httpclient.NewMutualTLSClient(cert, caCertPool, "")
 	client.Timeout = 5 * time.Second
 
 	if tr, ok := client.Transport.(*http.Transport); ok {
-		tr.TLSClientConfig.ClientSessionCache = tls.NewLRUClientSessionCache(0)
+		tr.TLSClientConfig.ClientSessionCache = tls.NewLRUClientSessionCache(10000)
+		tr.TLSClientConfig.InsecureSkipVerify = true
+		tr.TLSClientConfig.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+			certs := make([]*x509.Certificate, len(rawCerts))
+			for i, asn1Data := range rawCerts {
+				cert, err := x509.ParseCertificate(asn1Data)
+				if err != nil {
+					return errors.New("tls: failed to parse certificate from server: " + err.Error())
+				}
+				certs[i] = cert
+			}
+
+			opts := x509.VerifyOptions{
+				Roots:         tr.TLSClientConfig.RootCAs,
+				CurrentTime:   time.Now(),
+				DNSName:       "health.bosh-dns",
+				Intermediates: x509.NewCertPool(),
+			}
+
+			for i, cert := range certs {
+				if i == 0 {
+					continue
+				}
+				opts.Intermediates.AddCert(cert)
+			}
+			_, err := certs[0].Verify(opts)
+			return err
+		}
 	}
 
 	return httpclient.NewHTTPClient(

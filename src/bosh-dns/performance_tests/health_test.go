@@ -21,26 +21,37 @@ import (
 
 var _ = Describe("Health Server", func() {
 	var (
-		serverAddress     = "127.0.0.1:8853"
-		durationInSeconds = 60 * 30
+		serverAddress     = "127.0.0.2:8853"
+		durationInSeconds = 60 * 10
 		workers           = 10
 		requestsPerSecond = 400
 	)
+
+	BeforeEach(func() {
+		setupServers()
+	})
+
+	AfterEach(func() {
+		shutdownServers()
+	})
 
 	TestHealthPerformance := func(timeThresholds TimeThresholds) {
 		httpClient := setupSecureGet()
 
 		PerformanceTest{
+			Application: "health",
+			Context:     "health",
+
 			Workers:           workers,
 			RequestsPerSecond: requestsPerSecond,
 
-			ServerPID: healthSession.Command.Process.Pid,
+			ServerPID: healthSessions[0].Command.Process.Pid,
 
 			TimeThresholds: timeThresholds,
 			VitalsThresholds: VitalsThresholds{
-				CPUMax:   60,
-				CPUPct99: 60,
-				MemMax:   20,
+				CPUPct99: 35,
+				MemPct99: 20,
+				MemMax:   25,
 			},
 
 			SuccessStatus: http.StatusOK,
@@ -57,7 +68,6 @@ var _ = Describe("Health Server", func() {
 				Med:   15 * time.Millisecond,
 				Pct90: 20 * time.Millisecond,
 				Pct95: 25 * time.Millisecond,
-				Max:   7540 * time.Millisecond,
 			})
 		})
 	})
@@ -70,9 +80,9 @@ func MakeHealthEndpointRequest(client *httpclient.HTTPClient, serverAddress stri
 
 	if err != nil {
 		fmt.Printf("Error hitting health endpoint: %s\n", err.Error())
-		hr <- Result{status: http.StatusRequestTimeout, responseTime: responseTime}
+		hr <- Result{status: http.StatusRequestTimeout, time: time.Now().Unix(), metricName: "response_time", value: responseTime}
 	} else {
-		hr <- Result{status: resp.StatusCode, responseTime: responseTime}
+		hr <- Result{status: resp.StatusCode, time: time.Now().Unix(), metricName: "response_time", value: responseTime}
 	}
 }
 

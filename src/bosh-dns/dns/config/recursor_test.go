@@ -18,14 +18,14 @@ var _ = Describe("Recursor", func() {
 		dnsConfig = config.Config{}
 		resolvConfReader = &configfakes.FakeRecursorReader{}
 		stringShuffler = &configfakes.FakeStringShuffler{}
+		stringShuffler.ShuffleStub = func(src []string) []string {
+			return []string{src[1], src[0]}
+		}
 	})
 
 	Context("when dnsConfig does not have any recursors configured", func() {
 		BeforeEach(func() {
 			resolvConfReader.GetReturns([]string{"some-recursor-1", "some-recursor-2"}, nil)
-			stringShuffler.ShuffleStub = func(src []string) []string {
-				return []string{src[1], src[0]}
-			}
 		})
 
 		It("should generate recursors from the resolv.conf, shuffled", func() {
@@ -53,16 +53,15 @@ var _ = Describe("Recursor", func() {
 	Context("when dnsConfig does has recursors configured", func() {
 		BeforeEach(func() {
 			dnsConfig = config.Config{
-				Recursors: []string{"foo-bar"},
+				Recursors: []string{"some-recursor-1", "some-recursor-2"},
 			}
 		})
 
-		It("should not modify config", func() {
+		It("should shuffle the recursors", func() {
 			err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(dnsConfig.Recursors).Should(ConsistOf("foo-bar"))
+			Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-2", "some-recursor-1"}))
 		})
-
 	})
 
 	Context("when dnsConfig is not provided", func() {

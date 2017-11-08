@@ -24,6 +24,7 @@ func TestAcceptance(t *testing.T) {
 
 var (
 	pathToTestRecursorServer string
+	pathToTestHTTPDNSServer  string
 	boshBinaryPath           string
 	allDeployedInstances     []instanceInfo
 	boshDeployment           string
@@ -44,6 +45,9 @@ var _ = BeforeSuite(func() {
 
 	var err error
 	pathToTestRecursorServer, err = gexec.Build("bosh-dns/acceptance_tests/test_recursor")
+	Expect(err).NotTo(HaveOccurred())
+
+	pathToTestHTTPDNSServer, err = gexec.Build("bosh-dns/acceptance_tests/test_http_dns_server")
 	Expect(err).NotTo(HaveOccurred())
 })
 
@@ -73,6 +77,13 @@ func noRecursorsOpsFile() string {
 	} else {
 		return "no-recursors-configured"
 	}
+}
+
+func jsonServerAddress() string {
+	if testTargetOS == "windows" {
+		return "http://10.0.31.191:8081"
+	}
+	return "http://172.17.0.1:8081"
 }
 
 func setupLocalRecursorOpsFile() string {

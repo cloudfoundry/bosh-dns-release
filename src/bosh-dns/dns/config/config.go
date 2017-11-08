@@ -20,8 +20,21 @@ type Config struct {
 	AliasFilesGlob  string   `json:"alias_files_glob"`
 	UpcheckDomains  []string `json:"upcheck_domains"`
 
-	Health HealthConfig `json:"health"`
-	Cache  Cache        `json:"cache"`
+	Health   HealthConfig `json:"health"`
+	Cache    Cache        `json:"cache"`
+	Handlers []Handler    `json:"handlers"`
+}
+
+type Handler struct {
+	Domain string `json:"domain"`
+	Source Source `json:"source"`
+	Cache  Cache  `json:"cache"`
+}
+
+type Source struct {
+	Type      string   `json:"type"`
+	URL       string   `json:"url,omitempty"`
+	Recursors []string `json:"recursors,omitempty"`
 }
 
 type HealthConfig struct {
@@ -84,16 +97,34 @@ func LoadFromFile(configFilePath string) (Config, error) {
 		return Config{}, errors.New("port is required")
 	}
 
-	for i := range c.Recursors {
-		_, _, err := net.SplitHostPort(c.Recursors[i])
+	c.Recursors, err = AppendDefaultDNSPortIfMissing(c.Recursors)
+	if err != nil {
+		return Config{}, err
+	}
+
+	for i := range c.Handlers {
+		c.Handlers[i].Source.Recursors, err = AppendDefaultDNSPortIfMissing(c.Handlers[i].Source.Recursors)
 		if err != nil {
-			if strings.Contains(err.Error(), "missing port in address") {
-				c.Recursors[i] = net.JoinHostPort(c.Recursors[i], "53")
-			} else {
-				return Config{}, err
-			}
+			return Config{}, err
 		}
 	}
 
 	return c, nil
+}
+
+func AppendDefaultDNSPortIfMissing(recursors []string) ([]string, error) {
+	recursorsWithPort := []string{}
+	for i := range recursors {
+		_, _, err := net.SplitHostPort(recursors[i])
+		if err != nil {
+			if strings.Contains(err.Error(), "missing port in address") {
+				recursorsWithPort = append(recursorsWithPort, net.JoinHostPort(recursors[i], "53"))
+			} else {
+				return []string{}, err
+			}
+		} else {
+			recursorsWithPort = append(recursorsWithPort, recursors[i])
+		}
+	}
+	return recursorsWithPort, nil
 }

@@ -23,8 +23,6 @@ func NewDiscoveryHandler(logger logger.Logger, localDomain dnsresolver.LocalDoma
 
 func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, requestMsg *dns.Msg) {
 	responseMsg := &dns.Msg{}
-	responseMsg.Authoritative = true
-	responseMsg.RecursionAvailable = false
 
 	if len(requestMsg.Question) > 0 {
 		switch requestMsg.Question[0].Qtype {
@@ -36,6 +34,9 @@ func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, requestMsg
 			responseMsg.SetRcode(requestMsg, dns.RcodeServerFailure)
 		}
 	}
+
+	responseMsg.Authoritative = true
+	responseMsg.RecursionAvailable = true
 
 	if err := responseWriter.WriteMsg(responseMsg); err != nil {
 		d.logger.Error(d.logTag, err.Error())

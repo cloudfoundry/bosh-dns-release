@@ -23,6 +23,7 @@ jobs:
     - get: bosh-dns-release
       trigger: true
     - task: test-unit-windows
+      timeout: 1h
       file: bosh-dns-release/ci/tasks/test-unit-windows.yml
 
 - name: create-release
@@ -51,14 +52,31 @@ jobs:
       file: bosh-dns-release/ci/tasks/test-performance.yml
       params:
         ZONES_JSON_HASH: {{zones_json_hash}}
+        DATADOG_API_KEY: {{datadog_api_key}}
+        DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-linux
+
+- name: test-performance-windows
+  public: true
+  serial: true
+  plan:
+    - get: every-10m
+      trigger: true
+    - get: bosh-dns-release
+      trigger: true
+      passed: [create-release]
+    - task: test-performance
+      file: bosh-dns-release/ci/tasks/test-performance-windows.yml
+      timeout: 1h
+      params:
+        ZONES_JSON_HASH: {{zones_json_hash}}
+        DATADOG_API_KEY: {{datadog_api_key}}
+        DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-windows
 
 - name: test-acceptance
   public: true
   serial: true
   plan:
     - aggregate:
-      - get: every-2h
-        trigger: true
       - get: bosh-dns-release
         passed: [create-release]
       - get: bosh-candidate-stemcell
@@ -76,9 +94,11 @@ jobs:
   serial_groups:
   - windows-acceptance-env
   plan:
+  - ensure:
+      task: clean-up
+      file: bosh-dns-release/ci/tasks/clean-up.yml
+    do:
     - aggregate:
-      - get: every-2h
-        trigger: true
       - get: bosh-dns-release
         trigger: true
         passed: [create-release]
@@ -92,12 +112,13 @@ jobs:
         passed: [create-release]
     - task: windows
       file: bosh-dns-release/ci/tasks/test-acceptance-windows.yml
+      timeout: 1h
     - task: windows-nameserver-disabled
       file: bosh-dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
+      timeout: 1h
     - task: windows-shared
       file: bosh-dns-release/ci/tasks/test-acceptance-windows-shared.yml
-    - task: clean-up
-      file: bosh-dns-release/ci/tasks/clean-up.yml
+      timeout: 1h
 
 - name: brats-ubuntu
   serial: true
@@ -123,6 +144,8 @@ jobs:
       file: bosh-src/ci/tasks/test-brats.yml
       tags: ["worker-brats"]
       privileged: true
+      input_mapping:
+        dns-release: bosh-dns-release-src
       params:
         BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
         BOSH_DIRECTOR_RELEASE_VERSION: "latest"
@@ -167,7 +190,7 @@ jobs:
   plan:
     - aggregate:
       - get: bosh-dns-release
-        passed: [test-acceptance, test-performance, test-acceptance-windows]
+        passed: [test-acceptance, test-acceptance-windows]
       - get: candidate-release
         passed: [test-acceptance, brats-ubuntu, test-acceptance-windows]
       - get: version
@@ -245,7 +268,8 @@ resources:
 - name: bosh-candidate-stemcell-windows
   type: s3
   source:
-    bucket: bosh-windows-stemcells-release-candidates
+    region_name: us-east-2
+    bucket: bosh-windows-stemcells-production
     regexp: light-bosh-stemcell-(.+)-google-kvm-windows2012R2-go_agent.tgz
 
 - name: bosh-candidate-release
@@ -265,10 +289,6 @@ resources:
     branch: master
     uri: git@github.com:cloudfoundry/dns-release-ci-envs.git
     private_key: {{envs_private_key}}
-
-- name: every-2h
-  type: time
-  source: {interval: 2h}
 
 - name: every-10m
   type: time

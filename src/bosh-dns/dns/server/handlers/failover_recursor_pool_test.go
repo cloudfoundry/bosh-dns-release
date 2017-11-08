@@ -1,12 +1,14 @@
-package internal_test
+package handlers_test
 
 import (
-	. "bosh-dns/dns/server/handlers/internal"
+	. "bosh-dns/dns/server/handlers"
 
 	"errors"
+	"time"
+
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 )
 
 var _ = Describe("RecursorPool", func() {
@@ -15,11 +17,13 @@ var _ = Describe("RecursorPool", func() {
 		work                 func(string) error
 		recursorsFailOncePer [3]int
 		recursorAttempts     [3]int
+		fakeLogger           *loggerfakes.FakeLogger
 	)
 
 	BeforeEach(func() {
 		recursorsFailOncePer = [3]int{1000, 1000, 1000}
 		recursorAttempts = [3]int{0, 0, 0}
+		fakeLogger = &loggerfakes.FakeLogger{}
 	})
 
 	JustBeforeEach(func() {
@@ -56,14 +60,14 @@ var _ = Describe("RecursorPool", func() {
 			}
 		}
 
-		pool = NewFailoverRecursorPool(recursors)
+		pool = NewFailoverRecursorPool(recursors, fakeLogger)
 	})
 
 	It("returns an error if there are no recursors configured", func() {
-		pool = NewFailoverRecursorPool([]string{})
+		pool = NewFailoverRecursorPool([]string{}, fakeLogger)
 		Expect(pool.PerformStrategically(func(string) error { return nil })).To(HaveOccurred())
 
-		pool = NewFailoverRecursorPool(nil)
+		pool = NewFailoverRecursorPool(nil, fakeLogger)
 		Expect(pool.PerformStrategically(func(string) error { return nil })).To(HaveOccurred())
 	})
 
@@ -72,6 +76,11 @@ var _ = Describe("RecursorPool", func() {
 			err := pool.PerformStrategically(work)
 			Expect(err).ToNot(HaveOccurred())
 		}
+
+		Expect(fakeLogger.InfoCallCount()).To(Equal(1))
+		tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
+		Expect(logMsg).To(ContainSubstring("starting preference: one\n"))
+		Expect(tag).To(Equal("FailoverRecursor"))
 
 		Expect(recursorAttempts[0]).To(Equal(10))
 	})
@@ -102,8 +111,38 @@ var _ = Describe("RecursorPool", func() {
 				pool.PerformStrategically(work)
 			}
 
+			Expect(fakeLogger.InfoCallCount()).To(Equal(3))
+			_, logMsg, _ := fakeLogger.InfoArgsForCall(0)
+			Expect(logMsg).To(ContainSubstring("starting preference: one\n"))
+			_, logMsg, _ = fakeLogger.InfoArgsForCall(1)
+			Expect(logMsg).To(ContainSubstring("shifting recursor preference: two\n"))
+			_, logMsg, _ = fakeLogger.InfoArgsForCall(2)
+			Expect(logMsg).To(ContainSubstring("shifting recursor preference: three\n"))
+
 			Expect(recursorAttempts[0]).To(BeNumerically("<", recursorAttempts[2]))
 			Expect(recursorAttempts[1]).To(BeNumerically("<", recursorAttempts[2]))
+		})
+	})
+
+	Context("when the healthy recursor is the second one", func() {
+		BeforeEach(func() {
+			recursorsFailOncePer[0] = 3
+			recursorsFailOncePer[2] = 3
+		})
+
+		It("settles on the second (health) recursor and does not fail over to the third", func() {
+			for time := 0; time < 1000; time++ {
+				pool.PerformStrategically(work)
+			}
+
+			Expect(fakeLogger.InfoCallCount()).To(Equal(2))
+			_, logMsg, _ := fakeLogger.InfoArgsForCall(0)
+			Expect(logMsg).To(ContainSubstring("starting preference: one\n"))
+			_, logMsg, _ = fakeLogger.InfoArgsForCall(1)
+			Expect(logMsg).To(ContainSubstring("shifting recursor preference: two\n"))
+
+			Expect(recursorAttempts[0]).To(BeNumerically("<", recursorAttempts[1]))
+			Expect(recursorAttempts[2]).To(Equal(0))
 		})
 	})
 

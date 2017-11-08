@@ -7,14 +7,16 @@ import (
 
 	"bosh-dns/dns/server/records"
 
+	"code.cloudfoundry.org/clock"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	metrics "github.com/rcrowley/go-metrics"
 
 	"fmt"
-	"io/ioutil"
 
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 var _ = Describe("DNS", func() {
@@ -22,14 +24,24 @@ var _ = Describe("DNS", func() {
 		picker zp.ZonePicker
 		label  string
 
-		dnsServerAddress  = "127.0.0.1:9953"
-		durationInSeconds = 60 * 30
+		dnsServerAddress  = "127.0.0.2:9953"
+		durationInSeconds = 60 * 10
 		workers           = 10
 		requestsPerSecond = 7
 	)
 
-	TestDNSPerformance := func(timeThresholds TimeThresholds) {
+	BeforeEach(func() {
+		setupServers()
+	})
+
+	AfterEach(func() {
+		shutdownServers()
+	})
+
+	TestDNSPerformance := func(context string, timeThresholds TimeThresholds) {
 		PerformanceTest{
+			Application:       "dns",
+			Context:           context,
 			Workers:           workers,
 			RequestsPerSecond: requestsPerSecond,
 
@@ -37,9 +49,9 @@ var _ = Describe("DNS", func() {
 
 			TimeThresholds: timeThresholds,
 			VitalsThresholds: VitalsThresholds{
-				CPUMax:   20,
-				CPUPct99: 5,
-				MemMax:   25,
+				CPUPct99: 15,
+				MemPct99: 35,
+				MemMax:   40,
 			},
 
 			SuccessStatus: dns.RcodeSuccess,
@@ -59,18 +71,31 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for prod like zones", func() {
+			duration := time.Duration(durationInSeconds) * time.Second
+			resourcesInterval := time.Second / 2
+
+			cpuSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
+			cpuHistogram := metrics.NewHistogram(cpuSample)
+			metrics.Register("CPU Usage", cpuHistogram)
+
+			memSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
+			memHistogram := metrics.NewHistogram(memSample)
+			metrics.Register("Mem Usage", memHistogram)
+
 			benchmarkTime := generateTimeHistogram(
 				PerformanceTest{
+					Application:       "dns-benchmark",
+					Context:           "benchmark",
 					Workers:           workers,
 					RequestsPerSecond: requestsPerSecond,
 					WorkerFunc: func(resultChan chan<- Result) {
 						MakeDNSRequestUntilSuccessful(picker, "34.194.75.123:53", resultChan)
 					},
 				}.Setup().
-					MakeParallelRequests(20 * time.Second),
+					MakeParallelRequests(20*time.Second, resourcesInterval, cpuHistogram, memHistogram),
 			)
 
-			TestDNSPerformance(TimeThresholdsFromBenchmark(benchmarkTime, 1.1))
+			TestDNSPerformance("prod-like", TimeThresholdsFromBenchmark(benchmarkTime, 1.1))
 		})
 	})
 
@@ -81,23 +106,27 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for upcheck zone", func() {
-			TestDNSPerformance(TimeThresholds{
-				Max:   7540 * time.Millisecond,
-				Med:   1500 * time.Microsecond,
-				Pct90: 3 * time.Millisecond,
+			TestDNSPerformance("upcheck", TimeThresholds{
+				Med:   700 * time.Microsecond,
+				Pct90: 4 * time.Millisecond,
 				Pct95: 15 * time.Millisecond,
 			})
 		})
 	})
 
 	Describe("using local bosh dns records", func() {
+		var (
+			signal chan struct{}
+		)
+
 		BeforeEach(func() {
+			signal = make(chan struct{})
 			logger := &fakes.FakeLogger{}
-			recordsJsonBytes, err := ioutil.ReadFile("assets/records.json")
+			fs := boshsys.NewOsFileSystem(logger)
+			recordSetReader := records.NewFileReader("assets/records.json", fs, clock.NewClock(), logger, signal)
+			recordSet, err := records.NewRecordSet(recordSetReader, logger)
 			Expect(err).ToNot(HaveOccurred())
-			recordSet, err := records.CreateFromJSON(recordsJsonBytes, logger)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(recordSet.Records).To(HaveLen(2))
+			Expect(recordSet.Records).To(HaveLen(102))
 
 			records := []string{}
 			for _, record := range recordSet.Records {
@@ -115,10 +144,13 @@ var _ = Describe("DNS", func() {
 			label = "local zones"
 		})
 
+		AfterEach(func() {
+			close(signal)
+		})
+
 		It("handles DNS responses quickly for local zones", func() {
-			TestDNSPerformance(TimeThresholds{
-				Max:   7540 * time.Millisecond,
-				Med:   1500 * time.Microsecond,
+			TestDNSPerformance("local-zones", TimeThresholds{
+				Med:   700 * time.Microsecond,
 				Pct90: 3 * time.Millisecond,
 				Pct95: 15 * time.Millisecond,
 			})
@@ -143,7 +175,7 @@ func MakeDNSRequestUntilSuccessful(picker zp.ZonePicker, server string, result c
 		r, _, err := c.Exchange(m, server)
 		if err == nil {
 			responseTime := time.Since(startTime)
-			result <- Result{status: r.Rcode, responseTime: responseTime}
+			result <- Result{status: r.Rcode, time: time.Now().Unix(), metricName: "response_time", value: responseTime}
 			return
 		}
 	}

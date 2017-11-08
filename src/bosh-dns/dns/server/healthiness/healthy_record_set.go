@@ -2,22 +2,20 @@ package healthiness
 
 import (
 	"bosh-dns/dns/server/healthiness/internal"
-	"bosh-dns/dns/server/records"
 	"sync"
 )
 
-//go:generate counterfeiter . RecordSetRepo
+//go:generate counterfeiter . RecordSet
 
-type RecordSetRepo interface {
-	Get() (records.RecordSet, error)
+type RecordSet interface {
+	Resolve(domain string) ([]string, error)
 	Subscribe() <-chan bool
 }
 
 type HealthyRecordSet struct {
 	healthWatcher HealthWatcher
 
-	recordSet      records.RecordSet
-	recordSetMutex *sync.RWMutex
+	recordSet RecordSet
 
 	trackedDomains *internal.PriorityLimitedTranscript
 
@@ -26,19 +24,17 @@ type HealthyRecordSet struct {
 }
 
 func NewHealthyRecordSet(
-	recordSetRepo RecordSetRepo,
+	recordSet RecordSet,
 	healthWatcher HealthWatcher,
 	maximumTrackedDomains uint,
 	shutdownChan chan struct{},
 ) *HealthyRecordSet {
-	subscriptionChan := recordSetRepo.Subscribe()
-	recordSet, _ := recordSetRepo.Get()
+	subscriptionChan := recordSet.Subscribe()
 
 	hrs := &HealthyRecordSet{
 		healthWatcher: healthWatcher,
 
-		recordSet:      recordSet,
-		recordSetMutex: &sync.RWMutex{},
+		recordSet: recordSet,
 
 		trackedDomains: internal.NewPriorityLimitedTranscript(maximumTrackedDomains),
 
@@ -55,15 +51,6 @@ func NewHealthyRecordSet(
 				if !ok {
 					return
 				}
-				recordSet, err := recordSetRepo.Get()
-				if err != nil {
-					continue
-				}
-
-				hrs.recordSetMutex.Lock()
-				hrs.recordSet = recordSet
-				hrs.recordSetMutex.Unlock()
-
 				hrs.refreshTrackedIPs()
 			}
 		}
@@ -73,15 +60,11 @@ func NewHealthyRecordSet(
 }
 
 func (hrs *HealthyRecordSet) refreshTrackedIPs() {
-	hrs.recordSetMutex.RLock()
-	recordSet := hrs.recordSet
-	hrs.recordSetMutex.RUnlock()
-
 	newTrackedIPs := map[string]map[string]struct{}{}
 	hrs.trackedIPsMutex.Lock()
 	defer hrs.trackedIPsMutex.Unlock()
 	for _, domain := range hrs.trackedDomains.Registry() {
-		ips, err := recordSet.Resolve(domain)
+		ips, err := hrs.recordSet.Resolve(domain)
 		if err != nil {
 			continue
 		}
@@ -120,11 +103,7 @@ func (hrs *HealthyRecordSet) untrackDomain(removedDomain string) {
 }
 
 func (hrs *HealthyRecordSet) Resolve(fqdn string) ([]string, error) {
-	hrs.recordSetMutex.RLock()
-	recordSet := hrs.recordSet
-	hrs.recordSetMutex.RUnlock()
-
-	ips, err := recordSet.Resolve(fqdn)
+	ips, err := hrs.recordSet.Resolve(fqdn)
 	if err != nil {
 		return nil, err
 	}

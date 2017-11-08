@@ -1,14 +1,19 @@
-package internal
+package handlers
 
 import (
 	"errors"
+	"fmt"
 	"sync/atomic"
+
+	"github.com/cloudfoundry/bosh-utils/logger"
 )
 
 const (
-	FAIL_HISTORY_LENGTH      = 25
-	FAIL_TOLERANCE_THRESHOLD = 5
+	FailHistoryLength    = 25
+	FailHistoryThreshold = 5
 )
+
+//go:generate counterfeiter . RecursorPool
 
 type RecursorPool interface {
 	PerformStrategically(func(string) error) error
@@ -17,6 +22,8 @@ type RecursorPool interface {
 type failoverRecursorPool struct {
 	preferredRecursorIndex uint64
 
+	logger    logger.Logger
+	logTag    string
 	recursors []recursorWithHistory
 }
 
@@ -26,7 +33,7 @@ type recursorWithHistory struct {
 	failCount  int32
 }
 
-func NewFailoverRecursorPool(recursors []string) RecursorPool {
+func NewFailoverRecursorPool(recursors []string, logger logger.Logger) RecursorPool {
 	recursorsWithHistory := []recursorWithHistory{}
 
 	if recursors == nil {
@@ -34,8 +41,8 @@ func NewFailoverRecursorPool(recursors []string) RecursorPool {
 	}
 
 	for _, name := range recursors {
-		failBuffer := make(chan bool, FAIL_HISTORY_LENGTH)
-		for i := 0; i < FAIL_HISTORY_LENGTH; i++ {
+		failBuffer := make(chan bool, FailHistoryLength)
+		for i := 0; i < FailHistoryLength; i++ {
 			failBuffer <- false
 		}
 
@@ -45,17 +52,19 @@ func NewFailoverRecursorPool(recursors []string) RecursorPool {
 			failCount:  0,
 		})
 	}
+	logTag := "FailoverRecursor"
+	if len(recursorsWithHistory) > 0 {
+		logger.Info(logTag, fmt.Sprintf("starting preference: %s\n", recursorsWithHistory[0].name))
+	}
 	return &failoverRecursorPool{
 		recursors:              recursorsWithHistory,
 		preferredRecursorIndex: 0,
+		logger:                 logger,
+		logTag:                 logTag,
 	}
 }
 
 func (q *failoverRecursorPool) PerformStrategically(work func(string) error) error {
-	if len(q.recursors) == 0 {
-		return errors.New("no recursors configured")
-	}
-
 	offset := atomic.LoadUint64(&q.preferredRecursorIndex)
 	uintRecursorCount := uint64(len(q.recursors))
 
@@ -68,7 +77,7 @@ func (q *failoverRecursorPool) PerformStrategically(work func(string) error) err
 		}
 
 		failures := q.registerResult(index, true)
-		if i == 0 && failures >= FAIL_TOLERANCE_THRESHOLD {
+		if i == 0 && failures >= FailHistoryThreshold {
 			q.shiftPreference()
 		}
 	}
@@ -77,7 +86,9 @@ func (q *failoverRecursorPool) PerformStrategically(work func(string) error) err
 }
 
 func (q *failoverRecursorPool) shiftPreference() {
-	atomic.AddUint64(&q.preferredRecursorIndex, 1)
+	pri := atomic.AddUint64(&q.preferredRecursorIndex, 1)
+	index := pri % uint64(len(q.recursors))
+	q.logger.Info(q.logTag, fmt.Sprintf("shifting recursor preference: %s\n", q.recursors[index].name))
 }
 
 func (q *failoverRecursorPool) registerResult(index int, wasError bool) int32 {
@@ -89,11 +100,11 @@ func (q *failoverRecursorPool) registerResult(index int, wasError bool) int32 {
 	change := int32(0)
 
 	if oldestResult {
-		change -= 1
+		change--
 	}
 
 	if wasError {
-		change += 1
+		change++
 	}
 
 	return atomic.AddInt32(&failingRecursor.failCount, change)

@@ -22,7 +22,7 @@ var _ = Describe("FsRepoPerformance", func() {
 	var (
 		start, done     chan struct{}
 		recordsFilePath string
-		repo            RecordSetProvider
+		fileReader      FileReader
 		fileSys         boshsys.FileSystem
 		clock           clock.Clock
 		logger          *blogfakes.FakeLogger
@@ -49,12 +49,12 @@ var _ = Describe("FsRepoPerformance", func() {
 
 	Context("using mutex locks", func() {
 		BeforeEach(func() {
-			repo = NewRepo(recordsFilePath, fileSys, clock, logger, done)
+			fileReader = NewFileReader(recordsFilePath, fileSys, clock, logger, done)
 		})
 
 		It("should have a median response time less than 0.01 ms with no writes", func() {
 			values := []float64{}
-			hammerGet(repo, start, done, mutex, func(f float64) {
+			hammerGet(fileReader, start, done, mutex, func(f float64) {
 				values = append(values, f)
 			})
 
@@ -69,12 +69,12 @@ var _ = Describe("FsRepoPerformance", func() {
 			median := values[len(values)/2]
 			mutex.Unlock()
 
-			Expect(median).To(BeNumerically("<", 0.005))
+			Expect(median).To(BeNumerically("<", 0.01))
 		})
 
 		It("should have a median response time less than 0.01 ms with periodic writes", func() {
 			values := []float64{}
-			hammerGet(repo, start, done, mutex, func(f float64) {
+			hammerGet(fileReader, start, done, mutex, func(f float64) {
 				values = append(values, f)
 			})
 
@@ -102,14 +102,14 @@ var _ = Describe("FsRepoPerformance", func() {
 			median := values[len(values)/2]
 			mutex.Unlock()
 
-			Expect(median).To(BeNumerically("<", 0.005))
+			Expect(median).To(BeNumerically("<", 0.01))
 		})
 	})
 })
 
-func hammerGet(repo RecordSetProvider, start, done chan struct{}, mutex *sync.Mutex, benchmark func(float64)) {
+func hammerGet(repo FileReader, start, done chan struct{}, mutex *sync.Mutex, benchmark func(float64)) {
 	for i := 0; i < 1000; i++ {
-		go func(s chan struct{}, r RecordSetProvider, d chan struct{}) {
+		go func(s chan struct{}, r FileReader, d chan struct{}) {
 			defer GinkgoRecover()
 			<-s
 			for {

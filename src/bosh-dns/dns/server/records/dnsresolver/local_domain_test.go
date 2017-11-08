@@ -10,7 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"bosh-dns/dns/server/internal/internalfakes"
-	"bosh-dns/dns/server/records"
 	. "bosh-dns/dns/server/records/dnsresolver"
 	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 )
@@ -82,6 +81,8 @@ var _ = Describe("LocalDomain", func() {
 			Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
 			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.246"))
 
+			Expect(responseMsg.RecursionAvailable).To(BeTrue())
+			Expect(responseMsg.Authoritative).To(BeTrue())
 			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
 		})
 
@@ -121,72 +122,10 @@ var _ = Describe("LocalDomain", func() {
 
 		Context("when there are too many records to fit into 512 bytes", func() {
 			var (
-				recordSet records.RecordSet
-				req       *dns.Msg
+				req *dns.Msg
 			)
 
 			BeforeEach(func() {
-				recordSet = records.RecordSet{
-					Records: []*records.Record{
-						&records.Record{
-							ID:         "my-instance",
-							Group:      "my-group",
-							Network:    "my-network",
-							Deployment: "my-deployment",
-							IP:         "123.123.123.123",
-							Domain:     "bosh.",
-						},
-						&records.Record{
-							ID:         "my-instance",
-							Group:      "my-group",
-							Network:    "my-network",
-							Deployment: "my-deployment",
-							IP:         "127.0.0.1",
-							Domain:     "bosh.",
-						},
-						&records.Record{
-							ID:         "my-instance",
-							Group:      "my-group",
-							Network:    "my-network",
-							Deployment: "my-deployment",
-							IP:         "127.0.0.2",
-							Domain:     "bosh.",
-						},
-						&records.Record{
-							ID:         "my-instance",
-							Group:      "my-group",
-							Network:    "my-network",
-							Deployment: "my-deployment",
-							IP:         "127.0.0.3",
-							Domain:     "bosh.",
-						},
-						&records.Record{
-							ID:         "my-instance",
-							Group:      "my-group",
-							Network:    "my-network",
-							Deployment: "my-deployment",
-							IP:         "127.0.0.4",
-							Domain:     "bosh.",
-						},
-						&records.Record{
-							ID:         "my-instance",
-							Group:      "my-group",
-							Network:    "my-network",
-							Deployment: "my-deployment",
-							IP:         "127.0.0.5",
-							Domain:     "bosh.",
-						},
-						&records.Record{
-							ID:         "my-instance",
-							Group:      "my-group",
-							Network:    "my-network",
-							Deployment: "my-deployment",
-							IP:         "127.0.0.6",
-							Domain:     "bosh.",
-						},
-					},
-				}
-
 				fakeRecordSet.ResolveStub = func(domain string) ([]string, error) {
 					Expect(domain).To(Equal("my-instance.my-group.my-network.my-deployment.bosh."))
 

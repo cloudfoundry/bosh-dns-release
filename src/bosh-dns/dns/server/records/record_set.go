@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 
 	"errors"
 
@@ -17,239 +18,128 @@ import (
 type recordGroup map[*Record]struct{}
 
 type RecordSet struct {
-	Domains         []string
-	Records         []*Record
-	ByAzId          map[string]recordGroup
-	ByInstanceIndex map[string]recordGroup
-	ByInstanceGroup map[string]recordGroup
-	ByNetwork       map[string]recordGroup
-	ByDeployment    map[string]recordGroup
-	ByGroupID       map[string]recordGroup
-	ByInstanceName  map[string]recordGroup
-	ByDomain        map[string]recordGroup
-	initialized     bool
+	recordFileReader  FileReader
+	recordsMutex      sync.RWMutex
+	subscriberssMutex sync.RWMutex
+	subscribers       []chan bool
+	logger            boshlog.Logger
+
+	domains []string
+	Records []Record
 }
 
-func NewRecordSet(records []*Record) RecordSet {
-	r := RecordSet{}
-	r.ByAzId = make(map[string]recordGroup)
-	r.ByInstanceIndex = make(map[string]recordGroup)
-	r.ByGroupID = make(map[string]recordGroup)
-	r.ByInstanceGroup = make(map[string]recordGroup)
-	r.ByNetwork = make(map[string]recordGroup)
-	r.ByDeployment = make(map[string]recordGroup)
-	r.ByInstanceName = make(map[string]recordGroup)
-	r.ByDomain = make(map[string]recordGroup)
-	r.Records = records
+func NewRecordSet(recordFileReader FileReader, logger boshlog.Logger) (*RecordSet, error) {
+	r := &RecordSet{
+		recordFileReader: recordFileReader,
+		logger:           logger,
+	}
 
-	domains := make(map[string]struct{})
-	for _, record := range r.Records {
-		if r.ByAzId[record.AZID] == nil {
-			r.ByAzId[record.AZID] = make(recordGroup)
-		}
-		if r.ByInstanceIndex[record.InstanceIndex] == nil {
-			r.ByInstanceIndex[record.InstanceIndex] = make(recordGroup)
-		}
+	r.update()
 
-		r.ByAzId[record.AZID][record] = struct{}{}
-		r.ByInstanceIndex[record.InstanceIndex][record] = struct{}{}
-
-		for _, groupID := range record.GroupIDs {
-			if r.ByGroupID[groupID] == nil {
-				r.ByGroupID[groupID] = make(recordGroup)
+	go func() {
+		subscriptionChan := recordFileReader.Subscribe()
+		defer func() {
+			r.subscriberssMutex.RLock()
+			for _, subscriber := range r.subscribers {
+				close(subscriber)
 			}
-			r.ByGroupID[groupID][record] = struct{}{}
+			r.subscriberssMutex.RUnlock()
+		}()
+
+		for {
+			select {
+			case ok := <-subscriptionChan:
+				if !ok {
+					return
+				}
+
+				r.update()
+
+				r.subscriberssMutex.RLock()
+				for _, subscriber := range r.subscribers {
+					subscriber <- true
+				}
+				r.subscriberssMutex.RUnlock()
+			}
 		}
+	}()
 
-		if r.ByInstanceGroup[record.Group] == nil {
-			r.ByInstanceGroup[record.Group] = make(recordGroup)
-		}
-		r.ByInstanceGroup[record.Group][record] = struct{}{}
-
-		if r.ByNetwork[record.Network] == nil {
-			r.ByNetwork[record.Network] = make(recordGroup)
-		}
-		r.ByNetwork[record.Network][record] = struct{}{}
-
-		if r.ByDeployment[record.Deployment] == nil {
-			r.ByDeployment[record.Deployment] = make(recordGroup)
-		}
-		r.ByDeployment[record.Deployment][record] = struct{}{}
-
-		if r.ByInstanceName[record.ID] == nil {
-			r.ByInstanceName[record.ID] = make(recordGroup)
-		}
-		r.ByInstanceName[record.ID][record] = struct{}{}
-		domains[record.Domain] = struct{}{}
-
-		if r.ByDomain[record.Domain] == nil {
-			r.ByDomain[record.Domain] = make(recordGroup)
-		}
-		r.ByDomain[record.Domain][record] = struct{}{}
-
-		domains[record.Domain] = struct{}{}
-	}
-	for domain := range domains {
-		r.Domains = append(r.Domains, domain)
-	}
-
-	return r
+	return r, nil
 }
 
-func (r RecordSet) Resolve(fqdn string) ([]string, error) {
+func (r *RecordSet) Subscribe() <-chan bool {
+	r.subscriberssMutex.Lock()
+	defer r.subscriberssMutex.Unlock()
+	c := make(chan bool)
+	r.subscribers = append(r.subscribers, c)
+	return c
+}
+
+func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
 	if net.ParseIP(fqdn) != nil {
 		return []string{fqdn}, nil
 	}
 
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+
 	return r.resolveQuery(fqdn)
 }
 
-func (r recordGroup) union(anotherGroup recordGroup) recordGroup {
-	unionedGroup := make(recordGroup)
-	for record := range r {
-		unionedGroup[record] = struct{}{}
-	}
-	for record := range anotherGroup {
-		unionedGroup[record] = struct{}{}
-	}
-	return unionedGroup
+func (r *RecordSet) Domains() []string {
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+
+	return r.domains
 }
 
-func (r recordGroup) intersect(anotherGroup recordGroup) recordGroup {
-	intersectedGroup := make(recordGroup)
-	for record := range r {
-		if _, ok := anotherGroup[record]; ok {
-			intersectedGroup[record] = struct{}{}
+func (r *RecordSet) update() {
+	contents, err := r.recordFileReader.Get()
+	if err != nil {
+		return
+	}
+	records, err := createFromJSON(contents, r.logger)
+	if err != nil {
+		return
+	}
+
+	r.recordsMutex.Lock()
+	defer r.recordsMutex.Unlock()
+
+	r.Records = records
+
+	domains := make(map[string]struct{})
+	for _, record := range r.Records {
+		domains[record.Domain] = struct{}{}
+	}
+	for domain := range domains {
+		r.domains = append(r.domains, domain)
+	}
+}
+
+func (r *RecordSet) ipsMatching(matcher Matcher) []string {
+	ips := []string{}
+
+	for _, record := range r.Records {
+		if matcher.Match(&record) {
+			ips = append(ips, record.IP)
 		}
 	}
-	return intersectedGroup
+
+	return ips
 }
 
-// (recordGroup recordSet filter) -> recordGroup
-func (r RecordSet) allRecords() recordGroup {
-	records := make(recordGroup)
-	for i, _ := range r.Records {
-		records[r.Records[i]] = struct{}{}
-	}
-
-	return records
-}
-
-func (r RecordSet) recordFromGroup(groupIDs []string) recordGroup {
-	if len(groupIDs) == 0 {
-		return r.allRecords()
-	}
-
-	unionedGroups := make(recordGroup)
-	for _, groupID := range groupIDs {
-		unionedGroups = unionedGroups.union(r.ByGroupID[groupID])
-	}
-	return unionedGroups
-}
-
-func (r RecordSet) recordFromInstanceIndices(idxs []string) recordGroup {
-	if len(idxs) == 0 {
-		return r.allRecords()
-	}
-
-	unionedIdxs := make(recordGroup)
-	for _, idx := range idxs {
-		unionedIdxs = unionedIdxs.union(r.ByInstanceIndex[idx])
-	}
-	return unionedIdxs
-}
-
-func (r RecordSet) recordFromAZs(azs []string) recordGroup {
-	if len(azs) == 0 {
-		return r.allRecords()
-	}
-
-	unionedAzs := make(recordGroup)
-	for _, az := range azs {
-		unionedAzs = unionedAzs.union(r.ByAzId[az])
-	}
-	return unionedAzs
-}
-
-func (r RecordSet) recordFromNetwork(networks []string) recordGroup {
-	if len(networks) == 0 {
-		return r.allRecords()
-	}
-
-	unionedNetworks := make(recordGroup)
-	for _, network := range networks {
-		unionedNetworks = unionedNetworks.union(r.ByNetwork[network])
-	}
-	return unionedNetworks
-}
-
-func (r RecordSet) recordFromInstanceGroupName(instanceGroupNames []string) recordGroup {
-	if len(instanceGroupNames) == 0 {
-		return r.allRecords()
-	}
-
-	unionedIgNames := make(recordGroup)
-	for _, names := range instanceGroupNames {
-		unionedIgNames = unionedIgNames.union(r.ByInstanceGroup[names])
-	}
-	return unionedIgNames
-}
-
-func (r RecordSet) recordFromDeployment(deployments []string) recordGroup {
-	if len(deployments) == 0 {
-		return r.allRecords()
-	}
-
-	unionedDeployments := make(recordGroup)
-	for _, deployment := range deployments {
-		unionedDeployments = unionedDeployments.union(r.ByDeployment[deployment])
-	}
-	return unionedDeployments
-}
-
-func (r RecordSet) recordFromInstanceName(instanceNames []string) recordGroup {
-	if len(instanceNames) == 0 {
-		return r.allRecords()
-	}
-
-	unionedInstanceNames := make(recordGroup)
-	for _, instanceName := range instanceNames {
-		instances := []Record{}
-		for r, _ := range r.ByInstanceName[instanceName] {
-			instances = append(instances, *r)
-		}
-		unionedInstanceNames = unionedInstanceNames.union(r.ByInstanceName[instanceName])
-	}
-	return unionedInstanceNames
-}
-
-func (r RecordSet) recordFromDomain(domains []string) recordGroup {
-	if len(domains) == 0 {
-		return r.allRecords()
-	}
-
-	unionedDomains := make(recordGroup)
-	for _, domain := range domains {
-		instances := []Record{}
-		for r, _ := range r.ByDomain[domain] {
-			instances = append(instances, *r)
-		}
-		unionedDomains = unionedDomains.union(r.ByDomain[domain])
-	}
-	return unionedDomains
-}
-
-func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
+func (r *RecordSet) resolveQuery(fqdn string) ([]string, error) {
 	var ips []string
 
-	segments := strings.SplitN(fqdn, ".", 2) // [q-s0, g-7.x.y.bosh]
+	segments := strings.SplitN(fqdn, ".", 2) // [q-s0, q-g7.x.y.bosh]
 
 	if len(segments) < 2 {
 		return ips, errors.New("domain is malformed")
 	}
 
 	var tld string
-	for _, possible := range r.Domains { // do these/do these have to end in a . ?
+	for _, possible := range r.domains { // do these/do these have to end in a . ?
 		if strings.HasSuffix(fqdn, possible) {
 			tld = possible
 			break
@@ -262,7 +152,7 @@ func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
 
 	groupQuery := strings.TrimSuffix(segments[1], "."+tld)
 	groupSegments := strings.Split(groupQuery, ".")
-	var filter criteria
+	var filter Matcher
 	var err error
 	if len(groupSegments) == 1 {
 		filter, err = parseCriteria(segments[0], groupQuery, "", "", "", tld)
@@ -278,25 +168,10 @@ func (r RecordSet) resolveQuery(fqdn string) ([]string, error) {
 		panic(fmt.Sprintf("Bad group segment query had %d values %#v\n", len(groupSegments), groupSegments))
 	}
 
-	allRecords := r.allRecords()
-
-	candidates := allRecords
-	candidates = candidates.intersect(r.recordFromAZs(filter["a"]))
-	candidates = candidates.intersect(r.recordFromInstanceIndices(filter["i"]))
-	candidates = candidates.intersect(r.recordFromGroup(filter["g"]))
-	candidates = candidates.intersect(r.recordFromNetwork(filter["network"]))
-	candidates = candidates.intersect(r.recordFromInstanceGroupName(filter["instanceGroupName"]))
-	candidates = candidates.intersect(r.recordFromDeployment(filter["deployment"]))
-	candidates = candidates.intersect(r.recordFromInstanceName(filter["instanceName"]))
-	candidates = candidates.intersect(r.recordFromDomain(filter["domain"]))
-
-	for record := range candidates {
-		ips = append(ips, (*record).IP)
-	}
-	return ips, nil
+	return r.ipsMatching(filter), nil
 }
 
-func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
+func createFromJSON(j []byte, logger boshlog.Logger) ([]Record, error) {
 	swap := struct {
 		Keys  []string        `json:"record_keys"`
 		Infos [][]interface{} `json:"record_infos"`
@@ -304,14 +179,16 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 
 	err := json.Unmarshal(j, &swap)
 	if err != nil {
-		return RecordSet{}, err
+		return nil, err
 	}
 
-	records := make([]*Record, 0, len(swap.Infos))
+	records := make([]Record, 0, len(swap.Infos))
 
 	idIndex := -1
+	numIDIndex := -1
 	groupIndex := -1
 	networkIndex := -1
+	networkIDIndex := -1
 	deploymentIndex := -1
 	ipIndex := -1
 	domainIndex := -1
@@ -323,12 +200,16 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		switch k {
 		case "id":
 			idIndex = i
+		case "num_id":
+			numIDIndex = i
 		case "instance_group":
 			groupIndex = i
 		case "group_ids":
 			groupIdsIndex = i
 		case "network":
 			networkIndex = i
+		case "network_id":
+			networkIDIndex = i
 		case "deployment":
 			deploymentIndex = i
 		case "ip":
@@ -354,7 +235,7 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 		}
 
 		var domainIndexStr string
-		if !assertStringValue(&domainIndexStr, info, domainIndex, "domain", index, logger) {
+		if !requiredStringValue(&domainIndexStr, info, domainIndex, "domain", index, logger) {
 			continue
 		}
 
@@ -362,27 +243,32 @@ func CreateFromJSON(j []byte, logger boshlog.Logger) (RecordSet, error) {
 
 		record := Record{Domain: domain}
 
-		if !assertStringValue(&record.ID, info, idIndex, "id", index, logger) {
+		if !requiredStringValue(&record.ID, info, idIndex, "id", index, logger) {
 			continue
-		} else if !assertStringValue(&record.Group, info, groupIndex, "group", index, logger) {
+		} else if !requiredStringValue(&record.Group, info, groupIndex, "group", index, logger) {
 			continue
-		} else if !assertStringValue(&record.Network, info, networkIndex, "network", index, logger) {
+		} else if !requiredStringValue(&record.Network, info, networkIndex, "network", index, logger) {
 			continue
-		} else if !assertStringValue(&record.Deployment, info, deploymentIndex, "deployment", index, logger) {
+		} else if !requiredStringValue(&record.Deployment, info, deploymentIndex, "deployment", index, logger) {
 			continue
-		} else if !assertStringValue(&record.IP, info, ipIndex, "ip", index, logger) {
+		} else if !requiredStringValue(&record.IP, info, ipIndex, "ip", index, logger) {
 			continue
-		} else if !assertStringArrayOfStringValue(&record.GroupIDs, info, groupIdsIndex, "group_ids", index, logger) {
+		} else if !optionalStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger) {
+			continue
+		} else if !optionalStringValue(&record.NetworkID, info, networkIDIndex, "network_id", index, logger) {
+			continue
+		} else if !optionalStringValue(&record.NumId, info, numIDIndex, "num_id", index, logger) {
+			continue
+		} else if groupIdsIndex >= 0 && !assertStringArrayOfStringValue(&record.GroupIDs, info, groupIdsIndex, "group_ids", index, logger) {
 			continue
 		}
 
-		assertStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger)
 		assertStringIntegerValue(&record.InstanceIndex, info, instanceIndexIndex, "instance_index", index, logger)
 
-		records = append(records, &record)
+		records = append(records, record)
 	}
 
-	return NewRecordSet(records), nil
+	return records, nil
 }
 
 func assertStringIntegerValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
@@ -399,11 +285,7 @@ func assertStringIntegerValue(field *string, info []interface{}, fieldIdx int, f
 	return ok
 }
 
-func assertStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
-	if fieldIdx < 0 {
-		return false
-	}
-
+func convertToStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
 	var ok bool
 	*field, ok = info[fieldIdx].(string)
 
@@ -414,12 +296,27 @@ func assertStringValue(field *string, info []interface{}, fieldIdx int, fieldNam
 	return ok
 }
 
-func assertStringArrayOfStringValue(field *[]string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
-	if fieldIdx < 0 {
-		// *field = []string{}
-		return true
+func optionalStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
+	if fieldIdx >= 0 {
+		if info[fieldIdx] == nil {
+			info[fieldIdx] = ""
+			return true
+		}
+		return convertToStringValue(field, info, fieldIdx, fieldName, infoIdx, logger)
 	}
 
+	return true
+}
+
+func requiredStringValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
+	if fieldIdx < 0 {
+		return false
+	}
+
+	return convertToStringValue(field, info, fieldIdx, fieldName, infoIdx, logger)
+}
+
+func assertStringArrayOfStringValue(field *[]string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
 	var ok bool
 	var intermediateField []interface{}
 

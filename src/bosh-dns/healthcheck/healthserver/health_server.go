@@ -66,7 +66,7 @@ func (c *concreteHealthServer) Serve(config *HealthCheckConfig) {
 	serverConfig.BuildNameToCertificate()
 
 	server := &http.Server{
-		Addr:      fmt.Sprintf(":%d", config.Port),
+		Addr:      fmt.Sprintf("%s:%d", config.Address, config.Port),
 		TLSConfig: serverConfig,
 	}
 	server.SetKeepAlivesEnabled(false)

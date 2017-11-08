@@ -103,15 +103,44 @@ func mainExitCode() int {
 
 	shutdown := make(chan struct{})
 
-	recordsRepo := records.NewRepo(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
-	healthyRecordSet := healthiness.NewHealthyRecordSet(recordsRepo, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown)
+	fileReader := records.NewFileReader(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
+	recordSet, err := records.NewRecordSet(fileReader, logger)
+	aliasedRecordSet := aliases.NewAliasedRecordSet(recordSet, aliasConfiguration)
+	healthyRecordSet := healthiness.NewHealthyRecordSet(aliasedRecordSet, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown)
 
 	localDomain := dnsresolver.NewLocalDomain(logger, healthyRecordSet, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
-	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordsRepo, mux, discoveryHandler)
+	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, aliasedRecordSet, mux, discoveryHandler)
 
 	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
+
+	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
+
+	for _, handlerConfig := range config.Handlers {
+		var handler dns.Handler
+
+		if handlerConfig.Source.Type == "http" {
+			handler = handlers.NewHTTPJSONHandler(handlerConfig.Source.URL, logger)
+		} else if handlerConfig.Source.Type == "dns" {
+			if len(handlerConfig.Source.Recursors) == 0 {
+				logger.Error(logTag, fmt.Sprintf(`Configuring handler for "%s": No recursors present`, handlerConfig.Domain))
+				return 1
+			}
+
+			recursorPool := handlers.NewFailoverRecursorPool(stringShuffler.Shuffle(handlerConfig.Source.Recursors), logger)
+			handler = handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
+		} else {
+			logger.Error(logTag, fmt.Sprintf(`Configuring handler for "%s": Unexpected handler source type: %s`, handlerConfig.Domain, handlerConfig.Source.Type))
+			return 1
+		}
+
+		if handlerConfig.Cache.Enabled {
+			handler = handlers.NewCachingDNSHandler(handler)
+		}
+
+		handlers.AddHandler(mux, clock, handlerConfig.Domain, handler, logger)
+	}
 
 	upchecks := []server.Upcheck{}
 	for _, upcheckDomain := range config.UpcheckDomains {
@@ -120,24 +149,19 @@ func mainExitCode() int {
 		upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("%s:%d", config.Address, config.Port), upcheckDomain, "tcp"))
 	}
 
-	forwardHandler := handlers.NewForwardHandler(config.Recursors, handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout)), clock, logger)
+	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, logger)
+	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
 	if config.Cache.Enabled {
 		mux.Handle(".", handlers.NewCachingDNSHandler(forwardHandler))
 	} else {
 		mux.Handle(".", forwardHandler)
 	}
 
-	aliasResolver, err := handlers.NewAliasResolvingHandler(mux, aliasConfiguration, localDomain, clock, logger)
-	if err != nil {
-		logger.Error(logTag, fmt.Sprintf("could not initiate alias resolving handler: %s", err.Error()))
-		return 1
-	}
-
 	bindAddress := fmt.Sprintf("%s:%d", config.Address, config.Port)
 	dnsServer := server.New(
 		[]server.DNSServer{
-			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: aliasResolver},
-			&dns.Server{Addr: bindAddress, Net: "udp", Handler: aliasResolver, UDPSize: 65535},
+			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: mux},
+			&dns.Server{Addr: bindAddress, Net: "udp", Handler: mux, UDPSize: 65535},
 		},
 		upchecks,
 		time.Duration(config.Timeout),

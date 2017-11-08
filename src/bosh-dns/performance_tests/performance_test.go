@@ -1,12 +1,12 @@
 package performance_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"math"
-	"os/exec"
-	"strconv"
-	"strings"
-	"sync"
+	"net/http"
+	"os"
 	"time"
 
 	sigar "github.com/cloudfoundry/gosigar"
@@ -16,23 +16,24 @@ import (
 )
 
 type Result struct {
-	status       int
-	responseTime time.Duration
+	status     int
+	value      interface{}
+	metricName string
+	time       int64
 }
 
 type TimeThresholds struct {
-	Max, Med, Pct90, Pct95 time.Duration
+	Med, Pct90, Pct95 time.Duration
 }
 
 type VitalsThresholds struct {
-	CPUMax   float64
 	CPUPct99 float64
+	MemPct99 float64
 	MemMax   float64
 }
 
 func TimeThresholdsFromBenchmark(benchmark metrics.Histogram, allowance float64) TimeThresholds {
 	return TimeThresholds{
-		Max:   7540 * time.Millisecond,
 		Med:   time.Duration(float64(benchmark.Percentile(0.5)) * allowance),
 		Pct90: time.Duration(float64(benchmark.Percentile(0.9)) * allowance),
 		Pct95: time.Duration(float64(benchmark.Percentile(0.95)) * allowance),
@@ -40,6 +41,9 @@ func TimeThresholdsFromBenchmark(benchmark metrics.Histogram, allowance float64)
 }
 
 type PerformanceTest struct {
+	Application string
+	Context     string
+
 	Workers           int
 	RequestsPerSecond int
 
@@ -51,6 +55,7 @@ type PerformanceTest struct {
 	SuccessStatus int
 
 	WorkerFunc func(chan<- Result)
+	procCpu    *sigar.ProcCpu
 
 	shutdown chan struct{}
 }
@@ -60,66 +65,227 @@ func (p PerformanceTest) Setup() *PerformanceTest {
 	return &p
 }
 
-func (p *PerformanceTest) MakeParallelRequests(duration time.Duration) []Result {
-	wg := &sync.WaitGroup{}
-	resultChan := make(chan Result, p.RequestsPerSecond)
+func validateDatadogEnvironment() (string, string) {
+	environment := os.Getenv("DATADOG_ENVIRONMENT_TAG")
+	if environment == "" {
+		panic("Need to set DATADOG_ENVIRONMENT_TAG to prevent creating bogus data buckets")
+	}
 
-	workerFunc := func(wg *sync.WaitGroup, maxRequestsPerSecond float64) {
-		buffer := make(chan struct{}, 2*int(math.Ceil(maxRequestsPerSecond)))
-		ticker := time.NewTicker(time.Duration(float64(time.Second) / maxRequestsPerSecond))
-		buffer <- struct{}{}
+	gitSHA := os.Getenv("GIT_SHA")
+	if gitSHA == "" {
+		panic("Need to set GIT_SHA to correlate performance metric to release")
+	}
 
-		defer func() {
-			wg.Done()
-			ticker.Stop()
-		}()
+	return environment, gitSHA
+}
 
-		go func() {
-			for {
-				select {
-				case <-p.shutdown:
-					return
-				case <-ticker.C:
-					buffer <- struct{}{}
-				}
+func makeDataDogRequest(endpoint string, content interface{}) error {
+	apiKey := os.Getenv("DATADOG_API_KEY")
+	if apiKey == "" {
+		panic("DATADOG_API_KEY is missing")
+	}
+
+	uri := fmt.Sprintf("https://app.datadoghq.com/api/v1/%s?api_key=%s", endpoint, apiKey)
+
+	jsonContents, err := json.Marshal(content)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer(jsonContents)
+	_, err = http.Post(uri, "application/json", buf)
+	return err
+}
+
+func (p *PerformanceTest) postDatadogEvent(title, text string) error {
+	environment, gitSHA := validateDatadogEnvironment()
+
+	event := struct {
+		Title     string   `json:"title"`
+		Text      string   `json:"text"`
+		Priority  string   `json:"priority"`
+		Tags      []string `json:"tags"`
+		AlertType string   `json:"alert_type"`
+	}{
+		Title:     title,
+		Text:      text,
+		Priority:  "normal",
+		AlertType: "info",
+		Tags: []string{
+			fmt.Sprintf("environment:%s", environment),
+			fmt.Sprintf("application:%s", p.Application),
+			fmt.Sprintf("context:%s", p.Context),
+			fmt.Sprintf("sha:%s", gitSHA),
+		},
+	}
+
+	return makeDataDogRequest("events", event)
+}
+
+type Series struct {
+	Metric string          `json:"metric"`
+	Points [][]interface{} `json:"points"`
+	Type   string          `json:"type"`
+	Tags   []string        `json:"tags"`
+}
+
+type Items map[string][]Series
+
+func (p *PerformanceTest) postDatadog(r ...Result) error {
+	environment, gitSHA := validateDatadogEnvironment()
+
+	metrics := []Series{}
+	for _, v := range r {
+		metrics = append(metrics, Series{
+			Metric: v.metricName,
+			Points: [][]interface{}{{v.time, v.value}},
+			Type:   "gauge",
+			Tags: []string{
+				fmt.Sprintf("environment:%s", environment),
+				fmt.Sprintf("application:%s", p.Application),
+				fmt.Sprintf("context:%s", p.Context),
+				fmt.Sprintf("sha:%s", gitSHA),
+			},
+		})
+	}
+
+	metric := Items{"series": metrics}
+
+	return makeDataDogRequest("series", metric)
+}
+
+func (p *PerformanceTest) resultsProcessor(
+	dataDogResults chan Result,
+	resultChan chan Result,
+	results *[]Result,
+	resultsProcessorDone chan struct{},
+) {
+	requestPerSecondTicker := time.NewTicker(time.Duration(1 * time.Second))
+	successCount := 0
+	totalRequestsPerSecond := 0
+	for {
+		select {
+		case <-p.shutdown:
+			close(resultsProcessorDone)
+			return
+		case result := <-resultChan:
+			if result.status == p.SuccessStatus {
+				successCount += 1
 			}
-		}()
+			totalRequestsPerSecond++
+			dataDogResults <- result
+			*results = append(*results, result)
+		case <-requestPerSecondTicker.C:
+			dataDogResults <- Result{
+				status:     0,
+				value:      successCount,
+				metricName: "successful_requests_per_second",
+				time:       time.Now().Unix(),
+			}
+			dataDogResults <- Result{
+				status:     0,
+				value:      totalRequestsPerSecond,
+				metricName: "total_requests_per_second",
+				time:       time.Now().Unix(),
+			}
+			successCount = 0
+			totalRequestsPerSecond = 0
+		}
+	}
+}
 
+func (p *PerformanceTest) processDatadogResults(
+	dataDogDoneChan chan struct{},
+	dataDogResults chan Result,
+) {
+	chunkedResults := make(chan []Result)
+	go func() {
+		for chunk := range chunkedResults {
+			p.postDatadog(chunk...)
+		}
+		close(dataDogDoneChan)
+	}()
+	thisChunk := []Result{}
+	i := 1
+	for result := range dataDogResults {
+		if i%200 == 0 {
+			chunkedResults <- thisChunk
+			thisChunk = []Result{}
+		}
+		thisChunk = append(thisChunk, result)
+		i++
+	}
+	chunkedResults <- thisChunk
+	close(chunkedResults)
+}
+
+func (p *PerformanceTest) scheduleWork(resultChan chan Result, maxRequestsPerSecond float64) {
+	buffer := make(chan struct{}, 2*int(math.Ceil(maxRequestsPerSecond)))
+	ticker := time.NewTicker(time.Duration(float64(time.Second) / maxRequestsPerSecond))
+	buffer <- struct{}{}
+
+	defer func() {
+		ticker.Stop()
+	}()
+
+	go func() {
 		for {
 			select {
 			case <-p.shutdown:
 				return
-			case <-buffer:
-				p.WorkerFunc(resultChan)
+			case <-ticker.C:
+				buffer <- struct{}{}
 			}
 		}
-	}
-
-	doneChan := make(chan struct{})
-	results := []Result{}
-	go func() {
-		for result := range resultChan {
-			results = append(results, result)
-		}
-		close(doneChan)
 	}()
 
-	wg.Add(p.Workers)
+	for {
+		select {
+		case <-p.shutdown:
+			return
+		case <-buffer:
+			p.WorkerFunc(resultChan)
+		}
+	}
+}
+
+func (p *PerformanceTest) MakeParallelRequests(duration, resourcesInterval time.Duration, cpuHistogram, memHistogram metrics.Histogram) []Result {
+	resultChan := make(chan Result, p.RequestsPerSecond)
+
+	results := []Result{}
+
+	dataDogDoneChan := make(chan struct{})
+	resultsProcessorDone := make(chan struct{})
+
+	measurementResultsCount := 2 * int(duration/resourcesInterval)
+
+	totalResultCount := (p.RequestsPerSecond+2)*int(duration/time.Second) + measurementResultsCount
+	dataDogResults := make(chan Result, totalResultCount)
+
+	resourceMeasurementDone := make(chan struct{})
+
+	go p.measureResourceUtilization(resourcesInterval, cpuHistogram, memHistogram, dataDogResults, resourceMeasurementDone)
+	go p.resultsProcessor(dataDogResults, resultChan, &results, resultsProcessorDone)
+	go p.processDatadogResults(dataDogDoneChan, dataDogResults)
+
 	for i := 0; i < p.Workers; i++ {
-		go workerFunc(wg, float64(p.RequestsPerSecond)/float64(p.Workers))
+		go p.scheduleWork(resultChan, float64(p.RequestsPerSecond)/float64(p.Workers))
 	}
 
 	time.Sleep(duration)
 	close(p.shutdown)
 
-	wg.Wait()
-	close(resultChan)
-	<-doneChan
+	<-resourceMeasurementDone
+	<-resultsProcessorDone
+	close(dataDogResults)
+	<-dataDogDoneChan
 
 	return results
 }
 
 func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
+	p.postDatadogEvent("Starting performance test", "")
+
 	duration := time.Duration(durationInSeconds) * time.Second
 	resourcesInterval := time.Second / 2
 
@@ -131,11 +297,7 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	memHistogram := metrics.NewHistogram(memSample)
 	metrics.Register("Mem Usage", memHistogram)
 
-	done := make(chan struct{})
-	go p.measureResourceUtilization(resourcesInterval, cpuHistogram, memHistogram, done)
-
-	results := p.MakeParallelRequests(duration)
-	<-done
+	results := p.MakeParallelRequests(duration, resourcesInterval, cpuHistogram, memHistogram)
 
 	timeHistogram := generateTimeHistogram(results)
 
@@ -153,13 +315,12 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	medTime := time.Duration(timeHistogram.Percentile(0.5))
 	pct90Time := time.Duration(timeHistogram.Percentile(0.9))
 	pct95Time := time.Duration(timeHistogram.Percentile(0.95))
-	maxTime := time.Duration(timeHistogram.Max())
 	printStatsForHistogram(timeHistogram, fmt.Sprintf("Handling latency for %s", label), "ms", 1000*1000)
 
 	memMax := float64(memHistogram.Max()) / (1024 * 1024)
+	mem99Pct := float64(memHistogram.Percentile(0.99)) / (1024 * 1024)
 	printStatsForHistogram(memHistogram, fmt.Sprintf("Server mem usage for %s", label), "MB", 1024*1024)
 
-	cpuMax := float64(cpuHistogram.Max()) / (1000 * 1000)
 	cpu99Pct := float64(cpuHistogram.Percentile(0.99)) / (1000 * 1000)
 	printStatsForHistogram(cpuHistogram, fmt.Sprintf("Server CPU usage for %s", label), "%", 1000*1000)
 
@@ -174,6 +335,7 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 		testFailures = append(testFailures,
 			fmt.Errorf("Success ratio %d/%d, giving percentage %.3f%%, is too low", successCount, len(results), 100*successPercentage))
 	}
+
 	if medTime > p.TimeThresholds.Med {
 		testFailures = append(testFailures,
 			fmt.Errorf("Median response time of %.3fms was greater than %.3fms benchmark",
@@ -192,20 +354,15 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 				float64(pct95Time)/float64(time.Millisecond),
 				float64(p.TimeThresholds.Pct95)/float64(time.Millisecond)))
 	}
-	if maxTime > p.TimeThresholds.Max {
-		testFailures = append(testFailures,
-			fmt.Errorf("Max response time of %.3fms was greater than %.3fms benchmark",
-				float64(maxTime/time.Millisecond),
-				float64(p.TimeThresholds.Max/time.Millisecond)))
-	}
-	if cpuMax > p.VitalsThresholds.CPUMax {
-		testFailures = append(testFailures,
-			fmt.Errorf("Max server CPU usage of %.2f%% was greater than %.2f%% ceiling", cpuMax, p.VitalsThresholds.CPUMax))
-	}
 
 	if cpu99Pct > p.VitalsThresholds.CPUPct99 {
 		testFailures = append(testFailures,
 			fmt.Errorf("99th percentile server CPU usage of %.2f%% was greater than %.2f%% ceiling", cpu99Pct, p.VitalsThresholds.CPUPct99))
+	}
+
+	if mem99Pct > p.VitalsThresholds.MemPct99 {
+		testFailures = append(testFailures,
+			fmt.Errorf("99th percentile server memory usage of %.2fMB was greater than %.2fMB ceiling", mem99Pct, p.VitalsThresholds.MemPct99))
 	}
 
 	if memMax > p.VitalsThresholds.MemMax {
@@ -213,24 +370,29 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 			fmt.Errorf("Max server memory usage of %.2fMB was greater than %.2fMB ceiling", memMax, p.VitalsThresholds.MemMax))
 	}
 
+	p.postDatadogEvent("Finishing performance test", "")
 	Expect(testFailures).To(BeEmpty())
 }
 
-func (p *PerformanceTest) getProcessCPU() float64 {
-	cmd := exec.Command("ps", []string{"-p", strconv.Itoa(p.ServerPID), "-o", "%cpu"}...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		panic(string(output) + err.Error())
+func (p *PerformanceTest) getProcCpu() *sigar.ProcCpu {
+	if p.procCpu == nil {
+		p.procCpu = &sigar.ProcCpu{}
 	}
-
-	percentString := strings.TrimSpace(strings.Split(string(output), "\n")[1])
-	percent, err := strconv.ParseFloat(percentString, 64)
-	Expect(err).ToNot(HaveOccurred())
-
-	return percent
+	return p.procCpu
 }
 
-func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Duration, cpuHistogram, memHistogram metrics.Histogram, done chan<- struct{}) {
+func (p *PerformanceTest) getProcessCPU() float64 {
+	pCpu := p.getProcCpu()
+	err := pCpu.Get(p.ServerPID)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return pCpu.Percent * 100.0
+}
+
+func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Duration, cpuHistogram, memHistogram metrics.Histogram, dataDogResults chan Result, done chan<- struct{}) {
+
 	ticker := time.NewTicker(resourcesInterval)
 	defer func() {
 		ticker.Stop()
@@ -248,6 +410,17 @@ func (p *PerformanceTest) measureResourceUtilization(resourcesInterval time.Dura
 				cpuFloat := p.getProcessCPU()
 				cpuInt := cpuFloat * (1000 * 1000)
 				cpuHistogram.Update(int64(cpuInt))
+
+				dataDogResults <- Result{
+					metricName: "memory",
+					value:      mem.Resident,
+					time:       time.Now().Unix(),
+				}
+				dataDogResults <- Result{
+					metricName: "cpu",
+					value:      cpuInt,
+					time:       time.Now().Unix(),
+				}
 			}
 		}
 	}
@@ -257,7 +430,7 @@ func generateTimeHistogram(results []Result) metrics.Histogram {
 	timeSample := metrics.NewExpDecaySample(len(results), 0.015)
 	timeHistogram := metrics.NewHistogram(timeSample)
 	for _, result := range results {
-		timeHistogram.Update(int64(result.responseTime))
+		timeHistogram.Update(int64(result.value.(time.Duration)))
 	}
 	return timeHistogram
 }

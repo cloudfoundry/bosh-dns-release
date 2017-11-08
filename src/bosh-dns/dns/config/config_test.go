@@ -66,6 +66,16 @@ var _ = Describe("Config", func() {
 			"cache": map[string]interface{}{
 				"enabled": true,
 			},
+			"handlers": []map[string]interface{}{{
+				"domain": "some.tld.",
+				"cache": map[string]interface{}{
+					"enabled": true,
+				},
+				"source": map[string]interface{}{
+					"type": "http",
+					"url":  "http.server.address",
+				},
+			}},
 		})
 		configFilePath := writeConfigFile(string(configContents))
 
@@ -85,6 +95,7 @@ var _ = Describe("Config", func() {
 			Port:            listenPort,
 			Timeout:         config.DurationJSON(timeoutDuration),
 			RecursorTimeout: config.DurationJSON(recursorTimeoutDuration),
+			Recursors:       []string{},
 			UpcheckDomains:  []string{"upcheck.domain.", "health2.bosh."},
 			Health: config.HealthConfig{
 				Enabled:           true,
@@ -97,6 +108,19 @@ var _ = Describe("Config", func() {
 			},
 			Cache: config.Cache{
 				Enabled: true,
+			},
+			Handlers: []config.Handler{
+				{
+					Domain: "some.tld.",
+					Cache: config.Cache{
+						Enabled: true,
+					},
+					Source: config.Source{
+						Type:      "http",
+						URL:       "http.server.address",
+						Recursors: []string{},
+					},
+				},
 			},
 		}))
 	})
@@ -207,6 +231,18 @@ var _ = Describe("Config", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("too many colons in address"))
 			Expect(err.Error()).To(ContainSubstring("::::::::::::"))
+		})
+	})
+
+	Context("handlers", func() {
+		It("it rewrites source recursors to include default ports", func() {
+			configFilePath := writeConfigFile(`{ "address": "127.0.0.1", "port": 53, "handlers": [ { "source": { "recursors": [ "8.8.8.8", "10.244.4.4:9700" ] } } ] }`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.Handlers[0].Source.Recursors).To(ContainElement("8.8.8.8:53"))
+			Expect(dnsConfig.Handlers[0].Source.Recursors).To(ContainElement("10.244.4.4:9700"))
 		})
 	})
 })

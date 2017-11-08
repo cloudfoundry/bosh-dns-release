@@ -1,14 +1,12 @@
 package handlers_test
 
 import (
-	"errors"
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
 
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/handlersfakes"
-	"bosh-dns/dns/server/records"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
@@ -23,7 +21,7 @@ func (*HandlerRegistrarTestHandler) ServeDNS(dns.ResponseWriter, *dns.Msg) {}
 var _ = Describe("HandlerRegistrar", func() {
 	var (
 		logger           *loggerfakes.FakeLogger
-		recordsRepo      *handlersfakes.FakeRecordSetRepo
+		domainProvider   *handlersfakes.FakeDomainProvider
 		mux              *handlersfakes.FakeServerMux
 		handlerRegistrar handlers.HandlerRegistrar
 		childHandler     dns.Handler
@@ -32,11 +30,11 @@ var _ = Describe("HandlerRegistrar", func() {
 
 	BeforeEach(func() {
 		logger = &loggerfakes.FakeLogger{}
-		recordsRepo = &handlersfakes.FakeRecordSetRepo{}
+		domainProvider = &handlersfakes.FakeDomainProvider{}
 		mux = &handlersfakes.FakeServerMux{}
 		childHandler = &HandlerRegistrarTestHandler{}
 		clock = fakeclock.NewFakeClock(time.Now())
-		handlerRegistrar = handlers.NewHandlerRegistrar(logger, clock, recordsRepo, mux, childHandler)
+		handlerRegistrar = handlers.NewHandlerRegistrar(logger, clock, domainProvider, mux, childHandler)
 	})
 
 	Describe("Run", func() {
@@ -45,9 +43,7 @@ var _ = Describe("HandlerRegistrar", func() {
 		BeforeEach(func() {
 			shutdown = make(chan struct{})
 
-			recordsRepo.GetReturns(records.RecordSet{
-				Domains: []string{"initial-domain1", "initial-domain2"},
-			}, nil)
+			domainProvider.DomainsReturns([]string{"initial-domain1", "initial-domain2"})
 		})
 
 		invoke := func(run func(signal chan struct{}) error) {
@@ -76,35 +72,6 @@ var _ = Describe("HandlerRegistrar", func() {
 			Expect(handler.(handlers.RequestLoggerHandler).Handler).To(Equal(childHandler))
 		})
 
-		Context("when the repo fails", func() {
-			var getErr error
-
-			BeforeEach(func() {
-				getErr = errors.New("no potato for you")
-				recordsRepo.GetReturns(records.RecordSet{}, getErr)
-			})
-
-			It("logs and retries", func() {
-				invoke(handlerRegistrar.Run)
-				defer close(shutdown)
-
-				clock.WaitForWatcherAndIncrement(handlers.RegisterInterval)
-				Eventually(logger.ErrorCallCount).Should(Equal(1))
-				tag, msg, stuff := logger.ErrorArgsForCall(0)
-				Expect(tag).To(Equal("handler-registrar"))
-				Expect(msg).To(Equal("cannot get record set %v"))
-				Expect(stuff).To(HaveLen(1))
-				Expect(stuff[0]).To(Equal(getErr))
-
-				recordsRepo.GetReturns(records.RecordSet{
-					Domains: []string{"some-domain"},
-				}, nil)
-
-				clock.WaitForWatcherAndIncrement(handlers.RegisterInterval)
-				Eventually(mux.HandleCallCount).Should(Equal(1))
-			})
-		})
-
 		Context("new domain added", func() {
 			It("registers the new domain", func() {
 				invoke(handlerRegistrar.Run)
@@ -113,9 +80,7 @@ var _ = Describe("HandlerRegistrar", func() {
 				clock.WaitForWatcherAndIncrement(handlers.RegisterInterval)
 				Eventually(mux.HandleCallCount).Should(Equal(2))
 
-				recordsRepo.GetReturns(records.RecordSet{
-					Domains: []string{"initial-domain1", "initial-domain2", "new-domain"},
-				}, nil)
+				domainProvider.DomainsReturns([]string{"initial-domain1", "initial-domain2", "new-domain"})
 
 				clock.WaitForWatcherAndIncrement(handlers.RegisterInterval)
 				Eventually(mux.HandleCallCount).Should(Equal(3))
@@ -135,9 +100,7 @@ var _ = Describe("HandlerRegistrar", func() {
 				clock.WaitForWatcherAndIncrement(handlers.RegisterInterval)
 				Eventually(mux.HandleCallCount).Should(Equal(2))
 
-				recordsRepo.GetReturns(records.RecordSet{
-					Domains: []string{"initial-domain2"},
-				}, nil)
+				domainProvider.DomainsReturns([]string{"initial-domain2"})
 
 				clock.WaitForWatcherAndIncrement(handlers.RegisterInterval)
 

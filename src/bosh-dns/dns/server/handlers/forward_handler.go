@@ -8,35 +8,33 @@ import (
 
 	"code.cloudfoundry.org/clock"
 
-	"bosh-dns/dns/server/handlers/internal"
-
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
 
 type ForwardHandler struct {
 	clock            clock.Clock
-	recursors        internal.RecursorPool
+	recursors        RecursorPool
 	exchangerFactory ExchangerFactory
 	logger           logger.Logger
 	logTag           string
 }
 
 //go:generate counterfeiter . Exchanger
+
 type Exchanger interface {
 	Exchange(*dns.Msg, string) (*dns.Msg, time.Duration, error)
 }
 
-//go:generate counterfeiter . Cache
 type Cache interface {
 	Get(req *dns.Msg) *dns.Msg
 	Write(req, answer *dns.Msg)
 	GetExpired(*dns.Msg) *dns.Msg
 }
 
-func NewForwardHandler(recursors []string, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger) ForwardHandler {
+func NewForwardHandler(recursors RecursorPool, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger) ForwardHandler {
 	return ForwardHandler{
-		recursors:        internal.NewFailoverRecursorPool(recursors),
+		recursors:        recursors,
 		exchangerFactory: exchangerFactory,
 		clock:            clock,
 		logger:           logger,
@@ -130,8 +128,6 @@ func (ForwardHandler) network(responseWriter dns.ResponseWriter) string {
 func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter, req *dns.Msg) {
 	responseMessage := &dns.Msg{}
 	responseMessage.SetReply(req)
-	responseMessage.RecursionAvailable = true
-	responseMessage.Authoritative = false
 	responseMessage.SetRcode(req, dns.RcodeServerFailure)
 	if err := responseWriter.WriteMsg(responseMessage); err != nil {
 		r.logger.Error(r.logTag, "error writing response: %s", err.Error())
@@ -141,7 +137,6 @@ func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter
 func (r ForwardHandler) writeEmptyMessage(responseWriter dns.ResponseWriter, req *dns.Msg) {
 	emptyMessage := &dns.Msg{}
 	r.logger.Info(r.logTag, "received a request with no questions")
-	emptyMessage.RecursionAvailable = false
 	emptyMessage.Authoritative = true
 	emptyMessage.SetRcode(req, dns.RcodeSuccess)
 	if err := responseWriter.WriteMsg(emptyMessage); err != nil {

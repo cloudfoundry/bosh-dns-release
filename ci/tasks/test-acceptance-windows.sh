@@ -18,4 +18,4 @@ bosh -n deploy $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/windows-a
   -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/enable-health-manifest-ops.yml \
   --vars-store dns-creds.yml
 
-bosh run-errand acceptance-tests-windows --keep-alive
+bosh run-errand acceptance-tests-windows

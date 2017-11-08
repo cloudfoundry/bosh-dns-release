@@ -6,6 +6,9 @@ import (
 
 	"bosh-dns/dns/manager/managerfakes"
 	"bosh-dns/dns/nameserverconfig/monitor"
+
+	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 
 	. "github.com/onsi/ginkgo"
@@ -14,19 +17,21 @@ import (
 
 var _ = Describe("Monitor", func() {
 	var (
-		logger       *fakes.FakeLogger
-		address      string
-		applier      monitor.Monitor
-		dnsManager   *managerfakes.FakeDNSManager
-		testInterval time.Duration
+		logger     *fakes.FakeLogger
+		address    string
+		applier    monitor.Monitor
+		dnsManager *managerfakes.FakeDNSManager
+		fakeClock  *fakeclock.FakeClock
+		ticker     clock.Ticker
 	)
 
 	BeforeEach(func() {
 		logger = &fakes.FakeLogger{}
 		address = "some-address"
 		dnsManager = &managerfakes.FakeDNSManager{}
-		testInterval = 10 * time.Millisecond
-		applier = monitor.NewMonitor(logger, address, dnsManager, testInterval/2)
+		fakeClock = fakeclock.NewFakeClock(time.Now())
+		ticker = fakeClock.NewTicker(time.Second)
+		applier = monitor.NewMonitor(logger, address, dnsManager, ticker)
 	})
 
 	Describe("RunOnce", func() {
@@ -58,36 +63,47 @@ var _ = Describe("Monitor", func() {
 			shutdown = make(chan struct{})
 		})
 
-		It("should stop after you issue a shutdown", func() {
-			go applier.Run(shutdown)
-			close(shutdown)
+		Context("when the configurer takes a while", func() {
+			var isWaiting, stopWaiting chan struct{}
+			BeforeEach(func() {
+				isWaiting = make(chan struct{})
+				stopWaiting = make(chan struct{})
+				dnsManager.SetPrimaryStub = func(s string) error {
+					close(isWaiting)
+					<-stopWaiting
+					return nil
+				}
+			})
 
-			// wait for shutdown
-			time.Sleep(testInterval)
-			callCountAfterShutdown := dnsManager.SetPrimaryCallCount()
+			It("should finish a lagging write before shutting down", func() {
+				reallyDone := make(chan struct{})
+				go func() {
+					applier.Run(shutdown)
+					close(reallyDone)
+				}()
+				fakeClock.Increment(time.Second)
 
-			// check for any further calls to the checker
-			time.Sleep(testInterval)
+				Eventually(isWaiting).Should(BeClosed())
 
-			Expect(dnsManager.SetPrimaryCallCount()).To(Equal(callCountAfterShutdown))
+				go func() { shutdown <- struct{}{} }()
+				Consistently(reallyDone).ShouldNot(Receive())
+
+				close(stopWaiting)
+				Eventually(reallyDone).Should(BeClosed())
+			})
 		})
 
-		It("should apply changes", func() {
+		It("continuously checks and applies changes", func() {
 			go applier.Run(shutdown)
 
-			time.Sleep(testInterval)
-			Expect(dnsManager.SetPrimaryCallCount()).To(BeNumerically(">", 0))
+			fakeClock.Increment(time.Second)
+			Eventually(dnsManager.SetPrimaryCallCount).Should(BeNumerically(">=", 1))
+			fakeClock.Increment(time.Second)
+			Eventually(dnsManager.SetPrimaryCallCount).Should(BeNumerically(">=", 2))
+			fakeClock.Increment(time.Second)
+			Eventually(dnsManager.SetPrimaryCallCount).Should(BeNumerically(">=", 3))
 
 			close(shutdown)
-		})
-
-		It("continues to check and apply changes", func() {
-			go applier.Run(shutdown)
-
-			time.Sleep(testInterval * 4)
-			close(shutdown)
-
-			Expect(dnsManager.SetPrimaryCallCount()).To(BeNumerically(">=", 3))
 		})
 	})
 })

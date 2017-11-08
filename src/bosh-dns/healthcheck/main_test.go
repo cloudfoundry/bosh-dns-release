@@ -51,7 +51,7 @@ var _ = Describe("HealthCheck server", func() {
 			Expect(resp).To(BeNil())
 		})
 
-		Describe("When the vm is healthy", func() {
+		Describe("when the vm is healthy", func() {
 			It("returns healthy json output", func() {
 				client, err := healthclient.NewHealthClientFromFiles(
 					"assets/test_certs/test_ca.pem",
@@ -126,7 +126,7 @@ var _ = Describe("HealthCheck server", func() {
 			})
 		})
 
-		Describe("When the vm is unhealthy", func() {
+		Describe("when the vm is unhealthy", func() {
 			BeforeEach(func() {
 				status = "stopped"
 			})

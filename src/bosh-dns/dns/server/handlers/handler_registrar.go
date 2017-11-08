@@ -3,8 +3,6 @@ package handlers
 import (
 	"time"
 
-	"bosh-dns/dns/server/records"
-
 	"code.cloudfoundry.org/clock"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
@@ -13,34 +11,35 @@ import (
 const RegisterInterval = time.Millisecond * 250
 
 //go:generate counterfeiter . ServerMux
+
 type ServerMux interface {
 	Handle(pattern string, handler dns.Handler)
 	HandleRemove(pattern string)
 }
 
-//go:generate counterfeiter . RecordSetRepo
+//go:generate counterfeiter . DomainProvider
 
-type RecordSetRepo interface {
-	Get() (records.RecordSet, error)
+type DomainProvider interface {
+	Domains() []string
 }
 
 type HandlerRegistrar struct {
-	logger      logger.Logger
-	clock       clock.Clock
-	recordsRepo RecordSetRepo
-	mux         ServerMux
-	handler     dns.Handler
-	domains     map[string]struct{}
+	logger         logger.Logger
+	clock          clock.Clock
+	domainProvider DomainProvider
+	mux            ServerMux
+	handler        dns.Handler
+	domains        map[string]struct{}
 }
 
-func NewHandlerRegistrar(logger logger.Logger, clock clock.Clock, recordsRepo RecordSetRepo, mux ServerMux, handler dns.Handler) HandlerRegistrar {
+func NewHandlerRegistrar(logger logger.Logger, clock clock.Clock, domainProvider DomainProvider, mux ServerMux, handler dns.Handler) HandlerRegistrar {
 	return HandlerRegistrar{
-		logger:      logger,
-		clock:       clock,
-		recordsRepo: recordsRepo,
-		mux:         mux,
-		handler:     handler,
-		domains:     map[string]struct{}{},
+		logger:         logger,
+		clock:          clock,
+		domainProvider: domainProvider,
+		mux:            mux,
+		handler:        handler,
+		domains:        map[string]struct{}{},
 	}
 }
 
@@ -51,18 +50,12 @@ func (h *HandlerRegistrar) Run(signal chan struct{}) error {
 		case <-signal:
 			return nil
 		case <-ticker.C():
-			recordSet, err := h.recordsRepo.Get()
-			if err != nil {
-				h.logger.Error("handler-registrar", "cannot get record set %v", err)
-				continue
-			}
-
 			currentDomains := make(map[string]struct{}, len(h.domains))
 			for domain := range h.domains {
 				currentDomains[domain] = struct{}{}
 			}
 
-			for _, domain := range recordSet.Domains {
+			for _, domain := range h.domainProvider.Domains() {
 				delete(currentDomains, domain)
 
 				if _, ok := h.domains[domain]; !ok {

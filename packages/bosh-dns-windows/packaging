@@ -40,11 +40,6 @@ if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /PURGE emptyfolder ${BOSH_INSTALL_TARGET}/pkg"
 }
 
-robocopy "bosh-dns\dns\nameserverconfig\assets" "${BOSH_INSTALL_TARGET}/bin" "*.ps1"
-if ($LASTEXITCODE -ge 8) {
-    Write-Error "robocopy bosh-dns\dns\nameserverconfig\assets\*.ps1 ${BOSH_INSTALL_TARGET}/bin"
-}
-
 Remove-Item -Force -Recurse "${BOSH_INSTALL_TARGET}/src"
 Remove-Item -Force -Recurse "${BOSH_INSTALL_TARGET}/pkg"
 Remove-Item -Force -Recurse "emptyfolder"

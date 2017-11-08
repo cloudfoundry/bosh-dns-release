@@ -33,20 +33,19 @@ func main() {
 	signal.Notify(sigterm, syscall.SIGTERM)
 
 	fs := boshsys.NewOsFileSystem(logger)
-	clock := clock.NewClock()
+	realClock := clock.NewClock()
+	ticker := realClock.NewTicker(3 * time.Second)
 
-	dnsManager := newDNSManager(logger, clock, fs)
+	dnsManager := newDNSManager(logger, realClock, fs)
 
 	monitor := monitor.NewMonitor(
 		logger,
 		bindAddress,
 		dnsManager,
-		3*time.Second,
+		ticker,
 	)
 	go monitor.Run(shutdown)
 
-	func() {
-		<-sigterm
-		close(shutdown)
-	}()
+	<-sigterm
+	shutdown <- struct{}{}
 }

@@ -14,3 +14,6 @@ properties:
   suites:
     default: .
     description: "Suites to execute within acceptance_tests/windows"
+  properties_to_test.os_caching_enabled:
+    default: false
+    description: "Signal to configure & test disabling system cache"

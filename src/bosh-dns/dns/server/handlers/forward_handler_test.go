@@ -16,8 +16,6 @@ import (
 
 	"fmt"
 
-	"runtime"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -32,6 +30,7 @@ var _ = Describe("ForwardHandler", func() {
 			fakeExchanger        *handlersfakes.FakeExchanger
 			fakeClock            *fakeclock.FakeClock
 			fakeLogger           *loggerfakes.FakeLogger
+			fakeRecursorPool     *handlersfakes.FakeRecursorPool
 		)
 
 		BeforeEach(func() {
@@ -42,15 +41,51 @@ var _ = Describe("ForwardHandler", func() {
 			}
 			fakeLogger = &loggerfakes.FakeLogger{}
 			fakeClock = fakeclock.NewFakeClock(time.Now())
-			recursionHandler = handlers.NewForwardHandler([]string{"127.0.0.1", "10.244.5.4"}, fakeExchangerFactory, fakeClock, fakeLogger)
+			fakeRecursorPool = &handlersfakes.FakeRecursorPool{}
+			recursors := []string{"127.0.0.1", "10.244.5.4"}
+			fakeRecursorPool.PerformStrategicallyStub = func(f func(string) error) error {
+				var err error
+				for _, recursor := range recursors {
+					err = f(recursor)
+					if err == nil {
+						return nil
+					}
+				}
+				return err
+			}
+			recursionHandler = handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger)
 		})
 
-		Context("when no recursors are configured", func() {
-			var recursionHandler handlers.ForwardHandler
+		Context("when there are no recursors configured", func() {
 			var msg *dns.Msg
 			BeforeEach(func() {
+				fakeRecursorPool.PerformStrategicallyReturns(errors.New("no recursors configured"))
+				msg = &dns.Msg{}
+				msg.SetQuestion("example.com.", dns.TypeANY)
+			})
+
+			It("indicates that there are no recursers availible", func() {
+				recursionHandler.ServeDNS(fakeWriter, msg)
+				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+
+				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
+				tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
+				Expect(tag).To(Equal("ForwardHandler"))
+				Expect(logMsg).To(Equal("handlers.ForwardHandler Request [255] [example.com.] 2 [no recursors configured] 0ns"))
+
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Question).To(Equal(msg.Question))
+				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+				Expect(message.Authoritative).To(Equal(false))
+				Expect(message.RecursionAvailable).To(Equal(false))
+			})
+		})
+
+		Context("when no working recursors are configured", func() {
+			var msg *dns.Msg
+
+			BeforeEach(func() {
 				fakeExchanger.ExchangeReturns(nil, 0, errors.New("first recursor failed to reply"))
-				recursionHandler = handlers.NewForwardHandler([]string{"blah"}, fakeExchangerFactory, fakeClock, fakeLogger)
 				msg = &dns.Msg{}
 				msg.SetQuestion("example.com.", dns.TypeANY)
 			})
@@ -62,13 +97,13 @@ var _ = Describe("ForwardHandler", func() {
 				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
 				tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
-				Expect(logMsg).To(Equal("handlers.ForwardHandler Request [255] [example.com.] 2 [no response from recursors] 0ns"))
+				Expect(logMsg).To(Equal("handlers.ForwardHandler Request [255] [example.com.] 2 [first recursor failed to reply] 0ns"))
 
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Question).To(Equal(msg.Question))
 				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
 				Expect(message.Authoritative).To(Equal(false))
-				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(false))
 			})
 
 			Context("when the message fails to write", func() {
@@ -136,7 +171,7 @@ var _ = Describe("ForwardHandler", func() {
 					}
 
 					fakeWriter.RemoteAddrReturns(remoteAddrReturns)
-					recursionHandler := handlers.NewForwardHandler([]string{"127.0.0.1"}, fakeExchangerFactory, fakeClock, fakeLogger)
+					recursionHandler := handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger)
 
 					m := &dns.Msg{}
 					m.SetQuestion("example.com.", dns.TypeANY)
@@ -164,9 +199,8 @@ var _ = Describe("ForwardHandler", func() {
 
 			Context("compression", func() {
 				var (
-					requestMessage   *dns.Msg
-					recursorAnswer   *dns.Msg
-					recursionHandler dns.Handler
+					requestMessage *dns.Msg
+					recursorAnswer *dns.Msg
 				)
 
 				appendAnswersUntilSize := func(requestedResponseLen int) {
@@ -190,7 +224,7 @@ var _ = Describe("ForwardHandler", func() {
 					}
 					fakeExchanger := &handlersfakes.FakeExchanger{}
 					fakeExchangerFactory := func(net string) handlers.Exchanger { return fakeExchanger }
-					recursionHandler = handlers.NewForwardHandler([]string{"127.0.0.1"}, fakeExchangerFactory, fakeClock, fakeLogger)
+					recursionHandler = handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger)
 					requestMessage = &dns.Msg{}
 					requestMessage.SetQuestion("example.com.", dns.TypeANY)
 					fakeExchanger.ExchangeReturns(recursorAnswer, 0, nil)
@@ -272,62 +306,13 @@ var _ = Describe("ForwardHandler", func() {
 				})
 			})
 
-			Context("when the top recursor is not performant", func() {
-				It("starts to failover to another recursor", func() {
-					exchangeMsg := &dns.Msg{
-						Answer: []dns.RR{&dns.A{A: net.ParseIP("99.99.99.99")}},
-					}
-
-					callsToFirst := 0
-
-					fakeExchanger.ExchangeStub = func(msg *dns.Msg, address string) (*dns.Msg, time.Duration, error) {
-						if address == "10.244.5.4" {
-							return exchangeMsg, 0, nil
-						}
-
-						callsToFirst += 1
-						return nil, 0, errors.New("first recursor failed to reply")
-					}
-
-					m := &dns.Msg{}
-					m.SetQuestion("example.com.", dns.TypeANY)
-
-					for i := 0; i < 10; i++ {
-						recursionHandler.ServeDNS(fakeWriter, m)
-						runtime.Gosched()
-					}
-					callsInTheBeginning := callsToFirst
-
-					for i := 0; i < 30; i++ {
-						recursionHandler.ServeDNS(fakeWriter, m)
-						runtime.Gosched()
-					}
-					callsInTheMiddle := callsToFirst
-
-					for i := 0; i < 10; i++ {
-						recursionHandler.ServeDNS(fakeWriter, m)
-						runtime.Gosched()
-					}
-					callsInTheEnd := callsToFirst - callsInTheMiddle
-
-					Expect(callsInTheEnd).To(BeNumerically("<", callsInTheBeginning))
-				})
-			})
-
 			Context("when a recursor fails", func() {
 				var (
 					msg *dns.Msg
 				)
 
 				BeforeEach(func() {
-					fakeExchanger := &handlersfakes.FakeExchanger{}
 					fakeExchanger.ExchangeReturns(&dns.Msg{}, 0, errors.New("failed to exchange"))
-
-					fakeExchangerFactory := func(net string) handlers.Exchanger {
-						return fakeExchanger
-					}
-
-					recursionHandler := handlers.NewForwardHandler([]string{"127.0.0.1", "127.0.0.2"}, fakeExchangerFactory, fakeClock, fakeLogger)
 
 					msg = &dns.Msg{}
 					msg.SetQuestion("example.com.", dns.TypeANY)
@@ -343,7 +328,7 @@ var _ = Describe("ForwardHandler", func() {
 
 					tag, msg, args = fakeLogger.DebugArgsForCall(1)
 					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing to "127.0.0.2": failed to exchange`))
+					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing to "10.244.5.4": failed to exchange`))
 				})
 
 				Context("when all recursors fail", func() {
@@ -354,7 +339,7 @@ var _ = Describe("ForwardHandler", func() {
 						Expect(message.Question).To(Equal(msg.Question))
 						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
 						Expect(message.Authoritative).To(Equal(false))
-						Expect(message.RecursionAvailable).To(Equal(true))
+						Expect(message.RecursionAvailable).To(Equal(false))
 					})
 				})
 			})

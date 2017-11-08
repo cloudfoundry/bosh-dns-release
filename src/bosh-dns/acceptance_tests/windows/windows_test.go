@@ -3,6 +3,7 @@
 package windows_test
 
 import (
+	"os"
 	"os/exec"
 	"time"
 
@@ -42,6 +43,25 @@ var _ = Describe("windows tests", func() {
 			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 			Expect(session.Out.Contents()).To(ContainSubstring("IPAddress  : 127.0.0.1"))
 			Expect(session.Out.Contents()).To(ContainSubstring("Name       : upcheck.bosh-dns"))
+		})
+	})
+
+	Context("system level caching", func() {
+		It("is enabled or disabled according to the manifest property", func() {
+			cmd := exec.Command("powershell.exe", "-Command", "Get-Service DnsCache | Format-list")
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session).Should(gexec.Exit(0))
+
+			output := string(session.Out.Contents())
+			if os.Getenv("OS_DNS_CACHE") == "true" {
+				Expect(output).To(MatchRegexp(`Status\s*:\s*Running`))
+				Expect(output).To(MatchRegexp(`CanStop\s*:\s*True`))
+			} else {
+				Expect(output).To(MatchRegexp(`Status\s*:\s*Stopped`))
+				Expect(output).To(MatchRegexp(`CanStop\s*:\s*False`))
+			}
 		})
 	})
 })

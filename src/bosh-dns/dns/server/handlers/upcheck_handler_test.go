@@ -37,7 +37,7 @@ var _ = Describe("UpcheckHandler", func() {
 			message := fakeWriter.WriteMsgArgsForCall(0)
 			Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
 			Expect(message.Authoritative).To(Equal(true))
-			Expect(message.RecursionAvailable).To(Equal(false))
+			Expect(message.RecursionAvailable).To(Equal(true))
 			Expect(len(message.Answer)).To(Equal(1))
 			Expect(message.Answer[0]).To(Equal(&dns.A{
 				Hdr: dns.RR_Header{
