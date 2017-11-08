@@ -66,14 +66,13 @@ var _ = Describe("DNS", func() {
 		})
 
 		It("handles DNS responses quickly for prod like zones", func() {
-			duration := time.Duration(durationInSeconds) * time.Second
-			resourcesInterval := time.Second / 2
+			numberOfMeasurements := durationInSeconds * 2
 
-			cpuSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
+			cpuSample := metrics.NewExpDecaySample(numberOfMeasurements, 0.015)
 			cpuHistogram := metrics.NewHistogram(cpuSample)
 			metrics.Register("CPU Usage", cpuHistogram)
 
-			memSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
+			memSample := metrics.NewExpDecaySample(numberOfMeasurements, 0.015)
 			memHistogram := metrics.NewHistogram(memSample)
 			metrics.Register("Mem Usage", memHistogram)
 
@@ -87,7 +86,7 @@ var _ = Describe("DNS", func() {
 						MakeDNSRequestUntilSuccessful(picker, "34.194.75.123:53", resultChan)
 					},
 				}.Setup().
-					MakeParallelRequests(20*time.Second, resourcesInterval, cpuHistogram, memHistogram),
+					MakeParallelRequests(time.Duration(durationInSeconds)*time.Second, time.Second/2, cpuHistogram, memHistogram),
 			)
 
 			TestDNSPerformance("prod-like", TimeThresholdsFromBenchmark(benchmarkTime, 1.1), prodLikeVitalsThresholds())
