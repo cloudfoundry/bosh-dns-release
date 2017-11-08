@@ -21,14 +21,14 @@ func healthTimeThresholds() TimeThresholds {
 func prodLikeVitalsThresholds() VitalsThresholds {
 	return VitalsThresholds{
 		CPUPct99: 5,
-		MemPct99: 21,
-		MemMax:   23,
+		MemPct99: 23,
+		MemMax:   24,
 	}
 }
 
 func localZonesVitalsThresholds() VitalsThresholds {
 	return VitalsThresholds{
-		CPUPct99: 10,
+		CPUPct99: 21,
 		MemPct99: 38,
 		MemMax:   40,
 	}
@@ -44,7 +44,7 @@ func localZonesTimeThresholds() TimeThresholds {
 
 func upcheckVitalsThresholds() VitalsThresholds {
 	return VitalsThresholds{
-		CPUPct99: 1,
+		CPUPct99: 3,
 		MemPct99: 23,
 		MemMax:   25,
 	}
