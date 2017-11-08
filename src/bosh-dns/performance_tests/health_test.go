@@ -35,7 +35,7 @@ var _ = Describe("Health Server", func() {
 		shutdownServers()
 	})
 
-	TestHealthPerformance := func(timeThresholds TimeThresholds) {
+	TestHealthPerformance := func(timeThresholds TimeThresholds, vitalsThresholds VitalsThresholds) {
 		httpClient := setupSecureGet()
 
 		PerformanceTest{
@@ -47,12 +47,8 @@ var _ = Describe("Health Server", func() {
 
 			ServerPID: healthSessions[0].Command.Process.Pid,
 
-			TimeThresholds: timeThresholds,
-			VitalsThresholds: VitalsThresholds{
-				CPUPct99: 35,
-				MemPct99: 20,
-				MemMax:   25,
-			},
+			TimeThresholds:   timeThresholds,
+			VitalsThresholds: vitalsThresholds,
 
 			SuccessStatus: http.StatusOK,
 
@@ -64,11 +60,7 @@ var _ = Describe("Health Server", func() {
 
 	Describe("health server performance", func() {
 		It("handles requests quickly", func() {
-			TestHealthPerformance(TimeThresholds{
-				Med:   15 * time.Millisecond,
-				Pct90: 20 * time.Millisecond,
-				Pct95: 25 * time.Millisecond,
-			})
+			TestHealthPerformance(healthTimeThresholds(), healthVitalsThresholds())
 		})
 	})
 })
