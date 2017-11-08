@@ -26,9 +26,9 @@ func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, requestMsg
 
 	if len(requestMsg.Question) > 0 {
 		switch requestMsg.Question[0].Qtype {
-		case dns.TypeA, dns.TypeANY:
+		case dns.TypeA, dns.TypeANY, dns.TypeAAAA:
 			responseMsg = d.localDomain.Resolve([]string{requestMsg.Question[0].Name}, responseWriter, requestMsg)
-		case dns.TypeMX, dns.TypeAAAA:
+		case dns.TypeMX:
 			responseMsg.SetRcode(requestMsg, dns.RcodeSuccess)
 		default:
 			responseMsg.SetRcode(requestMsg, dns.RcodeServerFailure)

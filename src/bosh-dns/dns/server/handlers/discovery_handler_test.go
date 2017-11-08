@@ -13,7 +13,6 @@ import (
 	"github.com/miekg/dns"
 
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -51,7 +50,7 @@ var _ = Describe("DiscoveryHandler", func() {
 		})
 
 		Context("when there are questions", func() {
-			It("returns rcode success for mx questions", func() {
+			It("returns rcode success for MX questions", func() {
 				m := &dns.Msg{}
 				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeMX)
 
@@ -62,7 +61,18 @@ var _ = Describe("DiscoveryHandler", func() {
 				Expect(message.RecursionAvailable).To(BeTrue())
 			})
 
-			It("returns rcode success for aaaa questions", func() {
+			It("returns rcode success for A questions when there are no matching records", func() {
+				m := &dns.Msg{}
+				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeA)
+
+				discoveryHandler.ServeDNS(fakeWriter, m)
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(message.Authoritative).To(BeTrue())
+				Expect(message.RecursionAvailable).To(BeTrue())
+			})
+
+			It("returns rcode success for AAAA questions when there are no matching records", func() {
 				m := &dns.Msg{}
 				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeAAAA)
 
@@ -84,39 +94,109 @@ var _ = Describe("DiscoveryHandler", func() {
 				Expect(message.RecursionAvailable).To(BeTrue())
 			})
 
-			Context("when the question is an A or ANY record", func() {
-				DescribeTable("returns an A record based off of the records data",
-					func(queryType uint16) {
-						fakeRecordSet.ResolveReturns([]string{"123.123.123.123"}, nil)
+			// q: A -> only A even if AAAA
+			// q: AAAA -> only AAAA even if A
+			// q: ANY -> both A and AAAA
 
-						m := &dns.Msg{}
-						m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", queryType)
+			It("returns only A records (no AAAA records) when the queried for A records", func() {
+				fakeRecordSet.ResolveReturns([]string{"2601:0646:0102:0095:0000:0000:0000:0025", "123.123.123.123"}, nil)
 
-						discoveryHandler.ServeDNS(fakeWriter, m)
-						responseMsg := fakeWriter.WriteMsgArgsForCall(0)
+				m := &dns.Msg{}
+				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 
-						Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
-						Expect(responseMsg.Authoritative).To(BeTrue())
-						Expect(responseMsg.RecursionAvailable).To(BeTrue())
-						Expect(responseMsg.Truncated).To(BeFalse())
+				discoveryHandler.ServeDNS(fakeWriter, m)
+				responseMsg := fakeWriter.WriteMsgArgsForCall(0)
 
-						Expect(responseMsg.Answer).To(HaveLen(1))
+				Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(responseMsg.Authoritative).To(BeTrue())
+				Expect(responseMsg.RecursionAvailable).To(BeTrue())
+				Expect(responseMsg.Truncated).To(BeFalse())
 
-						answer := responseMsg.Answer[0]
-						header := answer.Header()
+				Expect(responseMsg.Answer).To(HaveLen(1))
 
-						Expect(header.Rrtype).To(Equal(dns.TypeA))
-						Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
-						Expect(header.Ttl).To(Equal(uint32(0)))
+				answer := responseMsg.Answer[0]
+				header := answer.Header()
 
-						Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
-						Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.123"))
+				Expect(header.Rrtype).To(Equal(dns.TypeA))
+				Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+				Expect(header.Ttl).To(Equal(uint32(0)))
 
-						Expect(fakeLogger.InfoCallCount()).To(Equal(0))
-					},
-					Entry("when the question is an A query", dns.TypeA),
-					Entry("when the question is an ANY query", dns.TypeANY),
-				)
+				Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+				Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.123"))
+
+				Expect(fakeLogger.InfoCallCount()).To(Equal(0))
+			})
+
+			It("returns only AAAA records (no A records) when the queried for AAAA records", func() {
+				fakeRecordSet.ResolveReturns([]string{"2601:0646:0102:0095:0000:0000:0000:0025", "4.2.2.2"}, nil)
+
+				m := &dns.Msg{}
+				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeAAAA)
+
+				discoveryHandler.ServeDNS(fakeWriter, m)
+				responseMsg := fakeWriter.WriteMsgArgsForCall(0)
+
+				Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(responseMsg.Authoritative).To(BeTrue())
+				Expect(responseMsg.RecursionAvailable).To(BeTrue())
+				Expect(responseMsg.Truncated).To(BeFalse())
+
+				Expect(responseMsg.Answer).To(HaveLen(1))
+
+				answer := responseMsg.Answer[0]
+				header := answer.Header()
+
+				Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
+				Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+				Expect(header.Ttl).To(Equal(uint32(0)))
+
+				Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
+				Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::25"))
+
+				Expect(fakeLogger.InfoCallCount()).To(Equal(0))
+			})
+
+			It("returns both A and AAAA records when the queried for ANY records", func() {
+				fakeRecordSet.ResolveReturns([]string{"2601:0646:0102:0095:0000:0000:0000:0025", "4.2.2.2"}, nil)
+
+				m := &dns.Msg{}
+				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+
+				discoveryHandler.ServeDNS(fakeWriter, m)
+				responseMsg := fakeWriter.WriteMsgArgsForCall(0)
+
+				Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(responseMsg.Authoritative).To(BeTrue())
+				Expect(responseMsg.RecursionAvailable).To(BeTrue())
+				Expect(responseMsg.Truncated).To(BeFalse())
+
+				Expect(responseMsg.Answer).To(HaveLen(2))
+
+				{
+					answer := responseMsg.Answer[0]
+					header := answer.Header()
+
+					Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
+					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+					Expect(header.Ttl).To(Equal(uint32(0)))
+
+					Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
+					Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::25"))
+				}
+
+				{
+					answer := responseMsg.Answer[1]
+					header := answer.Header()
+
+					Expect(header.Rrtype).To(Equal(dns.TypeA))
+					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+					Expect(header.Ttl).To(Equal(uint32(0)))
+
+					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+					Expect(answer.(*dns.A).A.String()).To(Equal("4.2.2.2"))
+				}
+
+				Expect(fakeLogger.InfoCallCount()).To(Equal(0))
 			})
 		})
 

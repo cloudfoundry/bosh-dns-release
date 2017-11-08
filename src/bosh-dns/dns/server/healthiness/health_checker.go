@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 )
 
@@ -30,7 +31,7 @@ type healthStatus struct {
 }
 
 func (hc *healthChecker) GetStatus(ip string) bool {
-	endpoint := fmt.Sprintf("https://%s:%d/health", ip, hc.port)
+	endpoint := fmt.Sprintf("https://%s/health", net.JoinHostPort(ip, fmt.Sprintf("%d", hc.port)))
 
 	response, err := hc.client.Get(endpoint)
 	if err != nil {
