@@ -23,17 +23,17 @@ type Result struct {
 }
 
 type TimeThresholds struct {
-	Max, Med, Pct90, Pct95 time.Duration
+	Med, Pct90, Pct95 time.Duration
 }
 
 type VitalsThresholds struct {
 	CPUPct99 float64
 	MemPct99 float64
+	MemMax   float64
 }
 
 func TimeThresholdsFromBenchmark(benchmark metrics.Histogram, allowance float64) TimeThresholds {
 	return TimeThresholds{
-		Max:   7540 * time.Millisecond,
 		Med:   time.Duration(float64(benchmark.Percentile(0.5)) * allowance),
 		Pct90: time.Duration(float64(benchmark.Percentile(0.9)) * allowance),
 		Pct95: time.Duration(float64(benchmark.Percentile(0.95)) * allowance),
@@ -317,6 +317,7 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	pct95Time := time.Duration(timeHistogram.Percentile(0.95))
 	printStatsForHistogram(timeHistogram, fmt.Sprintf("Handling latency for %s", label), "ms", 1000*1000)
 
+	memMax := float64(memHistogram.Max()) / (1024 * 1024)
 	mem99Pct := float64(memHistogram.Percentile(0.99)) / (1024 * 1024)
 	printStatsForHistogram(memHistogram, fmt.Sprintf("Server mem usage for %s", label), "MB", 1024*1024)
 
@@ -362,6 +363,11 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 	if mem99Pct > p.VitalsThresholds.MemPct99 {
 		testFailures = append(testFailures,
 			fmt.Errorf("99th percentile server memory usage of %.2fMB was greater than %.2fMB ceiling", mem99Pct, p.VitalsThresholds.MemPct99))
+	}
+
+	if memMax > p.VitalsThresholds.MemMax {
+		testFailures = append(testFailures,
+			fmt.Errorf("Max server memory usage of %.2fMB was greater than %.2fMB ceiling", memMax, p.VitalsThresholds.MemMax))
 	}
 
 	p.postDatadogEvent("Finishing performance test", "")

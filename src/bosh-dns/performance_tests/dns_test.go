@@ -41,8 +41,9 @@ var _ = Describe("DNS", func() {
 
 			TimeThresholds: timeThresholds,
 			VitalsThresholds: VitalsThresholds{
-				CPUPct99: 25,
-				MemPct99: 32,
+				CPUPct99: 15,
+				MemPct99: 35,
+				MemMax:   40,
 			},
 
 			SuccessStatus: dns.RcodeSuccess,
@@ -98,8 +99,7 @@ var _ = Describe("DNS", func() {
 
 		It("handles DNS responses quickly for upcheck zone", func() {
 			TestDNSPerformance("upcheck", TimeThresholds{
-				Max:   7540 * time.Millisecond,
-				Med:   1500 * time.Microsecond,
+				Med:   700 * time.Microsecond,
 				Pct90: 4 * time.Millisecond,
 				Pct95: 15 * time.Millisecond,
 			})
@@ -142,8 +142,7 @@ var _ = Describe("DNS", func() {
 
 		It("handles DNS responses quickly for local zones", func() {
 			TestDNSPerformance("local-zones", TimeThresholds{
-				Max:   7540 * time.Millisecond,
-				Med:   1500 * time.Microsecond,
+				Med:   700 * time.Microsecond,
 				Pct90: 3 * time.Millisecond,
 				Pct95: 15 * time.Millisecond,
 			})

@@ -41,8 +41,9 @@ var _ = Describe("Health Server", func() {
 
 			TimeThresholds: timeThresholds,
 			VitalsThresholds: VitalsThresholds{
-				CPUPct99: 60,
+				CPUPct99: 35,
 				MemPct99: 20,
+				MemMax:   25,
 			},
 
 			SuccessStatus: http.StatusOK,
@@ -59,7 +60,6 @@ var _ = Describe("Health Server", func() {
 				Med:   15 * time.Millisecond,
 				Pct90: 20 * time.Millisecond,
 				Pct95: 25 * time.Millisecond,
-				Max:   7540 * time.Millisecond,
 			})
 		})
 	})
