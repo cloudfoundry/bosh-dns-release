@@ -5,16 +5,16 @@ import "time"
 func healthVitalsThresholds() VitalsThresholds {
 	return VitalsThresholds{
 		CPUPct99: 40,
-		MemPct99: 22,
+		MemPct99: 24,
 		MemMax:   30,
 	}
 }
 
 func healthTimeThresholds() TimeThresholds {
 	return TimeThresholds{
-		Med:   12 * time.Millisecond,
-		Pct90: 14 * time.Millisecond,
-		Pct95: 15 * time.Millisecond,
+		Med:   14 * time.Millisecond,
+		Pct90: 16 * time.Millisecond,
+		Pct95: 17 * time.Millisecond,
 	}
 }
 

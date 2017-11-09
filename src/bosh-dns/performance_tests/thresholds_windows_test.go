@@ -4,7 +4,7 @@ import "time"
 
 func healthVitalsThresholds() VitalsThresholds {
 	return VitalsThresholds{
-		CPUPct99: 66,
+		CPUPct99: 73,
 		MemPct99: 20,
 		MemMax:   25,
 	}
@@ -20,7 +20,7 @@ func healthTimeThresholds() TimeThresholds {
 
 func prodLikeVitalsThresholds() VitalsThresholds {
 	return VitalsThresholds{
-		CPUPct99: 10,
+		CPUPct99: 20,
 		MemPct99: 18,
 		MemMax:   20,
 	}
@@ -44,7 +44,7 @@ func localZonesTimeThresholds() TimeThresholds {
 
 func upcheckVitalsThresholds() VitalsThresholds {
 	return VitalsThresholds{
-		CPUPct99: 4,
+		CPUPct99: 10,
 		MemPct99: 17,
 		MemMax:   20,
 	}
