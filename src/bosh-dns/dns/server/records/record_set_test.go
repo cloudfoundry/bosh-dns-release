@@ -103,6 +103,7 @@ var _ = Describe("RecordSet", func() {
 			Expect(averageTime).To(BeNumerically("<", 1500))
 			Expect(longestTime).To(BeNumerically("<", 3500))
 		})
+	})
 
 	Describe("NewRecordSet", func() {
 		BeforeEach(func() {
