@@ -86,7 +86,7 @@ var _ = Describe("RecordSet", func() {
 			var longestTime time.Duration
 			var totalTime time.Duration
 
-			for i := 0; i < 100; i++ {
+			for i := 0; i < 1000; i++ {
 				startTime := time.Now()
 				ips, err := recordSet.Resolve("q-m0s0.my-group.my-network.my-deployment.domain.")
 				queryDuration := time.Since(startTime) / time.Microsecond
@@ -99,9 +99,9 @@ var _ = Describe("RecordSet", func() {
 				Expect(ips).To(ContainElement("123.123.1.0"))
 			}
 
-			averageTime := totalTime / 100
-			Expect(averageTime).To(BeNumerically("<", 1500))
-			Expect(longestTime).To(BeNumerically("<", 3500))
+			averageTime := totalTime / 1000
+			Expect(averageTime).To(BeNumerically("<", 2000))
+			Expect(longestTime).To(BeNumerically("<", 5000))
 		})
 	})
 
