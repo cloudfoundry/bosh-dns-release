@@ -100,8 +100,8 @@ var _ = Describe("RecordSet", func() {
 			}
 
 			averageTime := totalTime / 1000
-			Expect(averageTime).To(BeNumerically("<", 2000))
-			Expect(longestTime).To(BeNumerically("<", 5000))
+			Expect(averageTime).To(BeNumerically("<", 6000))
+			Expect(longestTime).To(BeNumerically("<", 8000))
 		})
 	})
 
