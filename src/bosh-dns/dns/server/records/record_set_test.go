@@ -84,9 +84,12 @@ var _ = Describe("RecordSet", func() {
 
 		It("is able to resolve query with large number of records quickly", func() {
 			var longestTime time.Duration
+			var longestTimeLastRecord time.Duration
 			var totalTime time.Duration
+			var totalTimeLastRecord time.Duration
+			var count int
 
-			for i := 0; i < 1000; i++ {
+			for count = 0; count < 4000; count++ {
 				startTime := time.Now()
 				ips, err := recordSet.Resolve("q-m0s0.my-group.my-network.my-deployment.domain.")
 				queryDuration := time.Since(startTime) / time.Microsecond
@@ -97,11 +100,31 @@ var _ = Describe("RecordSet", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(ips).To(HaveLen(1))
 				Expect(ips).To(ContainElement("123.123.1.0"))
+
+				startTime = time.Now()
+				ips, err = recordSet.Resolve("q-m1999s0.my-group.my-network.my-deployment.domain.")
+				queryDurationLastRecord := time.Since(startTime) / time.Microsecond
+				if queryDurationLastRecord > longestTimeLastRecord {
+					longestTimeLastRecord = queryDurationLastRecord
+				}
+				totalTimeLastRecord += queryDurationLastRecord
+				Expect(err).ToNot(HaveOccurred())
+				Expect(ips).To(HaveLen(1))
+				Expect(ips).To(ContainElement("123.123.208.207"))
 			}
 
-			averageTime := totalTime / 1000
+			averageTime := totalTime / time.Duration(count)
+			averageTimeLastRecord := totalTimeLastRecord / time.Duration(count)
+
+			fmt.Printf("Average time first record %d\n", averageTime)
+			fmt.Printf("Average time last record %d\n", averageTimeLastRecord)
+			fmt.Printf("Longest time time first record %d\n", longestTime)
+			fmt.Printf("Longest time time last record %d\n", longestTimeLastRecord)
+
 			Expect(averageTime).To(BeNumerically("<", 6000))
+			Expect(averageTimeLastRecord).To(BeNumerically("<", 6000))
 			Expect(longestTime).To(BeNumerically("<", 8000))
+			Expect(longestTimeLastRecord).To(BeNumerically("<", 8000))
 		})
 	})
 
