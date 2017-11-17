@@ -59,6 +59,7 @@ jobs:
         file: "release/bosh-dns-dev-release.tgz"
 
 - name: test-performance
+  interruptible: true
   public: true
   serial: true
   plan:
@@ -77,6 +78,7 @@ jobs:
         DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-linux
 
 - name: test-performance-windows
+  interruptible: true
   public: true
   serial: true
   plan:
@@ -95,6 +97,7 @@ jobs:
 
 
 - name: test-performance-windows-aws
+  interruptible: true
   public: true
   serial: true
   plan:
@@ -113,6 +116,7 @@ jobs:
         DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-windows-aws
 
 - name: test-performance-aws
+  interruptible: true
   public: true
   serial: true
   plan:
