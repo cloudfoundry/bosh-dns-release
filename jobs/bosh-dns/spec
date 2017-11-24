@@ -61,6 +61,12 @@ properties:
         source:
           type: http
           url: http://some.endpoint.local
+      - domain: local.internal2.
+        cache:
+          enabled: true
+        source:
+          type: dns
+          recursors: [ 127.0.0.1 ]
 
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"
