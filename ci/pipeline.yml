@@ -12,6 +12,7 @@ groups:
   - test-performance-aws
   - test-acceptance
   - test-acceptance-windows
+  - brats-ubuntu
   - bbl-up
   - bbl-destroy
   - finalize-release
@@ -195,7 +196,7 @@ jobs:
         resource: candidate-release
         trigger: true
         passed: [create-release]
-      - get: candidate-warden-ubuntu-stemcell
+      - get: stemcell
         resource: bosh-candidate-stemcell
       - get: bosh-release
     - task: prepare-brats
