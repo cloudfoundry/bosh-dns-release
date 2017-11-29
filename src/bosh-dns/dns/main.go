@@ -66,6 +66,7 @@ func mainExitCode() int {
 	}
 
 	fs := boshsys.NewOsFileSystem(logger)
+
 	aliasConfiguration, err := aliases.ConfigFromGlob(
 		fs,
 		aliases.NewFSLoader(fs),
@@ -73,6 +74,17 @@ func mainExitCode() int {
 	)
 	if err != nil {
 		logger.Error(logTag, fmt.Sprintf("loading alias configuration: %s", err.Error()))
+		return 1
+	}
+
+	handlersConfiguration, err := handlers.ConfigFromGlob(
+		fs,
+		handlers.NewFSLoader(fs),
+		config.HandlersFilesGlob,
+	)
+
+	if err != nil {
+		logger.Error(logTag, fmt.Sprintf("loading handlers configuration: %s", err.Error()))
 		return 1
 	}
 
@@ -117,7 +129,7 @@ func mainExitCode() int {
 
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
 
-	for _, handlerConfig := range config.Handlers {
+	for _, handlerConfig := range handlersConfiguration.Handlers {
 		var handler dns.Handler
 
 		if handlerConfig.Source.Type == "http" {

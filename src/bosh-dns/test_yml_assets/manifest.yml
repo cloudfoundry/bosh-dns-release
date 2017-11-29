@@ -28,6 +28,11 @@ instance_groups:
       recursor_timeout: 1s
       cache:
         enabled: true
+  - name: configures-handler
+    release: dns-acceptance
+    properties:
+      handler_server_address: 172.17.0.1:9956
+      handler_domain: handler.internal.local.
 
 releases:
 - name: bosh-dns

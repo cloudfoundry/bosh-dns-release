@@ -1,0 +1,16 @@
+<%=
+
+config = [
+  {
+    "domain" => p('handler_domain'),
+    "cache" => {"enabled" => false},
+    "source" => {
+      "type" => "dns",
+      "recursors" => [p('handler_server_address')]
+    }
+  }
+]
+
+require 'json'
+JSON.dump(config)
+%>

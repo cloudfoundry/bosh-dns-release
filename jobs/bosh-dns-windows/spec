@@ -6,6 +6,7 @@ templates:
   config.json.erb: config/config.json
   post-start.ps1.erb: bin/post-start.ps1
   pre-start.ps1.erb: bin/pre-start.ps1
+  handlers.json.erb: dns/handlers.json
   health_server_config.json.erb: config/health_server_config.json
   server.key.erb: config/certs/server.key
   server.crt.erb: config/certs/server.crt
@@ -57,6 +58,10 @@ properties:
         source:
           type: http
           url: http://some.endpoint.local
+
+  handlers_files_glob:
+    description: "Glob for any files to look for DNS handler information"
+    default: C:\var\vcap\jobs\*\dns\handlers.json
 
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"

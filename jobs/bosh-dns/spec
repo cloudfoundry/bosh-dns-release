@@ -10,6 +10,7 @@ templates:
   client.key.erb: config/certs/client.key
   client_ca.crt.erb: config/certs/client_ca.crt
   config.json.erb: config/config.json
+  handlers.json.erb: dns/handlers.json
   health_server_config.json.erb: config/health_server_config.json
   is-system-resolver.erb: bin/is-system-resolver
   post-start.erb: bin/post-start
@@ -67,6 +68,10 @@ properties:
         source:
           type: dns
           recursors: [ 127.0.0.1 ]
+
+  handlers_files_glob:
+    description: "Glob for any files to look for DNS handler information"
+    default: /var/vcap/jobs/*/dns/handlers.json
 
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"

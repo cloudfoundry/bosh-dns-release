@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 
 	"github.com/onsi/ginkgo/config"
@@ -93,6 +94,7 @@ var _ = Describe("main", func() {
 			cmd                   *exec.Cmd
 			session               *gexec.Session
 			aliasesDir            string
+			handlersDir           string
 			recordsFilePath       string
 			checkInterval         string
 			httpJSONServer        *ghttp.Server
@@ -147,6 +149,9 @@ var _ = Describe("main", func() {
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
 
+			handlersDir, err = ioutil.TempDir("", "handlers")
+			Expect(err).NotTo(HaveOccurred())
+
 			httpJSONServer = ghttp.NewUnstartedServer()
 			httpJSONServer.AppendHandlers(ghttp.CombineHandlers(
 				ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=255"),
@@ -180,11 +185,12 @@ var _ = Describe("main", func() {
 			)
 			httpJSONServer.HTTPTestServer.Start()
 			configContents, err := json.Marshal(map[string]interface{}{
-				"address":          listenAddress,
-				"port":             listenPort,
-				"records_file":     recordsFilePath,
-				"alias_files_glob": path.Join(aliasesDir, "*"),
-				"upcheck_domains":  []string{"health.check.bosh.", "health.check.ca."},
+				"address":             listenAddress,
+				"port":                listenPort,
+				"records_file":        recordsFilePath,
+				"alias_files_glob":    path.Join(aliasesDir, "*"),
+				"handlers_files_glob": path.Join(handlersDir, "*"),
+				"upcheck_domains":     []string{"health.check.bosh.", "health.check.ca."},
 				"health": map[string]interface{}{
 					"enabled":          true,
 					"port":             2345 + config.GinkgoConfig.ParallelNode,
@@ -193,32 +199,36 @@ var _ = Describe("main", func() {
 					"private_key_file": "../healthcheck/assets/test_certs/test_client.key",
 					"check_interval":   checkInterval,
 				},
-				"handlers": []map[string]interface{}{
-					{
-						"domain": "internal-domain.",
-						"cache": map[string]interface{}{
-							"enabled": handlerCachingEnabled,
-						},
-						"source": map[string]interface{}{
-							"type": "http",
-							"url":  httpJSONServer.URL(),
-						},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			handlerConfigContents, err := json.Marshal([]map[string]interface{}{
+				{
+					"cache":  map[string]interface{}{"enabled": handlerCachingEnabled},
+					"domain": "internal-domain.",
+					"source": map[string]interface{}{
+						"type": "http",
+						"url":  httpJSONServer.URL(),
 					},
-					{
-						"domain": "recursor.internal.",
-						"cache": map[string]interface{}{
-							"enabled": handlerCachingEnabled,
-						},
-						"source": map[string]interface{}{
-							"type": "dns",
-							"recursors": []string{
-								fmt.Sprintf("127.0.0.1:%d", recursorPort),
-							},
-						},
+				},
+				{
+					"cache":  map[string]interface{}{"enabled": handlerCachingEnabled},
+					"domain": "recursor.internal.",
+					"source": map[string]interface{}{
+						"type":      "dns",
+						"recursors": []string{fmt.Sprintf("127.0.0.1:%d", recursorPort)},
 					},
 				},
 			})
 			Expect(err).NotTo(HaveOccurred())
+
+			handlersFile, err := ioutil.TempFile(handlersDir, "handlersjson")
+			Expect(err).NotTo(HaveOccurred())
+			defer handlersFile.Close()
+
+			_, err = handlersFile.Write([]byte(handlerConfigContents))
+			Expect(err).NotTo(HaveOccurred())
+
 			cmd = newCommandWithConfig(string(configContents))
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
@@ -246,6 +256,7 @@ var _ = Describe("main", func() {
 			}
 
 			Expect(os.RemoveAll(aliasesDir)).To(Succeed())
+			Expect(os.RemoveAll(handlersDir)).To(Succeed())
 
 			httpJSONServer.Close()
 		})
@@ -1029,48 +1040,76 @@ var _ = Describe("main", func() {
 			Eventually(session.Out).Should(gbytes.Say("[main].*ERROR - timed out waiting for server to bind"))
 		})
 
-		It("exits 1 and logs a helpful error message when the config contains an unknown handler source type", func() {
-			cmd := newCommandWithConfig(fmt.Sprintf(`{
-				"address": "%s",
-				"port": %d,
-				"upcheck_domains": ["upcheck.bosh-dns."],
-				"handlers": [
+		Context("mis-configured handlers", func() {
+			var handlersDir string
+			BeforeEach(func() {
+				var err error
+				handlersDir, err = ioutil.TempDir("", "handlers")
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				Expect(os.RemoveAll(handlersDir)).To(Succeed())
+			})
+
+			It("exits 1 and logs a helpful error message when the config contains an unknown handler source type", func() {
+				handlersFile, err := ioutil.TempFile(handlersDir, "handlersjson")
+				Expect(err).NotTo(HaveOccurred())
+
+				_, err = handlersFile.Write([]byte(`[
 					{
 						"domain": "internal.domain.",
 						"source": {
 							"type": "mistyped_dns"
 						}
 					}
-				]
-			}`, listenAddress, listenPort))
+				]`))
+				Expect(err).NotTo(HaveOccurred())
+				handlersFile.Close()
 
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
+				cmd := newCommandWithConfig(fmt.Sprintf(`{
+					"address": "%s",
+					"port": %d,
+					"upcheck_domains": ["upcheck.bosh-dns."],
+					"handlers_files_glob": "%s"
+				}`, listenAddress, listenPort, filepath.Join(handlersDir, "*")))
 
-			Eventually(session, "5s").Should(gexec.Exit(1))
-			Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - Configuring handler for "internal.domain.": Unexpected handler source type: mistyped_dns`))
-		})
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
 
-		It("exits 1 and logs a helpful error message when the dns handler section doesnt contain recursors", func() {
-			cmd := newCommandWithConfig(fmt.Sprintf(`{
-				"address": "%s",
-				"port": %d,
-				"upcheck_domains": ["upcheck.bosh-dns."],
-				"handlers": [
+				Eventually(session, "5s").Should(gexec.Exit(1))
+				Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - Configuring handler for "internal.domain.": Unexpected handler source type: mistyped_dns`))
+			})
+
+			It("exits 1 and logs a helpful error message when the dns handler section doesnt contain recursors", func() {
+				handlersFile, err := ioutil.TempFile(handlersDir, "handlersjson")
+				Expect(err).NotTo(HaveOccurred())
+
+				_, err = handlersFile.Write([]byte(`[
 					{
 						"domain": "internal.domain.",
 						"source": {
 							"type": "dns"
 						}
 					}
-				]
-			}`, listenAddress, listenPort))
+				]`))
+				Expect(err).NotTo(HaveOccurred())
+				handlersFile.Close()
 
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
+				cmd := newCommandWithConfig(fmt.Sprintf(`{
+					"address": "%s",
+					"port": %d,
+					"upcheck_domains": ["upcheck.bosh-dns."],
+					"handlers_files_glob": "%s"
+				}`, listenAddress, listenPort, filepath.Join(handlersDir, "*")))
 
-			Eventually(session, "5s").Should(gexec.Exit(1))
-			Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - Configuring handler for "internal.domain.": No recursors present`))
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(session, "5s").Should(gexec.Exit(1))
+				Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - Configuring handler for "internal.domain.": No recursors present`))
+			})
+
 		})
 
 		It("exits 1 and logs a message when the globbed config files contain a broken alias config", func() {

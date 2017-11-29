@@ -30,6 +30,11 @@ instance_groups:
         enabled: true
   - name: windows-firewall-rules
     release: dns-acceptance
+  - name: configures-handler
+    release: dns-acceptance
+    properties:
+      handler_server_address: 10.0.31.191:9956
+      handler_domain: handler.internal.local.
 
 releases:
 - name: bosh-dns
