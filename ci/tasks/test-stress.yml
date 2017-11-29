@@ -1,0 +1,24 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+
+inputs:
+  - name: bbl-state
+  - name: bosh-deployment
+  - name: bosh-dns-release
+  - name: bosh-docker-cpi-release
+  # - name: bosh-candidate-release
+
+outputs: []
+
+params:
+  USE_CONCOURSE_INPUTS: true
+  DEPLOYMENTS_OF_100: 2
+  BBL_STATE_SUBDIRECTORY: multicpi/bbl-state
+
+run:
+  path: bosh-dns-release/ci/tasks/test-stress.sh

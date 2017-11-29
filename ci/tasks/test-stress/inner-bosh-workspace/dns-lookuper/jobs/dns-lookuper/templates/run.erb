@@ -1,0 +1,30 @@
+#!/bin/bash -u
+
+export DEPLOYMENT_NAME_PREFIX=<%= p('deployment_name_prefix') %>
+export DEPLOYMENT_COUNT=<%= p('deployment_count') %>
+export INSTANCE_COUNT=<%= p('instance_count') %>
+
+failure=0
+success=0
+
+for deployment_index in $(seq 1 $DEPLOYMENT_COUNT); do
+  for instance_index in $(seq 0 $(($INSTANCE_COUNT-1))); do
+    host="q-i${instance_index}.bosh-dns.default.${DEPLOYMENT_NAME_PREFIX}-${deployment_index}.bosh"
+    if [[ -z "$(dig +short ${host})" ]] ; then
+      failure=$((failure+1))
+      echo "Failed to lookup ${host}"
+
+      # output some extra debug in case of failure
+      dig upcheck.bosh-dns
+      dig "${host}"
+      uptime
+    else
+      success=$((success+1))
+    fi
+  done
+done
+
+
+echo "Result: ${success} succeeded, ${failure} failed"
+
+[[ $failure -eq 0 ]] || exit 1

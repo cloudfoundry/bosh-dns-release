@@ -1,0 +1,121 @@
+---
+- type: replace
+  path: /vm_extensions/-
+  value:
+    name: docker0
+    cloud_properties:
+      source_dest_check: false
+      advertised_routes:
+      - table_id: ((jumpbox_table_id))
+        destination: 10.245.0.0/16
+      - table_id: ((default_table_id))
+        destination: 10.245.0.0/16
+
+- type: replace
+  path: /vm_extensions/name=docker1?
+  value:
+    name: docker1
+    cloud_properties:
+      source_dest_check: false
+      advertised_routes:
+      - table_id: ((jumpbox_table_id))
+        destination: 10.246.0.0/16
+      - table_id: ((default_table_id))
+        destination: 10.246.0.0/16
+
+- type: replace
+  path: /vm_extensions/name=docker2?
+  value:
+    name: docker2
+    cloud_properties:
+      source_dest_check: false
+      advertised_routes:
+      - table_id: ((jumpbox_table_id))
+        destination: 10.247.0.0/16
+      - table_id: ((default_table_id))
+        destination: 10.247.0.0/16
+
+- type: replace
+  path: /vm_extensions/name=docker3?
+  value:
+    name: docker3
+    cloud_properties:
+      source_dest_check: false
+      advertised_routes:
+      - table_id: ((jumpbox_table_id))
+        destination: 10.248.0.0/16
+      - table_id: ((default_table_id))
+        destination: 10.248.0.0/16
+
+- type: replace
+  path: /vm_extensions/name=docker4?
+  value:
+    name: docker4
+    cloud_properties:
+      source_dest_check: false
+      advertised_routes:
+      - table_id: ((jumpbox_table_id))
+        destination: 10.249.0.0/16
+      - table_id: ((default_table_id))
+        destination: 10.249.0.0/16
+
+- type: replace
+  path: /vm_extensions/name=docker5?
+  value:
+    name: docker5
+    cloud_properties:
+      source_dest_check: false
+      advertised_routes:
+      - table_id: ((jumpbox_table_id))
+        destination: 10.250.0.0/16
+      - table_id: ((default_table_id))
+        destination: 10.250.0.0/16
+
+- type: replace
+  path: /vm_extensions/name=docker6?
+  value:
+    name: docker6
+    cloud_properties:
+      source_dest_check: false
+      advertised_routes:
+      - table_id: ((jumpbox_table_id))
+        destination: 10.251.0.0/16
+      - table_id: ((default_table_id))
+        destination: 10.251.0.0/16
+
+- type: replace
+  path: /vm_extensions/name=docker7?
+  value:
+    name: docker7
+    cloud_properties:
+      source_dest_check: false
+      advertised_routes:
+      - table_id: ((jumpbox_table_id))
+        destination: 10.252.0.0/16
+      - table_id: ((default_table_id))
+        destination: 10.252.0.0/16
+
+- type: replace
+  path: /vm_extensions/name=docker8?
+  value:
+    name: docker8
+    cloud_properties:
+      source_dest_check: false
+      advertised_routes:
+      - table_id: ((jumpbox_table_id))
+        destination: 10.253.0.0/16
+      - table_id: ((default_table_id))
+        destination: 10.253.0.0/16
+
+- type: replace
+  path: /vm_extensions/name=docker9?
+  value:
+    name: docker9
+    cloud_properties:
+      source_dest_check: false
+      advertised_routes:
+      - table_id: ((jumpbox_table_id))
+        destination: 10.254.0.0/16
+      - table_id: ((default_table_id))
+        destination: 10.254.0.0/16
+

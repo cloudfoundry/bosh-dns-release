@@ -1,0 +1,32 @@
+---
+- type: replace
+  path: /releases/-
+  value:
+    name: bosh-docker-cpi
+    url: file://((docker_cpi_release_src_path))
+    version: create
+
+- type: replace
+  path: /instance_groups/name=bosh/jobs/-
+  value:
+    name: docker_cpi
+    release: bosh-docker-cpi
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/docker_cpi?
+  value:
+    docker:
+      host: should-not-use
+      tls: { ca: fake-should-not-use, certificate: fake-should-not-use, private_key: fake-should-not-use }
+    agent:
+      mbus: nats://nats:((nats_password))@((internal_ip)):4222
+      blobstore:
+        provider: dav
+        options:
+          endpoint: http://((internal_ip)):25250
+          user: agent
+          password: ((blobstore_agent_password))
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/director/cpi_job?
+  value: docker_cpi

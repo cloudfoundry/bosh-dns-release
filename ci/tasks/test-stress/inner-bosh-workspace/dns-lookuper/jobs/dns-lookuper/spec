@@ -1,0 +1,12 @@
+---
+name: dns-lookuper
+
+templates:
+  run.erb: bin/run
+
+packages: []
+
+properties:
+  deployment_name_prefix: {}
+  deployment_count: {}
+  instance_count: {}

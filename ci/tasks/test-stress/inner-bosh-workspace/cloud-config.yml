@@ -1,0 +1,114 @@
+azs:
+- name: z1
+  cpi: docker-1
+- name: z2
+  cpi: docker-2
+- name: z3
+  cpi: docker-3
+- name: z4
+  cpi: docker-4
+- name: z5
+  cpi: docker-5
+- name: z6
+  cpi: docker-6
+- name: z7
+  cpi: docker-7
+- name: z8
+  cpi: docker-8
+- name: z9
+  cpi: docker-9
+- name: z10
+  cpi: docker-10
+
+compilation:
+  az: z1
+  network: default
+  reuse_compilation_vms: true
+  vm_type: default
+  workers: 6
+disk_types:
+- disk_size: 1024
+  name: default
+- disk_size: 10240
+  name: 10GB
+networks:
+- name: default
+  subnets:
+  - az: z1
+    range: 10.245.0.0/16
+    dns: [8.8.8.8]
+    gateway: 10.245.0.1
+    static: [10.245.0.34]
+    cloud_properties:
+      name: docker-1
+  - az: z2
+    range: 10.246.0.0/16
+    dns: [8.8.8.8]
+    gateway: 10.246.0.1
+    static: [10.246.0.34]
+    cloud_properties:
+      name: docker-2
+  - az: z3
+    range: 10.247.0.0/16
+    dns: [8.8.8.8]
+    gateway: 10.247.0.1
+    static: [10.247.0.34]
+    cloud_properties:
+      name: docker-3
+  - az: z4
+    range: 10.248.0.0/16
+    dns: [8.8.8.8]
+    gateway: 10.248.0.1
+    static: [10.248.0.34]
+    cloud_properties:
+      name: docker-4
+  - az: z5
+    range: 10.249.0.0/16
+    dns: [8.8.8.8]
+    gateway: 10.249.0.1
+    static: [10.249.0.34]
+    cloud_properties:
+      name: docker-5
+  - az: z6
+    range: 10.250.0.0/16
+    dns: [8.8.8.8]
+    gateway: 10.250.0.1
+    static: [10.250.0.34]
+    cloud_properties:
+      name: docker-6
+  - az: z7
+    range: 10.251.0.0/16
+    dns: [8.8.8.8]
+    gateway: 10.251.0.1
+    static: [10.251.0.34]
+    cloud_properties:
+      name: docker-7
+  - az: z8
+    range: 10.252.0.0/16
+    dns: [8.8.8.8]
+    gateway: 10.252.0.1
+    static: [10.252.0.34]
+    cloud_properties:
+      name: docker-8
+  - az: z9
+    range: 10.253.0.0/16
+    dns: [8.8.8.8]
+    gateway: 10.253.0.1
+    static: [10.253.0.34]
+    cloud_properties:
+      name: docker-9
+  - az: z10
+    range: 10.254.0.0/16
+    dns: [8.8.8.8]
+    gateway: 10.254.0.1
+    static: [10.254.0.34]
+    cloud_properties:
+      name: docker-10
+  type: manual
+vm_extensions:
+- name: all_ports
+  cloud_properties:
+    ports:
+    - 22/tcp
+vm_types:
+- name: default
