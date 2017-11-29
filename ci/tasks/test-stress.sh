@@ -1,6 +1,38 @@
 #!/bin/bash
 set -euxo pipefail
 
+deploy_n() {
+  deployment_count=$1
+  pushd ${scripts_directory}/inner-bosh-workspace
+    bash ./update-configs.sh
+    bosh upload-stemcell https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent
+
+    pushd dns-lookuper
+      bosh create-release --force --timestamp-version
+      bosh upload-release
+    popd
+
+    if ! bosh -d bosh-dns-1 deployment > /dev/null ; then
+      # docker cpi has a race condition of creating networks on first appearance
+      # so, pre-provision the network once on each vm first
+      bosh -d bosh-dns-1 deploy -n \
+	deployments/bosh-dns.yml \
+	-v deployment_name=bosh-dns-1 \
+	-v dns_lookuper_release=dns-lookuper \
+	-v deployment_count=$deployment_count \
+	-v instances=10
+    fi
+
+    seq 1 $deployment_count \
+      | xargs -n1 -P5 -I{} \
+      -- bosh -d bosh-dns-{} deploy -n deployments/bosh-dns.yml \
+	-v deployment_name=bosh-dns-{} \
+	-v dns_lookuper_release=dns-lookuper \
+	-v deployment_count=$deployment_count \
+	-v instances=100
+  popd
+}
+
 export BOSH_DOCKER_CPI_RELEASE_REPO=$PWD/bosh-docker-cpi-release
 export BOSH_DEPLOYMENT_REPO=$PWD/bosh-deployment
 
@@ -41,7 +73,7 @@ set -x
 
   pushd inner-bosh-workspace
     # 3. 10x Deploy large bosh-dns deployment to inner director
-    ./deploy-n.sh $deployments
+    deploy_n $deployments
 
     # 4. Run test
     ./check-dns.sh $deployments
