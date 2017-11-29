@@ -8,6 +8,7 @@ bosh -n -d bosh deploy \
   --vars-file  ./vars.yml \
   -o $BOSH_DEPLOYMENT_REPO/misc/bosh-dev.yml \
   -o ./ops/add-docker-cpi-release.yml \
+  -o ./ops/make-stemcell-latest.yml \
   -o $BOSH_DEPLOYMENT_REPO/uaa.yml \
   -o $BOSH_DEPLOYMENT_REPO/jumpbox-user.yml \
   -o $BOSH_DEPLOYMENT_REPO/local-dns.yml \
