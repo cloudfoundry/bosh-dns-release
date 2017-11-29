@@ -10,6 +10,7 @@ bosh -n -d bosh deploy \
   -o $BOSH_DEPLOYMENT_REPO/local-dns.yml \
   -o $BOSH_DEPLOYMENT_REPO/uaa.yml \
   -o $BOSH_DEPLOYMENT_REPO/credhub.yml \
+  -o $BOSH_DEPLOYMENT_REPO/misc/bosh-dev.yml \
   -o ./ops/add-docker-cpi-release.yml \
   -o ./ops/make-cloud-configable.yml \
   -o ./ops/configure-max-threads.yml \
