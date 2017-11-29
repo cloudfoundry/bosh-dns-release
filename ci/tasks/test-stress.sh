@@ -17,12 +17,16 @@ set -x
 
 deployments="${DEPLOYMENTS_OF_100:=10}"
 
+# Ensure the environment is clean
+bosh -n -d bosh delete-deployment
+bosh -n -d docker delete-deployment
+
 # 1. Deploy docker hosts to outer director
 pushd docker-hosts-deployment
   ./deploy-docker.sh
 popd
 
-# 2. Deploy innr director
+# 2. Deploy inner director
 pushd inner-bosh-deployment
   ./deploy-director.sh
 popd

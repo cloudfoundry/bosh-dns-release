@@ -17,7 +17,7 @@ outputs: []
 
 params:
   USE_CONCOURSE_INPUTS: true
-  DEPLOYMENTS_OF_100: 2
+  DEPLOYMENTS_OF_100: 10
   BBL_STATE_SUBDIRECTORY: multicpi/bbl-state
 
 run:
