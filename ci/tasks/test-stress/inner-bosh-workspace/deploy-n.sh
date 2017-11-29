@@ -1,6 +1,6 @@
-#!/bin/bash -eux
+#!/bin/bash -euxo pipefail
 
-bash -eux ./update-configs.sh
+bash -euxo pipefail ./update-configs.sh
 
 bosh upload-stemcell https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent
 

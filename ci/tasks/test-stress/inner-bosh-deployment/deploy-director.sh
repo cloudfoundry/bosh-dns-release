@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -euxo pipefail
 
 bosh upload-stemcell https://bosh.io/d/stemcells/bosh-aws-xen-hvm-ubuntu-trusty-go_agent
 

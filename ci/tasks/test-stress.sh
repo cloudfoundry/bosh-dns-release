@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -euxo pipefail
 
 export BOSH_DOCKER_CPI_RELEASE_REPO=$PWD/bosh-docker-cpi-release
 export BOSH_DEPLOYMENT_REPO=$PWD/bosh-deployment

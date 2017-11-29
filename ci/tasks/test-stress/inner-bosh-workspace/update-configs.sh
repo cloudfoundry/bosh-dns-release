@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -euxo pipefail
 
 bosh update-cloud-config -n cloud-config.yml
 

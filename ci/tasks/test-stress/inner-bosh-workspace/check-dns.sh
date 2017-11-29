@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -euxo pipefail
 
 deployment_count=$1
 
