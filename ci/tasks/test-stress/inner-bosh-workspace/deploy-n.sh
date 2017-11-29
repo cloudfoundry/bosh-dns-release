@@ -1,7 +1,7 @@
-#!/bin/bash -euxo pipefail
+#!/bin/bash
+set -euxo pipefail
 
-bash -euxo pipefail ./update-configs.sh
-
+bash ./update-configs.sh
 bosh upload-stemcell https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent
 
 pushd dns-lookuper

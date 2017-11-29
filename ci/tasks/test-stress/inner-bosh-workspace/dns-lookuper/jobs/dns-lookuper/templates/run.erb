@@ -1,4 +1,5 @@
-#!/bin/bash -u
+#!/bin/bash
+set -euxo pipefail
 
 export DEPLOYMENT_NAME_PREFIX=<%= p('deployment_name_prefix') %>
 export DEPLOYMENT_COUNT=<%= p('deployment_count') %>

@@ -1,4 +1,5 @@
-#!/bin/bash -euxo pipefail
+#!/bin/bash
+set -euxo pipefail
 
 bbl --state-dir=$BBL_STATE_DIR cloud-config | bosh -n update-cloud-config - \
   -o docker-addressable-zones-template.yml \
