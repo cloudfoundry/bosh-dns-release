@@ -12,6 +12,7 @@ groups:
   - test-performance-aws
   - test-acceptance
   - test-acceptance-windows
+  - test-stress
   - brats-ubuntu
   - bbl-up
   - bbl-destroy
@@ -183,6 +184,21 @@ jobs:
       file: bosh-dns-release/ci/tasks/test-acceptance-windows-shared.yml
       timeout: 1h
 
+- name: test-stress
+  public: false
+  serial: true
+  plan:
+    - aggregate:
+      - get: bbl-state
+        resource: envs
+      - get: bosh-deployment
+      - get: bosh-dns-release
+        trigger: true
+        passed: [create-release]
+      - get: bosh-docker-cpi-release
+    - task: test-stress
+      file: bosh-dns-release/ci/tasks/test-stress.yml
+
 - name: brats-ubuntu
   serial: true
   plan:
@@ -320,6 +336,12 @@ resources:
   type: git
   source:
     uri: https://github.com/cloudfoundry/bosh-deployment
+    branch: master
+
+- name: bosh-docker-cpi-release
+  type: git
+  source:
+    uri: https://github.com/cppforlife/bosh-docker-cpi-release
     branch: master
 
 - name: bosh-candidate-stemcell
