@@ -1,6 +1,14 @@
 #!/bin/bash
 set -euxo pipefail
 
+function kill_bbl_ssh {
+  # kill the ssh tunnel to jumpbox, set up by bbl env
+  # (or task will hang forever)
+  pkill ssh || true
+}
+
+trap kill_bbl_ssh EXIT
+
 export BBL_STATE_DIR=$PWD/bbl-state/${BBL_STATE_SUBDIRECTORY}
 export STATE_DIR=$PWD/inner-bosh-vars
 
@@ -24,7 +32,3 @@ pushd ${scripts_directory}
     ./check-dns.sh $deployments
   popd
 popd
-
-# kill the ssh tunnel to jumpbox, set up by bbl env
-# (or task will hang forever)
-pkill ssh || true

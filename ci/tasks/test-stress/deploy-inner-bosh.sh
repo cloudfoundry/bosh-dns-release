@@ -1,6 +1,14 @@
 #!/bin/bash
 set -euxo pipefail
 
+function kill_bbl_ssh {
+  # kill the ssh tunnel to jumpbox, set up by bbl env
+  # (or task will hang forever)
+  pkill ssh || true
+}
+
+trap kill_bbl_ssh EXIT
+
 export BOSH_DOCKER_CPI_RELEASE_REPO=$PWD/bosh-docker-cpi-release
 export BOSH_DEPLOYMENT_REPO=$PWD/bosh-deployment
 
@@ -35,8 +43,3 @@ pushd ${scripts_directory}
 popd
 
 cp -R ${STATE_DIR} inner-bosh-vars
-
-# kill the ssh tunnel to jumpbox, set up by bbl env
-# (or task will hang forever)
-pkill ssh || true
-

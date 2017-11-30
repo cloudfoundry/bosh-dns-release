@@ -1,6 +1,14 @@
 #!/bin/bash
 set -euxo pipefail
 
+function kill_bbl_ssh {
+  # kill the ssh tunnel to jumpbox, set up by bbl env
+  # (or task will hang forever)
+  pkill ssh || true
+}
+
+trap kill_bbl_ssh EXIT
+
 deploy_n() {
   deployment_count=$1
   bash ./update-configs.sh
@@ -55,7 +63,3 @@ pushd ${scripts_directory}
     deploy_n $deployments
   popd
 popd
-
-# kill the ssh tunnel to jumpbox, set up by bbl env
-# (or task will hang forever)
-pkill ssh || true
