@@ -13,3 +13,7 @@ bosh -n -d docker delete-deployment
 
 # 7. Clean-up old artifacts
 bosh -n clean-up --all
+
+# kill the ssh tunnel to jumpbox, set up by bbl env
+# (or task will hang forever)
+pkill ssh || true

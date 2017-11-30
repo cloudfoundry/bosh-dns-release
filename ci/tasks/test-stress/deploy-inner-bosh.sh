@@ -36,3 +36,7 @@ popd
 
 cp -R ${STATE_DIR} inner-bosh-vars
 
+# kill the ssh tunnel to jumpbox, set up by bbl env
+# (or task will hang forever)
+pkill ssh || true
+
