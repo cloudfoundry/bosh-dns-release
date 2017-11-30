@@ -10,6 +10,7 @@ inputs:
   - name: bbl-state
   - name: bosh-deployment
   - name: bosh-docker-cpi-release
+  - name: bosh-dns-release
 
 outputs:
   - name: inner-bosh-vars
