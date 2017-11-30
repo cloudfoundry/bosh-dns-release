@@ -196,8 +196,18 @@ jobs:
         trigger: true
         passed: [create-release]
       - get: bosh-docker-cpi-release
-    - task: test-stress
-      file: bosh-dns-release/ci/tasks/test-stress.yml
+    - task: pre-clean
+      file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
+    - do:
+      - task: deploy-to-aws
+        file: bosh-dns-release/ci/tasks/test-stress/deploy-inner-bosh.yml
+      - task: deploy-containers
+        file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
+      - task: stress-containers
+        file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
+      ensure:
+        task: post-clean
+        file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
 
 - name: brats-ubuntu
   serial: true
