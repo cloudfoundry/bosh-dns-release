@@ -113,7 +113,7 @@ func mainExitCode() int {
 
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, aliasedRecordSet, mux, discoveryHandler)
 
-	handlers.AddHandler(mux, clock, "arpa.", handlers.NewArpaHandler(logger), logger)
+	mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger), clock, logger))
 
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
 
@@ -139,12 +139,12 @@ func mainExitCode() int {
 			handler = handlers.NewCachingDNSHandler(handler)
 		}
 
-		handlers.AddHandler(mux, clock, handlerConfig.Domain, handler, logger)
+		mux.Handle(handlerConfig.Domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
 	}
 
 	upchecks := []server.Upcheck{}
 	for _, upcheckDomain := range config.UpcheckDomains {
-		handlers.AddHandler(mux, clock, upcheckDomain, handlers.NewUpcheckHandler(logger), logger)
+		mux.Handle(upcheckDomain, handlers.NewRequestLoggerHandler(handlers.NewUpcheckHandler(logger), clock, logger))
 		upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("%s:%d", config.Address, config.Port), upcheckDomain, "udp"))
 		upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("%s:%d", config.Address, config.Port), upcheckDomain, "tcp"))
 	}
