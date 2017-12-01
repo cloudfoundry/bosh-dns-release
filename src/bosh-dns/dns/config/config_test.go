@@ -29,6 +29,8 @@ var _ = Describe("Config", func() {
 		healthMaxTrackedQueries int
 		healthPrivateKeyFile    string
 		upcheckDomains          []string
+		aliasesFileGlob         string
+		handlersFileGlob        string
 	)
 
 	BeforeEach(func() {
@@ -45,15 +47,19 @@ var _ = Describe("Config", func() {
 		healthCAFile = "/etc/ca"
 		upcheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
 		upcheckDomains = []string{"upcheck.domain.", "health2.bosh."}
+		aliasesFileGlob = "/aliases/*/glob"
+		handlersFileGlob = "/handlers/*/glob"
 	})
 
 	It("returns config from a config file", func() {
 		configContents, err := json.Marshal(map[string]interface{}{
-			"address":          listenAddress,
-			"port":             listenPort,
-			"timeout":          timeout,
-			"recursor_timeout": recursorTimeout,
-			"upcheck_domains":  upcheckDomains,
+			"address":             listenAddress,
+			"port":                listenPort,
+			"timeout":             timeout,
+			"recursor_timeout":    recursorTimeout,
+			"upcheck_domains":     upcheckDomains,
+			"alias_files_glob":    aliasesFileGlob,
+			"handlers_files_glob": handlersFileGlob,
 			"health": map[string]interface{}{
 				"enabled":             true,
 				"port":                healthPort,
@@ -91,12 +97,14 @@ var _ = Describe("Config", func() {
 		dnsConfig, err := config.LoadFromFile(configFilePath)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dnsConfig).To(Equal(config.Config{
-			Address:         listenAddress,
-			Port:            listenPort,
-			Timeout:         config.DurationJSON(timeoutDuration),
-			RecursorTimeout: config.DurationJSON(recursorTimeoutDuration),
-			Recursors:       []string{},
-			UpcheckDomains:  []string{"upcheck.domain.", "health2.bosh."},
+			Address:           listenAddress,
+			Port:              listenPort,
+			Timeout:           config.DurationJSON(timeoutDuration),
+			RecursorTimeout:   config.DurationJSON(recursorTimeoutDuration),
+			Recursors:         []string{},
+			UpcheckDomains:    []string{"upcheck.domain.", "health2.bosh."},
+			AliasFilesGlob:    aliasesFileGlob,
+			HandlersFilesGlob: handlersFileGlob,
 			Health: config.HealthConfig{
 				Enabled:           true,
 				Port:              healthPort,
@@ -108,19 +116,6 @@ var _ = Describe("Config", func() {
 			},
 			Cache: config.Cache{
 				Enabled: true,
-			},
-			Handlers: []config.Handler{
-				{
-					Domain: "some.tld.",
-					Cache: config.Cache{
-						Enabled: true,
-					},
-					Source: config.Source{
-						Type:      "http",
-						URL:       "http.server.address",
-						Recursors: []string{},
-					},
-				},
 			},
 		}))
 	})
@@ -231,18 +226,6 @@ var _ = Describe("Config", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("too many colons in address"))
 			Expect(err.Error()).To(ContainSubstring("::::::::::::"))
-		})
-	})
-
-	Context("handlers", func() {
-		It("it rewrites source recursors to include default ports", func() {
-			configFilePath := writeConfigFile(`{ "address": "127.0.0.1", "port": 53, "handlers": [ { "source": { "recursors": [ "8.8.8.8", "10.244.4.4:9700" ] } } ] }`)
-
-			dnsConfig, err := config.LoadFromFile(configFilePath)
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(dnsConfig.Handlers[0].Source.Recursors).To(ContainElement("8.8.8.8:53"))
-			Expect(dnsConfig.Handlers[0].Source.Recursors).To(ContainElement("10.244.4.4:9700"))
 		})
 	})
 })

@@ -11,30 +11,18 @@ import (
 )
 
 type Config struct {
-	Address         string
-	Port            int
-	Timeout         DurationJSON
-	RecursorTimeout DurationJSON `json:"recursor_timeout"`
-	Recursors       []string
-	RecordsFile     string   `json:"records_file"`
-	AliasFilesGlob  string   `json:"alias_files_glob"`
-	UpcheckDomains  []string `json:"upcheck_domains"`
+	Address           string
+	Port              int
+	Timeout           DurationJSON
+	RecursorTimeout   DurationJSON `json:"recursor_timeout"`
+	Recursors         []string
+	RecordsFile       string   `json:"records_file"`
+	AliasFilesGlob    string   `json:"alias_files_glob"`
+	HandlersFilesGlob string   `json:"handlers_files_glob"`
+	UpcheckDomains    []string `json:"upcheck_domains"`
 
-	Health   HealthConfig `json:"health"`
-	Cache    Cache        `json:"cache"`
-	Handlers []Handler    `json:"handlers"`
-}
-
-type Handler struct {
-	Domain string `json:"domain"`
-	Source Source `json:"source"`
-	Cache  Cache  `json:"cache"`
-}
-
-type Source struct {
-	Type      string   `json:"type"`
-	URL       string   `json:"url,omitempty"`
-	Recursors []string `json:"recursors,omitempty"`
+	Health HealthConfig `json:"health"`
+	Cache  Cache        `json:"cache"`
 }
 
 type HealthConfig struct {
@@ -100,13 +88,6 @@ func LoadFromFile(configFilePath string) (Config, error) {
 	c.Recursors, err = AppendDefaultDNSPortIfMissing(c.Recursors)
 	if err != nil {
 		return Config{}, err
-	}
-
-	for i := range c.Handlers {
-		c.Handlers[i].Source.Recursors, err = AppendDefaultDNSPortIfMissing(c.Handlers[i].Source.Recursors)
-		if err != nil {
-			return Config{}, err
-		}
 	}
 
 	return c, nil

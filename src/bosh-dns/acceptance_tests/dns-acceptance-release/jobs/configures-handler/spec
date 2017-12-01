@@ -1,0 +1,14 @@
+---
+name: configures-handler
+
+templates:
+  handlers.json.erb: dns/handlers.json
+
+packages: []
+
+properties:
+  handler_server_address:
+    description: "Address in which this job will configure a handler that points to a dns server address"
+
+  handler_domain:
+    description: "domain that will be used to configure handler"
