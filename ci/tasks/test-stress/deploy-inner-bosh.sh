@@ -42,4 +42,5 @@ pushd ${scripts_directory}
   bosh env
 popd
 
-cp -R ${STATE_DIR} inner-bosh-vars
+cp -R ${STATE_DIR}/ inner-bosh-vars/
+
