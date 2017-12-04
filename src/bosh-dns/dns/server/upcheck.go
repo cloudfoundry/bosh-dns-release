@@ -40,7 +40,7 @@ func (uc DNSAnswerValidatingUpcheck) IsUp() error {
 	dnsClient := dns.Client{Net: uc.network}
 	request := dns.Msg{
 		Question: []dns.Question{
-			{Name: uc.upCheckDomain},
+			{Name: uc.upCheckDomain, Qtype: dns.TypeA},
 		},
 	}
 	msg, _, err := dnsClient.Exchange(&request, uc.target)

@@ -29,25 +29,111 @@ var _ = Describe("UpcheckHandler", func() {
 	})
 
 	Describe("ServeDNS", func() {
-		It("returns success rcode", func() {
-			m := &dns.Msg{}
-			m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
+		Context("when ANY record", func() {
+			It("returns success rcode", func() {
+				m := &dns.Msg{}
+				m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
 
-			upcheckHandler.ServeDNS(fakeWriter, m)
-			message := fakeWriter.WriteMsgArgsForCall(0)
-			Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-			Expect(message.Authoritative).To(Equal(true))
-			Expect(message.RecursionAvailable).To(Equal(true))
-			Expect(len(message.Answer)).To(Equal(1))
-			Expect(message.Answer[0]).To(Equal(&dns.A{
-				Hdr: dns.RR_Header{
-					Name:   "upcheck.bosh-dns.",
-					Rrtype: dns.TypeA,
-					Class:  dns.ClassINET,
-					Ttl:    0,
-				},
-				A: net.IPv4(127, 0, 0, 1),
-			}))
+				upcheckHandler.ServeDNS(fakeWriter, m)
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(message.Authoritative).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(len(message.Answer)).To(Equal(2))
+				Expect(message.Answer[0]).To(Equal(&dns.A{
+					Hdr: dns.RR_Header{
+						Name:   "upcheck.bosh-dns.",
+						Rrtype: dns.TypeA,
+						Class:  dns.ClassINET,
+						Ttl:    0,
+					},
+					A: net.IPv4(127, 0, 0, 1),
+				}))
+				Expect(message.Answer[1]).To(Equal(&dns.AAAA{
+					Hdr: dns.RR_Header{
+						Name:   "upcheck.bosh-dns.",
+						Rrtype: dns.TypeAAAA,
+						Class:  dns.ClassINET,
+						Ttl:    0,
+					},
+					AAAA: net.ParseIP("::1"),
+				}))
+			})
+		})
+
+		Context("when A record", func() {
+			It("returns success rcode", func() {
+				m := &dns.Msg{}
+				m.SetQuestion("upcheck.bosh-dns.", dns.TypeA)
+
+				upcheckHandler.ServeDNS(fakeWriter, m)
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(message.Authoritative).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(len(message.Answer)).To(Equal(1))
+				Expect(message.Answer[0]).To(Equal(&dns.A{
+					Hdr: dns.RR_Header{
+						Name:   "upcheck.bosh-dns.",
+						Rrtype: dns.TypeA,
+						Class:  dns.ClassINET,
+						Ttl:    0,
+					},
+					A: net.IPv4(127, 0, 0, 1),
+				}))
+			})
+		})
+
+		Context("when AAAA record", func() {
+			It("returns success rcode", func() {
+				m := &dns.Msg{}
+				m.SetQuestion("upcheck.bosh-dns.", dns.TypeAAAA)
+
+				upcheckHandler.ServeDNS(fakeWriter, m)
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(message.Authoritative).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(len(message.Answer)).To(Equal(1))
+				Expect(message.Answer[0]).To(Equal(&dns.AAAA{
+					Hdr: dns.RR_Header{
+						Name:   "upcheck.bosh-dns.",
+						Rrtype: dns.TypeAAAA,
+						Class:  dns.ClassINET,
+						Ttl:    0,
+					},
+					AAAA: net.ParseIP("::1"),
+				}))
+			})
+		})
+
+		Context("when not A, AAAA, or ANY record", func() {
+			It("returns success rcode", func() {
+				m := &dns.Msg{}
+				m.SetQuestion("upcheck.bosh-dns.", dns.TypeMX)
+
+				upcheckHandler.ServeDNS(fakeWriter, m)
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(message.Authoritative).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(len(message.Answer)).To(Equal(0))
+			})
+		})
+
+		Context("when no question", func() {
+			It("returns something", func() {
+				m := &dns.Msg{}
+				m.Id = 3000
+
+				upcheckHandler.ServeDNS(fakeWriter, m)
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Id).To(Equal(m.Id))
+				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(message.Authoritative).To(Equal(true))
+				Expect(message.RecursionAvailable).To(Equal(true))
+				Expect(len(message.Answer)).To(Equal(0))
+			})
 		})
 
 		Context("when the message fails to write", func() {
