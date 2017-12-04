@@ -6,7 +6,7 @@ stemcells:
 update:
   canaries: 0
   canary_watch_time: 5000-1200000
-  max_in_flight: 10
+  max_in_flight: 20
   serial: false
   update_watch_time: 5000-1200000
 instance_groups:

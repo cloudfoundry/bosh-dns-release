@@ -31,7 +31,7 @@ deploy_n() {
   fi
 
   seq 1 $deployment_count \
-    | xargs -n1 -P5 -I{} \
+    | xargs -n1 -P3 -I{} \
     -- bosh -d bosh-dns-{} deploy -n deployments/bosh-dns.yml \
       -v deployment_name=bosh-dns-{} \
       -v dns_lookuper_release=dns-lookuper \
