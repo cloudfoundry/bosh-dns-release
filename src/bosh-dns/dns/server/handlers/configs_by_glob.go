@@ -23,7 +23,7 @@ func ConfigFromGlob(globber ConfigGlobber, loader NamedConfigLoader, glob string
 		return Config{}, bosherr.WrapError(err, "glob pattern failed to compute")
 	}
 
-	var handlers []Handler
+	var handlers []DelegatingHandlerDescription
 
 	for _, filePath := range filePaths {
 		found, err := loader.Load(filePath)

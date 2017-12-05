@@ -129,29 +129,18 @@ func mainExitCode() int {
 
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
 
-	for _, handlerConfig := range handlersConfiguration.Handlers {
-		var handler dns.Handler
-
-		if handlerConfig.Source.Type == "http" {
-			handler = handlers.NewHTTPJSONHandler(handlerConfig.Source.URL, logger)
-		} else if handlerConfig.Source.Type == "dns" {
-			if len(handlerConfig.Source.Recursors) == 0 {
-				logger.Error(logTag, fmt.Sprintf(`Configuring handler for "%s": No recursors present`, handlerConfig.Domain))
-				return 1
-			}
-
-			recursorPool := handlers.NewFailoverRecursorPool(stringShuffler.Shuffle(handlerConfig.Source.Recursors), logger)
-			handler = handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
-		} else {
-			logger.Error(logTag, fmt.Sprintf(`Configuring handler for "%s": Unexpected handler source type: %s`, handlerConfig.Domain, handlerConfig.Source.Type))
-			return 1
-		}
-
-		if handlerConfig.Cache.Enabled {
-			handler = handlers.NewCachingDNSHandler(handler)
-		}
-
-		mux.Handle(handlerConfig.Domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
+	delegatingHandlers, err := handlersConfiguration.RealHandlers(
+		logger,
+		stringShuffler,
+		clock,
+		exchangerFactory,
+	)
+	if err != nil {
+		logger.Error(logTag, err.Error())
+		return 1
+	}
+	for domain, handler := range delegatingHandlers {
+		mux.Handle(domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
 	}
 
 	upchecks := []server.Upcheck{}

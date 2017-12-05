@@ -68,7 +68,7 @@ var _ = Describe("ConfigFromGlob", func() {
 					switch name {
 					case "/some/file":
 						return Config{
-							Handlers: []Handler{
+							Handlers: []DelegatingHandlerDescription{
 								{
 									Domain: "local.internal.",
 									Cache:  ConfigCache{Enabled: true},
@@ -83,7 +83,7 @@ var _ = Describe("ConfigFromGlob", func() {
 						}, nil
 					case "/another/file":
 						return Config{
-							Handlers: []Handler{
+							Handlers: []DelegatingHandlerDescription{
 								{
 									Domain: "local.internal2.",
 									Cache:  ConfigCache{Enabled: false},
@@ -100,7 +100,7 @@ var _ = Describe("ConfigFromGlob", func() {
 				c, err := ConfigFromGlob(fakeGlobber, fakeLoader, "someglob")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(c).To(Equal(Config{
-					Handlers: []Handler{
+					Handlers: []DelegatingHandlerDescription{
 						{
 							Domain: "local.internal.",
 							Cache:  ConfigCache{Enabled: true},

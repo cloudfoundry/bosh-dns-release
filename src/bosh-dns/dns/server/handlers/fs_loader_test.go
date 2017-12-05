@@ -38,7 +38,7 @@ var _ = Describe("FSLoader", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				config := Config{
-					Handlers: []Handler{
+					Handlers: []DelegatingHandlerDescription{
 						{
 							Domain: "local.internal.",
 							Cache:  ConfigCache{Enabled: true},

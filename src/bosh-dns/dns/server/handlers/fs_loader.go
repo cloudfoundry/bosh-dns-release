@@ -19,7 +19,7 @@ func (l FSLoader) Load(filename string) (Config, error) {
 		return Config{}, bosherr.WrapError(err, "missing handlers config file")
 	}
 
-	var handlers []Handler
+	var handlers []DelegatingHandlerDescription
 	err = json.Unmarshal(fileContents, &handlers)
 	if err != nil {
 		return Config{}, bosherr.WrapErrorf(err, "handlers config file malformed: %s", filename)
