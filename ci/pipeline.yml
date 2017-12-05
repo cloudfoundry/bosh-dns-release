@@ -16,6 +16,8 @@ groups:
   - brats-ubuntu
   - bbl-up
   - bbl-destroy
+  - bbl-up-stress
+  - bbl-destroy-stress
   - finalize-release
 - name: aws-perf
   jobs:
@@ -187,6 +189,8 @@ jobs:
 - name: test-stress
   public: false
   serial: true
+  serial_groups:
+  - test-stress-group
   plan:
     - aggregate:
       - get: bbl-state
@@ -274,6 +278,49 @@ jobs:
         put: envs
         params:
           repository: envs
+
+- name: bbl-up-stress
+  serial_groups:
+  - test-stress-group
+  plan:
+    - aggregate:
+      - get: cf-deployment-concourse-tasks
+      - get: bbl-state
+        resource: envs
+      - get: ops-files
+        resource: envs
+    - task: bbl-up
+      file: cf-deployment-concourse-tasks/bbl-up/task.yml
+      params:
+        BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
+        BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+        BBL_AWS_REGION: us-west-2
+        IS_BOSH_LITE: true # this skips load balancer creation, which we want since we are not deploying CF
+        BBL_IAAS: aws
+        BBL_STATE_DIR: test-stress/bbl-state
+      ensure:
+        put: envs
+        params:
+          repository: updated-bbl-state
+
+- name: bbl-destroy-stress
+  serial_groups:
+  - test-stress-group
+  plan:
+    - aggregate:
+      - get: cf-deployment-concourse-tasks
+      - get: bbl-state
+        resource: envs
+    - task: bbl-destroy
+      file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+      params:
+        BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
+        BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+        BBL_STATE_DIR: test-stress/bbl-state
+      ensure:
+        put: envs
+        params:
+          repository: updated-bbl-state
 
 - name: finalize-release
   plan:
@@ -384,6 +431,12 @@ resources:
     branch: master
     uri: git@github.com:cloudfoundry/dns-release-ci-envs.git
     private_key: {{envs_private_key}}
+
+- name: cf-deployment-concourse-tasks
+  type: git
+  source:
+    branch: "v4.21"
+    uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks
 
 - name: every-10m
   type: time
