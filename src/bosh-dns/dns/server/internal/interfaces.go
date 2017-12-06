@@ -1,5 +1,11 @@
 package internal
 
+import "github.com/miekg/dns"
+
 //go:generate counterfeiter net.Conn
 
-//go:generate counterfeiter github.com/miekg/dns.ResponseWriter
+//go:generate counterfeiter . responseWriter
+
+type responseWriter interface {
+	dns.ResponseWriter
+}
