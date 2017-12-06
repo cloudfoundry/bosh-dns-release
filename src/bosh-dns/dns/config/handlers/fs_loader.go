@@ -13,26 +13,26 @@ type FSLoader struct {
 	fs boshsys.FileSystem
 }
 
-func (l FSLoader) Load(filename string) (HandlersConfig, error) {
+func (l FSLoader) Load(filename string) (HandlerConfigs, error) {
 	fileContents, err := l.fs.ReadFile(filename)
 	if err != nil {
-		return HandlersConfig{}, bosherr.WrapError(err, "missing handlers config file")
+		return nil, bosherr.WrapError(err, "missing handlers config file")
 	}
 
-	var handlers []HandlerConfig
+	var handlers HandlerConfigs
 	err = json.Unmarshal(fileContents, &handlers)
 	if err != nil {
-		return HandlersConfig{}, bosherr.WrapErrorf(err, "handlers config file malformed: %s", filename)
+		return nil, bosherr.WrapErrorf(err, "handlers config file malformed: %s", filename)
 	}
 
 	for i := range handlers {
 		handlers[i].Source.Recursors, err = config.AppendDefaultDNSPortIfMissing(handlers[i].Source.Recursors)
 		if err != nil {
-			return HandlersConfig{}, err
+			return nil, err
 		}
 	}
 
-	return HandlersConfig{Handlers: handlers}, nil
+	return handlers, nil
 }
 
 func NewFSLoader(fs boshsys.FileSystem) FSLoader {

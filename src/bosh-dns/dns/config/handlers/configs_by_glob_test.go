@@ -52,7 +52,7 @@ var _ = Describe("ConfigFromGlob", func() {
 
 		Context("when the loader is unable to load the config", func() {
 			BeforeEach(func() {
-				fakeLoader.LoadReturns(HandlersConfig{}, errors.New("file-is-busted"))
+				fakeLoader.LoadReturns(nil, errors.New("file-is-busted"))
 			})
 			It("promotes the error", func() {
 				_, err := ConfigFromGlob(fakeGlobber, fakeLoader, "someglob")
@@ -64,58 +64,52 @@ var _ = Describe("ConfigFromGlob", func() {
 
 		Context("when the loader loads one or more configs", func() {
 			BeforeEach(func() {
-				fakeLoader.LoadStub = func(name string) (HandlersConfig, error) {
+				fakeLoader.LoadStub = func(name string) (HandlerConfigs, error) {
 					switch name {
 					case "/some/file":
-						return HandlersConfig{
-							Handlers: []HandlerConfig{
-								{
-									Domain: "local.internal.",
-									Cache:  ConfigCache{Enabled: true},
-									Source: Source{Type: "http", URL: "http://some.endpoint.local"},
-								},
-								{
-									Domain: "local2.internal.",
-									Cache:  ConfigCache{Enabled: true},
-									Source: Source{Type: "http", URL: "http://some2.endpoint.local"},
-								},
+						return HandlerConfigs{
+							{
+								Domain: "local.internal.",
+								Cache:  ConfigCache{Enabled: true},
+								Source: Source{Type: "http", URL: "http://some.endpoint.local"},
+							},
+							{
+								Domain: "local2.internal.",
+								Cache:  ConfigCache{Enabled: true},
+								Source: Source{Type: "http", URL: "http://some2.endpoint.local"},
 							},
 						}, nil
 					case "/another/file":
-						return HandlersConfig{
-							Handlers: []HandlerConfig{
-								{
-									Domain: "local.internal2.",
-									Cache:  ConfigCache{Enabled: false},
-									Source: Source{Type: "dns", Recursors: []string{"127.0.0.1:53"}},
-								},
+						return HandlerConfigs{
+							{
+								Domain: "local.internal2.",
+								Cache:  ConfigCache{Enabled: false},
+								Source: Source{Type: "dns", Recursors: []string{"127.0.0.1:53"}},
 							},
 						}, nil
 					}
-					return HandlersConfig{}, errors.New("wrong-name")
+					return nil, errors.New("wrong-name")
 				}
 			})
 
 			It("appends all handlers", func() {
 				c, err := ConfigFromGlob(fakeGlobber, fakeLoader, "someglob")
 				Expect(err).ToNot(HaveOccurred())
-				Expect(c).To(Equal(HandlersConfig{
-					Handlers: []HandlerConfig{
-						{
-							Domain: "local.internal.",
-							Cache:  ConfigCache{Enabled: true},
-							Source: Source{Type: "http", URL: "http://some.endpoint.local"},
-						},
-						{
-							Domain: "local2.internal.",
-							Cache:  ConfigCache{Enabled: true},
-							Source: Source{Type: "http", URL: "http://some2.endpoint.local"},
-						},
-						{
-							Domain: "local.internal2.",
-							Cache:  ConfigCache{Enabled: false},
-							Source: Source{Type: "dns", Recursors: []string{"127.0.0.1:53"}},
-						},
+				Expect(c).To(Equal(HandlerConfigs{
+					{
+						Domain: "local.internal.",
+						Cache:  ConfigCache{Enabled: true},
+						Source: Source{Type: "http", URL: "http://some.endpoint.local"},
+					},
+					{
+						Domain: "local2.internal.",
+						Cache:  ConfigCache{Enabled: true},
+						Source: Source{Type: "http", URL: "http://some2.endpoint.local"},
+					},
+					{
+						Domain: "local.internal2.",
+						Cache:  ConfigCache{Enabled: false},
+						Source: Source{Type: "dns", Recursors: []string{"127.0.0.1:53"}},
 					},
 				}))
 			})

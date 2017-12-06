@@ -18,9 +18,7 @@ type HandlerFactory interface {
 	CreateForwardHandler([]string, bool) dns.Handler
 }
 
-type HandlersConfig struct {
-	Handlers []HandlerConfig `json:"handlers"`
-}
+type HandlerConfigs []HandlerConfig
 
 type HandlerConfig struct {
 	Domain string      `json:"domain"`
@@ -38,9 +36,9 @@ type ConfigCache struct {
 	Enabled bool `json:"enabled"`
 }
 
-func (c HandlersConfig) GenerateHandlers(factory HandlerFactory) (map[string]dns.Handler, error) {
+func (c HandlerConfigs) GenerateHandlers(factory HandlerFactory) (map[string]dns.Handler, error) {
 	var realHandlers = make(map[string]dns.Handler)
-	for _, handlerConfig := range c.Handlers {
+	for _, handlerConfig := range c {
 		var handler dns.Handler
 
 		if handlerConfig.Source.Type == "http" {

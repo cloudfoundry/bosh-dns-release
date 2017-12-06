@@ -11,7 +11,7 @@ import (
 var _ = Describe("Handlers Configuration", func() {
 	Describe("GenerateHandlers", func() {
 		var (
-			handlersConfig     HandlersConfig
+			handlersConfig     HandlerConfigs
 			fakeHandlerFactory *FakeHandlerFactory
 			fakeJsonHandler    *FakeDnsHandler
 			fakeDnsHandler     *FakeDnsHandler
@@ -29,9 +29,7 @@ var _ = Describe("Handlers Configuration", func() {
 
 		Context("with no handlers configured", func() {
 			It("returns an empty set", func() {
-				handlersConfig = HandlersConfig{
-					Handlers: []HandlerConfig{},
-				}
+				handlersConfig = HandlerConfigs{}
 
 				handlers, err := handlersConfig.GenerateHandlers(fakeHandlerFactory)
 				Expect(err).NotTo(HaveOccurred())
@@ -42,14 +40,12 @@ var _ = Describe("Handlers Configuration", func() {
 		Context("with a handler configuration", func() {
 			Context("of http type", func() {
 				BeforeEach(func() {
-					handlersConfig = HandlersConfig{
-						Handlers: []HandlerConfig{
-							{
-								Domain: "my-tld.",
-								Source: Source{
-									Type: "http",
-									URL:  "some-url",
-								},
+					handlersConfig = HandlerConfigs{
+						{
+							Domain: "my-tld.",
+							Source: Source{
+								Type: "http",
+								URL:  "some-url",
 							},
 						},
 					}
@@ -68,7 +64,7 @@ var _ = Describe("Handlers Configuration", func() {
 
 				Context("with cache enabled", func() {
 					BeforeEach(func() {
-						handlersConfig.Handlers[0].Cache.Enabled = true
+						handlersConfig[0].Cache.Enabled = true
 					})
 
 					It("passes that option to the factory", func() {
@@ -84,7 +80,7 @@ var _ = Describe("Handlers Configuration", func() {
 
 				Context("but with no URL setup", func() {
 					BeforeEach(func() {
-						handlersConfig.Handlers[0].Source.URL = ""
+						handlersConfig[0].Source.URL = ""
 					})
 
 					It("produces an error", func() {
@@ -97,14 +93,12 @@ var _ = Describe("Handlers Configuration", func() {
 
 			Context("of dns type", func() {
 				BeforeEach(func() {
-					handlersConfig = HandlersConfig{
-						Handlers: []HandlerConfig{
-							{
-								Domain: "my-tld.",
-								Source: Source{
-									Type:      "dns",
-									Recursors: []string{"some-recursor", "another-recursor"},
-								},
+					handlersConfig = HandlerConfigs{
+						{
+							Domain: "my-tld.",
+							Source: Source{
+								Type:      "dns",
+								Recursors: []string{"some-recursor", "another-recursor"},
 							},
 						},
 					}
@@ -123,7 +117,7 @@ var _ = Describe("Handlers Configuration", func() {
 
 				Context("but with no recursors declared", func() {
 					BeforeEach(func() {
-						handlersConfig.Handlers[0].Source.Recursors = []string{}
+						handlersConfig[0].Source.Recursors = []string{}
 					})
 
 					It("produces an error", func() {
@@ -136,13 +130,11 @@ var _ = Describe("Handlers Configuration", func() {
 
 			Context("with any other type", func() {
 				It("produces an error", func() {
-					handlersConfig = HandlersConfig{
-						Handlers: []HandlerConfig{
-							{
-								Domain: "my-tld.",
-								Source: Source{
-									Type: "badthing",
-								},
+					handlersConfig = HandlerConfigs{
+						{
+							Domain: "my-tld.",
+							Source: Source{
+								Type: "badthing",
 							},
 						},
 					}
@@ -156,20 +148,18 @@ var _ = Describe("Handlers Configuration", func() {
 
 		Context("with multiple handlers configured", func() {
 			BeforeEach(func() {
-				handlersConfig = HandlersConfig{
-					Handlers: []HandlerConfig{
-						{
-							Domain: "my-tld.",
-							Source: Source{
-								Type:      "dns",
-								Recursors: []string{"some-recursor", "another-recursor"},
-							},
-						}, {
-							Domain: "my-other-tld.",
-							Source: Source{
-								Type: "http",
-								URL:  "some-url",
-							},
+				handlersConfig = HandlerConfigs{
+					{
+						Domain: "my-tld.",
+						Source: Source{
+							Type:      "dns",
+							Recursors: []string{"some-recursor", "another-recursor"},
+						},
+					}, {
+						Domain: "my-other-tld.",
+						Source: Source{
+							Type: "http",
+							URL:  "some-url",
 						},
 					},
 				}
