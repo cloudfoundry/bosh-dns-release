@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"bosh-dns/dns/config"
 	. "bosh-dns/dns/config/handlers"
 
 	boshsysfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
@@ -40,12 +41,12 @@ var _ = Describe("FSLoader", func() {
 				config := HandlerConfigs{
 					{
 						Domain: "local.internal.",
-						Cache:  ConfigCache{Enabled: true},
+						Cache:  config.Cache{Enabled: true},
 						Source: Source{Type: "http", URL: "http://some.endpoint.local", Recursors: []string{}},
 					},
 					{
 						Domain: "local.internal2.",
-						Cache:  ConfigCache{Enabled: false},
+						Cache:  config.Cache{Enabled: false},
 						Source: Source{Type: "dns", Recursors: []string{"127.0.0.1:42"}},
 					},
 				}

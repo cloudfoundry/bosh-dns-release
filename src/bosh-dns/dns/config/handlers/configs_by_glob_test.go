@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"bosh-dns/dns/config"
 	. "bosh-dns/dns/config/handlers"
 	"bosh-dns/dns/config/handlers/handlersfakes"
 	"errors"
@@ -70,12 +71,12 @@ var _ = Describe("ConfigFromGlob", func() {
 						return HandlerConfigs{
 							{
 								Domain: "local.internal.",
-								Cache:  ConfigCache{Enabled: true},
+								Cache:  config.Cache{Enabled: true},
 								Source: Source{Type: "http", URL: "http://some.endpoint.local"},
 							},
 							{
 								Domain: "local2.internal.",
-								Cache:  ConfigCache{Enabled: true},
+								Cache:  config.Cache{Enabled: true},
 								Source: Source{Type: "http", URL: "http://some2.endpoint.local"},
 							},
 						}, nil
@@ -83,7 +84,7 @@ var _ = Describe("ConfigFromGlob", func() {
 						return HandlerConfigs{
 							{
 								Domain: "local.internal2.",
-								Cache:  ConfigCache{Enabled: false},
+								Cache:  config.Cache{Enabled: false},
 								Source: Source{Type: "dns", Recursors: []string{"127.0.0.1:53"}},
 							},
 						}, nil
@@ -98,17 +99,17 @@ var _ = Describe("ConfigFromGlob", func() {
 				Expect(c).To(Equal(HandlerConfigs{
 					{
 						Domain: "local.internal.",
-						Cache:  ConfigCache{Enabled: true},
+						Cache:  config.Cache{Enabled: true},
 						Source: Source{Type: "http", URL: "http://some.endpoint.local"},
 					},
 					{
 						Domain: "local2.internal.",
-						Cache:  ConfigCache{Enabled: true},
+						Cache:  config.Cache{Enabled: true},
 						Source: Source{Type: "http", URL: "http://some2.endpoint.local"},
 					},
 					{
 						Domain: "local.internal2.",
-						Cache:  ConfigCache{Enabled: false},
+						Cache:  config.Cache{Enabled: false},
 						Source: Source{Type: "dns", Recursors: []string{"127.0.0.1:53"}},
 					},
 				}))

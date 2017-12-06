@@ -1,16 +1,11 @@
 package handlers
 
 import (
+	"bosh-dns/dns/config"
 	"fmt"
 
 	"github.com/miekg/dns"
 )
-
-//go:generate counterfeiter . dnsHandler
-
-type dnsHandler interface {
-	dns.Handler
-}
 
 //go:generate counterfeiter . HandlerFactory
 type HandlerFactory interface {
@@ -21,19 +16,15 @@ type HandlerFactory interface {
 type HandlerConfigs []HandlerConfig
 
 type HandlerConfig struct {
-	Domain string      `json:"domain"`
-	Source Source      `json:"source"`
-	Cache  ConfigCache `json:"cache"`
+	Domain string       `json:"domain"`
+	Source Source       `json:"source"`
+	Cache  config.Cache `json:"cache"`
 }
 
 type Source struct {
 	Type      string   `json:"type"`
 	URL       string   `json:"url,omitempty"`
 	Recursors []string `json:"recursors,omitempty"`
-}
-
-type ConfigCache struct {
-	Enabled bool `json:"enabled"`
 }
 
 func (c HandlerConfigs) GenerateHandlers(factory HandlerFactory) (map[string]dns.Handler, error) {
