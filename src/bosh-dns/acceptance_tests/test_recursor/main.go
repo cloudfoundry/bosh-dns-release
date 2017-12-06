@@ -250,6 +250,30 @@ func main() {
 		}
 	})
 
+	dns.HandleFunc("handler.internal.local.", func(resp dns.ResponseWriter, req *dns.Msg) {
+		msg := new(dns.Msg)
+
+		msg.Answer = append(msg.Answer, &dns.A{
+			Hdr: dns.RR_Header{
+				Name:   req.Question[0].Name,
+				Rrtype: dns.TypeA,
+				Class:  dns.ClassINET,
+				Ttl:    0,
+			},
+			A: net.ParseIP("10.168.0.1"),
+		})
+
+		msg.Authoritative = true
+		msg.RecursionAvailable = true
+
+		msg.SetReply(req)
+
+		err := resp.WriteMsg(msg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Printf("Unable to start server: error: +%v", err)
 		os.Exit(1)

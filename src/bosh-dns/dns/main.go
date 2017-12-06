@@ -12,6 +12,7 @@ import (
 	"code.cloudfoundry.org/clock"
 
 	dnsconfig "bosh-dns/dns/config"
+	handlersconfig "bosh-dns/dns/config/handlers"
 	"bosh-dns/dns/server"
 	"bosh-dns/dns/server/aliases"
 	"bosh-dns/dns/server/handlers"
@@ -66,6 +67,7 @@ func mainExitCode() int {
 	}
 
 	fs := boshsys.NewOsFileSystem(logger)
+
 	aliasConfiguration, err := aliases.ConfigFromGlob(
 		fs,
 		aliases.NewFSLoader(fs),
@@ -73,6 +75,17 @@ func mainExitCode() int {
 	)
 	if err != nil {
 		logger.Error(logTag, fmt.Sprintf("loading alias configuration: %s", err.Error()))
+		return 1
+	}
+
+	handlersConfiguration, err := handlersconfig.ConfigFromGlob(
+		fs,
+		handlersconfig.NewFSLoader(fs),
+		config.HandlersFilesGlob,
+	)
+
+	if err != nil {
+		logger.Error(logTag, fmt.Sprintf("loading handlers configuration: %s", err.Error()))
 		return 1
 	}
 
@@ -116,30 +129,15 @@ func mainExitCode() int {
 	mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger), clock, logger))
 
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
+	handlerFactory := handlers.NewFactory(exchangerFactory, clock, stringShuffler, logger)
 
-	for _, handlerConfig := range config.Handlers {
-		var handler dns.Handler
-
-		if handlerConfig.Source.Type == "http" {
-			handler = handlers.NewHTTPJSONHandler(handlerConfig.Source.URL, logger)
-		} else if handlerConfig.Source.Type == "dns" {
-			if len(handlerConfig.Source.Recursors) == 0 {
-				logger.Error(logTag, fmt.Sprintf(`Configuring handler for "%s": No recursors present`, handlerConfig.Domain))
-				return 1
-			}
-
-			recursorPool := handlers.NewFailoverRecursorPool(stringShuffler.Shuffle(handlerConfig.Source.Recursors), logger)
-			handler = handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
-		} else {
-			logger.Error(logTag, fmt.Sprintf(`Configuring handler for "%s": Unexpected handler source type: %s`, handlerConfig.Domain, handlerConfig.Source.Type))
-			return 1
-		}
-
-		if handlerConfig.Cache.Enabled {
-			handler = handlers.NewCachingDNSHandler(handler)
-		}
-
-		mux.Handle(handlerConfig.Domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
+	delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
+	if err != nil {
+		logger.Error(logTag, err.Error())
+		return 1
+	}
+	for domain, handler := range delegatingHandlers {
+		mux.Handle(domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
 	}
 
 	upchecks := []server.Upcheck{}
