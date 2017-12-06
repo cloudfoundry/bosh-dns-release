@@ -1,7 +1,7 @@
 package handlers_test
 
 import (
-	. "bosh-dns/dns/server/handlers"
+	. "bosh-dns/dns/config/handlers"
 
 	boshsysfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
 
@@ -10,7 +10,7 @@ import (
 )
 
 var _ = Describe("FSLoader", func() {
-	var parser NamedConfigLoader
+	var parser FSLoader
 	var fs *boshsysfakes.FakeFileSystem
 
 	BeforeEach(func() {
@@ -37,8 +37,8 @@ var _ = Describe("FSLoader", func() {
 				handlers, err := parser.Load("/test/handlers.json")
 				Expect(err).ToNot(HaveOccurred())
 
-				config := Config{
-					Handlers: []DelegatingHandlerDescription{
+				config := HandlersConfig{
+					Handlers: []HandlerConfig{
 						{
 							Domain: "local.internal.",
 							Cache:  ConfigCache{Enabled: true},

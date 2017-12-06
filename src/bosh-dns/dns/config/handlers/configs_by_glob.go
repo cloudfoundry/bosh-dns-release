@@ -13,26 +13,26 @@ type ConfigGlobber interface {
 //go:generate counterfeiter . NamedConfigLoader
 
 type NamedConfigLoader interface {
-	Load(string) (Config, error)
+	Load(string) (HandlersConfig, error)
 }
 
-func ConfigFromGlob(globber ConfigGlobber, loader NamedConfigLoader, glob string) (Config, error) {
+func ConfigFromGlob(globber ConfigGlobber, loader NamedConfigLoader, glob string) (HandlersConfig, error) {
 	filePaths, err := globber.Glob(glob)
 
 	if err != nil {
-		return Config{}, bosherr.WrapError(err, "glob pattern failed to compute")
+		return HandlersConfig{}, bosherr.WrapError(err, "glob pattern failed to compute")
 	}
 
-	var handlers []DelegatingHandlerDescription
+	var handlers []HandlerConfig
 
 	for _, filePath := range filePaths {
 		found, err := loader.Load(filePath)
 		if err != nil {
-			return Config{}, bosherr.WrapError(err, "could not load config")
+			return HandlersConfig{}, bosherr.WrapError(err, "could not load config")
 		}
 
 		handlers = append(handlers, found.Handlers...)
 	}
 
-	return Config{Handlers: handlers}, nil
+	return HandlersConfig{Handlers: handlers}, nil
 }

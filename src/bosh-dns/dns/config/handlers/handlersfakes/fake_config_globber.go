@@ -2,7 +2,7 @@
 package handlersfakes
 
 import (
-	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/config/handlers"
 	"sync"
 )
 

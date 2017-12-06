@@ -12,6 +12,7 @@ import (
 	"code.cloudfoundry.org/clock"
 
 	dnsconfig "bosh-dns/dns/config"
+	handlersconfig "bosh-dns/dns/config/handlers"
 	"bosh-dns/dns/server"
 	"bosh-dns/dns/server/aliases"
 	"bosh-dns/dns/server/handlers"
@@ -77,9 +78,9 @@ func mainExitCode() int {
 		return 1
 	}
 
-	handlersConfiguration, err := handlers.ConfigFromGlob(
+	handlersConfiguration, err := handlersconfig.ConfigFromGlob(
 		fs,
-		handlers.NewFSLoader(fs),
+		handlersconfig.NewFSLoader(fs),
 		config.HandlersFilesGlob,
 	)
 
@@ -128,13 +129,9 @@ func mainExitCode() int {
 	mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger), clock, logger))
 
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
+	handlerFactory := handlers.NewFactory(exchangerFactory, clock, stringShuffler, logger)
 
-	delegatingHandlers, err := handlersConfiguration.RealHandlers(
-		logger,
-		stringShuffler,
-		clock,
-		exchangerFactory,
-	)
+	delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
 	if err != nil {
 		logger.Error(logTag, err.Error())
 		return 1

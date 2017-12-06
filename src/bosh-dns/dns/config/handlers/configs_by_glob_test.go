@@ -1,8 +1,8 @@
 package handlers_test
 
 import (
-	. "bosh-dns/dns/server/handlers"
-	"bosh-dns/dns/server/handlers/handlersfakes"
+	. "bosh-dns/dns/config/handlers"
+	"bosh-dns/dns/config/handlers/handlersfakes"
 	"errors"
 
 	. "github.com/onsi/ginkgo"
@@ -52,7 +52,7 @@ var _ = Describe("ConfigFromGlob", func() {
 
 		Context("when the loader is unable to load the config", func() {
 			BeforeEach(func() {
-				fakeLoader.LoadReturns(Config{}, errors.New("file-is-busted"))
+				fakeLoader.LoadReturns(HandlersConfig{}, errors.New("file-is-busted"))
 			})
 			It("promotes the error", func() {
 				_, err := ConfigFromGlob(fakeGlobber, fakeLoader, "someglob")
@@ -64,11 +64,11 @@ var _ = Describe("ConfigFromGlob", func() {
 
 		Context("when the loader loads one or more configs", func() {
 			BeforeEach(func() {
-				fakeLoader.LoadStub = func(name string) (Config, error) {
+				fakeLoader.LoadStub = func(name string) (HandlersConfig, error) {
 					switch name {
 					case "/some/file":
-						return Config{
-							Handlers: []DelegatingHandlerDescription{
+						return HandlersConfig{
+							Handlers: []HandlerConfig{
 								{
 									Domain: "local.internal.",
 									Cache:  ConfigCache{Enabled: true},
@@ -82,8 +82,8 @@ var _ = Describe("ConfigFromGlob", func() {
 							},
 						}, nil
 					case "/another/file":
-						return Config{
-							Handlers: []DelegatingHandlerDescription{
+						return HandlersConfig{
+							Handlers: []HandlerConfig{
 								{
 									Domain: "local.internal2.",
 									Cache:  ConfigCache{Enabled: false},
@@ -92,15 +92,15 @@ var _ = Describe("ConfigFromGlob", func() {
 							},
 						}, nil
 					}
-					return Config{}, errors.New("wrong-name")
+					return HandlersConfig{}, errors.New("wrong-name")
 				}
 			})
 
 			It("appends all handlers", func() {
 				c, err := ConfigFromGlob(fakeGlobber, fakeLoader, "someglob")
 				Expect(err).ToNot(HaveOccurred())
-				Expect(c).To(Equal(Config{
-					Handlers: []DelegatingHandlerDescription{
+				Expect(c).To(Equal(HandlersConfig{
+					Handlers: []HandlerConfig{
 						{
 							Domain: "local.internal.",
 							Cache:  ConfigCache{Enabled: true},

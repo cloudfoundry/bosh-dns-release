@@ -2,29 +2,29 @@
 package handlersfakes
 
 import (
-	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/config/handlers"
 	"sync"
 )
 
 type FakeNamedConfigLoader struct {
-	LoadStub        func(string) (handlers.Config, error)
+	LoadStub        func(string) (handlers.HandlersConfig, error)
 	loadMutex       sync.RWMutex
 	loadArgsForCall []struct {
 		arg1 string
 	}
 	loadReturns struct {
-		result1 handlers.Config
+		result1 handlers.HandlersConfig
 		result2 error
 	}
 	loadReturnsOnCall map[int]struct {
-		result1 handlers.Config
+		result1 handlers.HandlersConfig
 		result2 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeNamedConfigLoader) Load(arg1 string) (handlers.Config, error) {
+func (fake *FakeNamedConfigLoader) Load(arg1 string) (handlers.HandlersConfig, error) {
 	fake.loadMutex.Lock()
 	ret, specificReturn := fake.loadReturnsOnCall[len(fake.loadArgsForCall)]
 	fake.loadArgsForCall = append(fake.loadArgsForCall, struct {
@@ -53,24 +53,24 @@ func (fake *FakeNamedConfigLoader) LoadArgsForCall(i int) string {
 	return fake.loadArgsForCall[i].arg1
 }
 
-func (fake *FakeNamedConfigLoader) LoadReturns(result1 handlers.Config, result2 error) {
+func (fake *FakeNamedConfigLoader) LoadReturns(result1 handlers.HandlersConfig, result2 error) {
 	fake.LoadStub = nil
 	fake.loadReturns = struct {
-		result1 handlers.Config
+		result1 handlers.HandlersConfig
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeNamedConfigLoader) LoadReturnsOnCall(i int, result1 handlers.Config, result2 error) {
+func (fake *FakeNamedConfigLoader) LoadReturnsOnCall(i int, result1 handlers.HandlersConfig, result2 error) {
 	fake.LoadStub = nil
 	if fake.loadReturnsOnCall == nil {
 		fake.loadReturnsOnCall = make(map[int]struct {
-			result1 handlers.Config
+			result1 handlers.HandlersConfig
 			result2 error
 		})
 	}
 	fake.loadReturnsOnCall[i] = struct {
-		result1 handlers.Config
+		result1 handlers.HandlersConfig
 		result2 error
 	}{result1, result2}
 }
