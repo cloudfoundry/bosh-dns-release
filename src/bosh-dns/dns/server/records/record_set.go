@@ -11,6 +11,8 @@ import (
 
 	"strconv"
 
+	"bosh-dns/dns/server/aliases"
+
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
@@ -23,15 +25,17 @@ type RecordSet struct {
 	subscriberssMutex sync.RWMutex
 	subscribers       []chan bool
 	logger            boshlog.Logger
+	aliasList         aliases.Config
 
 	domains []string
 	Records []Record
 }
 
-func NewRecordSet(recordFileReader FileReader, logger boshlog.Logger) (*RecordSet, error) {
+func NewRecordSet(recordFileReader FileReader, aliasList aliases.Config, logger boshlog.Logger) (*RecordSet, error) {
 	r := &RecordSet{
 		recordFileReader: recordFileReader,
 		logger:           logger,
+		aliasList:        aliasList,
 	}
 
 	r.update()
@@ -76,12 +80,30 @@ func (r *RecordSet) Subscribe() <-chan bool {
 }
 
 func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
-	if net.ParseIP(fqdn) != nil {
-		return []string{fqdn}, nil
-	}
-
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
+
+	resolutions := r.aliasList.Resolutions(fqdn)
+	if len(resolutions) > 0 {
+		var errors []error
+		ips := []string{}
+
+		for _, resolution := range resolutions {
+			var hostIPs []string
+			hostIPs, err := r.resolveQuery(resolution)
+			if err != nil {
+				errors = append(errors, err)
+			}
+
+			ips = append(ips, hostIPs...)
+		}
+
+		if len(ips) == 0 && len(errors) > 0 {
+			return nil, fmt.Errorf("failures occurred when resolving alias domains: %s", errors)
+		}
+
+		return ips, nil
+	}
 
 	return r.resolveQuery(fqdn)
 }
@@ -90,7 +112,7 @@ func (r *RecordSet) Domains() []string {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
 
-	return r.domains
+	return append(r.domains, r.aliasList.AliasHosts()...)
 }
 
 func (r *RecordSet) update() {
@@ -131,6 +153,10 @@ func (r *RecordSet) ipsMatching(matcher Matcher) []string {
 
 func (r *RecordSet) resolveQuery(fqdn string) ([]string, error) {
 	var ips []string
+
+	if net.ParseIP(fqdn) != nil {
+		return []string{fqdn}, nil
+	}
 
 	segments := strings.SplitN(fqdn, ".", 2) // [q-s0, q-g7.x.y.bosh]
 
