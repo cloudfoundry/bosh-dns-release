@@ -1,13 +1,15 @@
 package main_test
 
 import (
+	"bosh-dns/dns/config"
+	handlersconfig "bosh-dns/dns/config/handlers"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
 	"strconv"
 
-	"github.com/onsi/ginkgo/config"
+	ginkgoconfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/gomega/gexec"
 
 	"os/exec"
@@ -79,8 +81,13 @@ var _ = Describe("main", func() {
 		})
 
 		It("exits 1 if the config file is busted", func() {
-			cmd := newCommandWithConfig("{")
+			configFile, err := ioutil.TempFile("", "")
+			Expect(err).NotTo(HaveOccurred())
 
+			_, err = configFile.Write([]byte("{"))
+			Expect(err).NotTo(HaveOccurred())
+
+			cmd := exec.Command(pathToServer, "--config", configFile.Name())
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -96,13 +103,13 @@ var _ = Describe("main", func() {
 			aliasesDir            string
 			handlersDir           string
 			recordsFilePath       string
-			checkInterval         string
+			checkInterval         time.Duration
 			httpJSONServer        *ghttp.Server
 			handlerCachingEnabled bool
 		)
 
 		BeforeEach(func() {
-			checkInterval = "100ms"
+			checkInterval = 100 * time.Millisecond
 			handlerCachingEnabled = false
 		})
 
@@ -184,52 +191,44 @@ var _ = Describe("main", func() {
 			),
 			)
 			httpJSONServer.HTTPTestServer.Start()
-			configContents, err := json.Marshal(map[string]interface{}{
-				"address":             listenAddress,
-				"port":                listenPort,
-				"records_file":        recordsFilePath,
-				"alias_files_glob":    path.Join(aliasesDir, "*"),
-				"handlers_files_glob": path.Join(handlersDir, "*"),
-				"upcheck_domains":     []string{"health.check.bosh.", "health.check.ca."},
-				"health": map[string]interface{}{
-					"enabled":          true,
-					"port":             2345 + config.GinkgoConfig.ParallelNode,
-					"ca_file":          "../healthcheck/assets/test_certs/test_ca.pem",
-					"certificate_file": "../healthcheck/assets/test_certs/test_client.pem",
-					"private_key_file": "../healthcheck/assets/test_certs/test_client.key",
-					"check_interval":   checkInterval,
-				},
-			})
-			Expect(err).NotTo(HaveOccurred())
-
-			handlerConfigContents, err := json.Marshal([]map[string]interface{}{
+			writeHandlersConfig(handlersDir, handlersconfig.HandlerConfigs{
 				{
-					"cache":  map[string]interface{}{"enabled": handlerCachingEnabled},
-					"domain": "internal-domain.",
-					"source": map[string]interface{}{
-						"type": "http",
-						"url":  httpJSONServer.URL(),
+					Domain: "internal-domain.",
+					Cache: config.Cache{
+						Enabled: handlerCachingEnabled,
 					},
-				},
-				{
-					"cache":  map[string]interface{}{"enabled": handlerCachingEnabled},
-					"domain": "recursor.internal.",
-					"source": map[string]interface{}{
-						"type":      "dns",
-						"recursors": []string{fmt.Sprintf("127.0.0.1:%d", recursorPort)},
+					Source: handlersconfig.Source{
+						Type: "http",
+						URL:  httpJSONServer.URL(),
+					},
+				}, {
+					Domain: "recursor.internal.",
+					Cache: config.Cache{
+						Enabled: handlerCachingEnabled,
+					},
+					Source: handlersconfig.Source{
+						Type:      "dns",
+						Recursors: []string{fmt.Sprintf("127.0.0.1:%d", recursorPort)},
 					},
 				},
 			})
-			Expect(err).NotTo(HaveOccurred())
 
-			handlersFile, err := ioutil.TempFile(handlersDir, "handlersjson")
-			Expect(err).NotTo(HaveOccurred())
-			defer handlersFile.Close()
-
-			_, err = handlersFile.Write([]byte(handlerConfigContents))
-			Expect(err).NotTo(HaveOccurred())
-
-			cmd = newCommandWithConfig(string(configContents))
+			cmd = newCommandWithConfig(config.Config{
+				Address:           listenAddress,
+				Port:              listenPort,
+				RecordsFile:       recordsFilePath,
+				AliasFilesGlob:    path.Join(aliasesDir, "*"),
+				HandlersFilesGlob: path.Join(handlersDir, "*"),
+				UpcheckDomains:    []string{"health.check.bosh.", "health.check.ca."},
+				Health: config.HealthConfig{
+					Enabled:         true,
+					Port:            2345 + ginkgoconfig.GinkgoConfig.ParallelNode,
+					CAFile:          "../healthcheck/assets/test_certs/test_ca.pem",
+					CertificateFile: "../healthcheck/assets/test_certs/test_client.pem",
+					PrivateKeyFile:  "../healthcheck/assets/test_certs/test_client.key",
+					CheckInterval:   config.DurationJSON(checkInterval),
+				},
+			})
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -859,7 +858,7 @@ var _ = Describe("main", func() {
 				var brokenServer *ghttp.Server
 
 				BeforeEach(func() {
-					checkInterval = "1m"
+					checkInterval = time.Minute
 					brokenServer = newFakeHealthServer("127.0.0.2", "stopped")
 					brokenServer.RouteToHandler("GET", "/health", ghttp.RespondWith(http.StatusGatewayTimeout, ``))
 
@@ -905,7 +904,7 @@ var _ = Describe("main", func() {
 		)
 
 		It("will timeout after the recursor_timeout has been reached", func() {
-			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", 9000+config.GinkgoConfig.ParallelNode))
+			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", 9000+ginkgoconfig.GinkgoConfig.ParallelNode))
 			Expect(err).NotTo(HaveOccurred())
 			defer l.Close()
 
@@ -915,12 +914,12 @@ var _ = Describe("main", func() {
 				Expect(err).NotTo(HaveOccurred())
 			}()
 
-			cmd = newCommandWithConfig(fmt.Sprintf(`{
-				"address": %q,
-				"port": %d,
-				"recursors": [%q],
-				"recursor_timeout": %q
-			}`, listenAddress, listenPort, l.Addr().String(), "1s"))
+			cmd = newCommandWithConfig(config.Config{
+				Address:         listenAddress,
+				Port:            listenPort,
+				Recursors:       []string{l.Addr().String()},
+				RecursorTimeout: config.DurationJSON(time.Second),
+			})
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -949,12 +948,12 @@ var _ = Describe("main", func() {
 		It("logs the recursor used to resolve", func() {
 			var err error
 
-			cmd = newCommandWithConfig(fmt.Sprintf(`{
-				"address": %q,
-				"port": %d,
-				"recursors": [%q],
-				"recursor_timeout": %q
-			}`, listenAddress, listenPort, "8.8.8.8", "1s"))
+			cmd = newCommandWithConfig(config.Config{
+				Address:         listenAddress,
+				Port:            listenPort,
+				Recursors:       []string{"8.8.8.8"},
+				RecursorTimeout: config.DurationJSON(time.Second),
+			})
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -992,13 +991,13 @@ var _ = Describe("main", func() {
 			aliasesDir, err = ioutil.TempDir("", "aliases")
 			Expect(err).NotTo(HaveOccurred())
 
-			cmd = newCommandWithConfig(fmt.Sprintf(`{
-				"address": "%s",
-				"port": %d,
-				"recursors": ["8.8.8.8"],
-				"upcheck_domains":["upcheck.bosh-dns."],
-				"alias_files_glob": %q
-			}`, listenAddress, listenPort, path.Join(aliasesDir, "*")))
+			cmd = newCommandWithConfig(config.Config{
+				Address:        listenAddress,
+				Port:           listenPort,
+				Recursors:      []string{"8.8.8.8"},
+				UpcheckDomains: []string{"upcheck.bosh-dns."},
+				AliasFilesGlob: path.Join(aliasesDir, "*"),
+			})
 		})
 
 		AfterEach(func() {
@@ -1026,12 +1025,12 @@ var _ = Describe("main", func() {
 		})
 
 		It("exits 1 and logs a helpful error message when the server times out binding to ports", func() {
-			cmd := newCommandWithConfig(fmt.Sprintf(`{
-				"address": "%s",
-				"port": %d,
-				"upcheck_domains": ["upcheck.bosh-dns."],
-				"timeout": "0s"
-			}`, listenAddress, listenPort))
+			cmd := newCommandWithConfig(config.Config{
+				Address:        listenAddress,
+				Port:           listenPort,
+				UpcheckDomains: []string{"upcheck.bosh-dns."},
+				Timeout:        config.DurationJSON(1),
+			})
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -1053,26 +1052,21 @@ var _ = Describe("main", func() {
 			})
 
 			It("exits 1 and logs a helpful error message when the config contains an unknown handler source type", func() {
-				handlersFile, err := ioutil.TempFile(handlersDir, "handlersjson")
-				Expect(err).NotTo(HaveOccurred())
-
-				_, err = handlersFile.Write([]byte(`[
+				writeHandlersConfig(handlersDir, handlersconfig.HandlerConfigs{
 					{
-						"domain": "internal.domain.",
-						"source": {
-							"type": "mistyped_dns"
-						}
-					}
-				]`))
-				Expect(err).NotTo(HaveOccurred())
-				handlersFile.Close()
+						Domain: "internal.domain.",
+						Source: handlersconfig.Source{
+							Type: "mistyped_dns",
+						},
+					},
+				})
 
-				cmd := newCommandWithConfig(fmt.Sprintf(`{
-					"address": "%s",
-					"port": %d,
-					"upcheck_domains": ["upcheck.bosh-dns."],
-					"handlers_files_glob": "%s"
-				}`, listenAddress, listenPort, filepath.Join(handlersDir, "*")))
+				cmd := newCommandWithConfig(config.Config{
+					Address:           listenAddress,
+					Port:              listenPort,
+					UpcheckDomains:    []string{"upcheck.bosh-dns."},
+					HandlersFilesGlob: filepath.Join(handlersDir, "*"),
+				})
 
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
@@ -1082,26 +1076,21 @@ var _ = Describe("main", func() {
 			})
 
 			It("exits 1 and logs a helpful error message when the dns handler section doesnt contain recursors", func() {
-				handlersFile, err := ioutil.TempFile(handlersDir, "handlersjson")
-				Expect(err).NotTo(HaveOccurred())
-
-				_, err = handlersFile.Write([]byte(`[
+				writeHandlersConfig(handlersDir, handlersconfig.HandlerConfigs{
 					{
-						"domain": "internal.domain.",
-						"source": {
-							"type": "dns"
-						}
-					}
-				]`))
-				Expect(err).NotTo(HaveOccurred())
-				handlersFile.Close()
+						Domain: "internal.domain.",
+						Source: handlersconfig.Source{
+							Type: "dns",
+						},
+					},
+				})
 
-				cmd := newCommandWithConfig(fmt.Sprintf(`{
-					"address": "%s",
-					"port": %d,
-					"upcheck_domains": ["upcheck.bosh-dns."],
-					"handlers_files_glob": "%s"
-				}`, listenAddress, listenPort, filepath.Join(handlersDir, "*")))
+				cmd := newCommandWithConfig(config.Config{
+					Address:           listenAddress,
+					Port:              listenPort,
+					UpcheckDomains:    []string{"upcheck.bosh-dns."},
+					HandlersFilesGlob: filepath.Join(handlersDir, "*"),
+				})
 
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
@@ -1137,20 +1126,17 @@ var _ = Describe("main", func() {
 	})
 })
 
-func newCommandWithConfig(config string) *exec.Cmd {
+func newCommandWithConfig(c config.Config) *exec.Cmd {
+	configContents, err := json.Marshal(c)
+	Expect(err).NotTo(HaveOccurred())
+
 	configFile, err := ioutil.TempFile("", "")
 	Expect(err).NotTo(HaveOccurred())
 
-	_, err = configFile.Write([]byte(config))
-
+	_, err = configFile.Write([]byte(configContents))
 	Expect(err).NotTo(HaveOccurred())
 
-	args := []string{
-		"--config",
-		configFile.Name(),
-	}
-
-	return exec.Command(pathToServer, args...)
+	return exec.Command(pathToServer, "--config", configFile.Name())
 }
 
 func waitForServer(port int) error {
@@ -1191,7 +1177,7 @@ func newFakeHealthServer(ip, state string) *ghttp.Server {
 	err = server.HTTPTestServer.Listener.Close()
 	Expect(err).NotTo(HaveOccurred())
 
-	port := 2345 + config.GinkgoConfig.ParallelNode
+	port := 2345 + ginkgoconfig.GinkgoConfig.ParallelNode
 	server.HTTPTestServer.Listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	Expect(err).ToNot(HaveOccurred(),
 		fmt.Sprintf(`
@@ -1228,4 +1214,16 @@ func getFreePort() (int, error) {
 	}
 
 	return intPort, nil
+}
+
+func writeHandlersConfig(dir string, handlersConfiguration handlersconfig.HandlerConfigs) {
+	handlerConfigContents, err := json.Marshal(handlersConfiguration)
+	Expect(err).NotTo(HaveOccurred())
+
+	handlersFile, err := ioutil.TempFile(dir, "handlersjson")
+	Expect(err).NotTo(HaveOccurred())
+	defer handlersFile.Close()
+
+	_, err = handlersFile.Write([]byte(handlerConfigContents))
+	Expect(err).NotTo(HaveOccurred())
 }

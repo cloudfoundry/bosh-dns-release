@@ -18,7 +18,7 @@ type HandlerConfigs []HandlerConfig
 type HandlerConfig struct {
 	Domain string       `json:"domain"`
 	Source Source       `json:"source"`
-	Cache  config.Cache `json:"cache"`
+	Cache  config.Cache `json:"cache,omitempty"`
 }
 
 type Source struct {

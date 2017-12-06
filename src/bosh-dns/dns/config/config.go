@@ -11,28 +11,28 @@ import (
 )
 
 type Config struct {
-	Address           string
-	Port              int
-	Timeout           DurationJSON
-	RecursorTimeout   DurationJSON `json:"recursor_timeout"`
-	Recursors         []string
-	RecordsFile       string   `json:"records_file"`
-	AliasFilesGlob    string   `json:"alias_files_glob"`
-	HandlersFilesGlob string   `json:"handlers_files_glob"`
-	UpcheckDomains    []string `json:"upcheck_domains"`
+	Address           string       `json:"address"`
+	Port              int          `json:"port"`
+	Timeout           DurationJSON `json:"timeout,omitempty"`
+	RecursorTimeout   DurationJSON `json:"recursor_timeout,omitempty"`
+	Recursors         []string     `json:"recursors,omitempty"`
+	RecordsFile       string       `json:"records_file,omitempty"`
+	AliasFilesGlob    string       `json:"alias_files_glob,omitempty"`
+	HandlersFilesGlob string       `json:"handlers_files_glob,omitempty"`
+	UpcheckDomains    []string     `json:"upcheck_domains,omitempty"`
 
 	Health HealthConfig `json:"health"`
 	Cache  Cache        `json:"cache"`
 }
 
 type HealthConfig struct {
-	Enabled           bool
+	Enabled           bool         `json:"enabled"`
 	Port              int          `json:"port"`
 	CertificateFile   string       `json:"certificate_file"`
 	PrivateKeyFile    string       `json:"private_key_file"`
 	CAFile            string       `json:"ca_file"`
-	CheckInterval     DurationJSON `json:"check_interval"`
-	MaxTrackedQueries int          `json:"max_tracked_queries"`
+	CheckInterval     DurationJSON `json:"check_interval,omitempty"`
+	MaxTrackedQueries int          `json:"max_tracked_queries,omitempty"`
 }
 
 type Cache struct {
