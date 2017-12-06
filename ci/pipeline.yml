@@ -38,6 +38,7 @@ jobs:
 
 - name: test-unit-windows
   public: true
+  serial: true
   plan:
     - get: bosh-dns-release
       trigger: true
