@@ -1029,7 +1029,7 @@ var _ = Describe("main", func() {
 				Address:        listenAddress,
 				Port:           listenPort,
 				UpcheckDomains: []string{"upcheck.bosh-dns."},
-				Timeout:        config.DurationJSON(1),
+				Timeout:        config.DurationJSON(-1),
 			})
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
