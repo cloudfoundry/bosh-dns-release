@@ -6,6 +6,7 @@ import (
 	zp "bosh-dns/performance_tests/zone_pickers"
 
 	"bosh-dns/dns/server/aliases"
+	"bosh-dns/dns/server/healthiness/healthinessfakes"
 	"bosh-dns/dns/server/records"
 
 	"code.cloudfoundry.org/clock"
@@ -106,16 +107,15 @@ var _ = Describe("DNS", func() {
 	})
 
 	Describe("using local bosh dns records", func() {
-		var (
-			signal chan struct{}
-		)
+		var signal, shutdown chan struct{}
 
 		BeforeEach(func() {
 			signal = make(chan struct{})
 			logger := &fakes.FakeLogger{}
+			healthWatcher := &healthinessfakes.FakeHealthWatcher{}
 			fs := boshsys.NewOsFileSystem(logger)
 			recordSetReader := records.NewFileReader("assets/records.json", fs, clock.NewClock(), logger, signal)
-			recordSet, err := records.NewRecordSet(recordSetReader, aliases.NewConfig(), logger)
+			recordSet, err := records.NewRecordSet(recordSetReader, aliases.NewConfig(), healthWatcher, uint(5), shutdown, logger)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(recordSet.Records).To(HaveLen(102))
 
@@ -137,6 +137,7 @@ var _ = Describe("DNS", func() {
 
 		AfterEach(func() {
 			close(signal)
+			close(shutdown)
 		})
 
 		It("handles DNS responses quickly for local zones", func() {
