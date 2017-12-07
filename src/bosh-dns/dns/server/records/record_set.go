@@ -12,6 +12,8 @@ import (
 	"strconv"
 
 	"bosh-dns/dns/server/aliases"
+	"bosh-dns/dns/server/healthiness"
+	"bosh-dns/dns/server/records/internal"
 
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
@@ -26,16 +28,33 @@ type RecordSet struct {
 	subscribers       []chan bool
 	logger            boshlog.Logger
 	aliasList         aliases.Config
+	healthWatcher     healthiness.HealthWatcher
+
+	trackedDomains *internal.PriorityLimitedTranscript
+
+	trackedIPs      map[string]map[string]struct{}
+	trackedIPsMutex *sync.Mutex
 
 	domains []string
 	Records []Record
 }
 
-func NewRecordSet(recordFileReader FileReader, aliasList aliases.Config, logger boshlog.Logger) (*RecordSet, error) {
+func NewRecordSet(
+	recordFileReader FileReader,
+	aliasList aliases.Config,
+	healthWatcher healthiness.HealthWatcher,
+	maximumTrackedDomains uint,
+	shutdownChan chan struct{},
+	logger boshlog.Logger,
+) (*RecordSet, error) {
 	r := &RecordSet{
 		recordFileReader: recordFileReader,
 		logger:           logger,
 		aliasList:        aliasList,
+		healthWatcher:    healthWatcher,
+		trackedDomains:   internal.NewPriorityLimitedTranscript(maximumTrackedDomains),
+		trackedIPs:       map[string]map[string]struct{}{},
+		trackedIPsMutex:  &sync.Mutex{},
 	}
 
 	r.update()
@@ -52,12 +71,15 @@ func NewRecordSet(recordFileReader FileReader, aliasList aliases.Config, logger 
 
 		for {
 			select {
+			case <-shutdownChan:
+				return
 			case ok := <-subscriptionChan:
 				if !ok {
 					return
 				}
 
 				r.update()
+				r.refreshTrackedIPs()
 
 				r.subscriberssMutex.RLock()
 				for _, subscriber := range r.subscribers {
@@ -83,10 +105,16 @@ func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
 
+	if removed := r.trackedDomains.Touch(fqdn); removed != "" {
+		r.untrackDomain(removed)
+	}
+
+	var ips []string
+	var err error
+
 	resolutions := r.aliasList.Resolutions(fqdn)
 	if len(resolutions) > 0 {
 		var errors []error
-		ips := []string{}
 
 		for _, resolution := range resolutions {
 			var hostIPs []string
@@ -101,11 +129,81 @@ func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
 		if len(ips) == 0 && len(errors) > 0 {
 			return nil, fmt.Errorf("failures occurred when resolving alias domains: %s", errors)
 		}
-
-		return ips, nil
+	} else {
+		ips, err = r.resolveQuery(fqdn)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return r.resolveQuery(fqdn)
+	var healthyIPs, unhealthyIPs []string
+
+	for _, ip := range ips {
+		r.trackedIPsMutex.Lock()
+		r.trackedIPs[ip] = map[string]struct{}{}
+		if _, ok := r.trackedIPs[ip]; !ok {
+			r.trackedIPs[ip] = map[string]struct{}{}
+		}
+		r.trackedIPs[ip][fqdn] = struct{}{}
+		r.trackedIPsMutex.Unlock()
+
+		if r.healthWatcher.IsHealthy(ip) {
+			healthyIPs = append(healthyIPs, ip)
+		} else {
+			unhealthyIPs = append(unhealthyIPs, ip)
+		}
+	}
+
+	if len(healthyIPs) == 0 {
+		return unhealthyIPs, nil
+	}
+
+	return healthyIPs, nil
+}
+
+func (r *RecordSet) refreshTrackedIPs() {
+	newTrackedIPs := map[string]map[string]struct{}{}
+	r.trackedIPsMutex.Lock()
+	defer r.trackedIPsMutex.Unlock()
+	for _, domain := range r.trackedDomains.Registry() {
+		ips, err := r.resolveQuery(domain)
+		if err != nil {
+			continue
+		}
+
+		for _, ip := range ips {
+			if _, ok := newTrackedIPs[ip]; !ok {
+				newTrackedIPs[ip] = map[string]struct{}{}
+			}
+			newTrackedIPs[ip][domain] = struct{}{}
+
+			if _, found := r.trackedIPs[ip]; found {
+				delete(r.trackedIPs, ip)
+			} else {
+				r.healthWatcher.IsHealthy(ip)
+			}
+		}
+	}
+
+	for oldIP := range r.trackedIPs {
+		r.healthWatcher.Untrack(oldIP)
+	}
+
+	r.trackedIPs = newTrackedIPs
+}
+
+func (r *RecordSet) untrackDomain(removedDomain string) {
+	r.trackedIPsMutex.Lock()
+	defer r.trackedIPsMutex.Unlock()
+
+	for ip, domains := range r.trackedIPs {
+		if _, ok := domains[removedDomain]; ok {
+			delete(domains, removedDomain)
+			if len(domains) == 0 {
+				r.healthWatcher.Untrack(ip)
+			}
+		}
+	}
 }
 
 func (r *RecordSet) Domains() []string {

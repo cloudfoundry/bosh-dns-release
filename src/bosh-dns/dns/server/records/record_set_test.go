@@ -2,6 +2,7 @@ package records_test
 
 import (
 	"bosh-dns/dns/server/aliases"
+	"bosh-dns/dns/server/healthiness/healthinessfakes"
 	"bosh-dns/dns/server/records"
 	"bosh-dns/dns/server/records/recordsfakes"
 	"encoding/json"
@@ -28,16 +29,24 @@ func dereferencer(r []records.Record) []records.Record {
 
 var _ = Describe("RecordSet", func() {
 	var (
-		recordSet  *records.RecordSet
-		fakeLogger *fakes.FakeLogger
-		fileReader *recordsfakes.FakeFileReader
-		aliasList  aliases.Config
+		recordSet         *records.RecordSet
+		fakeLogger        *fakes.FakeLogger
+		fileReader        *recordsfakes.FakeFileReader
+		aliasList         aliases.Config
+		shutdownChan      chan struct{}
+		fakeHealthWatcher *healthinessfakes.FakeHealthWatcher
 	)
 
 	BeforeEach(func() {
 		fakeLogger = &fakes.FakeLogger{}
 		fileReader = &recordsfakes.FakeFileReader{}
 		aliasList = aliases.MustNewConfigFromMap(map[string][]string{})
+		fakeHealthWatcher = &healthinessfakes.FakeHealthWatcher{}
+		shutdownChan = make(chan struct{})
+	})
+
+	AfterEach(func() {
+		close(shutdownChan)
 	})
 
 	Describe("Record Set Performance", func() {
@@ -80,7 +89,7 @@ var _ = Describe("RecordSet", func() {
 
 			fileReader.GetReturns(jsonBytes, nil)
 
-			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -133,7 +142,7 @@ var _ = Describe("RecordSet", func() {
 			fileReader.GetReturns(jsonBytes, nil)
 
 			var err error
-			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -254,7 +263,7 @@ var _ = Describe("RecordSet", func() {
 			fileReader.GetReturns(jsonBytes, nil)
 
 			var err error
-			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(recordSet.Domains()).To(ConsistOf("withadot.", "nodot.", "domain.", "alias1."))
@@ -278,7 +287,7 @@ var _ = Describe("RecordSet", func() {
 			}`)
 			fileReader.GetReturns(jsonBytes, nil)
 			var err error
-			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 			Expect(err).ToNot(HaveOccurred())
 
 			ips, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
@@ -386,7 +395,7 @@ var _ = Describe("RecordSet", func() {
 					fileReader.GetReturns(jsonBytes, nil)
 
 					var err error
-					recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+					recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 					Expect(err).ToNot(HaveOccurred())
 
 					ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
@@ -430,7 +439,7 @@ var _ = Describe("RecordSet", func() {
 					fileReader.GetReturns(jsonBytes, nil)
 
 					var err error
-					recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+					recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 
 					Expect(err).ToNot(HaveOccurred())
 				})
@@ -469,7 +478,7 @@ var _ = Describe("RecordSet", func() {
 				fileReader.GetReturns(jsonBytes, nil)
 
 				var err error
-				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 
 				Expect(err).ToNot(HaveOccurred())
 				Expect(recordSet.Records).To(BeEmpty())
@@ -492,7 +501,7 @@ var _ = Describe("RecordSet", func() {
 				fileReader.GetReturns(jsonBytes, nil)
 
 				var err error
-				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(recordSet.Records).ToNot(BeEmpty())
 			})
@@ -528,7 +537,7 @@ var _ = Describe("RecordSet", func() {
 				fileReader.GetReturns(jsonBytes, nil)
 
 				var err error
-				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(recordSet.Records).NotTo(BeEmpty())
 
@@ -566,7 +575,7 @@ var _ = Describe("RecordSet", func() {
 				fileReader.GetReturns(jsonBytes, nil)
 
 				var err error
-				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(recordSet.Records).NotTo(BeEmpty())
 
@@ -604,7 +613,7 @@ var _ = Describe("RecordSet", func() {
 				fileReader.GetReturns(jsonBytes, nil)
 
 				var err error
-				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(recordSet.Records).NotTo(BeEmpty())
 
@@ -630,7 +639,7 @@ var _ = Describe("RecordSet", func() {
 				fileReader.GetReturns(jsonBytes, nil)
 
 				var err error
-				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -810,7 +819,7 @@ var _ = Describe("RecordSet", func() {
 					fileReader.GetReturns(jsonBytes, nil)
 
 					var err error
-					recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+					recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -872,7 +881,7 @@ var _ = Describe("RecordSet", func() {
 						fileReader.GetReturns(jsonBytes, nil)
 
 						var err error
-						recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+						recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 
 						Expect(err).ToNot(HaveOccurred())
 					})
@@ -896,7 +905,7 @@ var _ = Describe("RecordSet", func() {
 						fileReader.GetReturns(jsonBytes, nil)
 
 						var err error
-						recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+						recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 						Expect(err).ToNot(HaveOccurred())
 					})
 
@@ -948,7 +957,7 @@ var _ = Describe("RecordSet", func() {
 						fileReader.GetReturns(jsonBytes, nil)
 
 						var err error
-						recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+						recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 						Expect(err).ToNot(HaveOccurred())
 					})
 
@@ -1002,7 +1011,7 @@ var _ = Describe("RecordSet", func() {
 				fileReader.GetReturns(jsonBytes, nil)
 
 				var err error
-				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeLogger)
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -1055,6 +1064,141 @@ var _ = Describe("RecordSet", func() {
 							Expect(err).ToNot(HaveOccurred())
 							Expect(resolutions).To(Equal([]string{"3.3.3.3"}))
 						})
+					})
+				})
+			})
+		})
+
+		Context("when health watching is enabled", func() {
+			var subscriptionChan chan bool
+			BeforeEach(func() {
+				subscriptionChan = make(chan bool, 1)
+				fileReader.SubscribeReturns(subscriptionChan)
+
+				fakeHealthWatcher.IsHealthyStub = func(ip string) bool {
+					switch ip {
+					case "123.123.123.123":
+						return true
+					case "123.123.123.5":
+						return true
+					case "123.123.123.246":
+						return false
+					}
+					return false
+				}
+
+				jsonBytes := []byte(`{
+					"record_keys":
+						["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
+					"record_infos": [
+						["instance0", "0", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "my-domain", 1],
+						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "123.123.123.246", "my-domain", 2]
+					]
+				}`)
+				fileReader.GetReturns(jsonBytes, nil)
+
+				var err error
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
+
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("returns only the healthy ips", func() {
+				ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(ips).To(ConsistOf("123.123.123.123"))
+			})
+
+			Context("when all ips are un-healthy", func() {
+				BeforeEach(func() {
+					fakeHealthWatcher.IsHealthyReturns(false)
+				})
+
+				It("returns all ips", func() {
+					ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.246"))
+				})
+			})
+
+			Context("when the ips under a tracked domain change", func() {
+				BeforeEach(func() {
+					recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
+
+					jsonBytes := []byte(`{
+					"record_keys":
+						["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
+					"record_infos": [
+						["instance0", "0", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "my-domain", 1],
+						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "123.123.123.5", "my-domain", 2]
+					]
+				}`)
+
+					fileReader.GetReturns(jsonBytes, nil)
+
+					subscriptionChan <- true
+
+					Expect(fakeHealthWatcher.IsHealthyCallCount()).To(Equal(2))
+				})
+
+				It("returns the new ones", func() {
+					Eventually(func() ([]string, error) {
+						return recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
+					}).Should(ConsistOf("123.123.123.123", "123.123.123.5"))
+				})
+
+				It("checks the health of new ones", func() {
+					Eventually(fakeHealthWatcher.IsHealthyCallCount).Should(Equal(3))
+					Expect(fakeHealthWatcher.IsHealthyArgsForCall(2)).To(Equal("123.123.123.5"))
+				})
+
+				It("stops tracking old ones", func() {
+					Eventually(fakeHealthWatcher.UntrackCallCount).Should(Equal(1))
+					Expect(fakeHealthWatcher.UntrackArgsForCall(0)).To(Equal("123.123.123.246"))
+				})
+			})
+
+			Context("when the ips not under a tracked domain change", func() {
+				Describe("limiting tracked domains", func() {
+					BeforeEach(func() {
+						fakeHealthWatcher.IsHealthyReturns(true)
+
+						jsonBytes := []byte(`{
+					"record_keys":
+						["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
+					"record_infos": [
+						["instance0", "0", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "my-domain", 1],
+						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", "my-domain", 2],
+						["instance2", "2", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.125", "my-domain", 3],
+						["instance3", "3", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "123.123.123.126", "my-domain", 4],
+						["instance4", "4", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.127", "my-domain", 5],
+						["instance5", "5", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.128", "my-domain", 6],
+						["instance6", "6", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.129", "my-domain", 7]
+					]
+				}`)
+
+						fileReader.GetReturns(jsonBytes, nil)
+
+						var err error
+						recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
+
+						Expect(err).ToNot(HaveOccurred())
+					})
+
+					It("tracks no more than the maximum number of domains (5) domains", func() {
+						for i := 1; i <= 7; i++ {
+							recordSet.Resolve(fmt.Sprintf("q-i%d.my-group.my-network.my-deployment.my-domain.", i))
+						}
+
+						Eventually(fakeHealthWatcher.UntrackCallCount).Should(Equal(2))
+
+						Expect([]string{
+							fakeHealthWatcher.UntrackArgsForCall(0),
+							fakeHealthWatcher.UntrackArgsForCall(1),
+						}).To(ConsistOf(
+							"123.123.123.123",
+							"123.123.123.124",
+						))
 					})
 				})
 			})

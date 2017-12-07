@@ -1,7 +1,7 @@
 package internal_test
 
 import (
-	. "bosh-dns/dns/server/healthiness/internal"
+	"bosh-dns/dns/server/records/internal"
 	"sync"
 
 	"time"
@@ -12,11 +12,11 @@ import (
 
 var _ = Describe("PriorityLimitedTranscript", func() {
 	var (
-		transcript *PriorityLimitedTranscript
+		transcript *internal.PriorityLimitedTranscript
 	)
 
 	BeforeEach(func() {
-		transcript = NewPriorityLimitedTranscript(5)
+		transcript = internal.NewPriorityLimitedTranscript(5)
 	})
 
 	It("maintains registered names", func() {

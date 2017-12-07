@@ -117,10 +117,9 @@ func mainExitCode() int {
 	shutdown := make(chan struct{})
 
 	fileReader := records.NewFileReader(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
-	recordSet, err := records.NewRecordSet(fileReader, aliasConfiguration, logger)
-	healthyRecordSet := healthiness.NewHealthyRecordSet(recordSet, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown)
+	recordSet, err := records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger)
 
-	localDomain := dnsresolver.NewLocalDomain(logger, healthyRecordSet, shuffle.New())
+	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordSet, mux, discoveryHandler)
