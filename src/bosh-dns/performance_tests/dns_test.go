@@ -5,6 +5,7 @@ import (
 
 	zp "bosh-dns/performance_tests/zone_pickers"
 
+	"bosh-dns/dns/server/aliases"
 	"bosh-dns/dns/server/records"
 
 	"code.cloudfoundry.org/clock"
@@ -114,7 +115,7 @@ var _ = Describe("DNS", func() {
 			logger := &fakes.FakeLogger{}
 			fs := boshsys.NewOsFileSystem(logger)
 			recordSetReader := records.NewFileReader("assets/records.json", fs, clock.NewClock(), logger, signal)
-			recordSet, err := records.NewRecordSet(recordSetReader, logger)
+			recordSet, err := records.NewRecordSet(recordSetReader, aliases.NewConfig(), logger)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(recordSet.Records).To(HaveLen(102))
 
