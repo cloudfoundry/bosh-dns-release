@@ -9,5 +9,5 @@ import (
 
 func TestHandlers(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "dns/config/handlers")
+	RunSpecs(t, "Handlers Suite")
 }
