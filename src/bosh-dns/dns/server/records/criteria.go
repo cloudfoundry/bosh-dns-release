@@ -110,7 +110,7 @@ func FieldMatcher(field, value string) MatcherFunc {
 	return func(*Record) bool { return false }
 }
 
-func parseCriteria(firstSegment, groupSegment, instanceGroupName, network, deployment, domain string) (Matcher, error) {
+func parseCriteria(firstSegment, groupSegment, instanceGroupName, network, deployment, domain string) (criteria, error) {
 	criteriaMap := make(criteria)
 
 	if strings.HasPrefix(firstSegment, "q-") {
@@ -140,16 +140,7 @@ func parseCriteria(firstSegment, groupSegment, instanceGroupName, network, deplo
 		criteriaMap.appendCriteria("domain", domain)
 	}
 
-	matcher := new(AndMatcher)
-	for field, values := range criteriaMap {
-		// healthiness is not handled by the normal recordset
-		if field == "s" {
-			continue
-		}
-		matcher.Append(Field(field, values))
-	}
-
-	return matcher, nil
+	return criteriaMap, nil
 }
 
 func (c criteria) parseShortQueries(query string) error {

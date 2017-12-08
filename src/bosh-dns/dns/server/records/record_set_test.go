@@ -1103,19 +1103,45 @@ var _ = Describe("RecordSet", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("returns only the healthy ips", func() {
-				ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
-				Expect(err).NotTo(HaveOccurred())
-				Expect(ips).To(ConsistOf("123.123.123.123"))
-			})
-
-			Context("when all ips are un-healthy", func() {
-				BeforeEach(func() {
-					fakeHealthWatcher.IsHealthyReturns(false)
+			Context("when the 'smart' strategy is specified", func() {
+				It("returns only the healthy ips", func() {
+					ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(ips).To(ConsistOf("123.123.123.123"))
 				})
 
-				It("returns all ips", func() {
-					ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
+				Context("when all ips are un-healthy", func() {
+					BeforeEach(func() {
+						fakeHealthWatcher.IsHealthyReturns(false)
+					})
+
+					It("returns all ips", func() {
+						ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
+						Expect(err).NotTo(HaveOccurred())
+						Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.246"))
+					})
+				})
+			})
+
+			Context("when 'unhealthy' strategy is specified", func() {
+				It("returns only unhealthy records", func() {
+					ips, err := recordSet.Resolve("q-s1.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(ips).To(ConsistOf("123.123.123.246"))
+				})
+			})
+
+			Context("when 'healthy' strategy is specified", func() {
+				It("returns only the healthy records", func() {
+					ips, err := recordSet.Resolve("q-s3.my-group.my-network.my-deployment.my-domain.")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(ips).To(ConsistOf("123.123.123.123"))
+				})
+			})
+
+			Context("when 'all' strategy is specified", func() {
+				It("returns all of the records regardless of health", func() {
+					ips, err := recordSet.Resolve("q-s4.my-group.my-network.my-deployment.my-domain.")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.246"))
 				})
@@ -1137,8 +1163,6 @@ var _ = Describe("RecordSet", func() {
 					fileReader.GetReturns(jsonBytes, nil)
 
 					subscriptionChan <- true
-
-					Expect(fakeHealthWatcher.IsHealthyCallCount()).To(Equal(2))
 				})
 
 				It("returns the new ones", func() {
