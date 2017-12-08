@@ -110,47 +110,73 @@ func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
 	}
 
 	var (
-		ips  []string
-		err  error
-		crit criteria
+		finalIPs []string
+		errs     []error
 	)
 
 	resolutions := r.aliasList.Resolutions(fqdn)
 	if len(resolutions) > 0 {
-		var errors []error
-
 		for _, resolution := range resolutions {
-			var hostIPs []string
 
 			if net.ParseIP(resolution) != nil {
-				ips = append(ips, resolution)
+				finalIPs = append(finalIPs, resolution)
 				continue
 			}
 
-			hostIPs, crit, err = r.resolveQuery(resolution)
+			hostIPs, crit, err := r.resolveQuery(resolution)
 			if err != nil {
-				errors = append(errors, err)
+				errs = append(errs, err)
 			}
 
-			ips = append(ips, hostIPs...)
+			healthyIPs, unhealthyIPs := r.segregateIPs(hostIPs, resolution)
+			results := filterByHealthStrategy(healthyIPs, unhealthyIPs, crit)
+			finalIPs = append(finalIPs, results...)
 		}
 
-		if len(ips) == 0 && len(errors) > 0 {
-			return nil, fmt.Errorf("failures occurred when resolving alias domains: %s", errors)
+		if len(finalIPs) == 0 && len(errs) > 0 {
+			return nil, fmt.Errorf("failures occurred when resolving alias domains: %s", errs)
 		}
 	} else {
 		if net.ParseIP(fqdn) != nil {
-			ips = []string{fqdn}
+			finalIPs = []string{fqdn}
 		} else {
-			ips, crit, err = r.resolveQuery(fqdn)
+			ips, crit, err := r.resolveQuery(fqdn)
 			if err != nil {
 				return nil, err
 			}
+
+			healthyIPs, unhealthyIPs := r.segregateIPs(ips, fqdn)
+			finalIPs = filterByHealthStrategy(healthyIPs, unhealthyIPs, crit)
 		}
 	}
 
-	var healthyIPs, unhealthyIPs []string
+	return finalIPs, nil
+}
 
+func filterByHealthStrategy(healthyIPs, unhealthyIPs []string, crit criteria) []string {
+	healthStrategy := "0"
+	if len(crit["s"]) > 0 {
+		healthStrategy = crit["s"][0]
+	}
+
+	switch healthStrategy {
+	case "1": // unhealthy ones
+		return unhealthyIPs
+	case "3": // healthy
+		return healthyIPs
+	case "4": // all
+		return append(healthyIPs, unhealthyIPs...)
+	default: // smart strategy
+		if len(healthyIPs) == 0 {
+			return unhealthyIPs
+		}
+
+		return healthyIPs
+	}
+}
+
+func (r *RecordSet) segregateIPs(ips []string, fqdn string) ([]string, []string) {
+	var healthyIPs, unhealthyIPs []string
 	for _, ip := range ips {
 		r.trackedIPsMutex.Lock()
 		r.trackedIPs[ip] = map[string]struct{}{}
@@ -167,25 +193,7 @@ func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
 		}
 	}
 
-	healthStrategy := "0"
-	if len(crit["s"]) > 0 {
-		healthStrategy = crit["s"][0]
-	}
-
-	switch healthStrategy {
-	case "1": // unhealthy ones
-		return unhealthyIPs, nil
-	case "3": // healthy
-		return healthyIPs, nil
-	case "4": // all
-		return append(healthyIPs, unhealthyIPs...), nil
-	default: // smart strategy
-		if len(healthyIPs) == 0 {
-			return unhealthyIPs, nil
-		}
-
-		return healthyIPs, nil
-	}
+	return healthyIPs, unhealthyIPs
 }
 
 func (r *RecordSet) refreshTrackedIPs() {

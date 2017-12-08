@@ -1087,12 +1087,22 @@ var _ = Describe("RecordSet", func() {
 					return false
 				}
 
+				aliasList = aliases.MustNewConfigFromMap(
+					map[string][]string{
+						"alias1": {
+							"q-s1.my-group.my-network.my-deployment.a1_domain1.",
+							"q-s3.my-group.my-network.my-deployment.a1_domain2.",
+						},
+					})
+
 				jsonBytes := []byte(`{
 					"record_keys":
 						["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
 					"record_infos": [
 						["instance0", "0", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "my-domain", 1],
-						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "123.123.123.246", "my-domain", 2]
+						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "123.123.123.246", "my-domain", 2],
+						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "246.246.246.246", "a1_domain1", 1],
+						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "246.246.246.247", "a1_domain2", 2]
 					]
 				}`)
 				fileReader.GetReturns(jsonBytes, nil)
@@ -1101,6 +1111,50 @@ var _ = Describe("RecordSet", func() {
 				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 
 				Expect(err).ToNot(HaveOccurred())
+			})
+
+			Context("when an alias is supplied", func() {
+				BeforeEach(func() {
+					fakeHealthWatcher.IsHealthyStub = func(ip string) bool {
+						switch ip {
+						case "246.246.246.246":
+							return false
+						case "246.246.246.247":
+							return true
+						}
+						return false
+					}
+
+					aliasList = aliases.MustNewConfigFromMap(
+						map[string][]string{
+							"alias1": {
+								"q-s1.my-group.my-network.my-deployment.a1_domain1.",
+								"q-s3.my-group.my-network.my-deployment.a1_domain2.",
+							},
+						})
+
+					jsonBytes := []byte(`{
+					"record_keys":
+						["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
+					"record_infos": [
+						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "246.246.246.246", "a1_domain1", 1],
+						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "246.246.246.247", "a1_domain2", 2]
+					]
+				}`)
+					fileReader.GetReturns(jsonBytes, nil)
+					var err error
+					recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
+
+					Expect(err).ToNot(HaveOccurred())
+				})
+
+				Context("when the strategies are mixed", func() {
+					It("returns the proper records", func() {
+						ips, err := recordSet.Resolve("alias1.")
+						Expect(err).NotTo(HaveOccurred())
+						Expect(ips).To(ConsistOf("246.246.246.246", "246.246.246.247"))
+					})
+				})
 			})
 
 			Context("when the 'smart' strategy is specified", func() {
