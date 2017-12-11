@@ -56,5 +56,5 @@ releases:
 
 stemcells:
 - alias: default
-  os: windows2012R2
+  os: ((windows-stemcell))
   version: latest
