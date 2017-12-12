@@ -56,5 +56,5 @@ releases:
 
 stemcells:
 - alias: default
-  os: ((windows-stemcell))
+  os: ((windows_stemcell))
   version: latest

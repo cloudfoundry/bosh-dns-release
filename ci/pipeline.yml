@@ -135,6 +135,8 @@ jobs:
         passed: [create-release]
     - task: windows
       file: bosh-dns-release/ci/tasks/test-acceptance-windows.yml
+      params:
+        WINDOWS_OS_VERSION: windows2012R2
       timeout: 1h
     - task: windows-nameserver-disabled
       file: bosh-dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
