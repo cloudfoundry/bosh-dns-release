@@ -27,26 +27,27 @@ try {
 }
 
 
-<% if p('enable_os_dns_caching') %>
-  try {
-    $RegistryPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters"
-    $ExpectedValue = 0
-    $Value = Get-ItemProperty -Path $RegistryPath
-    if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
-      Set-ItemProperty -Path $RegistryPath -Name MaxNegativeCacheTtl -Value $ExpectedValue -Type DWord
-      $Value = Get-ItemProperty -Path $RegistryPath
-      if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
-        Write-Error "Error: Expected MaxNegativeCacheTtl to be '${ExpectedValue}', got '${Value.MaxNegativeCacheTtl}'"
-      }
-    }
-  } catch {
-    $Host.UI.WriteErrorLine($_.Exception.Message)
-    Exit 1
+$RegistryPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters"
+$ExpectedValue = 0
+$Value = Get-ItemProperty -Path $RegistryPath
+if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
+  Set-ItemProperty -Path $RegistryPath -Name MaxNegativeCacheTtl -Value $ExpectedValue -Type DWord
+  $Value = Get-ItemProperty -Path $RegistryPath
+  if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
+    Write-Error "Error: Expected MaxNegativeCacheTtl to be '${ExpectedValue}', got '${Value.MaxNegativeCacheTtl}'"
   }
-
-  Get-Service Dnscache | Set-Service -StartupType automatic -PassThru | Start-Service
+}
+<% if p('enable_os_dns_caching') %>
+  Remove-ItemProperty -Path $RegistryPath -Name MaxCacheTtl
+  $status = (Get-Service Dnscache).Status
+  if ($status -ne "Running") {
+     Write-Error "Error: Expected Dnscache Service to be Running, got $status"
+  }
+  $startType = (Get-Service Dnscache).StartType
+  if ($startType -ne "Automatic") {
+     Write-Error "Error: Expected Dnscache StartupType to be Automatic, got $startType"
+  }
 <% else %>
-  $RegistryPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters"
   Set-ItemProperty -Path $RegistryPath -Name MaxCacheTtl -Value 0 -Type DWord
 <% end %>
 
