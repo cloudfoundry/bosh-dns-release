@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"bosh-dns/dns/api"
+	"bosh-dns/dns/api/apifakes"
 	"bosh-dns/dns/server/records"
 	"encoding/json"
 	"net/http"
@@ -13,14 +14,16 @@ import (
 
 var _ = Describe("InstancesHandler", func() {
 	var (
-		handler   *api.InstancesHandler
-		recordSet *records.RecordSet
+		fakeHealthStateGetter *apifakes.FakeHealthStateGetter
+		handler               *api.InstancesHandler
+		recordSet             *records.RecordSet
 
 		w *httptest.ResponseRecorder
 		r *http.Request
 	)
 
 	BeforeEach(func() {
+		fakeHealthStateGetter = &apifakes.FakeHealthStateGetter{}
 		// URL path doesn't matter here since routing is handled elsewhere
 		r = httptest.NewRequest("GET", "/", nil)
 		w = httptest.NewRecorder()
@@ -29,7 +32,7 @@ var _ = Describe("InstancesHandler", func() {
 	})
 
 	JustBeforeEach(func() {
-		handler = api.NewInstancesHandler(recordSet)
+		handler = api.NewInstancesHandler(recordSet, fakeHealthStateGetter)
 	})
 
 	It("returns status ok", func() {
@@ -53,6 +56,17 @@ var _ = Describe("InstancesHandler", func() {
 
 	Context("when record set has records", func() {
 		BeforeEach(func() {
+			fakeHealthStateGetter.HealthStateStub = func(ip string) string {
+				switch ip {
+				case "IP1":
+					return "potato"
+				case "IP2":
+					return "lightbulb"
+				default:
+					panic("ip is not recognized" + ip)
+				}
+			}
+
 			recordSet.Records = []records.Record{
 				{
 					ID:            "ID1",
@@ -98,26 +112,26 @@ var _ = Describe("InstancesHandler", func() {
 			}
 			Expect(records).To(ConsistOf([]api.Record{
 				{
-					ID:         "ID1",
-					Group:      "Group1",
-					Network:    "Network1",
-					Deployment: "Deployment1",
-					IP:         "IP1",
-					Domain:     "Domain1",
-					AZ:         "AZ1",
-					Index:      "InstanceIndex1",
-					Healthy:    true,
+					ID:          "ID1",
+					Group:       "Group1",
+					Network:     "Network1",
+					Deployment:  "Deployment1",
+					IP:          "IP1",
+					Domain:      "Domain1",
+					AZ:          "AZ1",
+					Index:       "InstanceIndex1",
+					HealthState: "potato",
 				},
 				{
-					ID:         "ID2",
-					Group:      "Group2",
-					Network:    "Network2",
-					Deployment: "Deployment2",
-					IP:         "IP2",
-					Domain:     "Domain2",
-					AZ:         "AZ2",
-					Index:      "InstanceIndex2",
-					Healthy:    true,
+					ID:          "ID2",
+					Group:       "Group2",
+					Network:     "Network2",
+					Deployment:  "Deployment2",
+					IP:          "IP2",
+					Domain:      "Domain2",
+					AZ:          "AZ2",
+					Index:       "InstanceIndex2",
+					HealthState: "lightbulb",
 				},
 			}))
 		})

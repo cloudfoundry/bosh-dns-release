@@ -110,6 +110,73 @@ var _ = Describe("HealthWatcher", func() {
 		})
 	})
 
+	Describe("HealthState", func() {
+		var ip string
+
+		BeforeEach(func() {
+			ip = "127.0.0.1"
+		})
+
+		Context("when the status is not known", func() {
+			It("returns unknown", func() {
+				Expect(healthWatcher.HealthState(ip)).To(Equal(healthiness.StateUnknown))
+			})
+		})
+
+		Context("when the status is known", func() {
+			JustBeforeEach(func() {
+				healthWatcher.IsHealthy(ip)
+				Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
+				Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
+			})
+
+			Context("and the ip is healthy", func() {
+				BeforeEach(func() {
+					ip = "127.0.0.2"
+					fakeChecker.GetStatusReturns(true)
+				})
+
+				It("returns healthy", func() {
+					Expect(healthWatcher.HealthState(ip)).To(Equal(healthiness.StateHealthy))
+				})
+			})
+
+			Context("and the ip is unhealthy", func() {
+				BeforeEach(func() {
+					ip = "127.0.0.3"
+					fakeChecker.GetStatusReturns(false)
+				})
+
+				It("returns unhealthy", func() {
+					Expect(healthWatcher.HealthState(ip)).To(Equal(healthiness.StateUnhealthy))
+				})
+			})
+
+			Context("and the status changes", func() {
+				BeforeEach(func() {
+					fakeChecker.GetStatusReturns(true)
+				})
+
+				It("goes unhealthy if the new status is stopped", func() {
+					Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
+					Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
+
+					fakeChecker.GetStatusReturns(false)
+
+					Consistently(func() string {
+						return healthWatcher.HealthState(ip)
+					}).Should(Equal(healthiness.StateHealthy))
+
+					fakeClock.WaitForWatcherAndIncrement(interval)
+
+					Eventually(func() string {
+						return healthWatcher.HealthState(ip)
+					}).Should(Equal(healthiness.StateUnhealthy))
+				})
+			})
+		})
+	})
+
 	Describe("Untrack", func() {
 		var ip string
 

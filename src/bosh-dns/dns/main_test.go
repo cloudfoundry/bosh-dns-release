@@ -294,91 +294,130 @@ var _ = Describe("main", func() {
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			})
 
-			It("returns json records", func() {
-				address := fmt.Sprintf("http://%s:%d/instances", listenAddress, listenAPIPort)
-				resp, err := http.Get(address)
-				Expect(err).NotTo(HaveOccurred())
-				defer resp.Body.Close()
+			Describe("/instances", func() {
+				var healthServers []*ghttp.Server
 
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				BeforeEach(func() {
+					healthServers = []*ghttp.Server{
+						newFakeHealthServer("127.0.0.1", "running"),
+						// sudo ifconfig lo0 alias 127.0.0.2 up # on osx
+						newFakeHealthServer("127.0.0.2", "stopped"),
+					}
+				})
 
-				var parsed []api.Record
-				decoder := json.NewDecoder(resp.Body)
-				var nextRecord api.Record
-				for decoder.More() {
-					err = decoder.Decode(&nextRecord)
-					Expect(err).ToNot(HaveOccurred())
-					parsed = append(parsed, nextRecord)
-				}
+				AfterEach(func() {
+					for _, server := range healthServers {
+						server.Close()
+					}
+				})
 
-				Expect(parsed).To(ConsistOf([]api.Record{
-					{
-						ID:         "my-instance",
-						Group:      "my-group",
-						Network:    "my-network",
-						Deployment: "my-deployment",
-						IP:         "127.0.0.1",
-						Domain:     "bosh.",
-						AZ:         "az1",
-						Index:      "",
-						Healthy:    true,
-					},
-					{
-						ID:         "my-instance-1",
-						Group:      "my-group",
-						Network:    "my-network",
-						Deployment: "my-deployment",
-						IP:         "127.0.0.2",
-						Domain:     "bosh.",
-						AZ:         "az2",
-						Index:      "",
-						Healthy:    true,
-					},
-					{
-						ID:         "my-instance-2",
-						Group:      "my-group",
-						Network:    "my-network",
-						Deployment: "my-deployment-2",
-						IP:         "127.0.0.3",
-						Domain:     "bosh.",
-						AZ:         "az2",
-						Index:      "",
-						Healthy:    true,
-					},
-					{
-						ID:         "my-instance-1",
-						Group:      "my-group",
-						Network:    "my-network",
-						Deployment: "my-deployment",
-						IP:         "127.0.0.2",
-						Domain:     "foo.",
-						AZ:         "az1",
-						Index:      "",
-						Healthy:    true,
-					},
-					{
-						ID:         "my-instance-2",
-						Group:      "my-group",
-						Network:    "my-network",
-						Deployment: "my-deployment-2",
-						IP:         "127.0.0.3",
-						Domain:     "foo.",
-						AZ:         "az2",
-						Index:      "",
-						Healthy:    true,
-					},
-					{
-						ID:         "primer-instance",
-						Group:      "primer-group",
-						Network:    "primer-network",
-						Deployment: "primer-deployment",
-						IP:         "127.0.0.254",
-						Domain:     "primer.",
-						AZ:         "az1",
-						Index:      "",
-						Healthy:    true,
-					},
-				}))
+				JustBeforeEach(func() {
+					c := &dns.Client{Net: "udp"}
+
+					m := &dns.Msg{}
+					m.SetQuestion("q-s0.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Answer).To(HaveLen(2))
+
+					serverRequestLen := func(server *ghttp.Server) func() int {
+						return func() int {
+							return len(server.ReceivedRequests())
+						}
+					}
+					Eventually(serverRequestLen(healthServers[0]), 5*time.Second).Should(BeNumerically(">", 2))
+					Eventually(serverRequestLen(healthServers[1]), 5*time.Second).Should(BeNumerically(">", 2))
+				})
+
+				It("returns json records", func() {
+					address := fmt.Sprintf("http://%s:%d/instances", listenAddress, listenAPIPort)
+					resp, err := http.Get(address)
+					Expect(err).NotTo(HaveOccurred())
+					defer resp.Body.Close()
+
+					Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+					var parsed []api.Record
+					decoder := json.NewDecoder(resp.Body)
+					var nextRecord api.Record
+					for decoder.More() {
+						err = decoder.Decode(&nextRecord)
+						Expect(err).ToNot(HaveOccurred())
+						parsed = append(parsed, nextRecord)
+					}
+
+					Expect(parsed).To(ConsistOf([]api.Record{
+						{
+							ID:          "my-instance",
+							Group:       "my-group",
+							Network:     "my-network",
+							Deployment:  "my-deployment",
+							IP:          "127.0.0.1",
+							Domain:      "bosh.",
+							AZ:          "az1",
+							Index:       "",
+							HealthState: "healthy",
+						},
+						{
+							ID:          "my-instance-1",
+							Group:       "my-group",
+							Network:     "my-network",
+							Deployment:  "my-deployment",
+							IP:          "127.0.0.2",
+							Domain:      "bosh.",
+							AZ:          "az2",
+							Index:       "",
+							HealthState: "unhealthy",
+						},
+						{
+							ID:          "my-instance-2",
+							Group:       "my-group",
+							Network:     "my-network",
+							Deployment:  "my-deployment-2",
+							IP:          "127.0.0.3",
+							Domain:      "bosh.",
+							AZ:          "az2",
+							Index:       "",
+							HealthState: "unknown",
+						},
+						{
+							ID:          "my-instance-1",
+							Group:       "my-group",
+							Network:     "my-network",
+							Deployment:  "my-deployment",
+							IP:          "127.0.0.2",
+							Domain:      "foo.",
+							AZ:          "az1",
+							Index:       "",
+							HealthState: "unhealthy",
+						},
+						{
+							ID:          "my-instance-2",
+							Group:       "my-group",
+							Network:     "my-network",
+							Deployment:  "my-deployment-2",
+							IP:          "127.0.0.3",
+							Domain:      "foo.",
+							AZ:          "az2",
+							Index:       "",
+							HealthState: "unknown",
+						},
+						{
+							ID:          "primer-instance",
+							Group:       "primer-group",
+							Network:     "primer-network",
+							Deployment:  "primer-deployment",
+							IP:          "127.0.0.254",
+							Domain:      "primer.",
+							AZ:          "az1",
+							Index:       "",
+							HealthState: "unknown",
+						},
+					}))
+				})
 			})
 		})
 
@@ -1014,8 +1053,8 @@ var _ = Describe("main", func() {
 
 			go func() {
 				defer GinkgoRecover()
-				_, err := l.Accept()
-				Expect(err).NotTo(HaveOccurred())
+				_, acceptErr := l.Accept()
+				Expect(acceptErr).NotTo(HaveOccurred())
 			}()
 
 			cmd = newCommandWithConfig(config.Config{
@@ -1129,7 +1168,7 @@ var _ = Describe("main", func() {
 		})
 
 		It("exits 1 and logs a helpful error message when the server times out binding to ports", func() {
-			cmd := newCommandWithConfig(config.Config{
+			cmd = newCommandWithConfig(config.Config{
 				Address:        listenAddress,
 				Port:           listenPort,
 				UpcheckDomains: []string{"upcheck.bosh-dns."},
@@ -1165,7 +1204,7 @@ var _ = Describe("main", func() {
 					},
 				})
 
-				cmd := newCommandWithConfig(config.Config{
+				cmd = newCommandWithConfig(config.Config{
 					Address:           listenAddress,
 					Port:              listenPort,
 					UpcheckDomains:    []string{"upcheck.bosh-dns."},
@@ -1189,7 +1228,7 @@ var _ = Describe("main", func() {
 					},
 				})
 
-				cmd := newCommandWithConfig(config.Config{
+				cmd = newCommandWithConfig(config.Config{
 					Address:           listenAddress,
 					Port:              listenPort,
 					UpcheckDomains:    []string{"upcheck.bosh-dns."},

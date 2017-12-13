@@ -186,7 +186,7 @@ func mainExitCode() int {
 		close(shutdown)
 	}()
 
-	http.Handle("/instances", api.NewInstancesHandler(recordSet))
+	http.Handle("/instances", api.NewInstancesHandler(recordSet, healthWatcher))
 
 	apiListenAddress := fmt.Sprintf(":%d", config.APIPort)
 	go http.ListenAndServe(apiListenAddress, nil)
