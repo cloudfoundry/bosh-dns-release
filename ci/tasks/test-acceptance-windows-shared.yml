@@ -19,3 +19,4 @@ run:
 
 params:
   ENV_NAME: default
+  WINDOWS_OS_VERSION: windows2012R2
