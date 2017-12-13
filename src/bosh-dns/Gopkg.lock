@@ -75,6 +75,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/maxbrunsfeld/counterfeiter"
+  packages = [".","arguments","astutil","generator","locator","model","terminal"]
+  revision = "c1f2005ff133f81907ce72f3d20e1169799317fe"
+  version = "v5"
+
+[[projects]]
   name = "github.com/mholt/caddy"
   packages = [".","caddyfile"]
   revision = "bc56793d3b919b17080deaa427bb5f70a826f4d6"
@@ -154,6 +160,12 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  revision = "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/net"
   packages = ["context","html","html/atom","html/charset","http2","http2/hpack","idna","internal/timeseries","lex/httplex","proxy","trace"]
   revision = "054b33e6527139ad5b1ec2f6232c3b175bd9a30c"
@@ -162,13 +174,19 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "6faef541c73732f438fb660a212750a9ba9f9362"
+  revision = "0131e684e801af603bb75e5d7f959b32442f327a"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
   packages = ["encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/gen","internal/tag","internal/triegen","internal/ucd","internal/utf8internal","language","runes","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
   revision = "836efe42bb4aa16aaa17b9c155d8813d336ed720"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/tools"
+  packages = ["go/ast/astutil","imports"]
+  revision = "64890f4e2b733655fee5077a5435a8812404c3a3"
 
 [[projects]]
   branch = "master"
@@ -191,6 +209,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ccbe49d515ac74e5c7f191543e63b0765977f44e3bf0f2619cf7c59733efd8de"
+  inputs-digest = "8fdab4635cc27f38eab72480719ff0026164c484533b0777735e6559c96a0854"
   solver-name = "gps-cdcl"
   solver-version = 1
