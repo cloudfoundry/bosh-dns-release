@@ -38,7 +38,8 @@ if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
   }
 }
 <% if p('enable_os_dns_caching') %>
-  Remove-ItemProperty -Path $RegistryPath -Name MaxCacheTtl
+  # Reset the MaxCacheTtl to the default: https://technet.microsoft.com/en-us/library/cc959926.aspx
+  Set-ItemProperty -Path $RegistryPath -Name MaxCacheTtl -Value 0x15180 -Type DWord
   $status = (Get-Service Dnscache).Status
   if ($status -ne "Running") {
      Write-Error "Error: Expected Dnscache Service to be Running, got $status"
