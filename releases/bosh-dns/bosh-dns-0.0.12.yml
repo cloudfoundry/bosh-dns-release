@@ -1,0 +1,58 @@
+name: bosh-dns
+version: 0.0.12
+commit_hash: 86dfaf1
+uncommitted_changes: false
+jobs:
+- name: acceptance-tests
+  version: d1e69ed4f684767de94ce7e6a8b3b34032f96b90
+  fingerprint: d1e69ed4f684767de94ce7e6a8b3b34032f96b90
+  sha1: ee9b10c88923677ac1249e4ff0b0b71f93a8d3aa
+- name: acceptance-tests-windows
+  version: c6716e2f4c709299a2f677df5ee972c552dc9249
+  fingerprint: c6716e2f4c709299a2f677df5ee972c552dc9249
+  sha1: 4c08e039bd243000bfb2483ba213bb314a7a077e
+- name: bosh-dns
+  version: 96064d92c02b44d553fab9b163c232397a0cf370
+  fingerprint: 96064d92c02b44d553fab9b163c232397a0cf370
+  sha1: f1d3d265ca2d4c7e71340d8d24f59c41ec6ad66f
+- name: bosh-dns-windows
+  version: f44d0f48e6baa44178a4e8a96d0ea2885f7dc6f1
+  fingerprint: f44d0f48e6baa44178a4e8a96d0ea2885f7dc6f1
+  sha1: ca08de66ad9a78fc7f3d25b4cdc1b61067a41f1d
+packages:
+- name: acceptance-tests
+  version: 0d2925f5db511902e9d392feb9a7dccef6167f47
+  fingerprint: 0d2925f5db511902e9d392feb9a7dccef6167f47
+  sha1: 0ccbbc016f6741cb856a8e96d0974048cd94272e
+  dependencies: []
+- name: acceptance-tests-windows
+  version: f573898b8fd33a5fe076a577f65ced62bc7b6731
+  fingerprint: f573898b8fd33a5fe076a577f65ced62bc7b6731
+  sha1: 02b3f4df98763ad647c0b0cfbd04ababbeadc3c8
+  dependencies: []
+- name: bosh-dns
+  version: 7377fab177db94fc066329f5a8bd97a8dad81c7f
+  fingerprint: 7377fab177db94fc066329f5a8bd97a8dad81c7f
+  sha1: ea90374adaa17d5a6935160bc9f93ea20f69d62a
+  dependencies:
+  - golang-1.8-linux
+- name: bosh-dns-windows
+  version: 3a06fb3bb002200fb48d6a945037a1e61e4a45e3
+  fingerprint: 3a06fb3bb002200fb48d6a945037a1e61e4a45e3
+  sha1: 656f972f99e8847c93c9867b0f9a2239efe9e47f
+  dependencies:
+  - golang-1.8-windows
+- name: golang-1.8-linux
+  version: 1509998fbf5c66cb8fc361a479beafb41ef8cc14
+  fingerprint: 1509998fbf5c66cb8fc361a479beafb41ef8cc14
+  sha1: 3d8d63ef92977b3e4ec1ac71a555e7374078fb80
+  dependencies: []
+- name: golang-1.8-windows
+  version: 01a820edb6e3fc5b9c32421d49a5218c7c8fb75d
+  fingerprint: 01a820edb6e3fc5b9c32421d49a5218c7c8fb75d
+  sha1: 09166332b28d2bd800e9ebb25f2fcf12dd2d4446
+  dependencies: []
+license:
+  version: b2a9512d0f5dc1719981c9dde172406441ca9c72
+  fingerprint: b2a9512d0f5dc1719981c9dde172406441ca9c72
+  sha1: 8f6d1003bebd08f160a1d8a5395700342aed463c
