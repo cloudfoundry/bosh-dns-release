@@ -2,7 +2,7 @@ package records
 
 type Record struct {
 	ID            string
-	NumId         string
+	NumID         string
 	Group         string
 	GroupIDs      []string
 	Network       string
@@ -10,6 +10,7 @@ type Record struct {
 	Deployment    string
 	IP            string
 	Domain        string
+	AZ            string
 	AZID          string
 	InstanceIndex string
 }

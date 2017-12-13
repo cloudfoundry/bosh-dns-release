@@ -19,6 +19,7 @@ var _ = Describe("Config", func() {
 	var (
 		listenAddress   string
 		listenPort      int
+		listenAPIPort   int
 		timeout         string
 		recursorTimeout string
 
@@ -38,6 +39,7 @@ var _ = Describe("Config", func() {
 
 		listenAddress = fmt.Sprintf("192.168.1.%d", rand.Int31n(256))
 		listenPort = rand.Int()
+		listenAPIPort = rand.Int()
 		timeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		recursorTimeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		healthPort = 2345
@@ -55,6 +57,7 @@ var _ = Describe("Config", func() {
 		configContents, err := json.Marshal(map[string]interface{}{
 			"address":             listenAddress,
 			"port":                listenPort,
+			"api_port":            listenAPIPort,
 			"timeout":             timeout,
 			"recursor_timeout":    recursorTimeout,
 			"upcheck_domains":     upcheckDomains,
@@ -99,6 +102,7 @@ var _ = Describe("Config", func() {
 		Expect(dnsConfig).To(Equal(config.Config{
 			Address:           listenAddress,
 			Port:              listenPort,
+			APIPort:           listenAPIPort,
 			Timeout:           config.DurationJSON(timeoutDuration),
 			RecursorTimeout:   config.DurationJSON(recursorTimeoutDuration),
 			Recursors:         []string{},

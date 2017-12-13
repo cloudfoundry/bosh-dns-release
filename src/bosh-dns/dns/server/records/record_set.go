@@ -356,6 +356,7 @@ func createFromJSON(j []byte, logger boshlog.Logger) ([]Record, error) {
 	deploymentIndex := -1
 	ipIndex := -1
 	domainIndex := -1
+	azIndex := -1
 	azIDIndex := -1
 	instanceIndexIndex := -1
 	groupIdsIndex := -1
@@ -380,6 +381,8 @@ func createFromJSON(j []byte, logger boshlog.Logger) ([]Record, error) {
 			ipIndex = i
 		case "domain":
 			domainIndex = i
+		case "az":
+			azIndex = i
 		case "az_id":
 			azIDIndex = i
 		case "instance_index":
@@ -417,11 +420,13 @@ func createFromJSON(j []byte, logger boshlog.Logger) ([]Record, error) {
 			continue
 		} else if !requiredStringValue(&record.IP, info, ipIndex, "ip", index, logger) {
 			continue
+		} else if !optionalStringValue(&record.AZ, info, azIndex, "az", index, logger) {
+			continue
 		} else if !optionalStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger) {
 			continue
 		} else if !optionalStringValue(&record.NetworkID, info, networkIDIndex, "network_id", index, logger) {
 			continue
-		} else if !optionalStringValue(&record.NumId, info, numIDIndex, "num_id", index, logger) {
+		} else if !optionalStringValue(&record.NumID, info, numIDIndex, "num_id", index, logger) {
 			continue
 		} else if groupIdsIndex >= 0 && !assertStringArrayOfStringValue(&record.GroupIDs, info, groupIdsIndex, "group_ids", index, logger) {
 			continue

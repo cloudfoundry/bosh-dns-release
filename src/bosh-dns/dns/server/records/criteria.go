@@ -89,7 +89,7 @@ func FieldMatcher(field, value string) MatcherFunc {
 		return func(r *Record) bool { return r.Domain == value }
 
 	case "m":
-		return func(r *Record) bool { return r.NumId == value }
+		return func(r *Record) bool { return r.NumID == value }
 	case "n":
 		return func(r *Record) bool { return r.NetworkID == value }
 	case "a":

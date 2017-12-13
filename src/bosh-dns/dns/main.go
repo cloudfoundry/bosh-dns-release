@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +12,7 @@ import (
 
 	"code.cloudfoundry.org/clock"
 
+	"bosh-dns/dns/api"
 	dnsconfig "bosh-dns/dns/config"
 	handlersconfig "bosh-dns/dns/config/handlers"
 	"bosh-dns/dns/server"
@@ -183,6 +185,11 @@ func mainExitCode() int {
 		close(repoUpdate)
 		close(shutdown)
 	}()
+
+	http.Handle("/instances", api.NewInstancesHandler(recordSet))
+
+	apiListenAddress := fmt.Sprintf(":%d", config.APIPort)
+	go http.ListenAndServe(apiListenAddress, nil)
 
 	if err := dnsServer.Run(); err != nil {
 		logger.Error(logTag, err.Error())

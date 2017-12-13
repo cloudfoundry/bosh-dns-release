@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"bosh-dns/dns/api"
 	"bosh-dns/dns/config"
 	handlersconfig "bosh-dns/dns/config/handlers"
 	"encoding/json"
@@ -43,6 +44,7 @@ var _ = Describe("main", func() {
 	var (
 		listenAddress string
 		listenPort    int
+		listenAPIPort int
 		recursorPort  int
 	)
 
@@ -50,6 +52,8 @@ var _ = Describe("main", func() {
 		listenAddress = "127.0.0.1"
 		var err error
 		listenPort, err = getFreePort()
+		Expect(err).NotTo(HaveOccurred())
+		listenAPIPort, err = getFreePort()
 		Expect(err).NotTo(HaveOccurred())
 
 		recursorPort, err = getFreePort()
@@ -216,6 +220,7 @@ var _ = Describe("main", func() {
 			cmd = newCommandWithConfig(config.Config{
 				Address:           listenAddress,
 				Port:              listenPort,
+				APIPort:           listenAPIPort,
 				RecordsFile:       recordsFilePath,
 				AliasFilesGlob:    path.Join(aliasesDir, "*"),
 				HandlersFilesGlob: path.Join(handlersDir, "*"),
@@ -234,6 +239,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(waitForServer(listenPort)).To(Succeed())
+			Expect(waitForServer(listenAPIPort)).To(Succeed())
 
 			Eventually(func() int {
 				c := &dns.Client{}
@@ -277,6 +283,104 @@ var _ = Describe("main", func() {
 			Entry("when the request is udp", "udp"),
 			Entry("when the request is tcp", "tcp"),
 		)
+
+		Describe("HTTP API", func() {
+			It("returns a 404 from unknown endpoints (well, one unknown endpoint)", func() {
+				address := fmt.Sprintf("http://%s:%d/unknown", listenAddress, listenAPIPort)
+				resp, err := http.Get(address)
+				Expect(err).NotTo(HaveOccurred())
+				defer resp.Body.Close()
+
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			})
+
+			It("returns json records", func() {
+				address := fmt.Sprintf("http://%s:%d/instances", listenAddress, listenAPIPort)
+				resp, err := http.Get(address)
+				Expect(err).NotTo(HaveOccurred())
+				defer resp.Body.Close()
+
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+				var parsed []api.Record
+				decoder := json.NewDecoder(resp.Body)
+				var nextRecord api.Record
+				for decoder.More() {
+					err = decoder.Decode(&nextRecord)
+					Expect(err).ToNot(HaveOccurred())
+					parsed = append(parsed, nextRecord)
+				}
+
+				Expect(parsed).To(ConsistOf([]api.Record{
+					{
+						ID:         "my-instance",
+						Group:      "my-group",
+						Network:    "my-network",
+						Deployment: "my-deployment",
+						IP:         "127.0.0.1",
+						Domain:     "bosh.",
+						AZ:         "az1",
+						Index:      "",
+						Healthy:    true,
+					},
+					{
+						ID:         "my-instance-1",
+						Group:      "my-group",
+						Network:    "my-network",
+						Deployment: "my-deployment",
+						IP:         "127.0.0.2",
+						Domain:     "bosh.",
+						AZ:         "az2",
+						Index:      "",
+						Healthy:    true,
+					},
+					{
+						ID:         "my-instance-2",
+						Group:      "my-group",
+						Network:    "my-network",
+						Deployment: "my-deployment-2",
+						IP:         "127.0.0.3",
+						Domain:     "bosh.",
+						AZ:         "az2",
+						Index:      "",
+						Healthy:    true,
+					},
+					{
+						ID:         "my-instance-1",
+						Group:      "my-group",
+						Network:    "my-network",
+						Deployment: "my-deployment",
+						IP:         "127.0.0.2",
+						Domain:     "foo.",
+						AZ:         "az1",
+						Index:      "",
+						Healthy:    true,
+					},
+					{
+						ID:         "my-instance-2",
+						Group:      "my-group",
+						Network:    "my-network",
+						Deployment: "my-deployment-2",
+						IP:         "127.0.0.3",
+						Domain:     "foo.",
+						AZ:         "az2",
+						Index:      "",
+						Healthy:    true,
+					},
+					{
+						ID:         "primer-instance",
+						Group:      "primer-group",
+						Network:    "primer-network",
+						Deployment: "primer-deployment",
+						IP:         "127.0.0.254",
+						Domain:     "primer.",
+						AZ:         "az1",
+						Index:      "",
+						Healthy:    true,
+					},
+				}))
+			})
+		})
 
 		Context("handlers", func() {
 			var (

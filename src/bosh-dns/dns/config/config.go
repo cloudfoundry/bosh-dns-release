@@ -13,6 +13,7 @@ import (
 type Config struct {
 	Address           string       `json:"address"`
 	Port              int          `json:"port"`
+	APIPort           int          `json:"api_port"`
 	Timeout           DurationJSON `json:"timeout,omitempty"`
 	RecursorTimeout   DurationJSON `json:"recursor_timeout,omitempty"`
 	Recursors         []string     `json:"recursors,omitempty"`
