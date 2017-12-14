@@ -9,6 +9,7 @@ export BOSH_CLIENT_SECRET=<%= p('bosh_client_secret') %>
 export BOSH_CA_CERT=$(readlink -m /var/vcap/jobs/acceptance-tests/ca.crt)
 export BOSH_ENVIRONMENT=<%= p('bosh_environment') %>
 export BOSH_DEPLOYMENT=<%= p('bosh_deployment') %>
+export BASE_STEMCELL=<%= p('base_stemcell') %>
 
 export TEST_MANIFEST_NAME="dns-windows"
 export NO_RECURSORS_OPS_FILE="no-recursors-configured-windows"

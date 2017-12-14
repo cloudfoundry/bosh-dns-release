@@ -27,3 +27,6 @@ properties:
     bosh_deployment:
         description: ""
         default:
+    base_stemcell:
+        description: ""
+        default: ubuntu-trusty

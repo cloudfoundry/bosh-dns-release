@@ -42,6 +42,7 @@ var _ = Describe("HTTP JSON Server integration", func() {
 				"-n", "-d", boshDeployment, "deploy",
 				"-o", enableHTTPJSONEndpointsPath,
 				"-v", fmt.Sprintf("name=%s", boshDeployment),
+				"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 				"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 				"-v", fmt.Sprintf("http_json_server_address=%s", jsonServerAddress()),
 				manifestPath,

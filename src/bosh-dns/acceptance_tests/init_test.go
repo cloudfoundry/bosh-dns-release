@@ -31,6 +31,7 @@ var (
 	cmdRunner                system.CmdRunner
 	cloudConfigTempFileName  string
 	testTargetOS             string
+	baseStemcell             string
 )
 
 var _ = BeforeSuite(func() {
@@ -42,6 +43,7 @@ var _ = BeforeSuite(func() {
 	boshDeployment = assertEnvExists("BOSH_DEPLOYMENT")
 	cloudConfigTempFileName = assertEnvExists("TEST_CLOUD_CONFIG_PATH")
 	testTargetOS = assertEnvExists("TEST_TARGET_OS")
+	baseStemcell = assertEnvExists("BASE_STEMCELL")
 
 	var err error
 	pathToTestRecursorServer, err = gexec.Build("bosh-dns/acceptance_tests/test_recursor")

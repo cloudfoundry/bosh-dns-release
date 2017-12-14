@@ -17,7 +17,7 @@ bosh -n -d bosh-dns-shared-acceptance deploy $ROOT_DIR/bosh-dns-release/src/bosh
     -v bosh_client_secret="$BOSH_CLIENT_SECRET" \
     -v bosh_client="$BOSH_CLIENT" \
     -v bosh_environment="$BOSH_ENVIRONMENT" \
-    -v windows_stemcell=$WINDOWS_OS_VERSION \
+    -v base_stemcell=$WINDOWS_OS_VERSION \
     -v bosh_deployment=bosh-dns \
     --vars-store dns-creds.yml
 

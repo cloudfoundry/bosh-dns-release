@@ -27,6 +27,7 @@ instance_groups:
       bosh_client: ((bosh_client))
       bosh_environment: ((bosh_environment))
       bosh_deployment: ((bosh_deployment))
+      base_stemcell: ((base_stemcell))
 
 releases:
 - name: bosh-dns
