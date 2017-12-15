@@ -38,6 +38,7 @@ var _ = Describe("Handler Configuration through Job Configuration File", func() 
 		stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
 			"-n", "-d", boshDeployment, "deploy",
 			"-v", fmt.Sprintf("name=%s", boshDeployment),
+			"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 			"-v", fmt.Sprintf("acceptance_release_path=%s", acceptanceTestReleasePath),
 			"-v", fmt.Sprintf("http_json_server_address=%s", jsonServerAddress()),
 			manifestPath,

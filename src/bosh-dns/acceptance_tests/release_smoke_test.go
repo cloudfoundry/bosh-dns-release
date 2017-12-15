@@ -274,6 +274,7 @@ func ensureHealthEndpointDeployed(extraOps ...string) {
 		"-n", "-d", boshDeployment, "deploy",
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
+		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-v", "health_server_port=2345",
 		"-o", "../test_yml_assets/enable-health-manifest-ops.yml",
 		"--vars-store", "creds.yml",

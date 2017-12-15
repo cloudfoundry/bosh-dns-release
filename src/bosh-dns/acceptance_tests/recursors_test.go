@@ -370,6 +370,7 @@ func ensureRecursorIsDefinedByBoshAgent() {
 	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
 		"-n", "-d", boshDeployment, "deploy",
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
+		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 		"-o", disableOverridePath,
 		manifestPath,
@@ -392,6 +393,7 @@ func ensureRecursorIsDefinedByDnsRelease() {
 	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
 		"-n", "-d", boshDeployment, "deploy",
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
+		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 		manifestPath,
 	)
