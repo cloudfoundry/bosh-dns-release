@@ -21,6 +21,7 @@ export TEST_MANIFEST_NAME="manifest"
 export NO_RECURSORS_OPS_FILE="no-recursors-configured"
 export LOCAL_RECURSOR_OPS_FILE="add-test-dns-nameservers"
 export TEST_TARGET_OS="linux"
+export BASE_STEMCELL="ubuntu-trusty"
 
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
     -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/add-static-ips-to-cloud-config.yml > ${TEST_CLOUD_CONFIG_PATH}
