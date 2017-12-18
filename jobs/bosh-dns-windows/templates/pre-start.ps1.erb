@@ -7,14 +7,17 @@
   }
 <% end %>
 
-Get-NetIPAddress -IPAddress <%= p('aliased_address') %>
 
-if ($? -eq $False) {
-  $loopbackInterfaceIndex = Get-NetIPInterface -InterfaceAlias *loopback* | Select-Object -First 1 ifi* | foreach {$_.ifIndex}
+<% if p('aliased_address') != "" %>
+  Get-NetIPAddress -IPAddress <%= p('aliased_address') %>
 
-  Write-host "Found loopback interface at InterfaceIndex ${loopbackInterfaceIndex}"
-  New-NetIPAddress -InterfaceIndex $loopbackInterfaceIndex -IPAddress <%= p('aliased_address') %>
-}
+  if ($? -eq $False) {
+    $loopbackInterfaceIndex = Get-NetIPInterface -InterfaceAlias *loopback* | Select-Object -First 1 ifi* | foreach {$_.ifIndex}
+
+    Write-host "Found loopback interface at InterfaceIndex ${loopbackInterfaceIndex}"
+    New-NetIPAddress -InterfaceIndex $loopbackInterfaceIndex -IPAddress <%= p('aliased_address') %>
+  }
+<% end %>
 
 $ErrorActionPreference = "Stop";
 trap { $host.SetShouldExit(1) }

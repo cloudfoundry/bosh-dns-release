@@ -18,6 +18,7 @@ import (
 
 	"bosh-dns/dns/api"
 	dnsconfig "bosh-dns/dns/config"
+	addressesconfig "bosh-dns/dns/config/addresses"
 	handlersconfig "bosh-dns/dns/config/handlers"
 	"bosh-dns/dns/server"
 	"bosh-dns/dns/server/aliases"
@@ -75,6 +76,16 @@ func mainExitCode() int {
 
 	fs := boshsys.NewOsFileSystem(logger)
 
+	addressConfiguration, err := addressesconfig.ConfigFromGlob(
+		fs,
+		addressesconfig.NewFSLoader(fs),
+		config.AddressesFilesGlob,
+	)
+	if err != nil {
+		logger.Error(logTag, fmt.Sprintf("loading addresses configuration: %s", err.Error()))
+		return 1
+	}
+
 	aliasConfiguration, err := aliases.ConfigFromGlob(
 		fs,
 		aliases.NewFSLoader(fs),
@@ -96,12 +107,17 @@ func mainExitCode() int {
 		return 1
 	}
 
+	listenIPs := []string{config.Address}
+	for _, addr := range addressConfiguration {
+		listenIPs = append(listenIPs, addr.Address)
+	}
+
 	mux := dns.NewServeMux()
 	clock := clock.NewClock()
 	repoUpdate := make(chan struct{})
 
 	dnsManager := newDNSManager(logger, clock, fs)
-	recursorReader := dnsconfig.NewRecursorReader(dnsManager, config.Address)
+	recursorReader := dnsconfig.NewRecursorReader(dnsManager, listenIPs)
 	stringShuffler := shuffle.NewStringShuffler()
 	err = dnsconfig.ConfigureRecursors(recursorReader, stringShuffler, &config)
 	if err != nil {
@@ -146,11 +162,18 @@ func mainExitCode() int {
 		mux.Handle(domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
 	}
 
+	listenAddrs := []string{fmt.Sprintf("%s:%d", config.Address, config.Port)}
+	for _, addr := range addressConfiguration {
+		listenAddrs = append(listenAddrs, fmt.Sprintf("%s:%d", addr.Address, addr.Port))
+	}
+
 	upchecks := []server.Upcheck{}
 	for _, upcheckDomain := range config.UpcheckDomains {
 		mux.Handle(upcheckDomain, handlers.NewUpcheckHandler(logger))
-		upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("%s:%d", config.Address, config.Port), upcheckDomain, "udp"))
-		upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("%s:%d", config.Address, config.Port), upcheckDomain, "tcp"))
+		for _, addr := range listenAddrs {
+			upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(addr, upcheckDomain, "udp"))
+			upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(addr, upcheckDomain, "tcp"))
+		}
 	}
 
 	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, logger)
@@ -161,12 +184,16 @@ func mainExitCode() int {
 		mux.Handle(".", forwardHandler)
 	}
 
-	bindAddress := fmt.Sprintf("%s:%d", config.Address, config.Port)
+	servers := []server.DNSServer{}
+	for _, addr := range listenAddrs {
+		servers = append(servers,
+			&dns.Server{Addr: addr, Net: "tcp", Handler: mux},
+			&dns.Server{Addr: addr, Net: "udp", Handler: mux, UDPSize: 65535},
+		)
+	}
+
 	dnsServer := server.New(
-		[]server.DNSServer{
-			&dns.Server{Addr: bindAddress, Net: "tcp", Handler: mux},
-			&dns.Server{Addr: bindAddress, Net: "udp", Handler: mux, UDPSize: 65535},
-		},
+		servers,
 		upchecks,
 		time.Duration(config.Timeout),
 		time.Duration(5*time.Second),

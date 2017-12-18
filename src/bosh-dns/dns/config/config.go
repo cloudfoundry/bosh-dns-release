@@ -11,15 +11,16 @@ import (
 )
 
 type Config struct {
-	Address           string       `json:"address"`
-	Port              int          `json:"port"`
-	Timeout           DurationJSON `json:"timeout,omitempty"`
-	RecursorTimeout   DurationJSON `json:"recursor_timeout,omitempty"`
-	Recursors         []string     `json:"recursors,omitempty"`
-	RecordsFile       string       `json:"records_file,omitempty"`
-	AliasFilesGlob    string       `json:"alias_files_glob,omitempty"`
-	HandlersFilesGlob string       `json:"handlers_files_glob,omitempty"`
-	UpcheckDomains    []string     `json:"upcheck_domains,omitempty"`
+	Address            string       `json:"address"`
+	Port               int          `json:"port"`
+	Timeout            DurationJSON `json:"timeout,omitempty"`
+	RecursorTimeout    DurationJSON `json:"recursor_timeout,omitempty"`
+	Recursors          []string     `json:"recursors,omitempty"`
+	RecordsFile        string       `json:"records_file,omitempty"`
+	AliasFilesGlob     string       `json:"alias_files_glob,omitempty"`
+	HandlersFilesGlob  string       `json:"handlers_files_glob,omitempty"`
+	AddressesFilesGlob string       `json:"addresses_files_glob,omitempty"`
+	UpcheckDomains     []string     `json:"upcheck_domains,omitempty"`
 
 	API APIConfig `json:"api"`
 

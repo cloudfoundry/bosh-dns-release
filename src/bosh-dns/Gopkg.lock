@@ -9,6 +9,12 @@
 
 [[projects]]
   branch = "master"
+  name = "code.cloudfoundry.org/localip"
+  packages = ["."]
+  revision = "b88ad0dea95cd41f302cf7eb6ed951efafaf47f2"
+
+[[projects]]
+  branch = "master"
   name = "code.cloudfoundry.org/workpool"
   packages = ["."]
   revision = "0e2024d2a925068519f6ba470d11f8b735ecd4f4"
@@ -221,6 +227,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8fdab4635cc27f38eab72480719ff0026164c484533b0777735e6559c96a0854"
+  inputs-digest = "01c0e5886ad05bc6b7cc2b3f5b911970d4ce9b147f27e5944d609042c3c5a46f"
   solver-name = "gps-cdcl"
   solver-version = 1

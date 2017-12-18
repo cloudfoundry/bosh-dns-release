@@ -1,9 +1,19 @@
 ﻿$ErrorActionPreference = "Stop"
 
+$address = "<%=
+  address = ""
+  if p('address') == ""
+    address = spec.networks.to_h.values.first.ip
+  else
+    address = p('address').to_s
+  end
+  address == "0.0.0.0" ? "127.0.0.1" : address
+%>"
+
 try
 {
-    Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. -Server <%= p('address').to_s == "0.0.0.0" ? "127.0.0.1" : p('address') %>
-    Resolve-DnsName -TcpOnly -DnsOnly -Name upcheck.bosh-dns. -Server <%= p('address').to_s == "0.0.0.0" ? "127.0.0.1" : p('address') %>
+    Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. -Server $address
+    Resolve-DnsName -TcpOnly -DnsOnly -Name upcheck.bosh-dns. -Server $address
 }
 catch
 {
