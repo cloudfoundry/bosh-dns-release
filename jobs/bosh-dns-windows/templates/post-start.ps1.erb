@@ -3,7 +3,7 @@
 $address = "<%=
   address = ""
   if p('address') == ""
-    address = spec.networks.to_h.values.first.ip
+    address = spec.ip
   else
     address = p('address').to_s
   end
