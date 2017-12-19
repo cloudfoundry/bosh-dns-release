@@ -1,7 +1,7 @@
-package internal_test
+package tracker_test
 
 import (
-	"bosh-dns/dns/server/records/internal"
+	"bosh-dns/dns/server/tracker"
 	"sync"
 
 	"time"
@@ -12,11 +12,11 @@ import (
 
 var _ = Describe("PriorityLimitedTranscript", func() {
 	var (
-		transcript *internal.PriorityLimitedTranscript
+		transcript *tracker.PriorityLimitedTranscript
 	)
 
 	BeforeEach(func() {
-		transcript = internal.NewPriorityLimitedTranscript(5)
+		transcript = tracker.NewPriorityLimitedTranscript(5)
 	})
 
 	It("maintains registered names", func() {

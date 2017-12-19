@@ -1,31 +1,29 @@
 package api
 
 import (
-	"bosh-dns/dns/server/records"
+	"bosh-dns/dns/server/record"
 	"encoding/json"
 	"net/http"
 )
 
-//go:generate counterfeiter . HealthStateGetter
-
-type HealthStateGetter interface {
+//go:generate counterfeiter -o ./fakes/health_state_getter.go --fake-name HealthStateGetter . healthStateGetter
+type healthStateGetter interface {
 	HealthState(ip string) string
 }
 
-//go:generate counterfeiter . RecordManager
-
-type RecordManager interface {
-	Filter(aliasExpansions []string, shouldTrack bool) ([]records.Record, error)
-	AllRecords() *[]records.Record
+//go:generate counterfeiter -o ./fakes/record_manager.go --fake-name RecordManager . recordManager
+type recordManager interface {
+	Filter(aliasExpansions []string, shouldTrack bool) ([]record.Record, error)
+	AllRecords() *[]record.Record
 	ExpandAliases(fqdn string) []string
 }
 
 type InstancesHandler struct {
-	recordManager     RecordManager
-	healthStateGetter HealthStateGetter
+	recordManager     recordManager
+	healthStateGetter healthStateGetter
 }
 
-func NewInstancesHandler(recordManager RecordManager, healthStateGetter HealthStateGetter) *InstancesHandler {
+func NewInstancesHandler(recordManager recordManager, healthStateGetter healthStateGetter) *InstancesHandler {
 	return &InstancesHandler{
 		recordManager:     recordManager,
 		healthStateGetter: healthStateGetter,
@@ -34,13 +32,12 @@ func NewInstancesHandler(recordManager RecordManager, healthStateGetter HealthSt
 
 func (h *InstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	address := r.URL.Query().Get("address")
-	var rs []records.Record
+	var rs []record.Record
 	if address == "" {
 		rs = *h.recordManager.AllRecords()
 	} else {
 		var err error
 		expandedAliases := h.recordManager.ExpandAliases(address)
-		// h.recordSet.Records
 		rs, err = h.recordManager.Filter(expandedAliases, false)
 		if err != nil {
 			w.WriteHeader(http.StatusUnprocessableEntity)

@@ -1,4 +1,9 @@
-package records
+package record
+
+type Host struct {
+	IP   string
+	FQDN string
+}
 
 type Record struct {
 	ID            string

@@ -1,4 +1,4 @@
-package internal_test
+package tracker_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestInternal(t *testing.T) {
+func TestTracker(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "dns/server/healthiness/internal")
+	RunSpecs(t, "dns/server/tracker")
 }

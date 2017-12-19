@@ -2,7 +2,8 @@ package api_test
 
 import (
 	"bosh-dns/dns/api"
-	"bosh-dns/dns/api/apifakes"
+	"bosh-dns/dns/api/fakes"
+	"bosh-dns/dns/server/record"
 	"bosh-dns/dns/server/records"
 	"encoding/json"
 	"fmt"
@@ -16,8 +17,8 @@ import (
 
 var _ = Describe("InstancesHandler", func() {
 	var (
-		fakeHealthStateGetter *apifakes.FakeHealthStateGetter
-		fakeRecordManager     *apifakes.FakeRecordManager
+		fakeHealthStateGetter *fakes.HealthStateGetter
+		fakeRecordManager     *fakes.RecordManager
 		handler               *api.InstancesHandler
 		recordSet             *records.RecordSet
 
@@ -26,8 +27,8 @@ var _ = Describe("InstancesHandler", func() {
 	)
 
 	BeforeEach(func() {
-		fakeHealthStateGetter = &apifakes.FakeHealthStateGetter{}
-		fakeRecordManager = &apifakes.FakeRecordManager{}
+		fakeHealthStateGetter = &fakes.HealthStateGetter{}
+		fakeRecordManager = &fakes.RecordManager{}
 		// URL path doesn't matter here since routing is handled elsewhere
 		r = httptest.NewRequest("GET", "/?address=foo", nil)
 		w = httptest.NewRecorder()
@@ -47,7 +48,7 @@ var _ = Describe("InstancesHandler", func() {
 
 	Context("when record set is empty", func() {
 		BeforeEach(func() {
-			recordSet.Records = []records.Record{}
+			recordSet.Records = []record.Record{}
 		})
 
 		It("returns an empty json array", func() {
@@ -75,7 +76,7 @@ var _ = Describe("InstancesHandler", func() {
 
 		It("filters records", func() {
 			fakeRecordManager.ExpandAliasesReturns([]string{"mashed potatoes"})
-			fakeRecordManager.FilterReturns([]records.Record{
+			fakeRecordManager.FilterReturns([]record.Record{
 				{
 					ID:            "ID1",
 					NumID:         "NumId1",
@@ -125,7 +126,7 @@ var _ = Describe("InstancesHandler", func() {
 
 		It("returns all records in json", func() {
 			r = httptest.NewRequest("GET", "/", nil)
-			fakeRecordManager.AllRecordsReturns(&[]records.Record{
+			fakeRecordManager.AllRecordsReturns(&[]record.Record{
 				{
 					ID:            "ID1",
 					NumID:         "NumId1",
@@ -196,7 +197,7 @@ var _ = Describe("InstancesHandler", func() {
 		})
 
 		It("handles unprocessable requests correctly", func() {
-			fakeRecordManager.FilterReturns([]records.Record{}, fmt.Errorf("yo!"))
+			fakeRecordManager.FilterReturns([]record.Record{}, fmt.Errorf("yo!"))
 			handler.ServeHTTP(w, r)
 			resp := w.Result()
 			defer resp.Body.Close()
