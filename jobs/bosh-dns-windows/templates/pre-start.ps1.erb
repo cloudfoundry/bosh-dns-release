@@ -37,19 +37,12 @@ if ($Value.MaxNegativeCacheTtl -ne $ExpectedValue) {
     Write-Error "Error: Expected MaxNegativeCacheTtl to be '${ExpectedValue}', got '${Value.MaxNegativeCacheTtl}'"
   }
 }
-<% if p('enable_os_dns_caching') %>
-  # Reset the MaxCacheTtl to the default: https://technet.microsoft.com/en-us/library/cc959926.aspx
-  Set-ItemProperty -Path $RegistryPath -Name MaxCacheTtl -Value 0x15180 -Type DWord
-  $status = (Get-Service Dnscache).Status
-  if ($status -ne "Running") {
-     Write-Error "Error: Expected Dnscache Service to be Running, got $status"
+if ($Value.ServerPriorityTimeLimit -ne $ExpectedValue) {
+  Set-ItemProperty -Path $RegistryPath -Name ServerPriorityTimeLimit -Value $ExpectedValue -Type DWord
+  $Value = Get-ItemProperty -Path $RegistryPath
+  if ($Value.ServerPriorityTimeLimit -ne $ExpectedValue) {
+    Write-Error "Error: Expected ServerPriorityTimeLimit to be '${ExpectedValue}', got '${Value.ServerPriorityTimeLimit}'"
   }
-  $startType = (Get-Service Dnscache).StartType
-  if ($startType -ne "Automatic") {
-     Write-Error "Error: Expected Dnscache StartupType to be Automatic, got $startType"
-  }
-<% else %>
-  Set-ItemProperty -Path $RegistryPath -Name MaxCacheTtl -Value 0 -Type DWord
-<% end %>
+}
 
 Exit 0
