@@ -12,21 +12,45 @@ type HealthStateGetter interface {
 	HealthState(ip string) string
 }
 
+//go:generate counterfeiter . RecordManager
+
+type RecordManager interface {
+	Filter(aliasExpansions []string, shouldTrack bool) ([]records.Record, error)
+	AllRecords() *[]records.Record
+	ExpandAliases(fqdn string) []string
+}
+
 type InstancesHandler struct {
-	recordSet         *records.RecordSet
+	recordManager     RecordManager
 	healthStateGetter HealthStateGetter
 }
 
-func NewInstancesHandler(recordSet *records.RecordSet, healthStateGetter HealthStateGetter) *InstancesHandler {
+func NewInstancesHandler(recordManager RecordManager, healthStateGetter HealthStateGetter) *InstancesHandler {
 	return &InstancesHandler{
-		recordSet:         recordSet,
+		recordManager:     recordManager,
 		healthStateGetter: healthStateGetter,
 	}
 }
-func (h *InstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	encoder := json.NewEncoder(w)
 
-	for _, record := range h.recordSet.Records {
+func (h *InstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	address := r.URL.Query().Get("address")
+	var rs []records.Record
+	if address == "" {
+		rs = *h.recordManager.AllRecords()
+	} else {
+		var err error
+		expandedAliases := h.recordManager.ExpandAliases(address)
+		// h.recordSet.Records
+		rs, err = h.recordManager.Filter(expandedAliases, false)
+		if err != nil {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+	}
+	encoder := json.NewEncoder(w)
+	for _, record := range rs {
 		encoder.Encode(Record{
 			ID:          record.ID,
 			Group:       record.Group,

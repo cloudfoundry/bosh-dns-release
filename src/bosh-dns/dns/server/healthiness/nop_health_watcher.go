@@ -10,6 +10,9 @@ func (hw *nopHealthWatcher) IsHealthy(ip string) bool {
 	return true
 }
 
+func (hw *nopHealthWatcher) Track(ip string) {
+}
+
 func (hw *nopHealthWatcher) HealthState(ip string) string {
 	return StateHealthy
 }

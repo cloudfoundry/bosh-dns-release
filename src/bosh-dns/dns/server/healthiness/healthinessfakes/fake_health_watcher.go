@@ -29,6 +29,11 @@ type FakeHealthWatcher struct {
 	healthStateReturnsOnCall map[int]struct {
 		result1 string
 	}
+	TrackStub        func(ip string)
+	trackMutex       sync.RWMutex
+	trackArgsForCall []struct {
+		ip string
+	}
 	UntrackStub        func(ip string)
 	untrackMutex       sync.RWMutex
 	untrackArgsForCall []struct {
@@ -139,6 +144,30 @@ func (fake *FakeHealthWatcher) HealthStateReturnsOnCall(i int, result1 string) {
 	}{result1}
 }
 
+func (fake *FakeHealthWatcher) Track(ip string) {
+	fake.trackMutex.Lock()
+	fake.trackArgsForCall = append(fake.trackArgsForCall, struct {
+		ip string
+	}{ip})
+	fake.recordInvocation("Track", []interface{}{ip})
+	fake.trackMutex.Unlock()
+	if fake.TrackStub != nil {
+		fake.TrackStub(ip)
+	}
+}
+
+func (fake *FakeHealthWatcher) TrackCallCount() int {
+	fake.trackMutex.RLock()
+	defer fake.trackMutex.RUnlock()
+	return len(fake.trackArgsForCall)
+}
+
+func (fake *FakeHealthWatcher) TrackArgsForCall(i int) string {
+	fake.trackMutex.RLock()
+	defer fake.trackMutex.RUnlock()
+	return fake.trackArgsForCall[i].ip
+}
+
 func (fake *FakeHealthWatcher) Untrack(ip string) {
 	fake.untrackMutex.Lock()
 	fake.untrackArgsForCall = append(fake.untrackArgsForCall, struct {
@@ -194,6 +223,8 @@ func (fake *FakeHealthWatcher) Invocations() map[string][][]interface{} {
 	defer fake.isHealthyMutex.RUnlock()
 	fake.healthStateMutex.RLock()
 	defer fake.healthStateMutex.RUnlock()
+	fake.trackMutex.RLock()
+	defer fake.trackMutex.RUnlock()
 	fake.untrackMutex.RLock()
 	defer fake.untrackMutex.RUnlock()
 	fake.runMutex.RLock()

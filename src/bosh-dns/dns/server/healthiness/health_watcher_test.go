@@ -58,7 +58,7 @@ var _ = Describe("HealthWatcher", func() {
 
 		Context("when the status is known", func() {
 			JustBeforeEach(func() {
-				healthWatcher.IsHealthy(ip)
+				healthWatcher.Track(ip)
 				Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
 				Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
 			})
@@ -125,7 +125,7 @@ var _ = Describe("HealthWatcher", func() {
 
 		Context("when the status is known", func() {
 			JustBeforeEach(func() {
-				healthWatcher.IsHealthy(ip)
+				healthWatcher.Track(ip)
 				Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
 				Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
 			})
@@ -182,7 +182,7 @@ var _ = Describe("HealthWatcher", func() {
 
 		BeforeEach(func() {
 			ip = "127.0.0.2"
-			healthWatcher.IsHealthy(ip)
+			healthWatcher.Track(ip)
 			Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
 			Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
 		})

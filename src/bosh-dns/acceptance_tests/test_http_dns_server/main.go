@@ -43,7 +43,7 @@ func main() {
 					"Additional": [ ],
 					"edns_client_subnet": "12.34.56.78/0"
 				}`
-		} else if queryValues.Get("type") == "1" && queryValues.Get("name") == "large-id.internal.local."{
+		} else if queryValues.Get("type") == "1" && queryValues.Get("name") == "large-id.internal.local." {
 			responseJSON = `{
 					"Status": 0,
 					"TC": false,

@@ -5,6 +5,8 @@ import (
 	"bosh-dns/dns/api/apifakes"
 	"bosh-dns/dns/server/records"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 
@@ -15,6 +17,7 @@ import (
 var _ = Describe("InstancesHandler", func() {
 	var (
 		fakeHealthStateGetter *apifakes.FakeHealthStateGetter
+		fakeRecordManager     *apifakes.FakeRecordManager
 		handler               *api.InstancesHandler
 		recordSet             *records.RecordSet
 
@@ -24,15 +27,16 @@ var _ = Describe("InstancesHandler", func() {
 
 	BeforeEach(func() {
 		fakeHealthStateGetter = &apifakes.FakeHealthStateGetter{}
+		fakeRecordManager = &apifakes.FakeRecordManager{}
 		// URL path doesn't matter here since routing is handled elsewhere
-		r = httptest.NewRequest("GET", "/", nil)
+		r = httptest.NewRequest("GET", "/?address=foo", nil)
 		w = httptest.NewRecorder()
 
 		recordSet = &records.RecordSet{}
 	})
 
 	JustBeforeEach(func() {
-		handler = api.NewInstancesHandler(recordSet, fakeHealthStateGetter)
+		handler = api.NewInstancesHandler(fakeRecordManager, fakeHealthStateGetter)
 	})
 
 	It("returns status ok", func() {
@@ -67,7 +71,61 @@ var _ = Describe("InstancesHandler", func() {
 				}
 			}
 
-			recordSet.Records = []records.Record{
+		})
+
+		It("filters records", func() {
+			fakeRecordManager.ExpandAliasesReturns([]string{"mashed potatoes"})
+			fakeRecordManager.FilterReturns([]records.Record{
+				{
+					ID:            "ID1",
+					NumID:         "NumId1",
+					Group:         "Group1",
+					GroupIDs:      []string{"GroupIDs1"},
+					Network:       "Network1",
+					NetworkID:     "NetworkID1",
+					Deployment:    "Deployment1",
+					IP:            "IP1",
+					Domain:        "Domain1",
+					AZ:            "AZ1",
+					AZID:          "AZID1",
+					InstanceIndex: "InstanceIndex1",
+				},
+			}, nil)
+			r = httptest.NewRequest("GET", "/?address=potatoFilter", nil)
+			handler.ServeHTTP(w, r)
+			response := w.Result()
+			Expect(response.StatusCode).To(Equal(http.StatusOK))
+			decoder := json.NewDecoder(response.Body)
+			records := []api.Record{}
+			for decoder.More() {
+				var record api.Record
+				err := decoder.Decode(&record)
+				Expect(err).NotTo(HaveOccurred())
+				records = append(records, record)
+			}
+
+			Expect(fakeRecordManager.ExpandAliasesCallCount()).To(Equal(1))
+			Expect(fakeRecordManager.ExpandAliasesArgsForCall(0)).To(Equal("potatoFilter"))
+			Expect(fakeRecordManager.FilterCallCount()).To(Equal(1))
+			Expect(fakeRecordManager.FilterArgsForCall(0)).To(Equal([]string{"mashed potatoes"}))
+			Expect(records).To(ConsistOf([]api.Record{
+				{
+					ID:          "ID1",
+					Group:       "Group1",
+					Network:     "Network1",
+					Deployment:  "Deployment1",
+					IP:          "IP1",
+					Domain:      "Domain1",
+					AZ:          "AZ1",
+					Index:       "InstanceIndex1",
+					HealthState: "potato",
+				},
+			}))
+		})
+
+		It("returns all records in json", func() {
+			r = httptest.NewRequest("GET", "/", nil)
+			fakeRecordManager.AllRecordsReturns(&[]records.Record{
 				{
 					ID:            "ID1",
 					NumID:         "NumId1",
@@ -96,12 +154,10 @@ var _ = Describe("InstancesHandler", func() {
 					AZID:          "AZID2",
 					InstanceIndex: "InstanceIndex2",
 				},
-			}
-		})
-
-		It("returns an all records in json", func() {
+			})
 			handler.ServeHTTP(w, r)
 			response := w.Result()
+			Expect(response.StatusCode).To(Equal(http.StatusOK))
 			decoder := json.NewDecoder(response.Body)
 			records := []api.Record{}
 			for decoder.More() {
@@ -110,6 +166,9 @@ var _ = Describe("InstancesHandler", func() {
 				Expect(err).NotTo(HaveOccurred())
 				records = append(records, record)
 			}
+			Expect(fakeRecordManager.AllRecordsCallCount()).To(Equal(1))
+			Expect(fakeRecordManager.ExpandAliasesCallCount()).To(Equal(0))
+			Expect(fakeRecordManager.FilterCallCount()).To(Equal(0))
 			Expect(records).To(ConsistOf([]api.Record{
 				{
 					ID:          "ID1",
@@ -134,6 +193,17 @@ var _ = Describe("InstancesHandler", func() {
 					HealthState: "lightbulb",
 				},
 			}))
+		})
+
+		It("handles unprocessable requests correctly", func() {
+			fakeRecordManager.FilterReturns([]records.Record{}, fmt.Errorf("yo!"))
+			handler.ServeHTTP(w, r)
+			resp := w.Result()
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			Expect(resp.StatusCode).To(Equal(http.StatusUnprocessableEntity))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(body)).To(Equal("yo!"))
 		})
 	})
 })

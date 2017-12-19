@@ -300,8 +300,9 @@ var _ = Describe("main", func() {
 				BeforeEach(func() {
 					healthServers = []*ghttp.Server{
 						newFakeHealthServer("127.0.0.1", "running"),
-						// sudo ifconfig lo0 alias 127.0.0.2 up # on osx
+						// sudo ifconfig lo0 alias 127.0.0.2, 3 up # on osx
 						newFakeHealthServer("127.0.0.2", "stopped"),
+						newFakeHealthServer("127.0.0.3", "stopped"),
 					}
 				})
 
@@ -413,6 +414,43 @@ var _ = Describe("main", func() {
 							IP:          "127.0.0.254",
 							Domain:      "primer.",
 							AZ:          "az1",
+							Index:       "",
+							HealthState: "unknown",
+						},
+					}))
+				})
+
+				It("allows for querying specific addresses without affecting health monitoring", func() {
+					Consistently(func() []api.Record {
+						address := fmt.Sprintf("http://%s:%d/instances?address=q-s0.my-group.my-network.my-deployment-2.bosh.", listenAddress, listenAPIPort)
+						timeout := time.Duration(5 * time.Second)
+						client := http.Client{
+							Timeout: timeout,
+						}
+						resp, err := client.Get(address)
+						Expect(err).NotTo(HaveOccurred())
+						defer resp.Body.Close()
+
+						Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+						var parsed []api.Record
+						decoder := json.NewDecoder(resp.Body)
+						var nextRecord api.Record
+						for decoder.More() {
+							err = decoder.Decode(&nextRecord)
+							Expect(err).ToNot(HaveOccurred())
+							parsed = append(parsed, nextRecord)
+						}
+						return parsed
+					}, 1*time.Second).Should(ConsistOf([]api.Record{
+						{
+							ID:          "my-instance-2",
+							Group:       "my-group",
+							Network:     "my-network",
+							Deployment:  "my-deployment-2",
+							IP:          "127.0.0.3",
+							Domain:      "bosh.",
+							AZ:          "az2",
 							Index:       "",
 							HealthState: "unknown",
 						},

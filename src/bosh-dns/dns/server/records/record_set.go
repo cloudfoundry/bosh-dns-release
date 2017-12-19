@@ -102,58 +102,71 @@ func (r *RecordSet) Subscribe() <-chan bool {
 }
 
 func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
-	r.recordsMutex.RLock()
-	defer r.recordsMutex.RUnlock()
-
 	if removed := r.trackedDomains.Touch(fqdn); removed != "" {
 		r.untrackDomain(removed)
 	}
 
-	var (
-		finalIPs []string
-		errs     []error
-	)
+	aliasExpansions := r.ExpandAliases(fqdn)
+	finalRecords, err := r.Filter(aliasExpansions, true)
+	if err != nil {
+		return []string{}, err
+	}
 
-	resolutions := r.aliasList.Resolutions(fqdn)
-	if len(resolutions) > 0 {
-		for _, resolution := range resolutions {
+	finalIPs := make([]string, len(finalRecords))
+	for i, rec := range finalRecords {
+		finalIPs[i] = rec.IP
+	}
 
-			if net.ParseIP(resolution) != nil {
-				finalIPs = append(finalIPs, resolution)
-				continue
-			}
-
-			hostIPs, crit, err := r.resolveQuery(resolution)
-			if err != nil {
-				errs = append(errs, err)
-			}
-
-			healthyIPs, unhealthyIPs := r.segregateIPs(hostIPs, resolution)
-			results := filterByHealthStrategy(healthyIPs, unhealthyIPs, crit)
-			finalIPs = append(finalIPs, results...)
-		}
-
-		if len(finalIPs) == 0 && len(errs) > 0 {
-			return nil, fmt.Errorf("failures occurred when resolving alias domains: %s", errs)
-		}
-	} else {
-		if net.ParseIP(fqdn) != nil {
-			finalIPs = []string{fqdn}
-		} else {
-			ips, crit, err := r.resolveQuery(fqdn)
-			if err != nil {
-				return nil, err
-			}
-
-			healthyIPs, unhealthyIPs := r.segregateIPs(ips, fqdn)
-			finalIPs = filterByHealthStrategy(healthyIPs, unhealthyIPs, crit)
+	for _, expansion := range aliasExpansions {
+		if net.ParseIP(expansion) != nil {
+			finalIPs = append(finalIPs, expansion)
 		}
 	}
 
 	return finalIPs, nil
 }
 
-func filterByHealthStrategy(healthyIPs, unhealthyIPs []string, crit criteria) []string {
+func (r *RecordSet) ExpandAliases(fqdn string) []string {
+	resolutions := r.aliasList.Resolutions(fqdn)
+	if len(resolutions) == 0 {
+		resolutions = []string{fqdn}
+	}
+	return resolutions
+}
+
+func (r *RecordSet) AllRecords() *[]Record {
+	return &r.Records
+}
+
+func (r *RecordSet) Filter(resolutions []string, shouldTrack bool) ([]Record, error) {
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+
+	var (
+		finalRecords []Record
+		errs         []error
+	)
+
+	for _, resolution := range resolutions {
+		hostRecords, crit, err := r.resolveQuery(resolution)
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		// modifies health
+		healthyRecords, unhealthyRecords := r.segregateIPs(hostRecords, resolution, shouldTrack)
+		results := filterByHealthStrategy(healthyRecords, unhealthyRecords, crit)
+		finalRecords = append(finalRecords, results...)
+	}
+
+	if len(finalRecords) == 0 && len(errs) > 0 {
+		return nil, fmt.Errorf("failures occurred when resolving alias domains: %s", errs)
+	}
+
+	return finalRecords, nil
+}
+
+func filterByHealthStrategy(healthyRecords, unhealthyRecords []Record, crit criteria) []Record {
 	healthStrategy := "0"
 	if len(crit["s"]) > 0 {
 		healthStrategy = crit["s"][0]
@@ -161,35 +174,38 @@ func filterByHealthStrategy(healthyIPs, unhealthyIPs []string, crit criteria) []
 
 	switch healthStrategy {
 	case "1": // unhealthy ones
-		return unhealthyIPs
+		return unhealthyRecords
 	case "3": // healthy
-		return healthyIPs
+		return healthyRecords
 	case "4": // all
-		return append(healthyIPs, unhealthyIPs...)
+		return append(healthyRecords, unhealthyRecords...)
 	default: // smart strategy
-		if len(healthyIPs) == 0 {
-			return unhealthyIPs
+		if len(healthyRecords) == 0 {
+			return unhealthyRecords
 		}
 
-		return healthyIPs
+		return healthyRecords
 	}
 }
 
-func (r *RecordSet) segregateIPs(ips []string, fqdn string) ([]string, []string) {
-	var healthyIPs, unhealthyIPs []string
-	for _, ip := range ips {
+func (r *RecordSet) segregateIPs(records []Record, fqdn string, shouldTrack bool) ([]Record, []Record) {
+	var healthyIPs, unhealthyIPs []Record
+	for _, record := range records {
 		r.trackedIPsMutex.Lock()
-		r.trackedIPs[ip] = map[string]struct{}{}
-		if _, ok := r.trackedIPs[ip]; !ok {
-			r.trackedIPs[ip] = map[string]struct{}{}
+		r.trackedIPs[record.IP] = map[string]struct{}{}
+		if _, ok := r.trackedIPs[record.IP]; !ok {
+			r.trackedIPs[record.IP] = map[string]struct{}{}
 		}
-		r.trackedIPs[ip][fqdn] = struct{}{}
+		r.trackedIPs[record.IP][fqdn] = struct{}{}
 		r.trackedIPsMutex.Unlock()
 
-		if r.healthWatcher.IsHealthy(ip) {
-			healthyIPs = append(healthyIPs, ip)
+		if shouldTrack {
+			r.healthWatcher.Track(record.IP)
+		}
+		if r.healthWatcher.IsHealthy(record.IP) {
+			healthyIPs = append(healthyIPs, record)
 		} else {
-			unhealthyIPs = append(unhealthyIPs, ip)
+			unhealthyIPs = append(unhealthyIPs, record)
 		}
 	}
 
@@ -201,7 +217,11 @@ func (r *RecordSet) refreshTrackedIPs() {
 	r.trackedIPsMutex.Lock()
 	defer r.trackedIPsMutex.Unlock()
 	for _, domain := range r.trackedDomains.Registry() {
-		ips, _, err := r.resolveQuery(domain)
+		records, _, err := r.resolveQuery(domain)
+		ips := make([]string, len(records))
+		for i, rec := range records {
+			ips[i] = rec.IP
+		}
 		if err != nil {
 			continue
 		}
@@ -215,6 +235,7 @@ func (r *RecordSet) refreshTrackedIPs() {
 			if _, found := r.trackedIPs[ip]; found {
 				delete(r.trackedIPs, ip)
 			} else {
+				r.healthWatcher.Track(ip)
 				r.healthWatcher.IsHealthy(ip)
 			}
 		}
@@ -272,25 +293,23 @@ func (r *RecordSet) update() {
 	}
 }
 
-func (r *RecordSet) ipsMatching(matcher Matcher) []string {
-	ips := []string{}
+func (r *RecordSet) recordsMatching(matcher Matcher) []Record {
+	records := []Record{}
 
 	for _, record := range r.Records {
 		if matcher.Match(&record) {
-			ips = append(ips, record.IP)
+			records = append(records, record)
 		}
 	}
 
-	return ips
+	return records
 }
 
-func (r *RecordSet) resolveQuery(fqdn string) ([]string, criteria, error) {
-	var ips []string
-
+func (r *RecordSet) resolveQuery(fqdn string) ([]Record, criteria, error) {
 	segments := strings.SplitN(fqdn, ".", 2) // [q-s0, q-g7.x.y.bosh]
 
 	if len(segments) < 2 {
-		return ips, criteria{}, errors.New("domain is malformed")
+		return []Record{}, criteria{}, errors.New("domain is malformed")
 	}
 
 	var tld string
@@ -302,7 +321,7 @@ func (r *RecordSet) resolveQuery(fqdn string) ([]string, criteria, error) {
 	}
 
 	if tld == "" {
-		return []string{}, criteria{}, nil
+		return []Record{}, criteria{}, nil
 	}
 
 	groupQuery := strings.TrimSuffix(segments[1], "."+tld)
@@ -312,12 +331,12 @@ func (r *RecordSet) resolveQuery(fqdn string) ([]string, criteria, error) {
 	if len(groupSegments) == 1 {
 		c, err = parseCriteria(segments[0], groupQuery, "", "", "", tld)
 		if err != nil {
-			return ips, c, err
+			return []Record{}, c, err
 		}
 	} else if len(groupSegments) == 3 {
 		c, err = parseCriteria(segments[0], "", groupSegments[0], groupSegments[1], groupSegments[2], tld)
 		if err != nil {
-			return ips, c, err
+			return []Record{}, c, err
 		}
 	} else {
 		panic(fmt.Sprintf("Bad group segment query had %d values %#v\n", len(groupSegments), groupSegments))
@@ -332,7 +351,7 @@ func (r *RecordSet) resolveQuery(fqdn string) ([]string, criteria, error) {
 		matcher.Append(Field(field, values))
 	}
 
-	return r.ipsMatching(matcher), c, nil
+	return r.recordsMatching(matcher), c, nil
 }
 
 func createFromJSON(j []byte, logger boshlog.Logger) ([]Record, error) {
