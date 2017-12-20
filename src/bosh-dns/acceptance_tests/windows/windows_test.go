@@ -3,12 +3,12 @@
 package windows_test
 
 import (
-	"os"
 	"os/exec"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -46,22 +46,23 @@ var _ = Describe("windows tests", func() {
 		})
 	})
 
-	Context("system level caching", func() {
-		It("is enabled or disabled according to the manifest property", func() {
-			cmd := exec.Command("powershell.exe", "-Command", "Get-Service DnsCache | Format-list")
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
+	It("sets the DNS cache service negative cache TTL to 0", func() {
+		cmd := exec.Command("powershell.exe", "$Value = Get-ItemProperty -Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters; $Value.MaxNegativeCacheTtl")
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(0))
+		Eventually(session).Should(gexec.Exit(0))
 
-			output := string(session.Out.Contents())
-			if os.Getenv("OS_DNS_CACHE") == "true" {
-				Expect(output).To(MatchRegexp(`Status\s*:\s*Running`))
-				Expect(output).To(MatchRegexp(`CanStop\s*:\s*True`))
-			} else {
-				Expect(output).To(MatchRegexp(`Status\s*:\s*Stopped`))
-				Expect(output).To(MatchRegexp(`CanStop\s*:\s*False`))
-			}
-		})
+		Expect(session.Out).To(Say("0"))
+	})
+
+	It("sets the DNS cache service server priority time limit to 0", func() {
+		cmd := exec.Command("powershell.exe", "$Value = Get-ItemProperty -Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters; $Value.ServerPriorityTimeLimit")
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(session).Should(gexec.Exit(0))
+
+		Expect(session.Out).To(Say("0"))
 	})
 })

@@ -9,7 +9,7 @@ update:
   update_watch_time: 30000-120000
 
 instance_groups:
-- name: dns-no-system-caching
+- name: acceptance-tests-windows
   azs: [z1]
   instances: 1
   vm_type: large
@@ -21,34 +21,8 @@ instance_groups:
   jobs:
   - name: acceptance-tests-windows
     release: bosh-dns
-    properties:
-      properties_to_test:
-        os_caching_enabled: false
   - name: bosh-dns-windows
     release: bosh-dns
-    properties:
-      enable_os_dns_caching: false
-
-- name: dns-with-system-caching
-  azs: [z1]
-  instances: 1
-  vm_type: large
-  vm_extensions:
-  - 100GB_ephemeral_disk
-  stemcell: default
-  networks:
-  - name: private
-  jobs:
-  - name: acceptance-tests-windows
-    release: bosh-dns
-    properties:
-      properties_to_test:
-        os_caching_enabled: true
-  - name: bosh-dns-windows
-    release: bosh-dns
-    properties:
-      enable_os_dns_caching: true
-
 
 releases:
 - name: bosh-dns
