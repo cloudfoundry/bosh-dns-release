@@ -8,6 +8,7 @@ files:
 - bosh-dns/healthcheck/healthclient/*
 - bosh-dns/test_yml_assets/*
 - bosh-dns/vendor/**/*
+- bosh-dns/dns/manager/*
 - exiter.ps1
 
 excluded_files:
