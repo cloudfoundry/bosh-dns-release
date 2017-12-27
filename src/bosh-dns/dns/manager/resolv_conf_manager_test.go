@@ -104,6 +104,8 @@ nameserver ns-2
 					It("returns all entries", func() {
 						nameservers, err := dnsManager.Read()
 
+						Expect(fs.ReadFileWithOptsCallCount).To(Equal(1))
+
 						Expect(err).ToNot(HaveOccurred())
 						Expect(nameservers).To(HaveLen(2))
 						Expect(nameservers).To(ConsistOf("ns-1", "ns-2"))

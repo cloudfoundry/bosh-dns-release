@@ -40,13 +40,13 @@ func (r *resolvConfManager) Read() ([]string, error) {
 	}
 
 	nameservers := []string{}
-	contents, err := r.fs.ReadFileString("/etc/resolv.conf")
+	contents, err := r.fs.ReadFileWithOpts("/etc/resolv.conf", boshsys.ReadOpts{Quiet: true})
 
 	if err != nil {
 		return nil, bosherr.WrapError(err, "attempting to read dns nameservers")
 	}
 
-	resolvConfLines := strings.Split(contents, "\n")
+	resolvConfLines := strings.Split(string(contents), "\n")
 	for _, line := range resolvConfLines {
 		submatch := nameserverRegexp.FindAllStringSubmatch(line, 1)
 

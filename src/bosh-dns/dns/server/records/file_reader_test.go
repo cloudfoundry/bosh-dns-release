@@ -102,6 +102,8 @@ var _ = Describe("RecordsFileReader", func() {
 			contents, err := fileReader.Get()
 			Expect(err).NotTo(HaveOccurred())
 
+			Expect(fakeFileSystem.StatWithOptsCallCount).To(Equal(1))
+
 			Expect(string(contents)).To(Equal(fileContents))
 		})
 

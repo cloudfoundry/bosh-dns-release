@@ -86,7 +86,7 @@ func (r *autoUpdatingRepo) Subscribe() <-chan bool {
 }
 
 func (r *autoUpdatingRepo) needNewFromDisk() (bool, []byte, error) {
-	newStat, err := r.fileSystem.Stat(r.recordsFilePath)
+	newStat, err := r.fileSystem.StatWithOpts(r.recordsFilePath, system.StatOpts{Quiet: true})
 	if err != nil {
 		return false, nil, bosherr.Errorf("Error stating records file '%s': %s", r.recordsFilePath, err.Error())
 	}
