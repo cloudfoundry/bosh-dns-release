@@ -26,6 +26,18 @@ func NewCriteria(fqdn string, domains []string) (Criteria, error) {
 	return crit, err
 }
 
+func (c Criteria) Matcher() Matcher {
+	matcher := new(AndMatcher)
+	for field, values := range c {
+		if field == "s" || field == "fqdn" {
+			continue
+		}
+		matcher.Append(Field(field, values))
+	}
+
+	return matcher
+}
+
 type Matcher interface {
 	Match(r *record.Record) bool
 }

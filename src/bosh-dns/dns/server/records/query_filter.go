@@ -8,14 +8,7 @@ import (
 type QueryFilter struct{}
 
 func (q *QueryFilter) Filter(crit criteria.Criteria, recs []record.Record) []record.Record {
-	matcher := new(criteria.AndMatcher)
-	for field, values := range crit {
-		if field == "s" || field == "fqdn" {
-			continue
-		}
-		matcher.Append(criteria.Field(field, values))
-	}
-
+	matcher := crit.Matcher()
 	var records []record.Record
 
 	for _, record := range recs {
