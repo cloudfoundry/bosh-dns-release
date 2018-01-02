@@ -142,7 +142,7 @@ func mainExitCode() int {
 
 	upchecks := []server.Upcheck{}
 	for _, upcheckDomain := range config.UpcheckDomains {
-		mux.Handle(upcheckDomain, handlers.NewRequestLoggerHandler(handlers.NewUpcheckHandler(logger), clock, logger))
+		mux.Handle(upcheckDomain, handlers.NewUpcheckHandler(logger))
 		upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("%s:%d", config.Address, config.Port), upcheckDomain, "udp"))
 		upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("%s:%d", config.Address, config.Port), upcheckDomain, "tcp"))
 	}
