@@ -15,7 +15,6 @@ inputs:
 outputs:
   - name: bumped-version
   - name: final-bosh-dns-release
-  - name: tag
 
 params:
   BLOBSTORE_ACCESS_KEY_ID: replace-me

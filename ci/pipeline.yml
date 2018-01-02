@@ -348,8 +348,6 @@ jobs:
     - put: bosh-dns-release
       params:
         repository: final-bosh-dns-release
-        tag: /tmp/build/put/tag/tag-name
-        annotate: /tmp/build/put/tag/annotate-msg
 
 resources:
 - name: bosh-dns-release

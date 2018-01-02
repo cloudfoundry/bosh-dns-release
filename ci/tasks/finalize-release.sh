@@ -10,9 +10,20 @@ PROMOTED_REPO=$PWD/final-bosh-dns-release
 
 export DEV_RELEASE_PATH=$ROOT_PATH/candidate-release/bosh*.tgz
 
+pushd ./bosh-dns-release
+  tag_name="v${VERSION}"
+
+  tag_annotation="Final release ${VERSION} tagged via concourse"
+
+  git tag -a "${tag_name}" -m "${tag_annotation}"
+popd
+
 git clone ./bosh-dns-release $PROMOTED_REPO
 
 pushd $PROMOTED_REPO
+  git status
+
+  git checkout master
   git status
 
   cat >> config/private.yml <<EOF
@@ -33,13 +44,4 @@ EOF
   git config --global user.name "CI Bot"
 
   git commit -m "Adding final release $VERSION via concourse"
-
 popd
-
-cat <<EOF >tag/tag-name
-v${VERSION}
-EOF
-
-cat <<EOF >tag/annotate-msg
-Final release $VERSION tagged via concourse
-EOF
