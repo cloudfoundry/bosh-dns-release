@@ -45,7 +45,7 @@ func NewSegment(fqdn string, domains []string) (segment, error) {
 		finalSegment.Network = groupSegments[1]
 		finalSegment.Deployment = groupSegments[2]
 	} else if tld != "" {
-		panic(fmt.Sprintf("Bad group segment query had %d values %#v\n", len(groupSegments), groupSegments))
+		return segment{}, fmt.Errorf("Bad group segment query had %d values %#v\n", len(groupSegments), groupSegments)
 	}
 
 	return finalSegment, nil
