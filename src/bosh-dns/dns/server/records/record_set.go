@@ -165,7 +165,7 @@ func (r *RecordSet) resolveQuery(fqdn string) ([]string, error) {
 			return ips, err
 		}
 	} else {
-		panic(fmt.Sprintf("Bad group segment query had %d values %#v\n", len(groupSegments), groupSegments))
+		return ips, fmt.Errorf("Bad group segment query had %d values %#v\n", len(groupSegments), groupSegments)
 	}
 
 	return r.ipsMatching(filter), nil

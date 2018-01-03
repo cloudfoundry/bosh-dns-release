@@ -585,6 +585,14 @@ var _ = Describe("RecordSet", func() {
 			})
 		})
 
+		Context("when the domain segmentation is ambiguous", func() {
+			It("returns an error", func() {
+				ips, err := recordSet.Resolve("q-i2.my-group.my-deployment.my-domain.")
+				Expect(err.Error()).To(ContainSubstring("Bad group segment query had 2 values"))
+				Expect(ips).To(HaveLen(0))
+			})
+		})
+
 		Context("when the query does not include any filters", func() {
 			It("returns all records matching the my-group.my-network.my-deployment.my-domain portion of the fqdn", func() {
 				ips, err := recordSet.Resolve("q-.my-group.my-network.my-deployment.my-domain.")
