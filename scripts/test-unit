@@ -19,10 +19,10 @@ main() {
 				packages=$*
 		fi
 
-		[[ -n "$(grep --exclude-dir src/bosh-dns/vendor \
-			--exclude-dir src/bosh-dns/test_yml_assets \
-			--exclude-dir src/bosh-dns/performance_tests \
-			--exclude-dir src/bosh-dns/acceptance_tests \
+		[[ -n "$(grep --exclude-dir vendor \
+			--exclude-dir test_yml_assets \
+			--exclude-dir performance_tests \
+			--exclude-dir acceptance_tests \
 			-ri panic src/bosh-dns)" \
 		]] && echo "panics detected in the code -- remove them" && exit 1
 
