@@ -336,7 +336,7 @@ jobs:
         passed: [test-acceptance, brats-ubuntu, test-acceptance-windows]
       - get: version
         params:
-          bump: patch
+          bump: minor
     - task: finalize-release
       file: bosh-dns-release/ci/tasks/finalize-release.yml
       params:
