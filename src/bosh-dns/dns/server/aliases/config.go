@@ -24,14 +24,6 @@ func NewConfig() Config {
 	}
 }
 
-func MustNewConfigFromMap(load map[string][]string) Config {
-	config, err := NewConfigFromMap(load)
-	if err != nil {
-		panic(err.Error())
-	}
-	return config
-}
-
 func NewConfigFromMap(load map[string][]string) (Config, error) {
 	config := NewConfig()
 

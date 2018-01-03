@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"net"
 
 	"github.com/miekg/dns"
@@ -23,7 +24,9 @@ func (r *respWriterWrapperFunc) WriteMsg(m *dns.Msg) error {
 	return r.child.WriteMsg(m)
 }
 
-func (r *respWriterWrapperFunc) Write(b []byte) (int, error) { panic("not implemented, use WriteMsg") }
+func (r *respWriterWrapperFunc) Write(b []byte) (int, error) {
+	return -1, errors.New("not implemented, use WriteMsg")
+}
 
 func (r *respWriterWrapperFunc) LocalAddr() net.Addr   { return r.child.LocalAddr() }
 func (r *respWriterWrapperFunc) RemoteAddr() net.Addr  { return r.child.RemoteAddr() }

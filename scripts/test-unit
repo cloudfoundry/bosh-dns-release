@@ -19,6 +19,13 @@ main() {
 				packages=$*
 		fi
 
+		[[ -n "$(grep --exclude-dir src/bosh-dns/vendor \
+			--exclude-dir src/bosh-dns/test_yml_assets \
+			--exclude-dir src/bosh-dns/performance_tests \
+			--exclude-dir src/bosh-dns/acceptance_tests \
+			-ri panic src/bosh-dns)" \
+		]] && echo "panics detected in the code -- remove them" && exit 1
+
 		ginkgo -p $recursive_flag -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=acceptance_tests,performance_tests,test_yml_assets,vendor $packages
 }
 

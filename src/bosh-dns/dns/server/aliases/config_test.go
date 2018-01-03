@@ -1,8 +1,6 @@
 package aliases_test
 
 import (
-	. "bosh-dns/dns/server/aliases"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

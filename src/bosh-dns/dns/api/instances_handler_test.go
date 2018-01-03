@@ -68,7 +68,8 @@ var _ = Describe("InstancesHandler", func() {
 				case "IP2":
 					return "lightbulb"
 				default:
-					panic("ip is not recognized" + ip)
+					Fail("ip is not recognized" + ip)
+					return ""
 				}
 			}
 

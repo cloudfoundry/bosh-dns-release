@@ -28,6 +28,14 @@ func dereferencer(r []record.Record) []record.Record {
 	return out
 }
 
+func mustNewConfigFromMap(load map[string][]string) aliases.Config {
+	config, err := aliases.NewConfigFromMap(load)
+	if err != nil {
+		Fail(err.Error())
+	}
+	return config
+}
+
 var _ = Describe("RecordSet", func() {
 	var (
 		recordSet         *records.RecordSet
@@ -41,7 +49,7 @@ var _ = Describe("RecordSet", func() {
 	BeforeEach(func() {
 		fakeLogger = &fakes.FakeLogger{}
 		fileReader = &recordsfakes.FakeFileReader{}
-		aliasList = aliases.MustNewConfigFromMap(map[string][]string{})
+		aliasList = mustNewConfigFromMap(map[string][]string{})
 		fakeHealthWatcher = &healthinessfakes.FakeHealthWatcher{}
 		shutdownChan = make(chan struct{})
 	})
@@ -295,7 +303,7 @@ var _ = Describe("RecordSet", func() {
 
 	Describe("Domains", func() {
 		BeforeEach(func() {
-			aliasList = aliases.MustNewConfigFromMap(map[string][]string{
+			aliasList = mustNewConfigFromMap(map[string][]string{
 				"alias1": {""},
 			})
 		})
@@ -1366,7 +1374,7 @@ var _ = Describe("RecordSet", func() {
 
 	Context("when resolving aliases", func() {
 		BeforeEach(func() {
-			aliasList = aliases.MustNewConfigFromMap(map[string][]string{
+			aliasList = mustNewConfigFromMap(map[string][]string{
 				"alias1":              {"q-s0.my-group.my-network.my-deployment.a1_domain1.", "q-s0.my-group.my-network.my-deployment.a1_domain2."},
 				"alias2":              {"q-s0.my-group.my-network.my-deployment.a2_domain1."},
 				"ipalias":             {"5.5.5.5"},
@@ -1479,7 +1487,7 @@ var _ = Describe("RecordSet", func() {
 				return false
 			}
 
-			aliasList = aliases.MustNewConfigFromMap(
+			aliasList = mustNewConfigFromMap(
 				map[string][]string{
 					"alias1": {
 						"q-s1.my-group.my-network.my-deployment.a1_domain1.",
@@ -1523,7 +1531,7 @@ var _ = Describe("RecordSet", func() {
 					return false
 				}
 
-				aliasList = aliases.MustNewConfigFromMap(
+				aliasList = mustNewConfigFromMap(
 					map[string][]string{
 						"alias1": {
 							"q-s1.my-group.my-network.my-deployment.a1_domain1.",
