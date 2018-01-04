@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"code.cloudfoundry.org/localip"
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	ginkgoconfig "github.com/onsi/ginkgo/config"
@@ -148,7 +147,7 @@ var _ = Describe("main", func() {
 			addressesDir, err = ioutil.TempDir("", "addresses")
 			Expect(err).NotTo(HaveOccurred())
 
-			listenAddress2, err = localip.LocalIP()
+			listenAddress2, err = localIP()
 			Expect(err).NotTo(HaveOccurred())
 
 			listenPort2, err = getFreePort()
@@ -1526,3 +1525,22 @@ func secureGet(client *httpclient.HTTPClient, port int, path string) (*http.Resp
 	}
 	return resp, nil
 }
+
+func localIP() (string, error) {
+	addr, err := net.ResolveUDPAddr("udp", "1.2.3.4:1")
+	if err != nil {
+		return "", err
+	}
+
+	conn, err := net.DialUDP("udp", nil, addr)
+	if err != nil {
+		return "", err
+	}
+
+	defer conn.Close()
+
+	host, _, err := net.SplitHostPort(conn.LocalAddr().String())
+	if err != nil {
+		return "", err
+	}
+

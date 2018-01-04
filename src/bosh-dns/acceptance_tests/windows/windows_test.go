@@ -4,10 +4,10 @@ package windows_test
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
 
-	"code.cloudfoundry.org/localip"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
@@ -18,9 +18,7 @@ var _ = Describe("windows tests", func() {
 	var localIP string
 
 	BeforeEach(func() {
-		var err error
-		localIP, err = localip.LocalIP()
-		Expect(err).NotTo(HaveOccurred())
+		localIP = os.Getenv("LOCAL_IP_ADDRESS")
 	})
 
 	It("should bind to tcp and udp", func() {

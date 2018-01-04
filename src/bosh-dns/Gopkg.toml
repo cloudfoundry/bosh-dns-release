@@ -33,7 +33,3 @@ required = ["github.com/onsi/ginkgo/ginkgo", "github.com/maxbrunsfeld/counterfei
   name = "github.com/coredns/coredns"
   source = "github.com/bosh-dep-forks/coredns"
   branch = "bosh-develop"
-
-[[constraint]]
-  branch = "master"
-  name = "code.cloudfoundry.org/localip"
