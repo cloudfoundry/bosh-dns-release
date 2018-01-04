@@ -1,13 +1,6 @@
 <%=
-  address = ""
-  if p('address') == ""
-    address = spec.ip
-  else
-    address = p('address').to_s
-  end
-
 {
-  address: address,
+  address: p('address', spec.ip),
   port: 53,
   recursors: p('recursors'),
   records_file: p('records_file'),

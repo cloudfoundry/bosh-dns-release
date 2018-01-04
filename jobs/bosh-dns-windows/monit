@@ -8,19 +8,12 @@ monit = {
   }]
 }
 
-address = ""
-if p('address') == ""
-  address = spec.ip
-else
-  address = p('address').to_s
-end
-
 if p('override_nameserver')
   monit[:processes] << {
     name: "bosh-dns-nameserverconfig-windows",
     executable: "/var/vcap/packages/bosh-dns-windows/bin/bosh-dns-nameserverconfig.exe",
 
-    args: ["--bindAddress", address == "0.0.0.0" ? "127.0.0.1" : address]
+    args: ["--bindAddress", p('address', spec.ip) == "0.0.0.0" ? "127.0.0.1" : p('address', spec.ip)]
   }
 end
 

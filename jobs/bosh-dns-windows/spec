@@ -30,10 +30,8 @@ packages:
 properties:
   address:
     description: "Address on which the DNS server will bind. Defaults to host IP address"
-    default: ""
   aliased_address:
     description: "Address that will be added on loopback interface. Defaults to none"
-    default: ""
   addresses_files_glob:
     description: "Glob for any files to look for extra addresses to listen on"
     default: C:\var\vcap\jobs\*\dns\addresses.json

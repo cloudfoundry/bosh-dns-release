@@ -8,14 +8,14 @@
 <% end %>
 
 
-<% if p('aliased_address') != "" %>
-  Get-NetIPAddress -IPAddress <%= p('aliased_address') %>
+<% if_p('aliased_address') do |aliased_address| %>
+  Get-NetIPAddress -IPAddress <%= aliased_address %>
 
   if ($? -eq $False) {
     $loopbackInterfaceIndex = Get-NetIPInterface -InterfaceAlias *loopback* | Select-Object -First 1 ifi* | foreach {$_.ifIndex}
 
     Write-host "Found loopback interface at InterfaceIndex ${loopbackInterfaceIndex}"
-    New-NetIPAddress -InterfaceIndex $loopbackInterfaceIndex -IPAddress <%= p('aliased_address') %>
+    New-NetIPAddress -InterfaceIndex $loopbackInterfaceIndex -IPAddress <%= aliased_address %>
   }
 <% end %>
 

@@ -1,14 +1,6 @@
 ﻿$ErrorActionPreference = "Stop"
 
-$address = "<%=
-  address = ""
-  if p('address') == ""
-    address = spec.ip
-  else
-    address = p('address').to_s
-  end
-  address == "0.0.0.0" ? "127.0.0.1" : address
-%>"
+$address = "<%= p('address', spec.ip) == "0.0.0.0" ? "127.0.0.1" : p('address', spec.ip) %>"
 
 try
 {
