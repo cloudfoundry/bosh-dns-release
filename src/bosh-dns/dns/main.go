@@ -106,14 +106,15 @@ func mainExitCode() int {
 
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
 	if config.Health.Enabled {
-		httpClient, err := healthclient.NewHealthClientFromFiles(config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, logger)
+		quietLogger := boshlog.NewAsyncWriterLogger(boshlog.LevelNone, os.Stdout)
+		httpClient, err := healthclient.NewHealthClientFromFiles(config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, quietLogger)
 		if err != nil {
 			logger.Error(logTag, fmt.Sprintf("Unable to configure health checker %s", err.Error()))
 			return 1
 		}
 		healthChecker := healthiness.NewHealthChecker(httpClient, config.Health.Port)
 		checkInterval := time.Duration(config.Health.CheckInterval)
-		healthWatcher = healthiness.NewHealthWatcher(healthChecker, clock, checkInterval)
+		healthWatcher = healthiness.NewHealthWatcher(healthChecker, clock, checkInterval, logger)
 	}
 
 	shutdown := make(chan struct{})
