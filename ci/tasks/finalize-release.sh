@@ -10,6 +10,9 @@ PROMOTED_REPO=$PWD/final-bosh-dns-release
 
 export DEV_RELEASE_PATH=$ROOT_PATH/candidate-release/bosh*.tgz
 
+git config --global user.email "ci@localhost"
+git config --global user.name "CI Bot"
+
 pushd ./bosh-dns-release
   tag_name="v${VERSION}"
 
@@ -39,9 +42,6 @@ EOF
 
   git add -A
   git status
-
-  git config --global user.email "ci@localhost"
-  git config --global user.name "CI Bot"
 
   git commit -m "Adding final release $VERSION via concourse"
 popd
