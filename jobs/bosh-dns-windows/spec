@@ -26,6 +26,10 @@ properties:
     description: "Address that will be added by default"
     default: 169.254.0.2
 
+  debug_api.port:
+    description: "Port that the DNS servers debug API will listen on"
+    default: 53080
+
   records_file:
     description: "Path to the file containing information that the DNS server will use to create DNS records"
     default: C:\var\vcap\instance\dns\records.json

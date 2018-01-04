@@ -189,7 +189,7 @@ func mainExitCode() int {
 
 	http.Handle("/instances", api.NewInstancesHandler(recordSet, healthWatcher))
 
-	apiListenAddress := fmt.Sprintf(":%d", config.APIPort)
+	apiListenAddress := fmt.Sprintf("127.0.0.1:%d", config.APIPort)
 	go http.ListenAndServe(apiListenAddress, nil)
 
 	if err := dnsServer.Run(); err != nil {
