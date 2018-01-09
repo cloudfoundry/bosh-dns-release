@@ -2,13 +2,16 @@
 name: bosh-dns
 
 dependencies:
-- golang-1.8-linux
+- golang-1.9-linux
 
 files:
 - bosh-dns/healthcheck/**/*
 - bosh-dns/dns/**/*
 - bosh-dns/wait/**/*
 - bosh-dns/vendor/**/*
+
+- debug/cli/**/*
+- debug/vendor/**/*
 
 excluded_files:
 - bosh-dns/vendor/github.com/bmatcuk/doublestar/test/**/*

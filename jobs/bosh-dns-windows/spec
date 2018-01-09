@@ -3,17 +3,18 @@ name: bosh-dns-windows
 
 templates:
   aliases.json.erb: dns/aliases.json
+  cli.ps1.erb: bin/cli.ps1
+  client.crt.erb: config/certs/client.crt
+  client.key.erb: config/certs/client.key
+  client_ca.crt.erb: config/certs/client_ca.crt
   config.json.erb: config/config.json
-  post-start.ps1.erb: bin/post-start.ps1
-  pre-start.ps1.erb: bin/pre-start.ps1
   handlers.json.erb: dns/handlers.json
   health_server_config.json.erb: config/health_server_config.json
-  server.key.erb: config/certs/server.key
+  post-start.ps1.erb: bin/post-start.ps1
+  pre-start.ps1.erb: bin/pre-start.ps1
   server.crt.erb: config/certs/server.crt
+  server.key.erb: config/certs/server.key
   server_ca.crt.erb: config/certs/server_ca.crt
-  client.key.erb: config/certs/client.key
-  client.crt.erb: config/certs/client.crt
-  client_ca.crt.erb: config/certs/client_ca.crt
 
 packages:
   - bosh-dns-windows

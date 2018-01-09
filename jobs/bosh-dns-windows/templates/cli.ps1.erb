@@ -1,0 +1,5 @@
+$env:DNS_DEBUG_API_ADDRESS = "http://127.0.0.1:<%= p('debug_api.port') %>"
+
+/var/vcap/packages/bosh-dns-windows/bin/cli.exe $args
+
+Exit 0

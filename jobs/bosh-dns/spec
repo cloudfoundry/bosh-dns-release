@@ -6,6 +6,7 @@ templates:
   bosh_dns_ctl.erb: bin/bosh_dns_ctl
   bosh_dns_health_ctl.erb: bin/bosh_dns_health_ctl
   bosh_dns_resolvconf_ctl.erb: bin/bosh_dns_resolvconf_ctl
+  cli.erb: bin/cli
   client.crt.erb: config/certs/client.crt
   client.key.erb: config/certs/client.key
   client_ca.crt.erb: config/certs/client_ca.crt

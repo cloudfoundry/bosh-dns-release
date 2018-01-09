@@ -34,6 +34,17 @@ var _ = Describe("windows tests", func() {
 		Expect(session.Out.Contents()).To(ContainSubstring("Name       : upcheck.bosh-dns"))
 	})
 
+	It("exposes a debug API through a CLI", func() {
+		cmd := exec.Command("powershell.exe", "/var/vcap/jobs/bosh-dns-windows/bin/cli.ps1", "instances")
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+		Expect(session.Out).To(Say(`ID\s+Group\s+Network\s+Deployment\s+IP\s+Domain\s+AZ\s+Index\s+HealthState`))
+		Expect(session.Out).To(Say(`[a-z0-9\-]{36}\s+acceptance-tests-windows\s+private\s+bosh-dns-windows-acceptance\s+[0-9.]+\s+bosh\.\s+z1\s+0\s+[a-z]+`))
+	})
+
 	Context("as the system-configured nameserver", func() {
 		It("should respond to dns queries", func() {
 			cmd := exec.Command("powershell.exe", "-Command", "Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. | Format-list")

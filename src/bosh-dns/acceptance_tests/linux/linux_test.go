@@ -39,6 +39,18 @@ var _ = Describe("Alias address binding", func() {
 		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
 
+	It("exposes a debug API through a CLI", func() {
+		// pipe to cat to remove color codes
+		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "/var/vcap/jobs/bosh-dns/bin/cli instances | cat"}...)
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+		Expect(session.Out).To(gbytes.Say(`ID\s+Group\s+Network\s+Deployment\s+IP\s+Domain\s+AZ\s+Index\s+HealthState`))
+		Expect(session.Out).To(gbytes.Say(`[a-z0-9\-]{36}\s+bosh-dns\s+default\s+bosh-dns\s+[0-9.]+\s+bosh\.\s+z1\s+0\s+[a-z]+`))
+	})
+
 	It("should respond to udp dns queries", func() {
 		cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c", "dig +notcp upcheck.bosh-dns. @169.254.0.2"}...)
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)

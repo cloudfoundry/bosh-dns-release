@@ -8,7 +8,7 @@ templates:
   ca.crt.erb: ca.crt
 
 packages:
-  - golang-1.8-linux
+  - golang-1.9-linux
   - acceptance-tests
 
 properties:

@@ -2,13 +2,16 @@
 name: bosh-dns-windows
 
 dependencies:
-- golang-1.8-windows
+- golang-1.9-windows
 
 files:
 - bosh-dns/healthcheck/**/*
 - bosh-dns/dns/**/*
 - bosh-dns/vendor/**/*
 - exiter.ps1
+
+- debug/cli/**/*
+- debug/vendor/**/*
 
 excluded_files:
 - bosh-dns/vendor/github.com/bmatcuk/doublestar/test/**/*

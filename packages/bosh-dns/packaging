@@ -1,7 +1,7 @@
 set -eu
 
 mkdir -p "${BOSH_INSTALL_TARGET}/bin"
-source /var/vcap/packages/golang-1.8-linux/bosh/compile.env
+source /var/vcap/packages/golang-1.9-linux/bosh/compile.env
 
 mkdir -p "${GOPATH}/src"
 mv bosh-dns "${GOPATH}/src"
@@ -10,3 +10,7 @@ go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns" "bosh-dns/dns"
 go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns-nameserverconfig" "bosh-dns/dns/nameserverconfig"
 go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns-health" "bosh-dns/healthcheck"
 go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns-wait" "bosh-dns/wait"
+
+mv debug "${GOPATH}/src"
+go build -o "${BOSH_INSTALL_TARGET}/bin/cli" "debug/cli"
+
