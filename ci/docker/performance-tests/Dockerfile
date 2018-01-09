@@ -8,8 +8,8 @@ RUN \
 
 WORKDIR /usr/local
 RUN ( true \
-  && export GO_VERSION=1.8.3 \
-  && export GO_SHA256SUM=1862f4c3d3907e59b04a757cfda0ea7aa9ef39274af99a784f5be843c80c6772 \
+  && export GO_VERSION=1.9.3 \
+  && export GO_SHA256SUM=de874549d9a8d8d8062be05808509c09a88a248e77ec14eb77453530829ac02b \
   && curl -L -O https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz \
   && echo "$GO_SHA256SUM  go${GO_VERSION}.linux-amd64.tar.gz" | sha256sum -c - \
   && tar xzf go${GO_VERSION}.linux-amd64.tar.gz \
