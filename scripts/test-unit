@@ -12,7 +12,7 @@ main() {
 		go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
 		local recursive_flag='-r'
-		local packages="src/bosh-dns"
+		local packages="src/bosh-dns src/debug"
 
 		if [[ "$#" -gt 0 ]]; then
 				recursive_flag=''

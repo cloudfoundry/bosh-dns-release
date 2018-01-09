@@ -93,7 +93,7 @@ var _ = Describe("InstancesHandler", func() {
 					InstanceIndex: "InstanceIndex1",
 				},
 			}, nil)
-			r = httptest.NewRequest("GET", "/?address=potatoFilter", nil)
+			r = httptest.NewRequest("GET", "/?address=potatoFilter.", nil)
 			handler.ServeHTTP(w, r)
 			response := w.Result()
 			Expect(response.StatusCode).To(Equal(http.StatusOK))
@@ -107,7 +107,7 @@ var _ = Describe("InstancesHandler", func() {
 			}
 
 			Expect(fakeRecordManager.ExpandAliasesCallCount()).To(Equal(1))
-			Expect(fakeRecordManager.ExpandAliasesArgsForCall(0)).To(Equal("potatoFilter"))
+			Expect(fakeRecordManager.ExpandAliasesArgsForCall(0)).To(Equal("potatoFilter."))
 			Expect(fakeRecordManager.FilterCallCount()).To(Equal(1))
 			Expect(fakeRecordManager.FilterArgsForCall(0)).To(Equal([]string{"mashed potatoes"}))
 			Expect(records).To(ConsistOf([]api.Record{
@@ -206,6 +206,18 @@ var _ = Describe("InstancesHandler", func() {
 			Expect(resp.StatusCode).To(Equal(http.StatusUnprocessableEntity))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(body)).To(Equal("yo!"))
+		})
+
+		Context("when there is no trailing dot", func() {
+			It("a dot is appended to the query param", func() {
+				r = httptest.NewRequest("GET", "/?address=potatoFilter", nil)
+				handler.ServeHTTP(w, r)
+				response := w.Result()
+				Expect(response.StatusCode).To(Equal(http.StatusOK))
+
+				Expect(fakeRecordManager.ExpandAliasesCallCount()).To(Equal(1))
+				Expect(fakeRecordManager.ExpandAliasesArgsForCall(0)).To(Equal("potatoFilter."))
+			})
 		})
 	})
 })

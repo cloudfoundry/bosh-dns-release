@@ -4,6 +4,8 @@ import (
 	"bosh-dns/dns/server/record"
 	"encoding/json"
 	"net/http"
+
+	"github.com/miekg/dns"
 )
 
 //go:generate counterfeiter -o ./fakes/health_state_getter.go --fake-name HealthStateGetter . healthStateGetter
@@ -37,6 +39,7 @@ func (h *InstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		rs = *h.recordManager.AllRecords()
 	} else {
 		var err error
+		address = dns.Fqdn(address)
 		expandedAliases := h.recordManager.ExpandAliases(address)
 		rs, err = h.recordManager.Filter(expandedAliases, false)
 		if err != nil {
