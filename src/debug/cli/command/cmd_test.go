@@ -1,14 +1,21 @@
 package command_test
 
 import (
-	. "debug/cli/command"
+	"crypto/tls"
+	"crypto/x509"
+	"debug/cli/command"
+	"fmt"
+	"io/ioutil"
+	"net"
 	"net/http"
 
 	uifakes "github.com/cloudfoundry/bosh-cli/ui/fakes"
 	boshtbl "github.com/cloudfoundry/bosh-cli/ui/table"
 	. "github.com/onsi/ginkgo"
+	ginkgoconfig "github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
+	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 var _ = Describe("InstancesCmd", func() {
@@ -16,13 +23,21 @@ var _ = Describe("InstancesCmd", func() {
 		api    string
 		server *ghttp.Server
 		ui     *uifakes.FakeUI
+		cmd    command.InstancesCmd
 	)
 
 	BeforeEach(func() {
-		server = ghttp.NewServer()
+		server = newFakeAPIServer()
 
 		api = server.URL()
 		ui = &uifakes.FakeUI{}
+		cmd = command.InstancesCmd{
+			UI:                 ui,
+			API:                api,
+			TLSCACertPath:      "../../../bosh-dns/dns/api/assets/test_certs/test_ca.pem",
+			TLSCertificatePath: "../../../bosh-dns/dns/api/assets/test_certs/test_wrong_cn_client.pem",
+			TLSPrivateKeyPath:  "../../../bosh-dns/dns/api/assets/test_certs/test_client.key",
+		}
 	})
 
 	AfterEach(func() {
@@ -64,7 +79,6 @@ var _ = Describe("InstancesCmd", func() {
 			})
 
 			It("formats the contents like a table", func() {
-				cmd := InstancesCmd{UI: ui, API: api}
 				Expect(cmd.Execute(nil)).To(Succeed())
 
 				Expect(ui.Table).To(Equal(boshtbl.Table{
@@ -119,7 +133,7 @@ var _ = Describe("InstancesCmd", func() {
 			})
 
 			It("includes an address arg as a query param", func() {
-				cmd := InstancesCmd{UI: ui, Args: InstancesArgs{Query: "my-query"}, API: api}
+				cmd.Args = command.InstancesArgs{Query: "my-query"}
 				Expect(cmd.Execute(nil)).To(Succeed())
 				Expect(ui.Table).To(BeAssignableToTypeOf(boshtbl.Table{}))
 			})
@@ -137,8 +151,39 @@ var _ = Describe("InstancesCmd", func() {
 		})
 
 		It("raises an error", func() {
-			cmd := InstancesCmd{}
 			Expect(cmd.Execute(nil)).ToNot(Succeed())
 		})
 	})
 })
+
+func newFakeAPIServer() *ghttp.Server {
+	caCert, err := ioutil.ReadFile("../../../bosh-dns/dns/api/assets/test_certs/test_ca.pem")
+	Expect(err).ToNot(HaveOccurred())
+
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	cert, err := tls.LoadX509KeyPair("../../../bosh-dns/dns/api/assets/test_certs/test_server.pem", "../../../bosh-dns/dns/api/assets/test_certs/test_server.key")
+	Expect(err).ToNot(HaveOccurred())
+
+	tlsConfig := tlsconfig.Build(
+		tlsconfig.WithIdentity(cert),
+		tlsconfig.WithInternalServiceDefaults(),
+	)
+
+	serverConfig := tlsConfig.Server(tlsconfig.WithClientAuthentication(caCertPool))
+	serverConfig.BuildNameToCertificate()
+
+	server := ghttp.NewUnstartedServer()
+	err = server.HTTPTestServer.Listener.Close()
+	Expect(err).NotTo(HaveOccurred())
+
+	port := 2345 + ginkgoconfig.GinkgoConfig.ParallelNode
+	server.HTTPTestServer.Listener, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	Expect(err).ToNot(HaveOccurred())
+
+	server.HTTPTestServer.TLS = serverConfig
+	server.HTTPTestServer.StartTLS()
+
+	return server
+}
