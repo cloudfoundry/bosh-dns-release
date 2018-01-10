@@ -5,10 +5,10 @@ dependencies: []
 
 files:
 - bosh-dns/acceptance_tests/**/*
-- bosh-dns/tlsclient/*
-- bosh-dns/test_yml_assets/*
+- bosh-dns/tlsclient/**/*
+- bosh-dns/test_yml_assets/**/*
 - bosh-dns/vendor/**/*
-- bosh-dns/dns/manager/*
+- bosh-dns/dns/manager/**/*
 - exiter.ps1
 
 excluded_files:

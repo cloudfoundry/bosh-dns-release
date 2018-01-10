@@ -200,7 +200,7 @@ var _ = Describe("Integration", func() {
 				if testTargetOS == "windows" {
 					osSuffix = "-windows"
 				}
-				ensureHealthEndpointDeployed("-o", "../test_yml_assets/enable-healthy-executable-job"+osSuffix+".yml")
+				ensureHealthEndpointDeployed("-o", "../test_yml_assets/ops/enable-healthy-executable-job"+osSuffix+".yml")
 				firstInstance = allDeployedInstances[0]
 			})
 
@@ -264,7 +264,7 @@ func runErrand(errandName string) {
 func ensureHealthEndpointDeployed(extraOps ...string) {
 	cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", testManifestName()))
+	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/manifests/%s.yml", testManifestName()))
 	Expect(err).ToNot(HaveOccurred())
 	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
 	Expect(err).ToNot(HaveOccurred())
@@ -276,7 +276,7 @@ func ensureHealthEndpointDeployed(extraOps ...string) {
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-v", "health_server_port=2345",
-		"-o", "../test_yml_assets/enable-health-manifest-ops.yml",
+		"-o", "../test_yml_assets/ops/enable-health-manifest-ops.yml",
 		"--vars-store", "creds.yml",
 		manifestPath,
 	}

@@ -358,9 +358,9 @@ var _ = Describe("recursor", func() {
 func ensureRecursorIsDefinedByBoshAgent() {
 	cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", testManifestName()))
+	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/manifests/%s.yml", testManifestName()))
 	Expect(err).ToNot(HaveOccurred())
-	disableOverridePath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", noRecursorsOpsFile()))
+	disableOverridePath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/ops/%s.yml", noRecursorsOpsFile()))
 	Expect(err).ToNot(HaveOccurred())
 	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
 	Expect(err).ToNot(HaveOccurred())
@@ -384,7 +384,7 @@ func ensureRecursorIsDefinedByBoshAgent() {
 func ensureRecursorIsDefinedByDnsRelease() {
 	cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", testManifestName()))
+	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/manifests/%s.yml", testManifestName()))
 	Expect(err).ToNot(HaveOccurred())
 	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
 	Expect(err).ToNot(HaveOccurred())
@@ -405,7 +405,7 @@ func ensureRecursorIsDefinedByDnsRelease() {
 }
 
 func updateCloudConfigWithOurLocalRecursor() {
-	removeRecursorAddressesOpsFile, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", setupLocalRecursorOpsFile()))
+	removeRecursorAddressesOpsFile, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/ops/%s.yml", setupLocalRecursorOpsFile()))
 	Expect(err).ToNot(HaveOccurred())
 	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "update-cloud-config", "-o", removeRecursorAddressesOpsFile, "-v", "network=director_network", cloudConfigTempFileName)
 	Expect(err).ToNot(HaveOccurred())

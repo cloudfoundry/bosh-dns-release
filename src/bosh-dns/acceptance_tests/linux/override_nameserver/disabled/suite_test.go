@@ -36,9 +36,9 @@ var _ = BeforeSuite(func() {
 
 	cmdRunner := system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-	manifestPath, err := filepath.Abs("../../../../test_yml_assets/manifest.yml")
+	manifestPath, err := filepath.Abs("../../../../test_yml_assets/manifests/dns-linux.yml")
 	Expect(err).ToNot(HaveOccurred())
-	defaultBindOpsPath, err := filepath.Abs("../../../../test_yml_assets/use-dns-release-default-bind-and-alias-addresses.yml")
+	defaultBindOpsPath, err := filepath.Abs("../../../../test_yml_assets/ops/use-dns-release-default-bind-and-alias-addresses.yml")
 	Expect(err).ToNot(HaveOccurred())
 	disableOverridePath, err := filepath.Abs("disable-override-nameserver.yml")
 	Expect(err).ToNot(HaveOccurred())

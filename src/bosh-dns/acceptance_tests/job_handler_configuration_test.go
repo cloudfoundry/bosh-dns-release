@@ -28,7 +28,7 @@ var _ = Describe("Handler Configuration through Job Configuration File", func() 
 
 		cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-		manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", testManifestName()))
+		manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/manifests/%s.yml", testManifestName()))
 		Expect(err).ToNot(HaveOccurred())
 		acceptanceTestReleasePath, err := filepath.Abs("dns-acceptance-release")
 		Expect(err).ToNot(HaveOccurred())

@@ -24,7 +24,7 @@ export TEST_TARGET_OS="linux"
 export BASE_STEMCELL="ubuntu-trusty"
 
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
-    -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/add-static-ips-to-cloud-config.yml > ${TEST_CLOUD_CONFIG_PATH}
+    -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/add-static-ips-to-cloud-config.yml > ${TEST_CLOUD_CONFIG_PATH}
 
 bosh -n update-cloud-config ${TEST_CLOUD_CONFIG_PATH} -v network=director_network
 
@@ -41,12 +41,12 @@ pushd $GOPATH/src/bosh-dns/acceptance_tests
     ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
 popd
 
-bosh -n deploy $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/manifest.yml \
+bosh -n deploy $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/manifests/dns-linux.yml \
    -v acceptance_release_path=$ROOT_DIR/bosh-dns-release/src/bosh-dns/acceptance_tests/dns-acceptance-release \
    -v health_server_port=2345 \
-   -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/use-dns-release-default-bind-and-alias-addresses.yml \
-   -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/enable-health-manifest-ops.yml \
-   -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/enable-require-dns-in-pre-start-ops.yml \
+   -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/use-dns-release-default-bind-and-alias-addresses.yml \
+   -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/enable-health-manifest-ops.yml \
+   -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/enable-require-dns-in-pre-start-ops.yml \
    --vars-store dns-creds.yml
 
 pushd $GOPATH/src/bosh-dns/acceptance_tests/linux

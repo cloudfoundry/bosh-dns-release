@@ -29,11 +29,11 @@ var _ = Describe("HTTP JSON Server integration", func() {
 
 			cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-			manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/%s.yml", testManifestName()))
+			manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/manifests/%s.yml", testManifestName()))
 			Expect(err).ToNot(HaveOccurred())
 			aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
 			Expect(err).ToNot(HaveOccurred())
-			enableHTTPJSONEndpointsPath, err := filepath.Abs("../test_yml_assets/enable-http-json-endpoints.yml")
+			enableHTTPJSONEndpointsPath, err := filepath.Abs("../test_yml_assets/ops/enable-http-json-endpoints.yml")
 			Expect(err).ToNot(HaveOccurred())
 
 			updateCloudConfigWithDefaultCloudConfig()

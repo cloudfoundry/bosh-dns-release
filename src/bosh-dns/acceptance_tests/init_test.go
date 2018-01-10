@@ -69,7 +69,7 @@ func testManifestName() string {
 	if testTargetOS == "windows" {
 		return "dns-windows"
 	} else {
-		return "manifest"
+		return "dns-linux"
 	}
 }
 
