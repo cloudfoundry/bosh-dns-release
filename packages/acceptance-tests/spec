@@ -5,7 +5,7 @@ dependencies: []
 
 files:
 - bosh-dns/acceptance_tests/**/*
-- bosh-dns/healthcheck/healthclient/*
+- bosh-dns/tlsclient/*
 - bosh-dns/test_yml_assets/*
 - bosh-dns/vendor/**/*
 - bosh-cli/bosh-cli-2.0.16-linux-amd64

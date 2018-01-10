@@ -51,6 +51,7 @@ var _ = BeforeSuite(func() {
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 		"-o", defaultBindOpsPath,
 		"-o", disableOverridePath,
+		"--vars-store", "dns-creds.yml",
 		manifestPath,
 	)
 	Expect(err).ToNot(HaveOccurred())

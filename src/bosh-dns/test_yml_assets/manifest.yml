@@ -23,6 +23,11 @@ instance_groups:
     release: bosh-dns
     properties:
       address: 0.0.0.0
+      api:
+        server:
+          tls: ((dns_api_server_tls))
+        client:
+          tls: ((dns_api_client_tls))
       recursors:
       - "172.17.0.1:9955"
       recursor_timeout: 1s
@@ -45,3 +50,26 @@ stemcells:
 - alias: default
   os: ubuntu-trusty
   version: latest
+
+variables:
+- name: dns_api_tls_ca
+  type: certificate
+  options:
+    is_ca: true
+    common_name: dns-api-tls-ca
+
+- name: dns_api_server_tls
+  type: certificate
+  options:
+    ca: dns_api_tls_ca
+    common_name: api.bosh-dns
+    extended_key_usage:
+      - server_auth
+
+- name: dns_api_client_tls
+  type: certificate
+  options:
+    ca: dns_api_tls_ca
+    common_name: api.bosh-dns
+    extended_key_usage:
+    - client_auth

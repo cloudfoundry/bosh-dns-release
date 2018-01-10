@@ -5,10 +5,11 @@ dependencies:
 - golang-1.9-linux
 
 files:
-- bosh-dns/healthcheck/**/*
 - bosh-dns/dns/**/*
-- bosh-dns/wait/**/*
+- bosh-dns/healthcheck/**/*
+- bosh-dns/tlsclient/**/*
 - bosh-dns/vendor/**/*
+- bosh-dns/wait/**/*
 
 - debug/cli/**/*
 - debug/vendor/**/*

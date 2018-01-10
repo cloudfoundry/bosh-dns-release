@@ -2,18 +2,23 @@
 {
   address: p('address'),
   port: 53,
-  api_port: p('debug_api.port'),
   recursors: p('recursors'),
   records_file: p('records_file'),
   alias_files_glob: p('alias_files_glob'),
   upcheck_domains: p('upcheck_domains'),
   recursor_timeout: p('recursor_timeout'),
+  api: {
+    port: p('api.port'),
+    certificate_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/api/server.crt',
+    private_key_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/api/server.key',
+    ca_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/api/server_ca.crt',
+  },
   health: {
     enabled: p('health.enabled'),
     port: p('health.server.port'),
-    certificate_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/client.crt',
-    private_key_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/client.key',
-    ca_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/client_ca.crt',
+    certificate_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/health/client.crt',
+    private_key_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/health/client.key',
+    ca_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/health/client_ca.crt',
     check_interval: "20s",
     max_tracked_queries: p('health.max_tracked_queries')
   },

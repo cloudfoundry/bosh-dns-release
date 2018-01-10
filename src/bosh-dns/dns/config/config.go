@@ -13,7 +13,6 @@ import (
 type Config struct {
 	Address           string       `json:"address"`
 	Port              int          `json:"port"`
-	APIPort           int          `json:"api_port"`
 	Timeout           DurationJSON `json:"timeout,omitempty"`
 	RecursorTimeout   DurationJSON `json:"recursor_timeout,omitempty"`
 	Recursors         []string     `json:"recursors,omitempty"`
@@ -22,8 +21,17 @@ type Config struct {
 	HandlersFilesGlob string       `json:"handlers_files_glob,omitempty"`
 	UpcheckDomains    []string     `json:"upcheck_domains,omitempty"`
 
+	API APIConfig `json:"api"`
+
 	Health HealthConfig `json:"health"`
 	Cache  Cache        `json:"cache"`
+}
+
+type APIConfig struct {
+	Port            int    `json:"port"`
+	CertificateFile string `json:"certificate_file"`
+	PrivateKeyFile  string `json:"private_key_file"`
+	CAFile          string `json:"ca_file"`
 }
 
 type HealthConfig struct {

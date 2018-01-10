@@ -373,6 +373,7 @@ func ensureRecursorIsDefinedByBoshAgent() {
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 		"-o", disableOverridePath,
+		"--vars-store", "creds.yml",
 		manifestPath,
 	)
 	Expect(err).ToNot(HaveOccurred())
@@ -395,6 +396,7 @@ func ensureRecursorIsDefinedByDnsRelease() {
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
+		"--vars-store", "creds.yml",
 		manifestPath,
 	)
 	Expect(err).ToNot(HaveOccurred())

@@ -4,12 +4,15 @@ import (
 	"bosh-dns/dns/api"
 	"bosh-dns/dns/config"
 	handlersconfig "bosh-dns/dns/config/handlers"
+	"bosh-dns/tlsclient"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
 	"strconv"
 
+	"github.com/cloudfoundry/bosh-utils/httpclient"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	ginkgoconfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/gomega/gexec"
 
@@ -102,14 +105,15 @@ var _ = Describe("main", func() {
 
 	Context("when the server starts successfully", func() {
 		var (
-			cmd                   *exec.Cmd
-			session               *gexec.Session
 			aliasesDir            string
-			handlersDir           string
-			recordsFilePath       string
+			apiClient             *httpclient.HTTPClient
 			checkInterval         time.Duration
-			httpJSONServer        *ghttp.Server
+			cmd                   *exec.Cmd
 			handlerCachingEnabled bool
+			handlersDir           string
+			httpJSONServer        *ghttp.Server
+			recordsFilePath       string
+			session               *gexec.Session
 		)
 
 		BeforeEach(func() {
@@ -217,14 +221,31 @@ var _ = Describe("main", func() {
 				},
 			})
 
+			logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
+			apiClient, err = tlsclient.NewFromFiles(
+				"api.bosh-dns",
+				"api/assets/test_certs/test_ca.pem",
+				"api/assets/test_certs/test_wrong_cn_client.pem",
+				"api/assets/test_certs/test_client.key",
+				logger,
+			)
+			Expect(err).NotTo(HaveOccurred())
+
 			cmd = newCommandWithConfig(config.Config{
 				Address:           listenAddress,
 				Port:              listenPort,
-				APIPort:           listenAPIPort,
 				RecordsFile:       recordsFilePath,
 				AliasFilesGlob:    path.Join(aliasesDir, "*"),
 				HandlersFilesGlob: path.Join(handlersDir, "*"),
 				UpcheckDomains:    []string{"health.check.bosh.", "health.check.ca."},
+
+				API: config.APIConfig{
+					Port:            listenAPIPort,
+					CAFile:          "api/assets/test_certs/test_ca.pem",
+					CertificateFile: "api/assets/test_certs/test_server.pem",
+					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+				},
+
 				Health: config.HealthConfig{
 					Enabled:         true,
 					Port:            2345 + ginkgoconfig.GinkgoConfig.ParallelNode,
@@ -286,8 +307,7 @@ var _ = Describe("main", func() {
 
 		Describe("HTTP API", func() {
 			It("returns a 404 from unknown endpoints (well, one unknown endpoint)", func() {
-				address := fmt.Sprintf("http://%s:%d/unknown", listenAddress, listenAPIPort)
-				resp, err := http.Get(address)
+				resp, err := secureGet(apiClient, listenAPIPort, "unknown")
 				Expect(err).NotTo(HaveOccurred())
 				defer resp.Body.Close()
 
@@ -334,8 +354,7 @@ var _ = Describe("main", func() {
 				})
 
 				It("returns json records", func() {
-					address := fmt.Sprintf("http://%s:%d/instances", listenAddress, listenAPIPort)
-					resp, err := http.Get(address)
+					resp, err := secureGet(apiClient, listenAPIPort, "instances")
 					Expect(err).NotTo(HaveOccurred())
 					defer resp.Body.Close()
 
@@ -422,12 +441,7 @@ var _ = Describe("main", func() {
 
 				It("allows for querying specific addresses without affecting health monitoring", func() {
 					Consistently(func() []api.Record {
-						address := fmt.Sprintf("http://%s:%d/instances?address=q-s0.my-group.my-network.my-deployment-2.bosh.", listenAddress, listenAPIPort)
-						timeout := time.Duration(5 * time.Second)
-						client := http.Client{
-							Timeout: timeout,
-						}
-						resp, err := client.Get(address)
+						resp, err := secureGet(apiClient, listenAPIPort, "instances?address=q-s0.my-group.my-network.my-deployment-2.bosh.")
 						Expect(err).NotTo(HaveOccurred())
 						defer resp.Body.Close()
 
@@ -1093,6 +1107,13 @@ var _ = Describe("main", func() {
 				Port:            listenPort,
 				Recursors:       []string{l.Addr().String()},
 				RecursorTimeout: config.DurationJSON(time.Second),
+
+				API: config.APIConfig{
+					Port:            listenAPIPort,
+					CAFile:          "api/assets/test_certs/test_ca.pem",
+					CertificateFile: "api/assets/test_certs/test_server.pem",
+					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+				},
 			})
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
@@ -1127,6 +1148,13 @@ var _ = Describe("main", func() {
 				Port:            listenPort,
 				Recursors:       []string{"8.8.8.8"},
 				RecursorTimeout: config.DurationJSON(time.Second),
+
+				API: config.APIConfig{
+					Port:            listenAPIPort,
+					CAFile:          "api/assets/test_certs/test_ca.pem",
+					CertificateFile: "api/assets/test_certs/test_server.pem",
+					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+				},
 			})
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
@@ -1204,6 +1232,13 @@ var _ = Describe("main", func() {
 				Port:           listenPort,
 				UpcheckDomains: []string{"upcheck.bosh-dns."},
 				Timeout:        config.DurationJSON(-1),
+
+				API: config.APIConfig{
+					Port:            listenAPIPort,
+					CAFile:          "api/assets/test_certs/test_ca.pem",
+					CertificateFile: "api/assets/test_certs/test_server.pem",
+					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+				},
 			})
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
@@ -1400,4 +1435,22 @@ func writeHandlersConfig(dir string, handlersConfiguration handlersconfig.Handle
 
 	_, err = handlersFile.Write([]byte(handlerConfigContents))
 	Expect(err).NotTo(HaveOccurred())
+}
+
+func secureGetRespBody(client *httpclient.HTTPClient, port int, path string) ([]byte, error) {
+	resp, err := secureGet(client, port, path)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return ioutil.ReadAll(resp.Body)
+}
+
+func secureGet(client *httpclient.HTTPClient, port int, path string) (*http.Response, error) {
+	resp, err := client.Get(fmt.Sprintf("https://127.0.0.1:%d/%s", port, path))
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return resp, nil
 }

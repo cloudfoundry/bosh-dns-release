@@ -1,5 +1,8 @@
 #!/bin/bash
 
-export DNS_DEBUG_API_ADDRESS=http://127.0.0.1:<%= p('debug_api.port') %>
+export DNS_API_ADDRESS=https://127.0.0.1:<%= p('api.port') %>
+export DNS_API_TLS_CA_CERT_PATH=/var/vcap/jobs/bosh-dns/config/certs/api/client_ca.crt
+export DNS_API_TLS_CERTIFICATE_PATH=/var/vcap/jobs/bosh-dns/config/certs/api/client.crt
+export DNS_API_TLS_PRIVATE_KEY_PATH=/var/vcap/jobs/bosh-dns/config/certs/api/client.key
 
 /var/vcap/packages/bosh-dns/bin/cli $@

@@ -5,8 +5,9 @@ dependencies:
 - golang-1.9-windows
 
 files:
-- bosh-dns/healthcheck/**/*
 - bosh-dns/dns/**/*
+- bosh-dns/healthcheck/**/*
+- bosh-dns/tlsclient/**/*
 - bosh-dns/vendor/**/*
 - exiter.ps1
 

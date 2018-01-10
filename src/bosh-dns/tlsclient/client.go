@@ -1,4 +1,4 @@
-package healthclient
+package tlsclient
 
 import (
 	"crypto/tls"
@@ -14,7 +14,7 @@ import (
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
-func NewHealthClientFromFiles(caFile, clientCertFile, clientKeyFile string, logger boshlog.Logger) (*httpclient.HTTPClient, error) {
+func NewFromFiles(dnsName string, caFile, clientCertFile, clientKeyFile string, logger boshlog.Logger) (*httpclient.HTTPClient, error) {
 	// Load client cert
 	cert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
 	if err != nil {
@@ -27,10 +27,10 @@ func NewHealthClientFromFiles(caFile, clientCertFile, clientKeyFile string, logg
 		return nil, err
 	}
 
-	return NewHealthClient(caCert, cert, logger), nil
+	return New(dnsName, caCert, cert, logger), nil
 }
 
-func NewHealthClient(caCert []byte, cert tls.Certificate, logger boshlog.Logger) *httpclient.HTTPClient {
+func New(dnsName string, caCert []byte, cert tls.Certificate, logger boshlog.Logger) *httpclient.HTTPClient {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
@@ -53,7 +53,7 @@ func NewHealthClient(caCert []byte, cert tls.Certificate, logger boshlog.Logger)
 			opts := x509.VerifyOptions{
 				Roots:         tr.TLSClientConfig.RootCAs,
 				CurrentTime:   time.Now(),
-				DNSName:       "health.bosh-dns",
+				DNSName:       dnsName,
 				Intermediates: x509.NewCertPool(),
 			}
 

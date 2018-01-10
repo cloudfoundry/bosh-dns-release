@@ -7,19 +7,27 @@ templates:
   bosh_dns_health_ctl.erb: bin/bosh_dns_health_ctl
   bosh_dns_resolvconf_ctl.erb: bin/bosh_dns_resolvconf_ctl
   cli.erb: bin/cli
-  client.crt.erb: config/certs/client.crt
-  client.key.erb: config/certs/client.key
-  client_ca.crt.erb: config/certs/client_ca.crt
   config.json.erb: config/config.json
   handlers.json.erb: dns/handlers.json
   health_server_config.json.erb: config/health_server_config.json
   is-system-resolver.erb: bin/is-system-resolver
   post-start.erb: bin/post-start
   pre-start.erb: bin/pre-start
-  server.crt.erb: config/certs/server.crt
-  server.key.erb: config/certs/server.key
-  server_ca.crt.erb: config/certs/server_ca.crt
   wait.erb: bin/wait
+
+  certs/health/client.crt.erb:    config/certs/health/client.crt
+  certs/health/client.key.erb:    config/certs/health/client.key
+  certs/health/client_ca.crt.erb: config/certs/health/client_ca.crt
+  certs/health/server.crt.erb:    config/certs/health/server.crt
+  certs/health/server.key.erb:    config/certs/health/server.key
+  certs/health/server_ca.crt.erb: config/certs/health/server_ca.crt
+
+  certs/api/client.crt.erb:    config/certs/api/client.crt
+  certs/api/client.key.erb:    config/certs/api/client.key
+  certs/api/client_ca.crt.erb: config/certs/api/client_ca.crt
+  certs/api/server.crt.erb:    config/certs/api/server.crt
+  certs/api/server.key.erb:    config/certs/api/server.key
+  certs/api/server_ca.crt.erb: config/certs/api/server_ca.crt
 
 packages:
   - bosh-dns
@@ -35,9 +43,13 @@ properties:
     description: "Port that the DNS server will bind to"
     default: 53
 
-  debug_api.port:
+  api.port:
     description: "Port that the DNS servers debug API will listen on"
     default: 53080
+  api.server.tls:
+    description: "Server-side mutual TLS configuration for the API"
+  api.client.tls:
+    description: "Client-side mutual TLS configuration for the API"
 
   records_file:
     description: "Path to the file containing information that the DNS server will use to create DNS records"

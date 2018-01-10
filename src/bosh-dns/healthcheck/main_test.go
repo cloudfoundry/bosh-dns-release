@@ -1,7 +1,7 @@
 package main_test
 
 import (
-	"bosh-dns/healthcheck/healthclient"
+	"bosh-dns/tlsclient"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -53,10 +53,13 @@ var _ = Describe("HealthCheck server", func() {
 
 		Describe("when the vm is healthy", func() {
 			It("returns healthy json output", func() {
-				client, err := healthclient.NewHealthClientFromFiles(
+				client, err := tlsclient.NewFromFiles(
+					"health.bosh-dns",
 					"assets/test_certs/test_ca.pem",
 					"assets/test_certs/test_client.pem",
-					"assets/test_certs/test_client.key", logger)
+					"assets/test_certs/test_client.key",
+					logger,
+				)
 				Expect(err).NotTo(HaveOccurred())
 
 				respData, err := secureGetRespBody(client, configPort)
@@ -80,10 +83,13 @@ var _ = Describe("HealthCheck server", func() {
 				})
 
 				It("returns healthy json output", func() {
-					client, err := healthclient.NewHealthClientFromFiles(
+					client, err := tlsclient.NewFromFiles(
+						"health.bosh-dns",
 						"assets/test_certs/test_ca.pem",
 						"assets/test_certs/test_client.pem",
-						"assets/test_certs/test_client.key", logger)
+						"assets/test_certs/test_client.key",
+						logger,
+					)
 					Expect(err).NotTo(HaveOccurred())
 
 					respData, err := secureGetRespBody(client, configPort)
@@ -106,10 +112,13 @@ var _ = Describe("HealthCheck server", func() {
 				})
 
 				It("returns unhealthy json output", func() {
-					client, err := healthclient.NewHealthClientFromFiles(
+					client, err := tlsclient.NewFromFiles(
+						"health.bosh-dns",
 						"assets/test_certs/test_ca.pem",
 						"assets/test_certs/test_client.pem",
-						"assets/test_certs/test_client.key", logger)
+						"assets/test_certs/test_client.key",
+						logger,
+					)
 					Expect(err).NotTo(HaveOccurred())
 
 					Eventually(func() map[string]string {
@@ -132,10 +141,13 @@ var _ = Describe("HealthCheck server", func() {
 			})
 
 			It("returns unhealthy json output", func() {
-				client, err := healthclient.NewHealthClientFromFiles(
+				client, err := tlsclient.NewFromFiles(
+					"health.bosh-dns",
 					"assets/test_certs/test_ca.pem",
 					"assets/test_certs/test_client.pem",
-					"assets/test_certs/test_client.key", logger)
+					"assets/test_certs/test_client.key",
+					logger,
+				)
 				Expect(err).NotTo(HaveOccurred())
 
 				respData, err := secureGetRespBody(client, configPort)
@@ -152,10 +164,13 @@ var _ = Describe("HealthCheck server", func() {
 		})
 
 		It("should reject a client cert with the wrong root CA", func() {
-			client, err := healthclient.NewHealthClientFromFiles(
+			client, err := tlsclient.NewFromFiles(
+				"health.bosh-dns",
 				"assets/test_certs/test_fake_ca.pem",
 				"assets/test_certs/test_fake_client.pem",
-				"assets/test_certs/test_client.key", logger)
+				"assets/test_certs/test_client.key",
+				logger,
+			)
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = secureGetRespBody(client, configPort)
@@ -164,10 +179,13 @@ var _ = Describe("HealthCheck server", func() {
 		})
 
 		It("should reject a client cert with the wrong CN", func() {
-			client, err := healthclient.NewHealthClientFromFiles(
+			client, err := tlsclient.NewFromFiles(
+				"health.bosh-dns",
 				"assets/test_certs/test_ca.pem",
 				"assets/test_certs/test_wrong_cn_client.pem",
-				"assets/test_certs/test_client.key", logger)
+				"assets/test_certs/test_client.key",
+				logger,
+			)
 			Expect(err).NotTo(HaveOccurred())
 
 			resp, err := secureGet(client, configPort)

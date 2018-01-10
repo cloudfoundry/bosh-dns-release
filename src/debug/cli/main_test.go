@@ -1,15 +1,23 @@
 package main_test
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
+
+	ginkgoconfig "github.com/onsi/ginkgo/config"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
+	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 var _ = Describe("Main", func() {
@@ -38,13 +46,19 @@ var _ = Describe("Main", func() {
 		)
 
 		BeforeEach(func() {
-			server = ghttp.NewServer()
-			os.Setenv("DNS_DEBUG_API_ADDRESS", server.URL())
+			server = newFakeAPIServer()
+			os.Setenv("DNS_API_ADDRESS", server.URL())
+			os.Setenv("DNS_API_TLS_CA_CERT_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_ca.pem")
+			os.Setenv("DNS_API_TLS_CERTIFICATE_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_wrong_cn_client.pem")
+			os.Setenv("DNS_API_TLS_PRIVATE_KEY_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_client.key")
 		})
 
 		AfterEach(func() {
 			server.Close()
-			os.Unsetenv("DNS_DEBUG_API_ADDRESS")
+			os.Unsetenv("DNS_API_ADDRESS")
+			os.Unsetenv("DNS_API_TLS_CA_CERT_PATH")
+			os.Unsetenv("DNS_API_TLS_CERTIFICATE_PATH")
+			os.Unsetenv("DNS_API_TLS_PRIVATE_KEY_PATH")
 		})
 
 		BeforeEach(func() {
@@ -89,3 +103,35 @@ var _ = Describe("Main", func() {
 		})
 	})
 })
+
+func newFakeAPIServer() *ghttp.Server {
+	caCert, err := ioutil.ReadFile("../../bosh-dns/dns/api/assets/test_certs/test_ca.pem")
+	Expect(err).ToNot(HaveOccurred())
+
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	cert, err := tls.LoadX509KeyPair("../../bosh-dns/dns/api/assets/test_certs/test_server.pem", "../../bosh-dns/dns/api/assets/test_certs/test_server.key")
+	Expect(err).ToNot(HaveOccurred())
+
+	tlsConfig := tlsconfig.Build(
+		tlsconfig.WithIdentity(cert),
+		tlsconfig.WithInternalServiceDefaults(),
+	)
+
+	serverConfig := tlsConfig.Server(tlsconfig.WithClientAuthentication(caCertPool))
+	serverConfig.BuildNameToCertificate()
+
+	server := ghttp.NewUnstartedServer()
+	err = server.HTTPTestServer.Listener.Close()
+	Expect(err).NotTo(HaveOccurred())
+
+	port := 2345 + ginkgoconfig.GinkgoConfig.ParallelNode
+	server.HTTPTestServer.Listener, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	Expect(err).ToNot(HaveOccurred())
+
+	server.HTTPTestServer.TLS = serverConfig
+	server.HTTPTestServer.StartTLS()
+
+	return server
+}

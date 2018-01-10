@@ -1,7 +1,7 @@
 package performance_test
 
 import (
-	"bosh-dns/healthcheck/healthclient"
+	"bosh-dns/tlsclient"
 	"io/ioutil"
 	"time"
 
@@ -92,7 +92,7 @@ func setupSecureGet() *httpclient.HTTPClient {
 
 	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
 
-	return healthclient.NewHealthClient(caCert, cert, logger)
+	return tlsclient.New("health.bosh-dns", caCert, cert, logger)
 }
 
 func secureGetHealthEndpoint(client *httpclient.HTTPClient, serverAddress string) (*http.Response, error) {

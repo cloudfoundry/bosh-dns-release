@@ -45,6 +45,7 @@ var _ = Describe("HTTP JSON Server integration", func() {
 				"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 				"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 				"-v", fmt.Sprintf("http_json_server_address=%s", jsonServerAddress()),
+				"--vars-store", "creds.yml",
 				manifestPath,
 			)
 

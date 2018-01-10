@@ -1,7 +1,7 @@
 package acceptance_test
 
 import (
-	"bosh-dns/healthcheck/healthclient"
+	"bosh-dns/tlsclient"
 	"crypto/tls"
 	"fmt"
 	"strings"
@@ -318,7 +318,7 @@ func setupSecureGet() *httpclient.HTTPClient {
 	Expect(err).NotTo(HaveOccurred())
 
 	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
-	return healthclient.NewHealthClient([]byte(caCert), cert, logger)
+	return tlsclient.New("health.bosh-dns", []byte(caCert), cert, logger)
 }
 
 func secureGetRespBody(client *httpclient.HTTPClient, hostname string, port int) ([]byte, error) {

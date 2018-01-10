@@ -41,6 +41,7 @@ var _ = Describe("Handler Configuration through Job Configuration File", func() 
 			"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 			"-v", fmt.Sprintf("acceptance_release_path=%s", acceptanceTestReleasePath),
 			"-v", fmt.Sprintf("http_json_server_address=%s", jsonServerAddress()),
+			"--vars-store", "creds.yml",
 			manifestPath,
 		)
 

@@ -1,9 +1,13 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,13 +26,14 @@ import (
 	"bosh-dns/dns/server/records"
 	"bosh-dns/dns/server/records/dnsresolver"
 	"bosh-dns/dns/shuffle"
-	"bosh-dns/healthcheck/healthclient"
+	"bosh-dns/tlsclient"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"github.com/miekg/dns"
+	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 func parseFlags() (string, error) {
@@ -107,7 +112,7 @@ func mainExitCode() int {
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
 	if config.Health.Enabled {
 		quietLogger := boshlog.NewAsyncWriterLogger(boshlog.LevelNone, os.Stdout)
-		httpClient, err := healthclient.NewHealthClientFromFiles(config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, quietLogger)
+		httpClient, err := tlsclient.NewFromFiles("health.bosh-dns", config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, quietLogger)
 		if err != nil {
 			logger.Error(logTag, fmt.Sprintf("Unable to configure health checker %s", err.Error()))
 			return 1
@@ -189,8 +194,37 @@ func mainExitCode() int {
 
 	http.Handle("/instances", api.NewInstancesHandler(recordSet, healthWatcher))
 
-	apiListenAddress := fmt.Sprintf("127.0.0.1:%d", config.APIPort)
-	go http.ListenAndServe(apiListenAddress, nil)
+	go func(config dnsconfig.APIConfig) {
+		caCert, err := ioutil.ReadFile(config.CAFile)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		cert, err := tls.LoadX509KeyPair(config.CertificateFile, config.PrivateKeyFile)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		tlsConfig := tlsconfig.Build(
+			tlsconfig.WithIdentity(cert),
+			tlsconfig.WithInternalServiceDefaults(),
+		)
+
+		serverConfig := tlsConfig.Server(tlsconfig.WithClientAuthentication(caCertPool))
+		serverConfig.BuildNameToCertificate()
+
+		server := &http.Server{
+			Addr:      fmt.Sprintf("127.0.0.1:%d", config.Port),
+			TLSConfig: serverConfig,
+		}
+		server.SetKeepAlivesEnabled(false)
+
+		server.ListenAndServeTLS("", "")
+	}(config.API)
 
 	if err := dnsServer.Run(); err != nil {
 		logger.Error(logTag, err.Error())

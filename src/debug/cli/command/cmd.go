@@ -2,13 +2,13 @@ package command
 
 import (
 	"bosh-dns/dns/api"
+	"bosh-dns/tlsclient"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/cloudfoundry/bosh-cli/ui"
 	boshtbl "github.com/cloudfoundry/bosh-cli/ui/table"
-	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
@@ -19,8 +19,11 @@ type Commands struct {
 }
 
 type InstancesCmd struct {
-	Args InstancesArgs `positional-args:"true"`
-	API  string        `long:"api" env:"DNS_DEBUG_API_ADDRESS" description:"API address to talk to"`
+	Args               InstancesArgs `positional-args:"true"`
+	API                string        `long:"api" env:"DNS_API_ADDRESS" description:"API address to talk to"`
+	TLSCACertPath      string        `long:"ca-cert-path" env:"DNS_API_TLS_CA_CERT_PATH" description:"CA certificate to use for mutual LS"`
+	TLSCertificatePath string        `long:"certificate-path" env:"DNS_API_TLS_CERTIFICATE_PATH" description:"Client certificate to use for mutual LS"`
+	TLSPrivateKeyPath  string        `long:"private-key-path" env:"DNS_API_TLS_PRIVATE_KEY_PATH" description:"Client key to use for mutual LS"`
 
 	UI ui.UI
 }
@@ -30,13 +33,17 @@ type InstancesArgs struct {
 }
 
 func (o *InstancesCmd) Execute(args []string) error {
+	logger := boshlog.NewLogger(boshlog.LevelNone)
 	if o.UI == nil {
-		confUI := ui.NewConfUI(boshlog.NewLogger(boshlog.LevelNone))
+		confUI := ui.NewConfUI(logger)
 		confUI.EnableColor()
 		o.UI = confUI
 	}
 
-	client := httpclient.CreateDefaultClient(nil)
+	client, err := tlsclient.NewFromFiles("api.bosh-dns", o.TLSCACertPath, o.TLSCertificatePath, o.TLSPrivateKeyPath, logger)
+	if err != nil {
+		return err
+	}
 
 	requestURL := o.API + "/instances"
 

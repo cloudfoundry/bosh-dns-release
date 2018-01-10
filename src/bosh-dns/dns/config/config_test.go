@@ -17,52 +17,62 @@ import (
 
 var _ = Describe("Config", func() {
 	var (
-		listenAddress   string
-		listenPort      int
-		listenAPIPort   int
-		timeout         string
-		recursorTimeout string
-
+		aliasesFileGlob         string
+		apiCAFile               string
+		apiCertificateFile      string
+		apiPrivateKeyFile       string
+		handlersFileGlob        string
 		healthCAFile            string
 		healthCertificateFile   string
-		upcheckInterval         string
-		healthPort              int
 		healthMaxTrackedQueries int
+		healthPort              int
 		healthPrivateKeyFile    string
+		listenAPIPort           int
+		listenAddress           string
+		listenPort              int
+		recursorTimeout         string
+		timeout                 string
 		upcheckDomains          []string
-		aliasesFileGlob         string
-		handlersFileGlob        string
+		upcheckInterval         string
 	)
 
 	BeforeEach(func() {
 		rand.Seed(time.Now().Unix())
 
+		aliasesFileGlob = "/aliases/*/glob"
+		apiCAFile = "/api/ca"
+		apiCertificateFile = "/api/cert"
+		apiPrivateKeyFile = "/api/key"
+		handlersFileGlob = "/handlers/*/glob"
+		healthCAFile = "/etc/ca"
+		healthCertificateFile = "/etc/certificate"
+		healthMaxTrackedQueries = 50
+		healthPort = 2345
+		healthPrivateKeyFile = "/etc/private_key"
+		listenAPIPort = rand.Int()
 		listenAddress = fmt.Sprintf("192.168.1.%d", rand.Int31n(256))
 		listenPort = rand.Int()
-		listenAPIPort = rand.Int()
-		timeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		recursorTimeout = fmt.Sprintf("%vs", rand.Int31n(16))
-		healthPort = 2345
-		healthMaxTrackedQueries = 50
-		healthCertificateFile = "/etc/certificate"
-		healthPrivateKeyFile = "/etc/private_key"
-		healthCAFile = "/etc/ca"
-		upcheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
+		timeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		upcheckDomains = []string{"upcheck.domain.", "health2.bosh."}
-		aliasesFileGlob = "/aliases/*/glob"
-		handlersFileGlob = "/handlers/*/glob"
+		upcheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
 	})
 
 	It("returns config from a config file", func() {
 		configContents, err := json.Marshal(map[string]interface{}{
 			"address":             listenAddress,
-			"port":                listenPort,
-			"api_port":            listenAPIPort,
-			"timeout":             timeout,
-			"recursor_timeout":    recursorTimeout,
-			"upcheck_domains":     upcheckDomains,
 			"alias_files_glob":    aliasesFileGlob,
 			"handlers_files_glob": handlersFileGlob,
+			"port":                listenPort,
+			"recursor_timeout":    recursorTimeout,
+			"timeout":             timeout,
+			"upcheck_domains":     upcheckDomains,
+			"api": map[string]interface{}{
+				"port":             listenAPIPort,
+				"certificate_file": apiCertificateFile,
+				"private_key_file": apiPrivateKeyFile,
+				"ca_file":          apiCAFile,
+			},
 			"health": map[string]interface{}{
 				"enabled":             true,
 				"port":                healthPort,
@@ -100,9 +110,14 @@ var _ = Describe("Config", func() {
 		dnsConfig, err := config.LoadFromFile(configFilePath)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dnsConfig).To(Equal(config.Config{
-			Address:           listenAddress,
-			Port:              listenPort,
-			APIPort:           listenAPIPort,
+			Address: listenAddress,
+			Port:    listenPort,
+			API: config.APIConfig{
+				Port:            listenAPIPort,
+				CertificateFile: apiCertificateFile,
+				PrivateKeyFile:  apiPrivateKeyFile,
+				CAFile:          apiCAFile,
+			},
 			Timeout:           config.DurationJSON(timeoutDuration),
 			RecursorTimeout:   config.DurationJSON(recursorTimeoutDuration),
 			Recursors:         []string{},
