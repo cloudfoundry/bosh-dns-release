@@ -111,7 +111,7 @@ func mainExitCode() int {
 
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
 	if config.Health.Enabled {
-		quietLogger := boshlog.NewAsyncWriterLogger(boshlog.LevelNone, os.Stdout)
+		quietLogger := boshlog.NewAsyncWriterLogger(boshlog.LevelNone, ioutil.Discard)
 		httpClient, err := tlsclient.NewFromFiles("health.bosh-dns", config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, quietLogger)
 		if err != nil {
 			logger.Error(logTag, fmt.Sprintf("Unable to configure health checker %s", err.Error()))
