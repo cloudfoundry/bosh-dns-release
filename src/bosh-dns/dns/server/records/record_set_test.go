@@ -871,14 +871,6 @@ var _ = Describe("RecordSet", func() {
 				})
 			})
 
-			Context("when the domain segmentation is ambiguous", func() {
-				It("returns an error", func() {
-					rs, err := recordSet.Filter([]string{"q-i2.my-group.my-deployment.my-domain."}, true)
-					Expect(err.Error()).To(ContainSubstring("Bad group segment query had 2 values"))
-					Expect(rs).To(HaveLen(0))
-				})
-			})
-
 			Context("when the query does not include any filters", func() {
 				It("returns all records matching the my-group.my-network.my-deployment.my-domain portion of the fqdn", func() {
 					rs, err := recordSet.Filter([]string{"q-.my-group.my-network.my-deployment.my-domain."}, true)
@@ -921,8 +913,8 @@ var _ = Describe("RecordSet", func() {
 					})
 				})
 
-				Context("when the query includes a single index", func() {
-					It("only returns records that have the index", func() {
+				Context("when the query includes multiple indices", func() {
+					It("only returns records that have those indices", func() {
 						rs, err := recordSet.Filter([]string{"q-i2i0.my-group.my-network.my-deployment.my-domain."}, false)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(rs).To(ConsistOf([]record.Record{

@@ -13,7 +13,7 @@ var groupRegex = regexp.MustCompile("^q-g([0-9]+)$")
 type Criteria map[string][]string
 
 func NewCriteria(fqdn string, domains []string) (Criteria, error) {
-	seg, err := NewSegment(fqdn, domains)
+	seg, err := ParseSegment(fqdn, domains)
 	if err != nil {
 		return Criteria{}, err
 	}
@@ -42,12 +42,18 @@ type Matcher interface {
 	Match(r *record.Record) bool
 }
 
+type MatcherFunc func(r *record.Record) bool
+
+func (m MatcherFunc) Match(r *record.Record) bool {
+	return m(r)
+}
+
 type AndMatcher struct {
-	criterion []Matcher
+	criteria []Matcher
 }
 
 func (m *AndMatcher) Match(r *record.Record) bool {
-	for _, matcher := range m.criterion {
+	for _, matcher := range m.criteria {
 		if !matcher.Match(r) {
 			return false
 		}
@@ -57,15 +63,15 @@ func (m *AndMatcher) Match(r *record.Record) bool {
 }
 
 func (m *AndMatcher) Append(matcher Matcher) {
-	m.criterion = append(m.criterion, matcher)
+	m.criteria = append(m.criteria, matcher)
 }
 
 type OrMatcher struct {
-	criterion []Matcher
+	criteria []Matcher
 }
 
 func (m *OrMatcher) Match(r *record.Record) bool {
-	for _, matcher := range m.criterion {
+	for _, matcher := range m.criteria {
 		if matcher.Match(r) {
 			return true
 		}
@@ -75,7 +81,7 @@ func (m *OrMatcher) Match(r *record.Record) bool {
 }
 
 func (m *OrMatcher) Append(matcher Matcher) {
-	m.criterion = append(m.criterion, matcher)
+	m.criteria = append(m.criteria, matcher)
 }
 
 func Field(field string, values []string) Matcher {
@@ -93,12 +99,6 @@ func Field(field string, values []string) Matcher {
 	}
 
 	return FieldMatcher("", "")
-}
-
-type MatcherFunc func(r *record.Record) bool
-
-func (m MatcherFunc) Match(r *record.Record) bool {
-	return m(r)
 }
 
 func FieldMatcher(field, value string) MatcherFunc {
@@ -137,7 +137,7 @@ func FieldMatcher(field, value string) MatcherFunc {
 	return func(*record.Record) bool { return false }
 }
 
-func parseCriteria(segment segment) (Criteria, error) {
+func parseCriteria(segment Segment) (Criteria, error) {
 	criteriaMap := make(Criteria)
 
 	if strings.HasPrefix(segment.Query, "q-") {

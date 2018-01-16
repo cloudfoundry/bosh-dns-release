@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type segment struct {
+type Segment struct {
 	Query      string
 	Group      string
 	Instance   string
@@ -15,11 +15,11 @@ type segment struct {
 	Domain     string
 }
 
-func NewSegment(fqdn string, domains []string) (segment, error) {
+func ParseSegment(fqdn string, domains []string) (Segment, error) {
 	segments := strings.SplitN(fqdn, ".", 2) // [q-s0, q-g7.x.y.bosh]
 
 	if len(segments) < 2 {
-		return segment{}, errors.New("domain is malformed")
+		return Segment{}, errors.New("domain is malformed")
 	}
 
 	var tld string
@@ -33,7 +33,7 @@ func NewSegment(fqdn string, domains []string) (segment, error) {
 	groupQuery := strings.TrimSuffix(segments[1], "."+tld)
 	groupSegments := strings.Split(groupQuery, ".")
 
-	finalSegment := segment{
+	finalSegment := Segment{
 		Query:  segments[0],
 		Domain: tld,
 	}
@@ -45,7 +45,7 @@ func NewSegment(fqdn string, domains []string) (segment, error) {
 		finalSegment.Network = groupSegments[1]
 		finalSegment.Deployment = groupSegments[2]
 	} else if tld != "" {
-		return segment{}, fmt.Errorf("Bad group segment query had %d values %#v\n", len(groupSegments), groupSegments)
+		return Segment{}, fmt.Errorf("bad group segment query had %d values %#v", len(groupSegments), groupSegments)
 	}
 
 	return finalSegment, nil
