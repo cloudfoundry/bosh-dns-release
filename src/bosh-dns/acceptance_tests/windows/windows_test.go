@@ -18,7 +18,10 @@ var _ = Describe("windows tests", func() {
 	var localIP string
 
 	BeforeEach(func() {
-		localIP = os.Getenv("LOCAL_IP_ADDRESS")
+		var present bool
+		localIP, present = os.LookupEnv("LOCAL_IP_ADDRESS")
+		Expect(present).To(BeTrue(), "LOCAL_IP_ADDRESS environment variable not set")
+		Expect(localIP).NotTo(BeEmpty(), "LOCAL_IP_ADDRESS environment variable not set")
 	})
 
 	It("should bind to tcp and udp", func() {
