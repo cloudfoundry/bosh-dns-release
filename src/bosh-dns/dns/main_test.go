@@ -1544,3 +1544,5 @@ func localIP() (string, error) {
 		return "", err
 	}
 
+	return host, nil
+}
