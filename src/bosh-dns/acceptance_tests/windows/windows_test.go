@@ -73,7 +73,7 @@ var _ = Describe("windows tests", func() {
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 		Expect(session.Out).To(Say("0"))
 	})
@@ -83,7 +83,7 @@ var _ = Describe("windows tests", func() {
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 		Expect(session.Out).To(Say("0"))
 	})
