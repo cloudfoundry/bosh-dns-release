@@ -396,13 +396,6 @@ var _ = Describe("main", func() {
 					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal("health.check.ca."))
 					Expect(r.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 				})
-
-				It("logs handler time", func() {
-					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-					Expect(err).NotTo(HaveOccurred())
-
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.UpcheckHandler Request \[1\] \[health\.check\.bosh\.\] 0 \d+ns`))
-				})
 			})
 
 			Context("arpa.", func() {

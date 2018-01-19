@@ -8,6 +8,7 @@ import (
 
 	"code.cloudfoundry.org/clock/fakeclock"
 
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -16,6 +17,7 @@ var _ = Describe("HealthWatcher", func() {
 	var (
 		fakeChecker *healthinessfakes.FakeHealthChecker
 		fakeClock   *fakeclock.FakeClock
+		fakeLogger  *loggerfakes.FakeLogger
 		interval    time.Duration
 		signal      chan struct{}
 		stopped     chan struct{}
@@ -26,8 +28,9 @@ var _ = Describe("HealthWatcher", func() {
 	BeforeEach(func() {
 		fakeChecker = &healthinessfakes.FakeHealthChecker{}
 		fakeClock = fakeclock.NewFakeClock(time.Now())
+		fakeLogger = &loggerfakes.FakeLogger{}
 		interval = time.Second
-		healthWatcher = healthiness.NewHealthWatcher(fakeChecker, fakeClock, interval)
+		healthWatcher = healthiness.NewHealthWatcher(fakeChecker, fakeClock, interval, fakeLogger)
 		signal = make(chan struct{})
 		stopped = make(chan struct{})
 
@@ -54,6 +57,21 @@ var _ = Describe("HealthWatcher", func() {
 			It("is always healthy", func() {
 				Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
 			})
+
+			Context("and the status is being checked for the first time", func() {
+				It("logs that the IP is being tracked", func() {
+					healthWatcher.IsHealthy(ip)
+					Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
+					Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
+
+					Eventually(fakeLogger.DebugCallCount).Should(Equal(1))
+					logTag, message, args := fakeLogger.DebugArgsForCall(0)
+					Expect(logTag).To(Equal("healthWatcher"))
+					Expect(message).To(Equal("Initial state for IP <%s> is %s"))
+					Expect(args).To(Equal([]interface{}{ip, "unhealthy"}))
+				})
+			})
+
 		})
 
 		Context("when the status is known", func() {
@@ -101,10 +119,22 @@ var _ = Describe("HealthWatcher", func() {
 					}).Should(BeTrue())
 
 					fakeClock.WaitForWatcherAndIncrement(interval)
-
 					Eventually(func() bool {
 						return healthWatcher.IsHealthy(ip)
 					}).Should(BeFalse())
+				})
+
+				It("logs that the status has changed", func() {
+					Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
+
+					fakeChecker.GetStatusReturns(false)
+
+					fakeClock.WaitForWatcherAndIncrement(interval)
+					Eventually(fakeLogger.DebugCallCount).Should(Equal(2))
+					logTag, message, args := fakeLogger.DebugArgsForCall(1)
+					Expect(logTag).To(Equal("healthWatcher"))
+					Expect(message).To(Equal("State for IP <%s> changed from %s to %s"))
+					Expect(args).To(Equal([]interface{}{ip, "healthy", "unhealthy"}))
 				})
 			})
 		})

@@ -6,6 +6,8 @@ import (
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/workpool"
+
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 //go:generate counterfeiter . HealthChecker
@@ -30,9 +32,10 @@ type healthWatcher struct {
 	checkWorkPool *workpool.WorkPool
 	state         map[string]bool
 	stateMutex    *sync.RWMutex
+	logger        boshlog.Logger
 }
 
-func NewHealthWatcher(checker HealthChecker, clock clock.Clock, checkInterval time.Duration) *healthWatcher {
+func NewHealthWatcher(checker HealthChecker, clock clock.Clock, checkInterval time.Duration, logger boshlog.Logger) *healthWatcher {
 	wp, _ := workpool.NewWorkPool(1000)
 
 	return &healthWatcher{
@@ -43,6 +46,7 @@ func NewHealthWatcher(checker HealthChecker, clock clock.Clock, checkInterval ti
 		checkWorkPool: wp,
 		state:         map[string]bool{},
 		stateMutex:    &sync.RWMutex{},
+		logger:        logger,
 	}
 }
 
@@ -92,10 +96,29 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 }
 
 func (hw *healthWatcher) runCheck(ip string) {
-	status := hw.checker.GetStatus(ip)
+	isHealthy := hw.checker.GetStatus(ip)
 
 	hw.stateMutex.Lock()
-	defer hw.stateMutex.Unlock()
 
-	hw.state[ip] = status
+	wasHealthy, found := hw.state[ip]
+	hw.state[ip] = isHealthy
+
+	hw.stateMutex.Unlock()
+
+	oldState := healthString(wasHealthy)
+	newState := healthString(isHealthy)
+
+	if !found {
+		hw.logger.Debug("healthWatcher", "Initial state for IP <%s> is %s", ip, oldState)
+	} else if oldState != newState {
+		hw.logger.Debug("healthWatcher", "State for IP <%s> changed from %s to %s", ip, oldState, newState)
+	}
+}
+
+func healthString(healthy bool) string {
+	if healthy {
+		return StateHealthy
+	}
+
+	return StateUnhealthy
 }
