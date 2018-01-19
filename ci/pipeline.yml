@@ -223,8 +223,7 @@ jobs:
   plan:
   - do:
     - aggregate:
-      - get: bosh-src
-      - get: bosh-dns-release-src
+      - get: brats-src
         resource: bosh-dns-release
         passed: [create-release]
       - get: bosh-dns-release
@@ -234,16 +233,13 @@ jobs:
       - get: stemcell
         resource: bosh-candidate-stemcell
       - get: bosh-release
-    - task: prepare-brats
-      file: bosh-dns-release-src/ci/tasks/prepare-brats.yml
-      input_mapping:
-        bosh-dns-release: bosh-dns-release-src
-    - task: test-brats
-      file: bosh-src/ci/tasks/test-brats.yml
+    - task: test-brats # contain base manifest
+      file: brats-src/ci/tasks/test-brats.yml
       tags: ["worker-brats"]
       privileged: true
       input_mapping:
         dns-release: bosh-dns-release-src
+        bosh-src: brats-src
       params:
         BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
         BOSH_DIRECTOR_RELEASE_VERSION: "latest"
@@ -381,11 +377,11 @@ resources:
     secret_access_key: {{candidate_release_secret_access_key}}
     versioned_file: "bosh-dns-dev-release.tgz"
 
-- name: bosh-src
+- name: brats-src
   type: git
   source:
     uri: https://github.com/cloudfoundry/bosh
-    branch: master
+    branch: 264.x
 
 - name: bosh-release
   type: bosh-io-release
