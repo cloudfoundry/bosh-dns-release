@@ -36,40 +36,6 @@ jobs:
       params:
         file: "release/bosh-dns-dev-release.tgz"
 
-- name: test-performance
-  public: true
-  serial: true
-  plan:
-    - get: every-10m
-      trigger: true
-    - get: bosh-dns-release
-      trigger: true
-      passed: [create-release]
-    - task: test-performance
-      tags: ["dns-performance"]
-      privileged: true
-      file: bosh-dns-release/ci/tasks/test-performance.yml
-      params:
-        ZONES_JSON_HASH: {{zones_json_hash}}
-        DATADOG_API_KEY: {{datadog_api_key}}
-        DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-linux
-
-- name: test-performance-windows
-  public: true
-  serial: true
-  plan:
-    - get: every-10m
-      trigger: true
-    - get: bosh-dns-release
-      trigger: true
-      passed: [create-release]
-    - task: test-performance
-      file: bosh-dns-release/ci/tasks/test-performance-windows.yml
-      params:
-        ZONES_JSON_HASH: {{zones_json_hash}}
-        DATADOG_API_KEY: {{datadog_api_key}}
-        DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-windows
-
 - name: test-acceptance
   public: true
   serial: true
@@ -147,40 +113,6 @@ jobs:
         DNS_RELEASE_FILE_PATH: "dns-release"
         DNS_RELEASE_VERSION: "create"
 
-- name: bbl-up
-  serial: true
-  serial_groups:
-  - windows-acceptance-env
-  plan:
-    - get: bosh-dns-release
-    - get: bosh-deployment
-    - get: bosh-candidate-release
-    - get: envs
-    - task: bbl-up
-      file: bosh-dns-release/ci/tasks/bbl-up.yml
-      params:
-        BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
-      ensure:
-        put: envs
-        params:
-          repository: envs
-
-- name: bbl-destroy
-  serial: true
-  serial_groups:
-  - windows-acceptance-env
-  plan:
-    - get: bosh-dns-release
-    - get: envs
-    - task: bbl-destroy
-      file: bosh-dns-release/ci/tasks/bbl-destroy.yml
-      params:
-        BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
-      ensure:
-        put: envs
-        params:
-          repository: envs
-
 - name: finalize-release
   plan:
     - aggregate:
@@ -210,7 +142,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/bosh-dns-release
-    branch: master
+    branch: 0.1.x
     private_key: {{github_deployment_key}}
     ignore_paths:
     - ci/docker
@@ -225,7 +157,7 @@ resources:
   type: semver
   source:
     bucket: {{candidate_release_bucket}}
-    key: version
+    key: 0.1.x/version
     access_key_id: {{candidate_release_access_key_id}}
     secret_access_key: {{candidate_release_secret_access_key}}
 
@@ -235,7 +167,7 @@ resources:
     bucket: {{candidate_release_bucket}}
     access_key_id: {{candidate_release_access_key_id}}
     secret_access_key: {{candidate_release_secret_access_key}}
-    versioned_file: "bosh-dns-dev-release.tgz"
+    versioned_file: "0.1.x/bosh-dns-dev-release.tgz"
 
 - name: bosh-src
   type: git
@@ -271,7 +203,7 @@ resources:
   type: s3
   source:
     bucket: bosh-candidate-release-tarballs
-    versioned_file: bosh-dev-release.tgz
+    versioned_file: 0.1.x/bosh-dev-release.tgz
 
 - name: gcp-linux-stemcell
   type: bosh-io-stemcell
@@ -284,7 +216,3 @@ resources:
     branch: master
     uri: git@github.com:cloudfoundry/dns-release-ci-envs.git
     private_key: {{envs_private_key}}
-
-- name: every-10m
-  type: time
-  source: {interval: 10m}
