@@ -94,7 +94,7 @@ jobs:
         resource: candidate-release
         trigger: true
         passed: [create-release]
-      - get: candidate-warden-ubuntu-stemcell
+      - get: stemcell
         resource: bosh-candidate-stemcell
       - get: bosh-release
     - task: prepare-brats
@@ -203,7 +203,7 @@ resources:
   type: s3
   source:
     bucket: bosh-candidate-release-tarballs
-    versioned_file: 0.1.x/bosh-dev-release.tgz
+    versioned_file: bosh-dev-release.tgz
 
 - name: gcp-linux-stemcell
   type: bosh-io-stemcell
