@@ -39,16 +39,17 @@ import (
 	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("main", func() {
 	var (
-		listenAddress string
-		listenPort    int
-		listenAPIPort int
-		recursorPort  int
+		listenAddress  string
+		listenPort     int
+		listenAddress2 string
+		listenPort2    int
+		listenAPIPort  int
+		recursorPort   int
 	)
 
 	BeforeEach(func() {
@@ -105,6 +106,7 @@ var _ = Describe("main", func() {
 
 	Context("when the server starts successfully", func() {
 		var (
+			addressesDir          string
 			aliasesDir            string
 			apiClient             *httpclient.HTTPClient
 			checkInterval         time.Duration
@@ -141,6 +143,21 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			recordsFilePath = recordsFile.Name()
+
+			addressesDir, err = ioutil.TempDir("", "addresses")
+			Expect(err).NotTo(HaveOccurred())
+
+			listenAddress2, err = localIP()
+			Expect(err).NotTo(HaveOccurred())
+
+			listenPort2, err = getFreePort()
+			Expect(err).NotTo(HaveOccurred())
+
+			addressesFile, err := ioutil.TempFile(addressesDir, "addresses")
+			Expect(err).NotTo(HaveOccurred())
+			defer addressesFile.Close()
+			_, err = addressesFile.Write([]byte(fmt.Sprintf(`[{"address": "%s", "port": %d }]`, listenAddress2, listenPort2)))
+			Expect(err).NotTo(HaveOccurred())
 
 			aliasesDir, err = ioutil.TempDir("", "aliases")
 			Expect(err).NotTo(HaveOccurred())
@@ -232,12 +249,13 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			cmd = newCommandWithConfig(config.Config{
-				Address:           listenAddress,
-				Port:              listenPort,
-				RecordsFile:       recordsFilePath,
-				AliasFilesGlob:    path.Join(aliasesDir, "*"),
-				HandlersFilesGlob: path.Join(handlersDir, "*"),
-				UpcheckDomains:    []string{"health.check.bosh.", "health.check.ca."},
+				Address:            listenAddress,
+				Port:               listenPort,
+				RecordsFile:        recordsFilePath,
+				AddressesFilesGlob: path.Join(addressesDir, "*"),
+				AliasFilesGlob:     path.Join(aliasesDir, "*"),
+				HandlersFilesGlob:  path.Join(handlersDir, "*"),
+				UpcheckDomains:     []string{"health.check.bosh.", "health.check.ca."},
 
 				API: config.APIConfig{
 					Port:            listenAPIPort,
@@ -287,8 +305,8 @@ var _ = Describe("main", func() {
 			httpJSONServer.Close()
 		})
 
-		DescribeTable("it responds to DNS requests",
-			func(protocol string) {
+		Describe("it responds to DNS requests", func() {
+			itResponds := func(protocol string, addr string) {
 				c := &dns.Client{
 					Net: protocol,
 				}
@@ -296,14 +314,22 @@ var _ = Describe("main", func() {
 				m := &dns.Msg{}
 
 				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
-				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+				r, _, err := c.Exchange(m, addr)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-			},
-			Entry("when the request is udp", "udp"),
-			Entry("when the request is tcp", "tcp"),
-		)
+			}
+
+			It("responds on the main listen address", func() {
+				itResponds("udp", fmt.Sprintf("%s:%d", listenAddress, listenPort))
+				itResponds("tcp", fmt.Sprintf("%s:%d", listenAddress, listenPort))
+			})
+
+			It("responds to the additional listen addresses", func() {
+				itResponds("udp", fmt.Sprintf("%s:%d", listenAddress2, listenPort2))
+				itResponds("tcp", fmt.Sprintf("%s:%d", listenAddress2, listenPort2))
+			})
+		})
 
 		Describe("HTTP API", func() {
 			It("returns a 404 from unknown endpoints (well, one unknown endpoint)", func() {
@@ -584,7 +610,7 @@ var _ = Describe("main", func() {
 					m.SetQuestion("health.check.bosh.", dns.TypeA)
 				})
 
-				It("responds with a success rcode", func() {
+				It("responds with a success rcode on the main listen address", func() {
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 					Expect(err).NotTo(HaveOccurred())
@@ -595,6 +621,24 @@ var _ = Describe("main", func() {
 
 					m.SetQuestion("health.check.ca.", dns.TypeA)
 					r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Answer).To(HaveLen(1))
+					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal("health.check.ca."))
+					Expect(r.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
+				})
+
+				It("responds with a success rcode on the second listen address", func() {
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress2, listenPort2))
+
+					Expect(err).NotTo(HaveOccurred())
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Answer).To(HaveLen(1))
+					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal("health.check.bosh."))
+					Expect(r.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
+
+					m.SetQuestion("health.check.ca.", dns.TypeA)
+					r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress2, listenPort2))
 					Expect(err).NotTo(HaveOccurred())
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 					Expect(r.Answer).To(HaveLen(1))
@@ -1184,8 +1228,9 @@ var _ = Describe("main", func() {
 
 	Context("failure cases", func() {
 		var (
-			cmd        *exec.Cmd
-			aliasesDir string
+			cmd          *exec.Cmd
+			aliasesDir   string
+			addressesDir string
 		)
 
 		BeforeEach(func() {
@@ -1193,17 +1238,22 @@ var _ = Describe("main", func() {
 			aliasesDir, err = ioutil.TempDir("", "aliases")
 			Expect(err).NotTo(HaveOccurred())
 
+			addressesDir, err = ioutil.TempDir("", "addresses")
+			Expect(err).NotTo(HaveOccurred())
+
 			cmd = newCommandWithConfig(config.Config{
-				Address:        listenAddress,
-				Port:           listenPort,
-				Recursors:      []string{"8.8.8.8"},
-				UpcheckDomains: []string{"upcheck.bosh-dns."},
-				AliasFilesGlob: path.Join(aliasesDir, "*"),
+				Address:            listenAddress,
+				Port:               listenPort,
+				Recursors:          []string{"8.8.8.8"},
+				UpcheckDomains:     []string{"upcheck.bosh-dns."},
+				AliasFilesGlob:     path.Join(aliasesDir, "*"),
+				AddressesFilesGlob: path.Join(addressesDir, "*"),
 			})
 		})
 
 		AfterEach(func() {
 			Expect(os.RemoveAll(aliasesDir)).To(Succeed())
+			Expect(os.RemoveAll(addressesDir)).To(Succeed())
 		})
 
 		It("exits 1 when fails to bind to the tcp port", func() {
@@ -1332,6 +1382,27 @@ var _ = Describe("main", func() {
 			Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - loading alias configuration:.*alias config file malformed:`))
 			Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf(`alias config file malformed: %s`, aliasesFile2.Name())))
 		})
+
+		It("exits 1 and logs a message when the globbed config files contain a broken address config", func() {
+			addressesFile1, err := ioutil.TempFile(addressesDir, "addressesjson1")
+			Expect(err).NotTo(HaveOccurred())
+			defer addressesFile1.Close()
+			_, err = addressesFile1.Write([]byte(`[{"address": "1.2.3.4", "port": 32 }]`))
+			Expect(err).NotTo(HaveOccurred())
+
+			addressesFile2, err := ioutil.TempFile(addressesDir, "addressesjson2")
+			Expect(err).NotTo(HaveOccurred())
+			defer addressesFile2.Close()
+			_, err = addressesFile2.Write([]byte(`{"malformed":"addressesfile"}`))
+			Expect(err).NotTo(HaveOccurred())
+
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - loading addresses configuration:.*addresses config file malformed:`))
+			Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf(`addresses config file malformed: %s`, addressesFile2.Name())))
+		})
 	})
 })
 
@@ -1453,4 +1524,25 @@ func secureGet(client *httpclient.HTTPClient, port int, path string) (*http.Resp
 		return nil, err
 	}
 	return resp, nil
+}
+
+func localIP() (string, error) {
+	addr, err := net.ResolveUDPAddr("udp", "1.2.3.4:1")
+	if err != nil {
+		return "", err
+	}
+
+	conn, err := net.DialUDP("udp", nil, addr)
+	if err != nil {
+		return "", err
+	}
+
+	defer conn.Close()
+
+	host, _, err := net.SplitHostPort(conn.LocalAddr().String())
+	if err != nil {
+		return "", err
+	}
+
+	return host, nil
 }

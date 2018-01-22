@@ -3,6 +3,8 @@
 package windows_test
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
 	"time"
 
@@ -13,6 +15,15 @@ import (
 )
 
 var _ = Describe("windows tests", func() {
+	var localIP string
+
+	BeforeEach(func() {
+		var present bool
+		localIP, present = os.LookupEnv("LOCAL_IP_ADDRESS")
+		Expect(present).To(BeTrue(), "LOCAL_IP_ADDRESS environment variable not set")
+		Expect(localIP).NotTo(BeEmpty(), "LOCAL_IP_ADDRESS environment variable not set")
+	})
+
 	It("should bind to tcp and udp", func() {
 		cmd := exec.Command("powershell.exe", "-Command", "netstat -na | findstr :53")
 
@@ -20,12 +31,12 @@ var _ = Describe("windows tests", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-		Expect(session.Out.Contents()).To(ContainSubstring("TCP    169.254.0.2:53"))
-		Expect(session.Out.Contents()).To(ContainSubstring("UDP    169.254.0.2:53"))
+		Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf("TCP    %s:53", localIP)))
+		Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf("UDP    %s:53", localIP)))
 	})
 
 	It("should respond to dns queries", func() {
-		cmd := exec.Command("powershell.exe", "-Command", "Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. -Server 169.254.0.2 | Format-list")
+		cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. -Server %s | Format-list", localIP))
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -62,7 +73,7 @@ var _ = Describe("windows tests", func() {
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 		Expect(session.Out).To(Say("0"))
 	})
@@ -72,7 +83,7 @@ var _ = Describe("windows tests", func() {
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 		Expect(session.Out).To(Say("0"))
 	})

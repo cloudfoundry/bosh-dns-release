@@ -12,17 +12,17 @@ import (
 
 var _ = Describe("RecursorReader", func() {
 	var (
-		recursorReader      RecursorReader
-		dnsManager          *managerfakes.FakeDNSManager
-		dnsServerDomainName string
-		loopackAddress      string
+		recursorReader       RecursorReader
+		dnsManager           *managerfakes.FakeDNSManager
+		dnsServerDomainNames []string
+		loopackAddress       string
 	)
 
 	BeforeEach(func() {
-		dnsServerDomainName = "dns-server-hostname"
+		dnsServerDomainNames = []string{"dns-server-hostname-1", "dns-server-hostname-2"}
 		loopackAddress = "127.0.0.1"
 		dnsManager = new(managerfakes.FakeDNSManager)
-		recursorReader = NewRecursorReader(dnsManager, dnsServerDomainName)
+		recursorReader = NewRecursorReader(dnsManager, dnsServerDomainNames)
 	})
 
 	Context("when there are no dns servers", func() {
@@ -38,9 +38,9 @@ var _ = Describe("RecursorReader", func() {
 		})
 	})
 
-	Context("when only the DNS server address is configured", func() {
+	Context("when only the DNS server addresses are configured", func() {
 		BeforeEach(func() {
-			dnsManager.ReadReturns([]string{dnsServerDomainName}, nil)
+			dnsManager.ReadReturns(dnsServerDomainNames, nil)
 		})
 
 		It("returns an empty array", func() {
@@ -66,7 +66,7 @@ var _ = Describe("RecursorReader", func() {
 
 	Context("when multiple recursors are configured", func() {
 		BeforeEach(func() {
-			dnsManager.ReadReturns([]string{"recursor-1", dnsServerDomainName, "recursor-2"}, nil)
+			dnsManager.ReadReturns(append(dnsServerDomainNames, "recursor-1", "recursor-2"), nil)
 		})
 
 		It("returns all entries except the DNS server itself", func() {

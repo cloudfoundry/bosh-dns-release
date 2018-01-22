@@ -17,6 +17,7 @@ import (
 
 var _ = Describe("Config", func() {
 	var (
+		addressesFileGlob       string
 		aliasesFileGlob         string
 		apiCAFile               string
 		apiCertificateFile      string
@@ -39,6 +40,7 @@ var _ = Describe("Config", func() {
 	BeforeEach(func() {
 		rand.Seed(time.Now().Unix())
 
+		addressesFileGlob = "/addresses/*/glob"
 		aliasesFileGlob = "/aliases/*/glob"
 		apiCAFile = "/api/ca"
 		apiCertificateFile = "/api/cert"
@@ -60,13 +62,14 @@ var _ = Describe("Config", func() {
 
 	It("returns config from a config file", func() {
 		configContents, err := json.Marshal(map[string]interface{}{
-			"address":             listenAddress,
-			"alias_files_glob":    aliasesFileGlob,
-			"handlers_files_glob": handlersFileGlob,
-			"port":                listenPort,
-			"recursor_timeout":    recursorTimeout,
-			"timeout":             timeout,
-			"upcheck_domains":     upcheckDomains,
+			"address":              listenAddress,
+			"addresses_files_glob": addressesFileGlob,
+			"alias_files_glob":     aliasesFileGlob,
+			"handlers_files_glob":  handlersFileGlob,
+			"port":                 listenPort,
+			"recursor_timeout":     recursorTimeout,
+			"timeout":              timeout,
+			"upcheck_domains":      upcheckDomains,
 			"api": map[string]interface{}{
 				"port":             listenAPIPort,
 				"certificate_file": apiCertificateFile,
@@ -118,12 +121,13 @@ var _ = Describe("Config", func() {
 				PrivateKeyFile:  apiPrivateKeyFile,
 				CAFile:          apiCAFile,
 			},
-			Timeout:           config.DurationJSON(timeoutDuration),
-			RecursorTimeout:   config.DurationJSON(recursorTimeoutDuration),
-			Recursors:         []string{},
-			UpcheckDomains:    []string{"upcheck.domain.", "health2.bosh."},
-			AliasFilesGlob:    aliasesFileGlob,
-			HandlersFilesGlob: handlersFileGlob,
+			Timeout:            config.DurationJSON(timeoutDuration),
+			RecursorTimeout:    config.DurationJSON(recursorTimeoutDuration),
+			Recursors:          []string{},
+			UpcheckDomains:     []string{"upcheck.domain.", "health2.bosh."},
+			AliasFilesGlob:     aliasesFileGlob,
+			HandlersFilesGlob:  handlersFileGlob,
+			AddressesFilesGlob: addressesFileGlob,
 			Health: config.HealthConfig{
 				Enabled:           true,
 				Port:              healthPort,
