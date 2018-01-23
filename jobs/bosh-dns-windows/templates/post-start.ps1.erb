@@ -2,6 +2,20 @@
 
 $address = "<%= p('address', spec.ip) == "0.0.0.0" ? "127.0.0.1" : p('address', spec.ip) %>"
 
+$up = $false
+
+for ($i=0; $i -lt 30 -and !$up; $i++) {
+  $a = "<%= p('address', spec.ip) == "0.0.0.0" ? "::" : p('address', spec.ip) %>"
+  Get-NetTCPConnection -LocalAddress $a -LocalPort 53 -State Listen
+  $up = $?
+  start-sleep 1
+}
+
+if (! $up) {
+  Write-Error "timed out waiting for BOSH DNS server to start"
+  Exit 1
+}
+
 try
 {
     Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. -Server $address
