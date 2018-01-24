@@ -60,7 +60,7 @@ func (h *HandlerRegistrar) Run(signal chan struct{}) error {
 
 				if _, ok := h.domains[domain]; !ok {
 					h.domains[domain] = struct{}{}
-					AddHandler(h.mux, h.clock, domain, h.handler, h.logger)
+					h.mux.Handle(domain, NewRequestLoggerHandler(h.handler, h.clock, h.logger))
 				}
 			}
 
