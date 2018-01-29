@@ -85,6 +85,8 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 		return responseMsg
 	}
 
+	defer httpResponse.Body.Close()
+
 	if httpResponse.StatusCode != 200 {
 		h.logger.Error(h.logTag, "non successful response from server '%s': %v", h.address, httpResponse)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
