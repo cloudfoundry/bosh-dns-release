@@ -51,7 +51,7 @@ var _ = Describe("RecursorReader", func() {
 		})
 	})
 
-	Context("When resolv.conf has only the loopback address", func() {
+	Context("when manager has only the loopback address", func() {
 		BeforeEach(func() {
 			dnsManager.ReadReturns([]string{loopackAddress}, nil)
 		})
@@ -61,6 +61,20 @@ var _ = Describe("RecursorReader", func() {
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(nameservers).To(HaveLen(0))
+		})
+	})
+
+	Context("when manager.Read returns empty string results", func() {
+		BeforeEach(func() {
+			dnsManager.ReadReturns([]string{"", "10.0.0.1", "my.dns.server"}, nil)
+		})
+
+		It("returns only non-empty strings`", func() {
+			nameservers, err := recursorReader.Get()
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(nameservers).To(HaveLen(2))
+			Expect(nameservers).To(ConsistOf("10.0.0.1:53", "my.dns.server:53"))
 		})
 	})
 

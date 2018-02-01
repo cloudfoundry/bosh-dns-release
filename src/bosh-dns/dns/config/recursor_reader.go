@@ -29,7 +29,7 @@ func (r recursorReader) Get() ([]string, error) {
 	}
 
 	for _, server := range nameservers {
-		if !r.isNameServer(server) && server != loopbackAddress {
+		if r.isValid(server) {
 			recursors = append(recursors, fmt.Sprintf("%s:53", server))
 		}
 	}
@@ -45,4 +45,10 @@ func (r recursorReader) isNameServer(s string) bool {
 	}
 
 	return false
+}
+
+func (r recursorReader) isValid(server string) bool {
+	return !r.isNameServer(server) &&
+		server != loopbackAddress &&
+		server != ""
 }
