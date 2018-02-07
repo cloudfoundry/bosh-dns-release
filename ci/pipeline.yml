@@ -224,8 +224,6 @@ jobs:
   - do:
     - aggregate:
       - get: brats-src
-        resource: bosh-dns-release
-        passed: [create-release]
       - get: bosh-dns-release
         resource: candidate-release
         trigger: true
