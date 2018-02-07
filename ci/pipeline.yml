@@ -342,6 +342,7 @@ jobs:
         bump: minor
     - put: bosh-dns-release
       params:
+        rebase: true
         repository: final-bosh-dns-release
 
 - name: bump-major
