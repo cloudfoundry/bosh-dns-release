@@ -18,6 +18,7 @@ groups:
   - bbl-up-stress
   - bbl-destroy-stress
   - finalize-release
+  - bump-major
 
 jobs:
 - name: test-unit
@@ -322,6 +323,8 @@ jobs:
           repository: updated-bbl-state
 
 - name: finalize-release
+  serial_groups:
+    - version
   plan:
     - aggregate:
       - get: bosh-dns-release
@@ -329,8 +332,6 @@ jobs:
       - get: candidate-release
         passed: [test-acceptance, brats-ubuntu, test-acceptance-windows]
       - get: version
-        params:
-          bump: minor
     - task: finalize-release
       file: bosh-dns-release/ci/tasks/finalize-release.yml
       params:
@@ -338,10 +339,18 @@ jobs:
         BLOBSTORE_SECRET_ACCESS_KEY: {{release_blobs_secret_access_key}}
     - put: version
       params:
-        file: bumped-version/number
+        bump: minor
     - put: bosh-dns-release
       params:
         repository: final-bosh-dns-release
+
+- name: bump-major
+  serial_groups:
+    - version
+  plan:
+    - put: version
+      params:
+        bump: major
 
 resources:
 - name: bosh-dns-release
