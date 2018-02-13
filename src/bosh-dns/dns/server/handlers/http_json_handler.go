@@ -13,13 +13,20 @@ import (
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
+	"net/http"
 )
 
+//go:generate counterfeiter . HTTPClient
+
+type HTTPClient interface {
+	Get(endpoint string) (*http.Response, error)
+}
+
 type HTTPJSONHandler struct {
-	address string
-	client  *httpclient.HTTPClient
-	logger  logger.Logger
-	logTag  string
+	Address string
+	Client  HTTPClient
+	Logger  logger.Logger
+	LogTag  string
 }
 
 type Answer struct {
@@ -36,13 +43,13 @@ type httpDNSMessage struct {
 
 func NewHTTPJSONHandler(address string, logger logger.Logger) HTTPJSONHandler {
 	return HTTPJSONHandler{
-		address: address,
-		client: httpclient.NewHTTPClient(
+		Address: address,
+		Client: httpclient.NewHTTPClient(
 			httpclient.DefaultClient,
 			logger,
 		),
-		logger: logger,
-		logTag: "HTTPJSONHandler",
+		Logger: logger,
+		LogTag: "HTTPJSONHandler",
 	}
 }
 
@@ -52,7 +59,7 @@ func (h HTTPJSONHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dn
 	dnsresolver.TruncateIfNeeded(responseWriter, responseMsg)
 
 	if err := responseWriter.WriteMsg(responseMsg); err != nil {
-		h.logger.Error(h.logTag, err.Error())
+		h.Logger.Error(h.LogTag, err.Error())
 	}
 }
 
@@ -73,14 +80,11 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 		"name": []string{question.Name},
 	}.Encode()
 
-	url := fmt.Sprintf("%s/?%s",
-		h.address,
-		queryParams,
-	)
-	httpResponse, err := h.client.Get(url)
+	url := fmt.Sprintf("%s/?%s", h.Address, queryParams)
+	httpResponse, err := h.Client.Get(url)
 
 	if err != nil {
-		h.logger.Error(h.logTag, "error connecting to '%s': %v", h.address, err)
+		h.Logger.Error(h.LogTag, "error connecting to '%s': %v", h.Address, err)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
 		return responseMsg
 	}
@@ -88,7 +92,7 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	defer httpResponse.Body.Close()
 
 	if httpResponse.StatusCode != 200 {
-		h.logger.Error(h.logTag, "non successful response from server '%s': %v", h.address, httpResponse)
+		h.Logger.Error(h.LogTag, "non successful response from server '%s': %v", h.Address, httpResponse)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
 		return responseMsg
 	}
@@ -96,14 +100,14 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	httpDNSMessage := &httpDNSMessage{}
 	bytes, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		h.logger.Error(h.logTag, "failed to read response message '%s': %v", string(bytes), err)
+		h.Logger.Error(h.LogTag, "failed to read response message '%s': %v", string(bytes), err)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
 		return responseMsg
 	}
 
 	err = json.Unmarshal(bytes, httpDNSMessage)
 	if err != nil {
-		h.logger.Error(h.logTag, "failed to unmarshal response message '%s': %v", string(bytes), err)
+		h.Logger.Error(h.LogTag, "failed to unmarshal response message '%s': %v", string(bytes), err)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
 		return responseMsg
 	}
