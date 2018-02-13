@@ -26,4 +26,7 @@ catch
     $Host.UI.WriteErrorLine($_.Exception.Message)
     Exit 1
 }
+
+(Get-Process -name bosh-dns).PriorityClass='High'
+
 Exit 0
