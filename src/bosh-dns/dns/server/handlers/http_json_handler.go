@@ -89,7 +89,10 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 		return responseMsg
 	}
 
-	defer httpResponse.Body.Close()
+	defer func() {
+		ioutil.ReadAll(httpResponse.Body)
+		httpResponse.Body.Close()
+	}()
 
 	if httpResponse.StatusCode != 200 {
 		h.Logger.Error(h.LogTag, "non successful response from server '%s': %v", h.Address, httpResponse)
