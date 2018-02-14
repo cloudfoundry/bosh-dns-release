@@ -16,81 +16,145 @@ import (
 
 var _ = Describe("WindowsManager", func() {
 	var (
-		dnsManager     manager.DNSManager
-		fakeCmdRunner  *managerfakes.FakeCmdRunner
-		fakeFileSystem *systemfakes.FakeFileSystem
-		address        = "192.0.2.100"
+		dnsManager         manager.DNSManager
+		fakeAdapterFetcher *managerfakes.FakeAdapterFetcher
+		fakeCmdRunner      *managerfakes.FakeCmdRunner
+		fakeFileSystem     *systemfakes.FakeFileSystem
+		address            = "192.0.2.100"
+	)
+
+	const (
+		NotLoopBack uint32 = 23
+		NotTunnel   uint32 = 130
+		NonUp       uint32 = 0
 	)
 
 	BeforeEach(func() {
 		fakeCmdRunner = &managerfakes.FakeCmdRunner{}
 		fakeFileSystem = systemfakes.NewFakeFileSystem()
-		dnsManager = manager.NewWindowsManager(fakeCmdRunner, fakeFileSystem)
+		fakeAdapterFetcher = &managerfakes.FakeAdapterFetcher{}
+		dnsManager = manager.NewWindowsManager(fakeCmdRunner, fakeFileSystem, fakeAdapterFetcher)
 	})
 
 	Describe("Read", func() {
-		Context("powershell fails", func() {
-			It("errors for list", func() {
-				fakeCmdRunner.RunCommandReturns("", "", 1, errors.New("fake-err1"))
+		Context("when an error occurs", func() {
+			It("returns an error", func() {
+				fakeAdapterFetcher.AdaptersReturns(nil, errors.New("Failed to fetch adapters"))
 
 				_, err := dnsManager.Read()
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("Executing list-server-addresses.ps1"))
-				Expect(err.Error()).To(ContainSubstring("fake-err1"))
+				Expect(err.Error()).To(ContainSubstring("Failed to fetch adapters"))
+				Expect(err.Error()).To(ContainSubstring("Getting list of current DNS Servers"))
 			})
 		})
 
-		It("splits lines and returns as slice", func() {
-			fakeCmdRunner.RunCommandReturns(fmt.Sprintf("%s\r\n%s", "8.8.8.8", address), "", 0, nil)
+		Context("when adapters are found", func() {
+			It("filters out loopback adapters", func() {
+				fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
+					{
+						IfType:             manager.IfTypeSoftwareLoopback,
+						OperStatus:         manager.IfOperStatusUp,
+						PhysicalAddress:    "C1:F2:2A:44:73:5E",
+						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
+					},
+					{
+						IfType:             NotLoopBack,
+						OperStatus:         manager.IfOperStatusUp,
+						PhysicalAddress:    "A1:F2:2A:44:73:5F",
+						DNSServerAddresses: []string{"1.1.1.1"},
+					},
+				}, nil)
 
-			servers, err := dnsManager.Read()
-			Expect(err).NotTo(HaveOccurred())
-			Expect(servers).To(ConsistOf("8.8.8.8", address))
+				servers, err := dnsManager.Read()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(servers).To(ConsistOf("1.1.1.1"))
+			})
+
+			It("filters out tunnel adapters", func() {
+				fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
+					{
+						IfType:             manager.IfTypeTunnel,
+						OperStatus:         manager.IfOperStatusUp,
+						PhysicalAddress:    "C1:F2:2A:44:73:5E",
+						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
+					},
+					{
+						IfType:             NotTunnel,
+						OperStatus:         manager.IfOperStatusUp,
+						PhysicalAddress:    "A1:F2:2A:44:73:5F",
+						DNSServerAddresses: []string{"1.1.1.1"},
+					},
+				}, nil)
+
+				servers, err := dnsManager.Read()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(servers).To(ConsistOf("1.1.1.1"))
+			})
+
+			It("filters out non-physical adapters", func() {
+				fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
+					{
+						IfType:             NotLoopBack,
+						OperStatus:         manager.IfOperStatusUp,
+						PhysicalAddress:    "C1:F2:2A:44:73:5E",
+						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
+					},
+					{
+						IfType:             NotTunnel,
+						OperStatus:         manager.IfOperStatusUp,
+						PhysicalAddress:    "00:03:FF:44:73:5F",
+						DNSServerAddresses: []string{"1.1.1.1"},
+					},
+				}, nil)
+
+				servers, err := dnsManager.Read()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(servers).To(ConsistOf("8.8.8.8", "8.8.4.4"))
+			})
+
+			It("filter out non-up adapters", func() {
+				fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
+					{
+						IfType:             NotLoopBack,
+						OperStatus:         manager.IfOperStatusUp,
+						PhysicalAddress:    "C1:F2:2A:44:73:5E",
+						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
+					},
+					{
+						IfType:             NotTunnel,
+						OperStatus:         NonUp,
+						PhysicalAddress:    "A1:F2:2A:44:73:5F",
+						DNSServerAddresses: []string{"1.1.1.1"},
+					},
+				}, nil)
+
+				servers, err := dnsManager.Read()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(servers).To(ConsistOf("8.8.8.8", "8.8.4.4"))
+			})
 		})
 
 		It("returns an empty array when no servers are configured", func() {
-			fakeCmdRunner.RunCommandReturns("", "", 0, nil)
+			fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{}, nil)
 
 			servers, err := dnsManager.Read()
-
 			Expect(err).ToNot(HaveOccurred())
 			Expect(servers).To(HaveLen(0))
-		})
-
-		Context("when an error occurs", func() {
-			Context("when the temp dir cannot be created", func() {
-				It("returns an error", func() {
-					fakeFileSystem.TempDirError = errors.New("no temp dir")
-
-					_, err := dnsManager.Read()
-					Expect(err).To(MatchError("Creating list-server-addresses.ps1: no temp dir"))
-				})
-			})
-
-			Context("when the file cannot be written", func() {
-				It("returns an error", func() {
-					fakeFileSystem.WriteFileError = errors.New("no file written")
-
-					_, err := dnsManager.Read()
-					Expect(err).To(MatchError("Creating list-server-addresses.ps1: no file written"))
-				})
-			})
-
-			Context("when the file cannot be chmod'ed", func() {
-				It("returns an error", func() {
-					fakeFileSystem.ChmodErr = errors.New("no chmodding allowed")
-
-					_, err := dnsManager.Read()
-					Expect(err).To(MatchError("Creating list-server-addresses.ps1: no chmodding allowed"))
-				})
-			})
 		})
 	})
 
 	Describe("SetPrimary", func() {
 		Context("powershell fails", func() {
 			It("errors for prepend", func() {
-				fakeCmdRunner.RunCommandReturnsOnCall(1, "", "", 1, errors.New("fake-err1"))
+				fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
+					{
+						IfType:             NotLoopBack,
+						OperStatus:         manager.IfOperStatusUp,
+						PhysicalAddress:    "A1:F2:2A:44:73:5F",
+						DNSServerAddresses: []string{},
+					},
+				}, nil)
+				fakeCmdRunner.RunCommandReturns("", "", 1, errors.New("fake-err1"))
 
 				err := dnsManager.SetPrimary(address)
 				Expect(err).To(HaveOccurred())
@@ -99,12 +163,12 @@ var _ = Describe("WindowsManager", func() {
 			})
 
 			It("errors for list", func() {
-				fakeCmdRunner.RunCommandReturns("", "", 1, errors.New("fake-err1"))
+				fakeAdapterFetcher.AdaptersReturns(nil, errors.New("Failed to fetch adapters"))
 
 				err := dnsManager.SetPrimary(address)
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("Executing list-server-addresses.ps1"))
-				Expect(err.Error()).To(ContainSubstring("fake-err1"))
+				Expect(err.Error()).To(ContainSubstring("Failed to fetch adapters"))
+				Expect(err.Error()).To(ContainSubstring("Getting list of current DNS Servers"))
 			})
 		})
 
@@ -126,7 +190,7 @@ var _ = Describe("WindowsManager", func() {
 			err := dnsManager.SetPrimary(address)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeCmdRunner.RunCommandCallCount()).To(Equal(2))
+			Expect(fakeCmdRunner.RunCommandCallCount()).To(Equal(1))
 
 			for _, path := range paths {
 				Expect(fakeFileSystem.FileExists(filepath.Dir(path))).To(BeFalse())
@@ -135,11 +199,19 @@ var _ = Describe("WindowsManager", func() {
 
 		It("skips if dns is already configured", func() {
 			fakeCmdRunner.RunCommandReturns(fmt.Sprintf("%s\r\n", address), "", 0, nil)
+			fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
+				{
+					IfType:             NotLoopBack,
+					OperStatus:         manager.IfOperStatusUp,
+					PhysicalAddress:    "A1:F2:2A:44:73:5F",
+					DNSServerAddresses: []string{address, "1.1.1.1"},
+				},
+			}, nil)
 
 			err := dnsManager.SetPrimary(address)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeCmdRunner.RunCommandCallCount()).To(Equal(1))
+			Expect(fakeCmdRunner.RunCommandCallCount()).To(Equal(0))
 		})
 	})
 })
