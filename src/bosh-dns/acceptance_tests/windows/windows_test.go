@@ -78,6 +78,16 @@ var _ = Describe("windows tests", func() {
 		Expect(session.Out).To(Say("0"))
 	})
 
+	It("runs the bosh-dns process with High priority", func() {
+		cmd := exec.Command("powershell.exe", "-command", "(Get-Process -name bosh-dns).PriorityClass")
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+
+		Expect(session.Out).To(Say("High"))
+	})
+
 	It("sets the DNS cache service server priority time limit to 0", func() {
 		cmd := exec.Command("powershell.exe", "$Value = Get-ItemProperty -Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters; $Value.ServerPriorityTimeLimit")
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
