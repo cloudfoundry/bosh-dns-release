@@ -1,0 +1,77 @@
+{
+  "_.cell.service.cf.internal": [
+    "_.ig-f1f0995e.net-3b01d1a9.dep-9fa89765.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-fcaf863e.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-71f2acc4.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-0fc13920.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-8a3ed72b.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-5e5c12bc.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-f3c71ba1.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-f486cc6f.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-46d72789.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-886070df.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-7b5223ac.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-78eb9312.bosh",
+    "_.ig-f1f0995e.net-3b01d1a9.dep-70d01c6c.bosh"
+  ],
+  "_.doppler.service.cf.internal": [
+    "*.ig-ff91c39e.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "auctioneer.service.cf.internal": [
+    "*.ig-c40a2366.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "bbs.service.cf.internal": [
+    "*.ig-3001abfc.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "cc-uploader.service.cf.internal": [
+    "*.ig-1fe3edb5.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "cloud-controller-ng.service.cf.internal": [
+    "*.ig-1fe3edb5.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "consul.service.cf.internal": [
+    "*.ig-22507f59.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "credhub.service.cf.internal": [
+    "*.ig-57f028b3.net-79382b0e.dep-fb637262.bosh"
+  ],
+  "doppler.service.cf.internal": [
+    "*.ig-ff91c39e.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "file-server.service.cf.internal": [
+    "*.ig-1fe3edb5.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "locket.service.cf.internal": [
+    "*.ig-3001abfc.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "loggregator-trafficcontroller.service.cf.internal": [
+    "*.ig-0b66b5d3.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "mysql.service.cf.internal": [
+    "*.ig-1b6d774a.net-bfa99108.dep-8df76dcf.bosh"
+  ],
+  "perm-db.service.cf.internal": [
+    "*.ig-fe5b715a.net-d1c6edd1.dep-ea516d95.bosh"
+  ],
+  "perm.service.cf.internal": [
+    "*.ig-a1d37c79.net-d1c6edd1.dep-ea516d95.bosh"
+  ],
+  "policy-server.service.cf.internal": [
+    "*.ig-1fe3edb5.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "reverse-log-proxy.service.cf.internal": [
+    "*.ig-0b66b5d3.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "routing-api.service.cf.internal": [
+    "*.ig-1fe3edb5.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "silk-controller.service.cf.internal": [
+    "*.ig-3001abfc.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "tps.service.cf.internal": [
+    "*.ig-c40a2366.net-79382b0e.dep-966b6cac.bosh"
+  ],
+  "uaa.service.cf.internal": [
+    "*.ig-449b1c9c.net-79382b0e.dep-966b6cac.bosh"
+  ]
+}

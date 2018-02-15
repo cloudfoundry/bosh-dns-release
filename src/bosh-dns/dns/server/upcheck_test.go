@@ -2,14 +2,13 @@ package server_test
 
 import (
 	"fmt"
-	"net"
-	"strconv"
-
-	"bosh-dns/dns/server"
-	"bosh-dns/dns/server/handlers"
 
 	boshlogf "github.com/cloudfoundry/bosh-utils/logger/fakes"
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/internal/testhelpers"
+	"bosh-dns/dns/server"
+	"bosh-dns/dns/server/handlers"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -49,9 +48,9 @@ var _ = Describe("Upcheck", func() {
 
 	JustBeforeEach(func() {
 		var err error
-		ports["udp"], err = getFreePort()
+		ports["udp"], err = testhelpers.GetFreePort()
 		Expect(err).NotTo(HaveOccurred())
-		ports["tcp"], err = getFreePort()
+		ports["tcp"], err = testhelpers.GetFreePort()
 		Expect(err).NotTo(HaveOccurred())
 		addresses["udp"] = fmt.Sprintf("%s:%d", listenDomain, ports["udp"])
 		addresses["tcp"] = fmt.Sprintf("%s:%d", listenDomain, ports["tcp"])
@@ -166,23 +165,3 @@ var _ = Describe("Upcheck", func() {
 		)
 	})
 })
-
-func getFreePort() (int, error) {
-	l, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return 0, err
-	}
-	l.Close()
-
-	_, port, err := net.SplitHostPort(l.Addr().String())
-	if err != nil {
-		return 0, err
-	}
-
-	intPort, err := strconv.Atoi(port)
-	if err != nil {
-		return 0, err
-	}
-
-	return intPort, nil
-}
