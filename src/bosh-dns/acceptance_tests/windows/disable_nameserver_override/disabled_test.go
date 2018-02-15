@@ -39,7 +39,7 @@ var _ = Describe("dns job: disable_nameserver_override", func() {
 				logger := logger.NewLogger(logger.LevelDebug)
 				cmdRunner := system.NewExecCmdRunner(logger)
 				fs := system.NewOsFileSystem(logger)
-				man = manager.NewWindowsManager(cmdRunner, fs)
+				man = manager.NewWindowsManager(cmdRunner, fs, manager.WindowsAdapterFetcher{})
 
 				addresses, err := man.Read()
 				Expect(err).NotTo(HaveOccurred())

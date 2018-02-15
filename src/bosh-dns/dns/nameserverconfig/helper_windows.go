@@ -9,5 +9,5 @@ import (
 )
 
 func newDNSManager(logger logger.Logger, _ clock.Clock, fs boshsys.FileSystem) manager.DNSManager {
-	return manager.NewWindowsManager(boshsys.NewExecCmdRunner(logger), fs)
+	return manager.NewWindowsManager(boshsys.NewExecCmdRunner(logger), fs, manager.WindowsAdapterFetcher{})
 }
