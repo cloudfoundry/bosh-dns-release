@@ -16,6 +16,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"bosh-dns/dns/internal/testhelpers"
 )
 
 func tcpServerStub(bindAddress string, stop chan struct{}) func() error {
@@ -128,7 +129,7 @@ var _ = Describe("Server", func() {
 		shutdownChannel = make(chan struct{})
 		timeout = 1 * time.Second
 
-		port, err := getFreePort()
+		port, err := testhelpers.GetFreePort()
 		Expect(err).NotTo(HaveOccurred())
 		bindAddress = fmt.Sprintf("127.0.0.1:%d", port)
 

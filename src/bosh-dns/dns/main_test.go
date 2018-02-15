@@ -1,39 +1,32 @@
 package main_test
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
+	"runtime"
+	"syscall"
+	"time"
+
 	"bosh-dns/dns/api"
 	"bosh-dns/dns/config"
 	handlersconfig "bosh-dns/dns/config/handlers"
 	"bosh-dns/tlsclient"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"path/filepath"
-	"strconv"
+	"bosh-dns/dns/internal/testhelpers"
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/miekg/dns"
 	ginkgoconfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/gomega/gexec"
-
-	"os/exec"
-	"time"
-
-	"net"
-
-	"io/ioutil"
-
-	"runtime"
-	"syscall"
-
-	"os"
-	"path"
-
-	"crypto/tls"
-	"crypto/x509"
-	"net/http"
-
-	"github.com/miekg/dns"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/ghttp"
 	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
@@ -55,12 +48,12 @@ var _ = Describe("main", func() {
 	BeforeEach(func() {
 		listenAddress = "127.0.0.1"
 		var err error
-		listenPort, err = getFreePort()
+		listenPort, err = testhelpers.GetFreePort()
 		Expect(err).NotTo(HaveOccurred())
-		listenAPIPort, err = getFreePort()
+		listenAPIPort, err = testhelpers.GetFreePort()
 		Expect(err).NotTo(HaveOccurred())
 
-		recursorPort, err = getFreePort()
+		recursorPort, err = testhelpers.GetFreePort()
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -150,7 +143,7 @@ var _ = Describe("main", func() {
 			listenAddress2, err = localIP()
 			Expect(err).NotTo(HaveOccurred())
 
-			listenPort2, err = getFreePort()
+			listenPort2, err = testhelpers.GetFreePort()
 			Expect(err).NotTo(HaveOccurred())
 
 			addressesFile, err := ioutil.TempFile(addressesDir, "addresses")
@@ -277,8 +270,8 @@ var _ = Describe("main", func() {
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(waitForServer(listenPort)).To(Succeed())
-			Expect(waitForServer(listenAPIPort)).To(Succeed())
+			Expect(testhelpers.WaitForListeningTCP(listenPort)).To(Succeed())
+			Expect(testhelpers.WaitForListeningTCP(listenAPIPort)).To(Succeed())
 
 			Eventually(func() int {
 				c := &dns.Client{}
@@ -1163,7 +1156,7 @@ var _ = Describe("main", func() {
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(waitForServer(listenPort)).To(Succeed())
+			Expect(testhelpers.WaitForListeningTCP(listenPort)).To(Succeed())
 
 			timeoutNeverToBeReached := 10 * time.Second
 			c := &dns.Client{
@@ -1204,7 +1197,7 @@ var _ = Describe("main", func() {
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(waitForServer(listenPort)).To(Succeed())
+			Expect(testhelpers.WaitForListeningTCP(listenPort)).To(Succeed())
 
 			c := &dns.Client{}
 			m := &dns.Msg{}
@@ -1419,21 +1412,6 @@ func newCommandWithConfig(c config.Config) *exec.Cmd {
 	return exec.Command(pathToServer, "--config", configFile.Name())
 }
 
-func waitForServer(port int) error {
-	for i := 0; i < 20; i++ {
-		c, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
-		if err != nil {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-
-		err = c.Close()
-		Expect(err).NotTo(HaveOccurred())
-		return nil
-	}
-
-	return errors.New("dns server failed to start")
-}
 
 func newFakeHealthServer(ip, state string) *ghttp.Server {
 	caCert, err := ioutil.ReadFile("../healthcheck/assets/test_certs/test_ca.pem")
@@ -1476,26 +1454,6 @@ func newFakeHealthServer(ip, state string) *ghttp.Server {
 	return server
 }
 
-func getFreePort() (int, error) {
-	l, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return 0, err
-	}
-	l.Close()
-
-	_, port, err := net.SplitHostPort(l.Addr().String())
-	if err != nil {
-		return 0, err
-	}
-
-	intPort, err := strconv.Atoi(port)
-	if err != nil {
-		return 0, err
-	}
-
-	return intPort, nil
-}
-
 func writeHandlersConfig(dir string, handlersConfiguration handlersconfig.HandlerConfigs) {
 	handlerConfigContents, err := json.Marshal(handlersConfiguration)
 	Expect(err).NotTo(HaveOccurred())
@@ -1506,15 +1464,6 @@ func writeHandlersConfig(dir string, handlersConfiguration handlersconfig.Handle
 
 	_, err = handlersFile.Write([]byte(handlerConfigContents))
 	Expect(err).NotTo(HaveOccurred())
-}
-
-func secureGetRespBody(client *httpclient.HTTPClient, port int, path string) ([]byte, error) {
-	resp, err := secureGet(client, port, path)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	return ioutil.ReadAll(resp.Body)
 }
 
 func secureGet(client *httpclient.HTTPClient, port int, path string) (*http.Response, error) {
