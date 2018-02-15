@@ -11,6 +11,8 @@ import (
 	"net/http"
 
 	"bytes"
+
+	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
@@ -70,11 +72,7 @@ var _ = Describe("HttpJsonHandler", func() {
 		})
 
 		JustBeforeEach(func() {
-			handler = HTTPJSONHandler{
-				Address: "http://example.com",
-				Client:  client,
-				Logger:  fakeLogger,
-			}
+			handler = NewHTTPJSONHandler("http://example.com", client, fakeLogger)
 		})
 
 		Context("when the request to the http server fails", func() {
@@ -118,7 +116,8 @@ var _ = Describe("HttpJsonHandler", func() {
 			server = ghttp.NewUnstartedServer()
 			server.AppendHandlers(fakeServerResponse)
 			server.HTTPTestServer.Start()
-			handler = NewHTTPJSONHandler(server.URL(), fakeLogger)
+			httpClient := httpclient.NewHTTPClient(httpclient.DefaultClient, fakeLogger)
+			handler = NewHTTPJSONHandler(server.URL(), httpClient, fakeLogger)
 		})
 
 		AfterEach(func() {
@@ -213,7 +212,8 @@ var _ = Describe("HttpJsonHandler", func() {
 
 		Context("when it cannot reach the http server", func() {
 			JustBeforeEach(func() {
-				handler = NewHTTPJSONHandler("bogus-address", fakeLogger)
+				httpClient := httpclient.NewHTTPClient(httpclient.DefaultClient, fakeLogger)
+				handler = NewHTTPJSONHandler("bogus-address", httpClient, fakeLogger)
 			})
 
 			It("logs the error ", func() {

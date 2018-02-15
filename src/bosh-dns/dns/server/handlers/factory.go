@@ -4,6 +4,7 @@ import (
 	"bosh-dns/dns/shuffle"
 
 	"code.cloudfoundry.org/clock"
+	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
@@ -26,7 +27,9 @@ func NewFactory(exchangerFactory ExchangerFactory, clock clock.Clock, shuffler s
 
 func (f *Factory) CreateHTTPJSONHandler(url string, cache bool) dns.Handler {
 	var handler dns.Handler
-	handler = NewHTTPJSONHandler(url, f.logger)
+
+	httpClient := httpclient.NewHTTPClient(httpclient.DefaultClient, f.logger)
+	handler = NewHTTPJSONHandler(url, httpClient, f.logger)
 
 	if cache {
 		handler = NewCachingDNSHandler(handler)
