@@ -269,7 +269,8 @@ jobs:
   - windows-acceptance-env
   plan:
     - get: bosh-dns-release
-    - get: envs
+    - get: env-repo
+      resource: envs
     - task: bbl-destroy
       file: bosh-dns-release/ci/tasks/bbl-destroy.yml
       params:
@@ -277,7 +278,7 @@ jobs:
       ensure:
         put: envs
         params:
-          repository: envs
+          repository: updated-env-repo
 
 - name: bbl-up-stress
   serial_groups:
@@ -285,7 +286,7 @@ jobs:
   plan:
     - aggregate:
       - get: cf-deployment-concourse-tasks
-      - get: bbl-state
+      - get: env-repo
         resource: envs
       - get: ops-files
         resource: envs
@@ -295,13 +296,13 @@ jobs:
         BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
         BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
         BBL_AWS_REGION: us-west-2
-        IS_BOSH_LITE: true # this skips load balancer creation, which we want since we are not deploying CF
+        SKIP_LB_CREATION: true
         BBL_IAAS: aws
         BBL_STATE_DIR: test-stress/bbl-state
       ensure:
         put: envs
         params:
-          repository: updated-bbl-state
+          repository: updated-env-repo
 
 - name: bbl-destroy-stress
   serial_groups:
@@ -449,8 +450,8 @@ resources:
 - name: cf-deployment-concourse-tasks
   type: git
   source:
-    branch: "v4.21"
-    uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks
+    branch: fix-aws-lb
+    uri: https://github.com/bosh-dep-forks/cf-deployment-concourse-tasks
 
 - name: every-10m
   type: time
