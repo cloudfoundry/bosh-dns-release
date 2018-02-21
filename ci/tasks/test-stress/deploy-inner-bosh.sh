@@ -58,13 +58,13 @@ pushd ${scripts_directory}
 
   set +x
   # target inner bosh
-  export BOSH_CA_CERT="$(bosh int ${STATE_DIR}/vars-store.yml --path /director_ssl/ca)"
+  export BOSH_CA_CERT="$(bosh int ${state_dir}/vars-store.yml --path /director_ssl/ca)"
   export BOSH_CLIENT="admin"
-  export BOSH_CLIENT_SECRET="$(bosh int ${STATE_DIR}/vars-store.yml --path /admin_password)"
+  export BOSH_CLIENT_SECRET="$(bosh int ${state_dir}/vars-store.yml --path /admin_password)"
   export BOSH_ENVIRONMENT="https://$(bosh int inner-bosh-deployment/vars.yml --path /internal_ip):25555"
   set -x
 
   bosh env
 popd
 
-cp -R ${STATE_DIR}/* inner-bosh-vars/
+cp -R ${state_dir}/* inner-bosh-vars/

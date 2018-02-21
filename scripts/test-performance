@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# workers exits 1 if not logged in
+fly -t production workers || fly -t production login
+
+fly -t production execute -x --privileged \
+  --tag=dns-performance \
+  --config=./ci/tasks/test-performance.yml \
+  --inputs-from=bosh-dns-release/test-performance \
+  --input=bosh-dns-release=$DIR/../
