@@ -29,12 +29,11 @@ pushd ${scripts_directory}
       -v jumpbox_table_id=$(bosh int $BBL_STATE_DIR/vars/terraform.tfstate --path /modules/0/resources/aws_route_table.bosh_route_table/primary/id) \
       -v default_table_id=$(bosh int $BBL_STATE_DIR/vars/terraform.tfstate --path /modules/0/resources/aws_route_table.internal_route_table/primary/id)
 
-    bosh upload-stemcell https://bosh.io/d/stemcells/bosh-aws-xen-hvm-ubuntu-trusty-go_agent
+    bosh upload-stemcell $stemcell_path
 
     bosh -n deploy -d docker ./deployments/docker.yml \
       -l ./vars/docker-vars.yml \
       --vars-store=${state_dir}/docker-vars-store.yml
-
   popd
 
   # 2. Deploy inner director

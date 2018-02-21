@@ -207,18 +207,56 @@ jobs:
         passed: [create-release]
       - get: bosh-docker-cpi-release
       - get: stemcell
-    - task: pre-clean
-      file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
     - do:
-      - task: deploy-to-aws
-        file: bosh-dns-release/ci/tasks/test-stress/deploy-inner-bosh.yml
-      - task: deploy-containers
-        file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
-      - task: stress-containers
-        file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
-      ensure:
-        task: post-clean
+      - task: bbl-up
+        file: cf-deployment-concourse-tasks/bbl-up/task.yml
+        params:
+          BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
+          BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+          BBL_AWS_REGION: us-west-2
+          SKIP_LB_CREATION: true
+          BBL_IAAS: aws
+          BBL_STATE_DIR: test-stress/bbl-state
+        ensure:
+          put: envs
+          params:
+            repository: updated-env-repo
+      - task: pre-clean
         file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
+      - do:
+        - task: deploy-to-aws
+          file: bosh-dns-release/ci/tasks/test-stress/deploy-inner-bosh.yml
+        - task: deploy-containers
+          file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
+        - task: stress-containers
+          file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
+      ensure:
+        do:
+        - task: post-clean
+          file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
+        - task: bbl-destroy
+          file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+          params:
+            BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
+            BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+            BBL_STATE_DIR: test-stress/bbl-state
+          ensure:
+            put: envs
+            params:
+              repository: updated-bbl-state
+
+    # - task: pre-clean
+    #   file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
+    # - do:
+    #   - task: deploy-to-aws
+    #     file: bosh-dns-release/ci/tasks/test-stress/deploy-inner-bosh.yml
+    #   - task: deploy-containers
+    #     file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
+    #   - task: stress-containers
+    #     file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
+    #   ensure:
+    #     task: post-clean
+    #     file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
 
 - name: brats-ubuntu
   serial: true
