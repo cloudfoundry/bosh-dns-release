@@ -11,12 +11,13 @@ inputs:
   - name: bosh-deployment
   - name: bosh-docker-cpi-release
   - name: bosh-dns-release
+  - name: stemcell
 
 outputs:
   - name: inner-bosh-vars
 
 params:
-  BBL_STATE_SUBDIRECTORY: multicpi/bbl-state
+  BBL_STATE_SUBDIRECTORY: test-stress/bbl-state
 
 run:
   path: bosh-dns-release/ci/tasks/test-stress/deploy-inner-bosh.sh

@@ -9,11 +9,12 @@ function kill_bbl_ssh {
 
 trap kill_bbl_ssh EXIT
 
-export BOSH_DOCKER_CPI_RELEASE_REPO=$PWD/bosh-docker-cpi-release
-export BOSH_DEPLOYMENT_REPO=$PWD/bosh-deployment
+bosh_docker_cpi_release_repo=$PWD/bosh-docker-cpi-release
+bosh_deployment_repo=$PWD/bosh-deployment
+stemcell_path=$PWD/stemcell/*.tgz
+state_dir=$(mktemp -d)
 
 export BBL_STATE_DIR=$PWD/bbl-state/${BBL_STATE_SUBDIRECTORY}
-export STATE_DIR=$(mktemp -d)
 
 scripts_directory=$(dirname $0)
 pushd ${scripts_directory}
@@ -28,7 +29,22 @@ pushd ${scripts_directory}
 
   # 2. Deploy inner director
   pushd inner-bosh-deployment
-    ./deploy-director.sh
+    bosh upload-stemcell $stemcell_path
+
+    bosh -n -d bosh deploy \
+      $bosh_deployment_repo/bosh.yml \
+      --vars-store ${state_dir}/vars-store.yml \
+      --vars-file  ./vars.yml \
+      -o $bosh_deployment_repo/misc/bosh-dev.yml \
+      -o ./ops/add-docker-cpi-release.yml \
+      -o ./ops/make-stemcell-latest.yml \
+      -o ./ops/make-persistent-disk-big.yml \
+      -o $bosh_deployment_repo/uaa.yml \
+      -o $bosh_deployment_repo/jumpbox-user.yml \
+      -o $bosh_deployment_repo/local-dns.yml \
+      -o $bosh_deployment_repo/credhub.yml \
+      -o ./ops/configure-max-threads.yml \
+      -v docker_cpi_release_src_path=$bosh_docker_cpi_release_repo
   popd
 
   set +x
@@ -43,4 +59,3 @@ pushd ${scripts_directory}
 popd
 
 cp -R ${STATE_DIR}/* inner-bosh-vars/
-

@@ -13,7 +13,7 @@ inputs:
 outputs: []
 
 params:
-  BBL_STATE_SUBDIRECTORY: multicpi/bbl-state
+  BBL_STATE_SUBDIRECTORY: test-stress/bbl-state
 
 run:
   path: bosh-dns-release/ci/tasks/test-stress/clean-up.sh
