@@ -25,8 +25,8 @@ pushd ${scripts_directory}
   set -x
   pushd inner-bosh-workspace
     # 4. Run test
-    seq 1 "${DEPLOYMENTS_OF_100:=10}" \
-      | xargs -n1 -P"${PARALLEL_DEPLOYMENTS:=10}" -I{} \
+    seq 1 "${DEPLOYMENTS_OF_100}" \
+      | xargs -n1 -P"${PARALLEL_DEPLOYMENTS}" -I{} \
       -- bosh -d bosh-dns-{} run-errand dns-lookuper
   popd
 popd

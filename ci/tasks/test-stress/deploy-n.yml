@@ -16,7 +16,7 @@ outputs: []
 
 params:
   DEPLOYMENTS_OF_100: 10
-  PARALLEL_DEPLOYMENTS: 3
+  PARALLEL_DEPLOYMENTS: 5
   BBL_STATE_SUBDIRECTORY: test-stress/bbl-state
 
 run:

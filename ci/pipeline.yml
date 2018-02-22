@@ -15,10 +15,12 @@ groups:
   - brats-ubuntu
   - bbl-up
   - bbl-destroy
-  - bbl-up-stress
-  - bbl-destroy-stress
   - finalize-release
   - bump-major
+- name: bbl-stress
+  jobs:
+  - bbl-up-stress
+  - bbl-destroy-stress
 
 jobs:
 - name: test-unit
@@ -207,6 +209,12 @@ jobs:
         passed: [create-release]
       - get: bosh-docker-cpi-release
       - get: stemcell
+      - get: warden-stemcell
+      - get: cf-deployment-concourse-tasks
+      - get: env-repo
+        resource: envs
+      - get: ops-files
+        resource: envs
     - do:
       - task: bbl-up
         file: cf-deployment-concourse-tasks/bbl-up/task.yml
@@ -228,35 +236,24 @@ jobs:
           file: bosh-dns-release/ci/tasks/test-stress/deploy-inner-bosh.yml
         - task: deploy-containers
           file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
+          input_mapping:
+            stemcell: warden-stemcell
         - task: stress-containers
           file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
-      ensure:
-        do:
-        - task: post-clean
+        ensure:
+          task: post-clean
           file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
-        - task: bbl-destroy
-          file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+      ensure:
+        task: bbl-destroy
+        file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+        params:
+          BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
+          BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+          BBL_STATE_DIR: test-stress/bbl-state
+        ensure:
+          put: envs
           params:
-            BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
-            BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
-            BBL_STATE_DIR: test-stress/bbl-state
-          ensure:
-            put: envs
-            params:
-              repository: updated-bbl-state
-
-    # - task: pre-clean
-    #   file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
-    # - do:
-    #   - task: deploy-to-aws
-    #     file: bosh-dns-release/ci/tasks/test-stress/deploy-inner-bosh.yml
-    #   - task: deploy-containers
-    #     file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
-    #   - task: stress-containers
-    #     file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
-    #   ensure:
-    #     task: post-clean
-    #     file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
+            repository: updated-bbl-state
 
 - name: brats-ubuntu
   serial: true
@@ -500,4 +497,10 @@ resources:
   type: bosh-io-stemcell
   source:
     name: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
+    version_family: "3468.latest"
+
+- name: warden-stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-warden-boshlite-ubuntu-trusty-go_agent
     version_family: "3468.latest"

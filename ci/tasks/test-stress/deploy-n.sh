@@ -68,6 +68,6 @@ pushd ${scripts_directory}
 
   pushd inner-bosh-workspace
     # 3. 10x Deploy large bosh-dns deployment to inner director
-    deploy_n "${DEPLOYMENTS_OF_100:=10}" "${PARALLEL_DEPLOYMENTS:=3}" "${state_dir}" "${stemcell_path}"
+    deploy_n "${DEPLOYMENTS_OF_100}" "${PARALLEL_DEPLOYMENTS}" "${state_dir}" "${stemcell_path}"
   popd
 popd
