@@ -54,6 +54,7 @@ pushd ${scripts_directory}
       -o $bosh_deployment_repo/credhub.yml \
       -o ./ops/configure-max-threads.yml \
       -o ./ops/configure-workers.yml \
+      -o ./ops/configure-pg-max-connections.yml \
       -v docker_cpi_release_src_path=$bosh_docker_cpi_release_repo
   popd
 

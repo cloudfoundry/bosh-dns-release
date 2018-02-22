@@ -1,0 +1,4 @@
+---
+- type: replace
+  path: /instance_groups/name=bosh/properties/postgres/max_connections?
+  value: ((pg_max_connection))
