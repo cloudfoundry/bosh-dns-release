@@ -10,11 +10,13 @@ inputs:
   - name: bbl-state
   - name: bosh-dns-release
   - name: inner-bosh-vars
+  - name: stemcell
 
 outputs: []
 
 params:
   DEPLOYMENTS_OF_100: 10
+  PARALLEL_DEPLOYMENTS: 3
   BBL_STATE_SUBDIRECTORY: test-stress/bbl-state
 
 run:

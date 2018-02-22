@@ -43,7 +43,7 @@ pushd ${scripts_directory}
     bosh -n -d bosh deploy \
       $bosh_deployment_repo/bosh.yml \
       --vars-store ${state_dir}/vars-store.yml \
-      --vars-file  ./vars.yml \
+      --vars-file ./vars.yml \
       -o $bosh_deployment_repo/misc/bosh-dev.yml \
       -o ./ops/add-docker-cpi-release.yml \
       -o ./ops/make-stemcell-latest.yml \
@@ -53,6 +53,7 @@ pushd ${scripts_directory}
       -o $bosh_deployment_repo/local-dns.yml \
       -o $bosh_deployment_repo/credhub.yml \
       -o ./ops/configure-max-threads.yml \
+      -o ./ops/configure-workers.yml \
       -v docker_cpi_release_src_path=$bosh_docker_cpi_release_repo
   popd
 

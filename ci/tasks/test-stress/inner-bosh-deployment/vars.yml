@@ -1,3 +1,4 @@
 internal_ip: 10.0.31.254
 director_name: bosh-inner
 director_max_threads: 20
+number_workers: 10
