@@ -49,11 +49,12 @@ var _ = Describe("Config", func() {
 
 	It("returns config from a config file", func() {
 		configContents, err := json.Marshal(map[string]interface{}{
-			"address":          listenAddress,
-			"port":             listenPort,
-			"timeout":          timeout,
-			"recursor_timeout": recursorTimeout,
-			"upcheck_domains":  upcheckDomains,
+			"address":            listenAddress,
+			"port":               listenPort,
+			"timeout":            timeout,
+			"excluded_recursors": []string{"169.254.169.254"},
+			"recursor_timeout":   recursorTimeout,
+			"upcheck_domains":    upcheckDomains,
 			"health": map[string]interface{}{
 				"enabled":             true,
 				"port":                healthPort,
@@ -91,12 +92,13 @@ var _ = Describe("Config", func() {
 		dnsConfig, err := config.LoadFromFile(configFilePath)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dnsConfig).To(Equal(config.Config{
-			Address:         listenAddress,
-			Port:            listenPort,
-			Timeout:         config.DurationJSON(timeoutDuration),
-			RecursorTimeout: config.DurationJSON(recursorTimeoutDuration),
-			Recursors:       []string{},
-			UpcheckDomains:  []string{"upcheck.domain.", "health2.bosh."},
+			Address:           listenAddress,
+			Port:              listenPort,
+			Timeout:           config.DurationJSON(timeoutDuration),
+			RecursorTimeout:   config.DurationJSON(recursorTimeoutDuration),
+			ExcludedRecursors: []string{"169.254.169.254"},
+			Recursors:         []string{},
+			UpcheckDomains:    []string{"upcheck.domain.", "health2.bosh."},
 			Health: config.HealthConfig{
 				Enabled:           true,
 				Port:              healthPort,
