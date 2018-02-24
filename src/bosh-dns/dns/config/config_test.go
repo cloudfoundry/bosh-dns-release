@@ -68,6 +68,7 @@ var _ = Describe("Config", func() {
 			"handlers_files_glob":  handlersFileGlob,
 			"port":                 listenPort,
 			"recursor_timeout":     recursorTimeout,
+			"excluded_recursors":   []string{"169.254.169.254"},
 			"timeout":              timeout,
 			"upcheck_domains":      upcheckDomains,
 			"api": map[string]interface{}{
@@ -124,6 +125,7 @@ var _ = Describe("Config", func() {
 			Timeout:            config.DurationJSON(timeoutDuration),
 			RecursorTimeout:    config.DurationJSON(recursorTimeoutDuration),
 			Recursors:          []string{},
+			ExcludedRecursors:  []string{"169.254.169.254"},
 			UpcheckDomains:     []string{"upcheck.domain.", "health2.bosh."},
 			AliasFilesGlob:     aliasesFileGlob,
 			HandlersFilesGlob:  handlersFileGlob,

@@ -16,6 +16,7 @@ type Config struct {
 	Timeout            DurationJSON `json:"timeout,omitempty"`
 	RecursorTimeout    DurationJSON `json:"recursor_timeout,omitempty"`
 	Recursors          []string     `json:"recursors,omitempty"`
+	ExcludedRecursors  []string     `json:"excluded_recursors,omitempty"`
 	RecordsFile        string       `json:"records_file,omitempty"`
 	AliasFilesGlob     string       `json:"alias_files_glob,omitempty"`
 	HandlersFilesGlob  string       `json:"handlers_files_glob,omitempty"`

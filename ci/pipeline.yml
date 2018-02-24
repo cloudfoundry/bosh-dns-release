@@ -5,6 +5,7 @@ groups:
   - test-unit
   - test-coredns-cache
   - test-unit-windows
+  - test-unit-release
   - create-release
   - test-performance
   - test-performance-windows
@@ -50,11 +51,22 @@ jobs:
       timeout: 1h
       file: bosh-dns-release/ci/tasks/test-unit-windows.yml
 
+- name: test-unit-release
+  public: true
+  plan:
+    - get: bosh-dns-release
+      trigger: true
+    - task: test-unit-release
+      file: bosh-dns-release/ci/tasks/test-unit-release.yml
+
 - name: create-release
   plan:
     - get: bosh-dns-release
       trigger: true
-      passed: [test-unit, test-unit-windows]
+      passed:
+      - test-unit
+      - test-unit-windows
+      - test-unit-release
     - task: create
       file: bosh-dns-release/ci/tasks/create-candidate.yml
     - put: candidate-release

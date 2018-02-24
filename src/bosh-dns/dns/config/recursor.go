@@ -16,13 +16,29 @@ func ConfigureRecursors(reader RecursorReader, shuffler StringShuffler, dnsConfi
 		return nil
 	}
 
-	recursors := dnsConfig.Recursors
-
 	if len(dnsConfig.Recursors) <= 0 {
 		var err error
-		recursors, err = reader.Get()
+		dnsConfig.Recursors, err = reader.Get()
 		if err != nil {
 			return err
+		}
+	}
+
+	recursors := []string{}
+
+	for _, recursor := range dnsConfig.Recursors {
+		shouldAdd := true
+
+		for _, excludedRecursor := range dnsConfig.ExcludedRecursors {
+			if recursor == excludedRecursor {
+				shouldAdd = false
+
+				break
+			}
+		}
+
+		if shouldAdd {
+			recursors = append(recursors, recursor)
 		}
 	}
 
