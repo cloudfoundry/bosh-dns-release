@@ -1,0 +1,10 @@
+#!/bin/bash
+
+main() {
+		set -eu -o pipefail -x
+
+		bundle install
+		bundle exec rspec
+}
+
+main "$@"
