@@ -23,11 +23,11 @@ var _ = Describe("recursor", func() {
 	var (
 		recursorSession *gexec.Session
 		firstInstance   instanceInfo
-		err             error
 	)
 
 	Context("when the recursors must be read from the system resolver list", func() {
 		BeforeEach(func() {
+			var err error
 			cmd := exec.Command(pathToTestRecursorServer, "53")
 			recursorSession, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -60,6 +60,7 @@ var _ = Describe("recursor", func() {
 
 	Context("when the recursors are configured explicitly on the DNS server", func() {
 		BeforeEach(func() {
+			var err error
 			cmd := exec.Command(pathToTestRecursorServer, "9955")
 			recursorSession, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -285,10 +286,39 @@ var _ = Describe("recursor", func() {
 			Expect(output).To(MatchRegexp("example.com.\\s+0\\s+IN\\s+A\\s+10\\.10\\.10\\.10"))
 			Expect(output).To(ContainSubstring(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 		})
+
+		It("fowards ipv4 ARPA queries to the configured recursors", func() {
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-x 8.8.4.4 @%s", firstInstance.IP), " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+			Expect(output).To(MatchRegexp(`4\.4\.8\.8\.in-addr\.arpa\.\s+\d+\s+IN\s+PTR\s+google-public-dns-b\.google\.com\.`))
+			Expect(output).To(ContainSubstring(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+		})
+
+		It("fowards ipv6 ARPA queries to the configured recursors", func() {
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-x 2001:4860:4860::8888 @%s", firstInstance.IP), " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
+			output := string(session.Out.Contents())
+			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+			Expect(output).To(MatchRegexp(`8\.8\.8\.8\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.6\.8\.4\.0\.6\.8\.4\.1\.0\.0\.2\.ip6\.arpa\.\s+\d+\s+IN\s+PTR\s+google-public-dns-a\.google\.com\.`))
+			Expect(output).To(ContainSubstring(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+		})
 	})
 
 	Context("when using cache", func() {
 		BeforeEach(func() {
+			var err error
 			cmd := exec.Command(pathToTestRecursorServer, "9955")
 			recursorSession, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -319,7 +349,7 @@ var _ = Describe("recursor", func() {
 			Expect(matches[2]).To(Equal("1"))
 
 			Consistently(func() string {
-				cmd := exec.Command("dig",
+				cmd = exec.Command("dig",
 					"+notcp", "always-different-with-timeout-example.com.",
 					fmt.Sprintf("@%s", firstInstance.IP),
 				)

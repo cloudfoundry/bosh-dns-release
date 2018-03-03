@@ -1,10 +1,10 @@
 package handlers_test
 
 import (
-	"errors"
-
 	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
+
 	"github.com/miekg/dns"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
@@ -15,21 +15,26 @@ import (
 var _ = Describe("ArpaHandler", func() {
 	Context("ServeDNS", func() {
 		var (
-			arpaHandler handlers.ArpaHandler
-			fakeWriter  *internalfakes.FakeResponseWriter
-			fakeLogger  *loggerfakes.FakeLogger
+			arpaHandler    handlers.ArpaHandler
+			fakeWriter     *internalfakes.FakeResponseWriter
+			fakeIPProvider *handlersfakes.FakeIPProvider
+			fakeForwarder  *handlersfakes.FakeDNSHandler
+			fakeLogger     *loggerfakes.FakeLogger
 		)
 
 		BeforeEach(func() {
 			fakeLogger = &loggerfakes.FakeLogger{}
 			fakeWriter = &internalfakes.FakeResponseWriter{}
+			fakeIPProvider = &handlersfakes.FakeIPProvider{}
+			fakeForwarder = &handlersfakes.FakeDNSHandler{}
 
-			arpaHandler = handlers.NewArpaHandler(fakeLogger)
+			arpaHandler = handlers.NewArpaHandler(fakeLogger, fakeIPProvider, fakeForwarder)
 		})
 
 		Context("when there are no questions", func() {
 			It("responds with an rcode success", func() {
 				arpaHandler.ServeDNS(fakeWriter, &dns.Msg{})
+				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
 				Expect(message.Authoritative).To(Equal(true))
@@ -38,40 +43,96 @@ var _ = Describe("ArpaHandler", func() {
 		})
 
 		Context("when there are questions", func() {
-			It("responds with an rcode server failure", func() {
-				m := &dns.Msg{}
-				m.SetQuestion("109.22.25.104.in-addr.arpa.", dns.TypePTR)
+			Describe("IPV4", func() {
+				Context("and they are about external ips", func() {
+					It("forwards the question up to a recursor", func() {
+						m := &dns.Msg{}
+						m.SetQuestion("109.22.25.104.in-addr.arpa.", dns.TypePTR)
 
-				arpaHandler.ServeDNS(fakeWriter, m)
-				message := fakeWriter.WriteMsgArgsForCall(0)
-				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
-				Expect(message.Authoritative).To(Equal(true))
-				Expect(message.RecursionAvailable).To(Equal(false))
+						arpaHandler.ServeDNS(fakeWriter, m)
+						Expect(fakeForwarder.ServeDNSCallCount()).To(Equal(1))
+						forwardedWriter, forwardedMsg := fakeForwarder.ServeDNSArgsForCall(0)
+						Expect(forwardedWriter).To(Equal(fakeWriter))
+						Expect(forwardedMsg).To(Equal(m))
+					})
+				})
+
+				Context("and they are about internal ips", func() {
+					BeforeEach(func() {
+						fakeIPProvider.AllIPsReturns(map[string]bool{"1.2.3.4": true})
+					})
+
+					It("responds with an rcode server failure", func() {
+						m := &dns.Msg{}
+						m.SetQuestion("4.3.2.1.in-addr.arpa.", dns.TypePTR)
+
+						arpaHandler.ServeDNS(fakeWriter, m)
+						Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+						message := fakeWriter.WriteMsgArgsForCall(0)
+						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(message.Authoritative).To(Equal(true))
+						Expect(message.RecursionAvailable).To(Equal(false))
+					})
+				})
 			})
-		})
 
-		Context("logging", func() {
-			It("logs the number of questions", func() {
-				m := &dns.Msg{}
-				m.SetQuestion("109.22.25.104.in-addr.arpa.", dns.TypePTR)
+			Describe("IPV6", func() {
+				Context("and they are about external ips", func() {
+					It("forwards the question up to a recursor", func() {
+						m := &dns.Msg{}
+						m.SetQuestion("0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.ip6.arpa.", dns.TypePTR)
 
-				arpaHandler.ServeDNS(fakeWriter, m)
-				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
-				tag, msg, args := fakeLogger.InfoArgsForCall(0)
-				Expect(tag).To(Equal("ArpaHandler"))
-				Expect(msg).To(Equal("received a request with %d questions"))
-				Expect(args[0]).To(Equal(1))
+						arpaHandler.ServeDNS(fakeWriter, m)
+						Expect(fakeForwarder.ServeDNSCallCount()).To(Equal(1))
+						forwardedWriter, forwardedMsg := fakeForwarder.ServeDNSArgsForCall(0)
+						Expect(forwardedWriter).To(Equal(fakeWriter))
+						Expect(forwardedMsg).To(Equal(m))
+					})
+				})
+
+				Context("and they are about internal ips", func() {
+					BeforeEach(func() {
+						fakeIPProvider.AllIPsReturns(map[string]bool{"1234:beef:dead:0000:0000:0000:0000:0000": true})
+					})
+
+					It("responds with an rcode server failure", func() {
+						m := &dns.Msg{}
+						m.SetQuestion("0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.d.a.e.d.f.e.e.b.4.3.2.1.ip6.arpa.", dns.TypePTR)
+
+						arpaHandler.ServeDNS(fakeWriter, m)
+						Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+						message := fakeWriter.WriteMsgArgsForCall(0)
+						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(message.Authoritative).To(Equal(true))
+						Expect(message.RecursionAvailable).To(Equal(false))
+					})
+
+					It("fills in the zeroes", func() {
+						m := &dns.Msg{}
+						m.SetQuestion("0.d.a.e.d.f.e.e.b.4.3.2.1.ip6.arpa.", dns.TypePTR)
+
+						arpaHandler.ServeDNS(fakeWriter, m)
+						Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+						message := fakeWriter.WriteMsgArgsForCall(0)
+						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(message.Authoritative).To(Equal(true))
+						Expect(message.RecursionAvailable).To(Equal(false))
+					})
+				})
 			})
 
-			It("logs if there is an error during writing a message", func() {
-				fakeWriter.WriteMsgReturns(errors.New("failed to write message"))
+			Describe("not a valid question", func() {
+				It("responds with rcode failure", func() {
+					m := &dns.Msg{}
+					m.SetQuestion("wut.wut.wuuuuuuuuuuuuut.ip39.arpa", dns.TypePTR)
 
-				arpaHandler.ServeDNS(fakeWriter, &dns.Msg{})
-
-				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
-				tag, msg, _ := fakeLogger.ErrorArgsForCall(0)
-				Expect(tag).To(Equal("ArpaHandler"))
-				Expect(msg).To(Equal("failed to write message"))
+					arpaHandler.ServeDNS(fakeWriter, m)
+					Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+					message := fakeWriter.WriteMsgArgsForCall(0)
+					Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+					Expect(message.Authoritative).To(Equal(true))
+					Expect(message.RecursionAvailable).To(Equal(false))
+				})
 			})
 		})
 	})

@@ -75,6 +75,14 @@ func (r *RecordSet) Subscribe() <-chan bool {
 	return c
 }
 
+func (r *RecordSet) AllIPs() map[string]bool {
+	allIPs := make(map[string]bool, len(r.Records))
+	for _, r := range r.Records {
+		allIPs[r.IP] = true
+	}
+	return allIPs
+}
+
 func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
 	if net.ParseIP(fqdn) != nil {
 		return []string{fqdn}, nil
