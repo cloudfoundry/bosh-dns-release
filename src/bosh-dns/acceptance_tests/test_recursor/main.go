@@ -274,6 +274,54 @@ func main() {
 		}
 	})
 
+	dns.HandleFunc("4.4.8.8.in-addr.arpa.", func(resp dns.ResponseWriter, req *dns.Msg) {
+		msg := new(dns.Msg)
+
+		msg.Answer = append(msg.Answer, &dns.PTR{
+			Hdr: dns.RR_Header{
+				Name:   req.Question[0].Name,
+				Rrtype: dns.TypePTR,
+				Class:  dns.ClassINET,
+				Ttl:    0,
+			},
+			Ptr: "google-public-dns-b.google.com.",
+		})
+
+		msg.Authoritative = true
+		msg.RecursionAvailable = true
+
+		msg.SetReply(req)
+
+		err := resp.WriteMsg(msg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+
+	dns.HandleFunc("8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.ip6.arpa.", func(resp dns.ResponseWriter, req *dns.Msg) {
+		msg := new(dns.Msg)
+
+		msg.Answer = append(msg.Answer, &dns.PTR{
+			Hdr: dns.RR_Header{
+				Name:   req.Question[0].Name,
+				Rrtype: dns.TypePTR,
+				Class:  dns.ClassINET,
+				Ttl:    0,
+			},
+			Ptr: "google-public-dns-a.google.com.",
+		})
+
+		msg.Authoritative = true
+		msg.RecursionAvailable = true
+
+		msg.SetReply(req)
+
+		err := resp.WriteMsg(msg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Printf("Unable to start server: error: +%v", err)
 		os.Exit(1)

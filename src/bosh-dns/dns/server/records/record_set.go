@@ -132,6 +132,14 @@ func (r *RecordSet) AllRecords() *[]record.Record {
 	return &r.Records
 }
 
+func (r *RecordSet) AllIPs() map[string]bool {
+	allIPs := make(map[string]bool, len(r.Records))
+	for _, r := range r.Records {
+		allIPs[r.IP] = true
+	}
+	return allIPs
+}
+
 func (r *RecordSet) Filter(resolutions []string, shouldTrack bool) ([]record.Record, error) {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()

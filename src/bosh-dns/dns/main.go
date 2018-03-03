@@ -148,9 +148,12 @@ func mainExitCode() int {
 
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordSet, mux, discoveryHandler)
 
-	mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger), clock, logger))
-
+	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, logger)
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
+	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
+
+	mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger, recordSet, forwardHandler), clock, logger))
+
 	handlerFactory := handlers.NewFactory(exchangerFactory, clock, stringShuffler, logger)
 
 	delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
@@ -176,8 +179,6 @@ func mainExitCode() int {
 		}
 	}
 
-	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, logger)
-	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
 	if config.Cache.Enabled {
 		mux.Handle(".", handlers.NewCachingDNSHandler(forwardHandler))
 	} else {

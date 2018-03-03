@@ -327,6 +327,36 @@ var _ = Describe("RecordSet", func() {
 		})
 	})
 
+	Describe("AllIPs", func() {
+		BeforeEach(func() {
+			aliasList = mustNewConfigFromMap(map[string][]string{
+				"alias1": {""},
+			})
+		})
+
+		It("returns a map with all ips as keys", func() {
+			jsonBytes := []byte(`{
+				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
+				"record_infos": [
+					["instance0", "0", "my-group", "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "withadot."],
+					["instance1", "1", "my-group", "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", "nodot"],
+					["instance2", "2", "my-group", "az3", null, "my-network", "1", "my-deployment", "123.123.123.125", "domain."]
+				]
+			}`)
+			fileReader.GetReturns(jsonBytes, nil)
+
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(recordSet.AllIPs()).To(Equal(map[string]bool{
+				"123.123.123.123": true,
+				"123.123.123.124": true,
+				"123.123.123.125": true,
+			}))
+		})
+	})
+
 	Describe("auto refreshing records", func() {
 		var (
 			subscriptionChan chan bool

@@ -53,6 +53,19 @@ var _ = Describe("Integration", func() {
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 		})
 
+		It("returns Rcode failure for arpaing bosh instances", func() {
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-x %s @%s", firstInstance.IP, firstInstance.IP), " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
+			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
+			Eventually(session.Out).Should(gbytes.Say(`;; ->>HEADER<<- opcode: QUERY, status: SERVFAIL, id: \d+`))
+			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+		})
+
 		It("returns records for bosh instances found with query for all records", func() {
 			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
 

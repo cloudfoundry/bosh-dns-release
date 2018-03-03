@@ -19,15 +19,15 @@ import (
 	"bosh-dns/dns/api"
 	"bosh-dns/dns/config"
 	handlersconfig "bosh-dns/dns/config/handlers"
-	"bosh-dns/tlsclient"
 	"bosh-dns/dns/internal/testhelpers"
+	"bosh-dns/tlsclient"
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 	ginkgoconfig "github.com/onsi/ginkgo/config"
-	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
 	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 
@@ -641,24 +641,46 @@ var _ = Describe("main", func() {
 			})
 
 			Context("arpa.", func() {
-				BeforeEach(func() {
-					m.SetQuestion("109.22.25.104.in-addr.arpa.", dns.TypePTR)
+				Context("when arpaing external ips", func() {
+					It("forwards ipv4 to a recursor", func() {
+						m.SetQuestion("8.8.8.8.in-addr.arpa.", dns.TypePTR)
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Answer).To(HaveLen(1))
+						Expect(r.Answer[0].String()).To(MatchRegexp(`8\.8\.8\.8\.in-addr\.arpa\.\s+\d+\s+IN\s+PTR\s+google-public-dns-a\.google\.com\.`))
+					})
+
+					It("forwards ipv6 to a recursor", func() {
+						m.SetQuestion("8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.ip6.arpa.", dns.TypePTR)
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Answer).To(HaveLen(1))
+						Expect(r.Answer[0].String()).To(MatchRegexp(`8\.8\.8\.8\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.6\.8\.4\.0\.6\.8\.4\.1\.0\.0\.2\.ip6\.arpa\.\s+\d+\s+IN\s+PTR\s+google-public-dns-a\.google\.com\.`))
+					})
 				})
 
-				It("responds to arpa. requests with an rcode server failure", func() {
-					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+				Context("when arpaing internal ips", func() {
+					It("responds with an rcode server failure", func() {
+						m.SetQuestion("1.0.0.127.in-addr.arpa.", dns.TypePTR)
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
-					Expect(err).NotTo(HaveOccurred())
-					Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
-					Expect(r.Authoritative).To(BeTrue())
-					Expect(r.RecursionAvailable).To(BeFalse())
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(r.Authoritative).To(BeTrue())
+						Expect(r.RecursionAvailable).To(BeFalse())
+					})
 				})
 
 				It("logs handler time", func() {
+					m.SetQuestion("1.0.0.127.in-addr.arpa.", dns.TypePTR)
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ArpaHandler Request \[12\] \[109\.22\.25\.104\.in-addr\.arpa\.\] 2 \d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ArpaHandler Request \[12\] \[1\.0\.0\.127\.in-addr\.arpa\.\] 2 \d+ns`))
 				})
 			})
 
@@ -1411,7 +1433,6 @@ func newCommandWithConfig(c config.Config) *exec.Cmd {
 
 	return exec.Command(pathToServer, "--config", configFile.Name())
 }
-
 
 func newFakeHealthServer(ip, state string) *ghttp.Server {
 	caCert, err := ioutil.ReadFile("../healthcheck/assets/test_certs/test_ca.pem")
