@@ -16,7 +16,7 @@ type DNSHandler interface {
 }
 
 type IPProvider interface {
-	AllIPs() map[string]bool
+	HasIP(string) bool
 }
 
 type ArpaHandler struct {
@@ -43,7 +43,7 @@ func reverse(ss []string) []string {
 	return r
 }
 
-func convertToRecordIP(query string) (string, error) {
+func (ArpaHandler) convertToRecordIP(query string) (string, error) {
 	if strings.HasSuffix(query, ".ip6.arpa.") {
 		segments := strings.Split(strings.TrimRight(query, ".ip6.arpa."), ".")
 		reversedSegments := reverse(segments)
@@ -76,11 +76,11 @@ func (a ArpaHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 		return
 	}
 
-	ip, err := convertToRecordIP(req.Question[0].Name)
+	ip, err := a.convertToRecordIP(req.Question[0].Name)
 	a.logErrors(w, err)
 	a.logger.Info(a.logTag, "received a request with %d questions", len(req.Question))
 
-	if err != nil || a.ipProvider.AllIPs()[ip] {
+	if err != nil || a.ipProvider.HasIP(ip) {
 		m.SetRcode(req, dns.RcodeServerFailure)
 		a.logErrors(w, w.WriteMsg(m))
 		return

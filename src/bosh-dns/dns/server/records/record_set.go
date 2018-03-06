@@ -75,12 +75,16 @@ func (r *RecordSet) Subscribe() <-chan bool {
 	return c
 }
 
-func (r *RecordSet) AllIPs() map[string]bool {
-	allIPs := make(map[string]bool, len(r.Records))
+func (r *RecordSet) HasIP(ip string) bool {
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+
 	for _, r := range r.Records {
-		allIPs[r.IP] = true
+		if r.IP == ip {
+			return true
+		}
 	}
-	return allIPs
+	return false
 }
 
 func (r *RecordSet) Resolve(fqdn string) ([]string, error) {

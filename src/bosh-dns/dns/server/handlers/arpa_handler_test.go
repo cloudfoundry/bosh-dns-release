@@ -59,7 +59,7 @@ var _ = Describe("ArpaHandler", func() {
 
 				Context("and they are about internal ips", func() {
 					BeforeEach(func() {
-						fakeIPProvider.AllIPsReturns(map[string]bool{"1.2.3.4": true})
+						fakeIPProvider.HasIPReturns(true)
 					})
 
 					It("responds with an rcode server failure", func() {
@@ -67,6 +67,8 @@ var _ = Describe("ArpaHandler", func() {
 						m.SetQuestion("4.3.2.1.in-addr.arpa.", dns.TypePTR)
 
 						arpaHandler.ServeDNS(fakeWriter, m)
+						Expect(fakeIPProvider.HasIPCallCount()).To(Equal(1))
+						Expect(fakeIPProvider.HasIPArgsForCall(0)).To(Equal("1.2.3.4"))
 						Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 						message := fakeWriter.WriteMsgArgsForCall(0)
 						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
@@ -77,6 +79,10 @@ var _ = Describe("ArpaHandler", func() {
 			})
 
 			Describe("IPV6", func() {
+				BeforeEach(func() {
+					fakeIPProvider.HasIPReturns(false)
+				})
+
 				Context("and they are about external ips", func() {
 					It("forwards the question up to a recursor", func() {
 						m := &dns.Msg{}
@@ -84,6 +90,7 @@ var _ = Describe("ArpaHandler", func() {
 
 						arpaHandler.ServeDNS(fakeWriter, m)
 						Expect(fakeForwarder.ServeDNSCallCount()).To(Equal(1))
+						Expect(fakeIPProvider.HasIPCallCount()).To(Equal(1))
 						forwardedWriter, forwardedMsg := fakeForwarder.ServeDNSArgsForCall(0)
 						Expect(forwardedWriter).To(Equal(fakeWriter))
 						Expect(forwardedMsg).To(Equal(m))
@@ -92,7 +99,7 @@ var _ = Describe("ArpaHandler", func() {
 
 				Context("and they are about internal ips", func() {
 					BeforeEach(func() {
-						fakeIPProvider.AllIPsReturns(map[string]bool{"1234:beef:dead:0000:0000:0000:0000:0000": true})
+						fakeIPProvider.HasIPReturns(true)
 					})
 
 					It("responds with an rcode server failure", func() {
@@ -100,6 +107,8 @@ var _ = Describe("ArpaHandler", func() {
 						m.SetQuestion("0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.d.a.e.d.f.e.e.b.4.3.2.1.ip6.arpa.", dns.TypePTR)
 
 						arpaHandler.ServeDNS(fakeWriter, m)
+						Expect(fakeIPProvider.HasIPCallCount()).To(Equal(1))
+						Expect(fakeIPProvider.HasIPArgsForCall(0)).To(Equal("1234:beef:dead:0000:0000:0000:0000:0000"))
 						Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 						message := fakeWriter.WriteMsgArgsForCall(0)
 						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
