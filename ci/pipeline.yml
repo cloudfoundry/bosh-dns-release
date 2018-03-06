@@ -1,4 +1,17 @@
 ---
+groups:
+- name: all
+  jobs:
+  - test-unit
+  - test-coredns-cache
+  - test-unit-windows
+  - test-unit-release
+  - create-release
+  - test-acceptance
+  - test-acceptance-windows
+  - brats-ubuntu
+  - finalize-release
+
 jobs:
 - name: test-unit
   public: true
