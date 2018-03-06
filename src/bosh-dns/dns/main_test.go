@@ -180,8 +180,11 @@ var _ = Describe("main", func() {
 			)
 			httpJSONServer.HTTPTestServer.Start()
 			configContents, err := json.Marshal(map[string]interface{}{
-				"address":          listenAddress,
-				"port":             listenPort,
+				"address": listenAddress,
+				"port":    listenPort,
+				"recursors": []string{
+					fmt.Sprintf("127.0.0.1:%d", recursorPort),
+				},
 				"records_file":     recordsFilePath,
 				"alias_files_glob": path.Join(aliasesDir, "*"),
 				"upcheck_domains":  []string{"health.check.bosh.", "health.check.ca."},
