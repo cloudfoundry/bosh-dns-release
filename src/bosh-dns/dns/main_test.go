@@ -399,28 +399,6 @@ var _ = Describe("main", func() {
 			})
 
 			Context("arpa.", func() {
-				Context("when arpaing external ips", func() {
-					It("forwards ipv4 to a recursor", func() {
-						m.SetQuestion("8.8.8.8.in-addr.arpa.", dns.TypePTR)
-						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-
-						Expect(err).NotTo(HaveOccurred())
-						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-						Expect(r.Answer).To(HaveLen(1))
-						Expect(r.Answer[0].String()).To(MatchRegexp(`8\.8\.8\.8\.in-addr\.arpa\.\s+\d+\s+IN\s+PTR\s+google-public-dns-a\.google\.com\.`))
-					})
-
-					It("forwards ipv6 to a recursor", func() {
-						m.SetQuestion("8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.ip6.arpa.", dns.TypePTR)
-						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-
-						Expect(err).NotTo(HaveOccurred())
-						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-						Expect(r.Answer).To(HaveLen(1))
-						Expect(r.Answer[0].String()).To(MatchRegexp(`8\.8\.8\.8\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.6\.8\.4\.0\.6\.8\.4\.1\.0\.0\.2\.ip6\.arpa\.\s+\d+\s+IN\s+PTR\s+google-public-dns-a\.google\.com\.`))
-					})
-				})
-
 				Context("when arpaing internal ips", func() {
 					It("responds with an rcode server failure", func() {
 						m.SetQuestion("1.0.0.127.in-addr.arpa.", dns.TypePTR)
@@ -675,6 +653,7 @@ var _ = Describe("main", func() {
 					})
 
 					go server.ListenAndServe()
+					Expect(waitForServer(recursorPort)).To(Succeed())
 				})
 
 				AfterEach(func() {
@@ -777,6 +756,30 @@ var _ = Describe("main", func() {
 						Expect(err).NotTo(HaveOccurred())
 						Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
 						Expect(r.Answer).To(HaveLen(0))
+					})
+				})
+
+				Context("arpa.", func() {
+					Context("when arpaing external ips", func() {
+						It("forwards ipv4 to a recursor", func() {
+							m.SetQuestion("8.8.8.8.in-addr.arpa.", dns.TypePTR)
+							r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+							Expect(err).NotTo(HaveOccurred())
+							Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+							Expect(r.Answer).To(HaveLen(1))
+							Expect(r.Answer[0].String()).To(MatchRegexp(`8\.8\.8\.8\.in-addr\.arpa\.\s+\d+\s+IN\s+PTR\s+google-public-dns-a\.google\.com\.`))
+						})
+
+						It("forwards ipv6 to a recursor", func() {
+							m.SetQuestion("8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.ip6.arpa.", dns.TypePTR)
+							r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+							Expect(err).NotTo(HaveOccurred())
+							Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+							Expect(r.Answer).To(HaveLen(1))
+							Expect(r.Answer[0].String()).To(MatchRegexp(`8\.8\.8\.8\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.6\.8\.4\.0\.6\.8\.4\.1\.0\.0\.2\.ip6\.arpa\.\s+\d+\s+IN\s+PTR\s+google-public-dns-a\.google\.com\.`))
+						})
 					})
 				})
 			})
