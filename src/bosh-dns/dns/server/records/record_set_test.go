@@ -327,14 +327,14 @@ var _ = Describe("RecordSet", func() {
 		})
 	})
 
-	Describe("AllIPs", func() {
+	Describe("HasIP", func() {
 		BeforeEach(func() {
 			aliasList = mustNewConfigFromMap(map[string][]string{
 				"alias1": {""},
 			})
 		})
 
-		It("returns a map with all ips as keys", func() {
+		It("returns true if an IP is known", func() {
 			jsonBytes := []byte(`{
 				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
 				"record_infos": [
@@ -349,11 +349,8 @@ var _ = Describe("RecordSet", func() {
 			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(recordSet.AllIPs()).To(Equal(map[string]bool{
-				"123.123.123.123": true,
-				"123.123.123.124": true,
-				"123.123.123.125": true,
-			}))
+			Expect(recordSet.HasIP("123.123.123.123")).To(Equal(true))
+			Expect(recordSet.HasIP("127.0.0.1")).To(Equal(false))
 		})
 	})
 

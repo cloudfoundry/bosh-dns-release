@@ -7,64 +7,74 @@ import (
 )
 
 type FakeIPProvider struct {
-	AllIPsStub        func() map[string]bool
-	allIPsMutex       sync.RWMutex
-	allIPsArgsForCall []struct{}
-	allIPsReturns     struct {
-		result1 map[string]bool
+	HasIPStub        func(string) bool
+	hasIPMutex       sync.RWMutex
+	hasIPArgsForCall []struct {
+		arg1 string
 	}
-	allIPsReturnsOnCall map[int]struct {
-		result1 map[string]bool
+	hasIPReturns struct {
+		result1 bool
+	}
+	hasIPReturnsOnCall map[int]struct {
+		result1 bool
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeIPProvider) AllIPs() map[string]bool {
-	fake.allIPsMutex.Lock()
-	ret, specificReturn := fake.allIPsReturnsOnCall[len(fake.allIPsArgsForCall)]
-	fake.allIPsArgsForCall = append(fake.allIPsArgsForCall, struct{}{})
-	fake.recordInvocation("AllIPs", []interface{}{})
-	fake.allIPsMutex.Unlock()
-	if fake.AllIPsStub != nil {
-		return fake.AllIPsStub()
+func (fake *FakeIPProvider) HasIP(arg1 string) bool {
+	fake.hasIPMutex.Lock()
+	ret, specificReturn := fake.hasIPReturnsOnCall[len(fake.hasIPArgsForCall)]
+	fake.hasIPArgsForCall = append(fake.hasIPArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("HasIP", []interface{}{arg1})
+	fake.hasIPMutex.Unlock()
+	if fake.HasIPStub != nil {
+		return fake.HasIPStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.allIPsReturns.result1
+	return fake.hasIPReturns.result1
 }
 
-func (fake *FakeIPProvider) AllIPsCallCount() int {
-	fake.allIPsMutex.RLock()
-	defer fake.allIPsMutex.RUnlock()
-	return len(fake.allIPsArgsForCall)
+func (fake *FakeIPProvider) HasIPCallCount() int {
+	fake.hasIPMutex.RLock()
+	defer fake.hasIPMutex.RUnlock()
+	return len(fake.hasIPArgsForCall)
 }
 
-func (fake *FakeIPProvider) AllIPsReturns(result1 map[string]bool) {
-	fake.AllIPsStub = nil
-	fake.allIPsReturns = struct {
-		result1 map[string]bool
+func (fake *FakeIPProvider) HasIPArgsForCall(i int) string {
+	fake.hasIPMutex.RLock()
+	defer fake.hasIPMutex.RUnlock()
+	return fake.hasIPArgsForCall[i].arg1
+}
+
+func (fake *FakeIPProvider) HasIPReturns(result1 bool) {
+	fake.HasIPStub = nil
+	fake.hasIPReturns = struct {
+		result1 bool
 	}{result1}
 }
 
-func (fake *FakeIPProvider) AllIPsReturnsOnCall(i int, result1 map[string]bool) {
-	fake.AllIPsStub = nil
-	if fake.allIPsReturnsOnCall == nil {
-		fake.allIPsReturnsOnCall = make(map[int]struct {
-			result1 map[string]bool
+func (fake *FakeIPProvider) HasIPReturnsOnCall(i int, result1 bool) {
+	fake.HasIPStub = nil
+	if fake.hasIPReturnsOnCall == nil {
+		fake.hasIPReturnsOnCall = make(map[int]struct {
+			result1 bool
 		})
 	}
-	fake.allIPsReturnsOnCall[i] = struct {
-		result1 map[string]bool
+	fake.hasIPReturnsOnCall[i] = struct {
+		result1 bool
 	}{result1}
 }
 
 func (fake *FakeIPProvider) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.allIPsMutex.RLock()
-	defer fake.allIPsMutex.RUnlock()
+	fake.hasIPMutex.RLock()
+	defer fake.hasIPMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

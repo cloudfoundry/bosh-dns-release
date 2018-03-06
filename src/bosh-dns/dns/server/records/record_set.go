@@ -132,12 +132,16 @@ func (r *RecordSet) AllRecords() *[]record.Record {
 	return &r.Records
 }
 
-func (r *RecordSet) AllIPs() map[string]bool {
-	allIPs := make(map[string]bool, len(r.Records))
+func (r *RecordSet) HasIP(ip string) bool {
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+
 	for _, r := range r.Records {
-		allIPs[r.IP] = true
+		if r.IP == ip {
+			return true
+		}
 	}
-	return allIPs
+	return false
 }
 
 func (r *RecordSet) Filter(resolutions []string, shouldTrack bool) ([]record.Record, error) {
