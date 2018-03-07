@@ -950,7 +950,7 @@ var _ = Describe("main", func() {
 					})
 
 					go server.ListenAndServe()
-					Expect(waitForServer(recursorPort)).To(Succeed())
+					Expect(testhelpers.WaitForListeningTCP(recursorPort)).To(Succeed())
 				})
 
 				AfterEach(func() {
