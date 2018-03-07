@@ -632,26 +632,78 @@ var _ = Describe("main", func() {
 
 				BeforeEach(func() {
 					server = &dns.Server{Addr: fmt.Sprintf("0.0.0.0:%d", recursorPort), Net: "tcp", UDPSize: 65535}
-					dns.HandleFunc("test-target.recursor.internal", func(resp dns.ResponseWriter, req *dns.Msg) {
-						msg := new(dns.Msg)
 
-						msg.Answer = append(msg.Answer, &dns.A{
-							Hdr: dns.RR_Header{
-								Name:   req.Question[0].Name,
-								Rrtype: dns.TypeA,
-								Class:  dns.ClassINET,
-								Ttl:    30,
-							},
-							A: net.ParseIP("192.0.2.100"),
-						})
+					dns.HandleFunc(".", func(resp dns.ResponseWriter, req *dns.Msg) {
+						switch name := req.Question[0].Name; name {
+						case "test-target.recursor.internal.":
+							msg := new(dns.Msg)
 
-						msg.Authoritative = true
-						msg.RecursionAvailable = true
+							msg.Answer = append(msg.Answer, &dns.A{
+								Hdr: dns.RR_Header{
+									Name:   req.Question[0].Name,
+									Rrtype: dns.TypeA,
+									Class:  dns.ClassINET,
+									Ttl:    30,
+								},
+								A: net.ParseIP("192.0.2.100"),
+							})
 
-						msg.SetReply(req)
-						err := resp.WriteMsg(msg)
-						if err != nil {
-							Expect(err).NotTo(HaveOccurred())
+							msg.Authoritative = true
+							msg.RecursionAvailable = true
+
+							msg.SetReply(req)
+							err := resp.WriteMsg(msg)
+							if err != nil {
+								Expect(err).NotTo(HaveOccurred())
+							}
+						case "7.0.0.10.in-addr.arpa.":
+							msg := new(dns.Msg)
+
+							msg.Answer = append(msg.Answer, &dns.PTR{
+								Hdr: dns.RR_Header{
+									Name:   req.Question[0].Name,
+									Rrtype: dns.TypePTR,
+									Class:  dns.ClassINET,
+									Ttl:    0,
+								},
+								Ptr: "bosh-dns.arpa.com.",
+							})
+
+							msg.Authoritative = true
+							msg.RecursionAvailable = true
+
+							msg.SetReply(req)
+
+							err := resp.WriteMsg(msg)
+							if err != nil {
+								Expect(err).NotTo(HaveOccurred())
+							}
+
+						case "3.6.8.4.c.e.d.1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.7.8.4.1.0.0.2.ip6.arpa.":
+							msg := new(dns.Msg)
+
+							msg.Answer = append(msg.Answer, &dns.PTR{
+								Hdr: dns.RR_Header{
+									Name:   req.Question[0].Name,
+									Rrtype: dns.TypePTR,
+									Class:  dns.ClassINET,
+									Ttl:    0,
+								},
+								Ptr: "bosh-dns.arpa6.com.",
+							})
+
+							msg.Authoritative = true
+							msg.RecursionAvailable = true
+
+							msg.SetReply(req)
+
+							err := resp.WriteMsg(msg)
+							if err != nil {
+								Expect(err).NotTo(HaveOccurred())
+							}
+
+						default:
+							fmt.Printf("Unexpected request to test recursor :%+v", name)
 						}
 					})
 
@@ -765,23 +817,33 @@ var _ = Describe("main", func() {
 				Context("arpa.", func() {
 					Context("when arpaing external ips", func() {
 						It("forwards ipv4 to a recursor", func() {
-							m.SetQuestion("8.8.8.8.in-addr.arpa.", dns.TypePTR)
+							c := &dns.Client{Net: "tcp"}
+
+							m := &dns.Msg{}
+							reverseAddr, err := dns.ReverseAddr("10.0.0.7")
+							Expect(err).NotTo(HaveOccurred())
+							m.SetQuestion(reverseAddr, dns.TypePTR)
 							r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 							Expect(err).NotTo(HaveOccurred())
 							Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 							Expect(r.Answer).To(HaveLen(1))
-							Expect(r.Answer[0].String()).To(MatchRegexp(`8\.8\.8\.8\.in-addr\.arpa\.\s+\d+\s+IN\s+PTR\s+google-public-dns-a\.google\.com\.`))
+							Expect(r.Answer[0].String()).To(MatchRegexp(`7\.0\.0\.10\.in-addr\.arpa\.\s+\d+\s+IN\s+PTR\s+bosh-dns\.arpa\.com\.`))
 						})
 
 						It("forwards ipv6 to a recursor", func() {
-							m.SetQuestion("8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.ip6.arpa.", dns.TypePTR)
+							c := &dns.Client{Net: "tcp"}
+
+							m := &dns.Msg{}
+							reverseAddr, err := dns.ReverseAddr("2001:4870::1dec:4863")
+							Expect(err).NotTo(HaveOccurred())
+							m.SetQuestion(reverseAddr, dns.TypePTR)
 							r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 							Expect(err).NotTo(HaveOccurred())
 							Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 							Expect(r.Answer).To(HaveLen(1))
-							Expect(r.Answer[0].String()).To(MatchRegexp(`8\.8\.8\.8\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.6\.8\.4\.0\.6\.8\.4\.1\.0\.0\.2\.ip6\.arpa\.\s+\d+\s+IN\s+PTR\s+google-public-dns-a\.google\.com\.`))
+							Expect(r.Answer[0].String()).To(MatchRegexp(`3\.6\.8\.4\.c\.e\.d\.1\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.7\.8\.4\.1\.0\.0\.2\.ip6\.arpa\.\s+\d+\s+IN\s+PTR\s+bosh-dns\.arpa6\.com\.`))
 						})
 					})
 				})
