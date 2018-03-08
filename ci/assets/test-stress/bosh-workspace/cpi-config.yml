@@ -1,0 +1,70 @@
+cpis:
+- name: docker-1
+  type: docker
+  properties:
+    host: tcp://((docker_server_ip_0)):4243
+    tls: ((docker_client_tls))
+    api_version: "1.22"
+
+- name: docker-2
+  type: docker
+  properties:
+    host: tcp://((docker_server_ip_1)):4243
+    tls: ((docker_client_tls))
+    api_version: "1.22"
+
+- name: docker-3
+  type: docker
+  properties:
+    host: tcp://((docker_server_ip_2)):4243
+    tls: ((docker_client_tls))
+    api_version: "1.22"
+
+- name: docker-4
+  type: docker
+  properties:
+    host: tcp://((docker_server_ip_3)):4243
+    tls: ((docker_client_tls))
+    api_version: "1.22"
+
+- name: docker-5
+  type: docker
+  properties:
+    host: tcp://((docker_server_ip_4)):4243
+    tls: ((docker_client_tls))
+    api_version: "1.22"
+
+- name: docker-6
+  type: docker
+  properties:
+    host: tcp://((docker_server_ip_5)):4243
+    tls: ((docker_client_tls))
+    api_version: "1.22"
+
+- name: docker-7
+  type: docker
+  properties:
+    host: tcp://((docker_server_ip_6)):4243
+    tls: ((docker_client_tls))
+    api_version: "1.22"
+
+- name: docker-8
+  type: docker
+  properties:
+    host: tcp://((docker_server_ip_7)):4243
+    tls: ((docker_client_tls))
+    api_version: "1.22"
+
+- name: docker-9
+  type: docker
+  properties:
+    host: tcp://((docker_server_ip_8)):4243
+    tls: ((docker_client_tls))
+    api_version: "1.22"
+
+- name: docker-10
+  type: docker
+  properties:
+    host: tcp://((docker_server_ip_9)):4243
+    tls: ((docker_client_tls))
+    api_version: "1.22"

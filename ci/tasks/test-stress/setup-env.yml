@@ -1,0 +1,26 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v4
+
+inputs:
+  - name: bbl-state
+  - name: bosh-dns-release
+  - name: bosh-docker-cpi-release
+
+outputs:
+  - name: updated-bbl-state
+
+params:
+  BBL_AWS_ACCESS_KEY_ID: ""
+  BBL_AWS_SECRET_ACCESS_KEY: ""
+  BBL_AWS_REGION: us-west-2
+  BBL_IAAS: aws
+  BBL_STATE_DIR: test-stress/bbl-state
+
+run:
+  path: bosh-dns-release/ci/tasks/test-stress/setup-env.sh

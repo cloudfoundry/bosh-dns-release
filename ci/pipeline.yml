@@ -18,10 +18,6 @@ groups:
   - bbl-destroy
   - finalize-release
   - bump-major
-- name: bbl-stress
-  jobs:
-  - bbl-up-stress
-  - bbl-destroy-stress
 
 jobs:
 - name: test-unit
@@ -49,7 +45,7 @@ jobs:
       trigger: true
     - task: test-unit-windows
       timeout: 1h
-      file: bosh-dns-release/ci/tasks/test-unit-windows.yml
+      file: bosh-dns-release/ci/tasks/windows/test-unit-windows.yml
 
 - name: test-unit-release
   public: true
@@ -103,7 +99,7 @@ jobs:
       trigger: true
       passed: [create-release]
     - task: test-performance
-      file: bosh-dns-release/ci/tasks/test-performance-windows.yml
+      file: bosh-dns-release/ci/tasks/windows/test-performance-windows.yml
       timeout: 1h
       params:
         ZONES_JSON_HASH: {{zones_json_hash}}
@@ -149,15 +145,15 @@ jobs:
         trigger: true
         passed: [create-release]
     - task: windows
-      file: bosh-dns-release/ci/tasks/test-acceptance-windows.yml
+      file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
       params:
         WINDOWS_OS_VERSION: windows2012R2
       timeout: 1h
     - task: windows-nameserver-disabled
-      file: bosh-dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
+      file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
       timeout: 1h
     - task: windows-shared
-      file: bosh-dns-release/ci/tasks/test-acceptance-windows-shared.yml
+      file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.yml
       timeout: 1h
 
 - name: test-acceptance-windows2016
@@ -182,21 +178,21 @@ jobs:
         - create-release
         trigger: true
     - task: windows
-      file: bosh-dns-release/ci/tasks/test-acceptance-windows.yml
+      file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
       params:
         WINDOWS_OS_VERSION: windows2016
       input_mapping:
         bosh-candidate-stemcell-windows: bosh-candidate-stemcell-windows2016
       timeout: 1h
     - task: windows-nameserver-disabled
-      file: bosh-dns-release/ci/tasks/test-acceptance-windows-nameserver-disabled.yml
+      file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
       params:
         WINDOWS_OS_VERSION: windows2016
       input_mapping:
         bosh-candidate-stemcell-windows: bosh-candidate-stemcell-windows2016
       timeout: 1h
     - task: windows-shared
-      file: bosh-dns-release/ci/tasks/test-acceptance-windows-shared.yml
+      file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.yml
       params:
         WINDOWS_OS_VERSION: windows2016
       input_mapping:
@@ -209,38 +205,58 @@ jobs:
 - name: test-stress
   public: false
   serial: true
-  serial_groups:
-  - test-stress-group
   plan:
     - aggregate:
-      - get: bbl-state
-        resource: envs
-      - get: bosh-deployment
       - get: bosh-dns-release
         trigger: true
         passed: [create-release]
-      - get: bosh-docker-cpi-release
+      - get: bbl-state
+        resource: envs
+      - get: bosh-deployment
+      - get: docker-release
       - get: stemcell
       - get: warden-stemcell
-      - get: cf-deployment-concourse-tasks
-      - get: env-repo
-        resource: envs
-      - get: ops-files
-        resource: envs
-    - task: pre-clean
-      file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
+      - get: bosh-docker-cpi-release
     - do:
-      - task: deploy-to-aws
-        file: bosh-dns-release/ci/tasks/test-stress/deploy-inner-bosh.yml
+      - task: setup-env
+        file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
+        params:
+          BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
+          BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+          BBL_AWS_REGION: us-west-2
+          BBL_IAAS: aws
+          BBL_STATE_DIR: test-stress/bbl-state
+        ensure:
+          put: envs
+          params:
+            repository: updated-bbl-state
+      - task: deploy-docker-vms
+        file: bosh-dns-release/ci/tasks/test-stress/deploy-docker.yml
+        input_mapping:
+          bbl-state: updated-bbl-state
       - task: deploy-containers
         file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
         input_mapping:
           stemcell: warden-stemcell
+          bbl-state: updated-bbl-state
       - task: stress-containers
         file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
+        input_mapping:
+          bbl-state: updated-bbl-state
       ensure:
-        task: post-clean
-        file: bosh-dns-release/ci/tasks/test-stress/clean-up.yml
+        task: destroy-env
+        file: bosh-dns-release/ci/tasks/test-stress/destroy-env.yml
+        input_mapping:
+          bbl-state: updated-bbl-state
+        params:
+          BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
+          BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+          BBL_STATE_DIR: test-stress/bbl-state
+        ensure:
+          put: envs
+          params:
+            repository: cleanup-bbl-state
+            rebase: true
 
 - name: brats-ubuntu
   serial: true
@@ -298,49 +314,6 @@ jobs:
       file: bosh-dns-release/ci/tasks/bbl-destroy.yml
       params:
         BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
-      ensure:
-        put: envs
-        params:
-          repository: updated-env-repo
-
-- name: bbl-up-stress
-  serial_groups:
-  - test-stress-group
-  plan:
-    - aggregate:
-      - get: cf-deployment-concourse-tasks
-      - get: env-repo
-        resource: envs
-      - get: ops-files
-        resource: envs
-    - task: bbl-up
-      file: cf-deployment-concourse-tasks/bbl-up/task.yml
-      params:
-        BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
-        BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
-        BBL_AWS_REGION: us-west-2
-        SKIP_LB_CREATION: true
-        BBL_IAAS: aws
-        BBL_STATE_DIR: test-stress/bbl-state
-      ensure:
-        put: envs
-        params:
-          repository: updated-env-repo
-
-- name: bbl-destroy-stress
-  serial_groups:
-  - test-stress-group
-  plan:
-    - aggregate:
-      - get: cf-deployment-concourse-tasks
-      - get: env-repo
-        resource: envs
-    - task: bbl-destroy
-      file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
-      params:
-        BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
-        BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
-        BBL_STATE_DIR: test-stress/bbl-state
       ensure:
         put: envs
         params:
@@ -426,11 +399,15 @@ resources:
     uri: https://github.com/cloudfoundry/bosh-deployment
     branch: master
 
-- name: bosh-docker-cpi-release
-  type: git
+- name: docker-release
+  type: bosh-io-release
   source:
-    uri: https://github.com/cppforlife/bosh-docker-cpi-release
-    branch: master
+    repository: cppforlife/docker-release
+
+- name: bosh-docker-cpi-release
+  type: bosh-io-release
+  source:
+    repository: cppforlife/bosh-docker-cpi-release
 
 - name: bosh-candidate-stemcell
   type: s3
@@ -470,12 +447,6 @@ resources:
     uri: git@github.com:cloudfoundry/dns-release-ci-envs.git
     private_key: {{envs_private_key}}
 
-- name: cf-deployment-concourse-tasks
-  type: git
-  source:
-    branch: fix-aws-lb
-    uri: https://github.com/bosh-dep-forks/cf-deployment-concourse-tasks
-
 - name: every-10m
   type: time
   source: {interval: 10m}
@@ -484,10 +455,8 @@ resources:
   type: bosh-io-stemcell
   source:
     name: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
-    version_family: "3468.latest"
 
 - name: warden-stemcell
   type: bosh-io-stemcell
   source:
     name: bosh-warden-boshlite-ubuntu-trusty-go_agent
-    version_family: "3468.latest"

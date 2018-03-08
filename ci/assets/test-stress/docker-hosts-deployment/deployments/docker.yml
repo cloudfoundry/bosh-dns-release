@@ -1,0 +1,130 @@
+name: docker
+stemcells:
+- alias: default
+  os: ubuntu-trusty
+  version: latest
+update:
+  canaries: 1
+  canary_watch_time: 30000-1200000
+  max_in_flight: 5
+  serial: false
+  update_watch_time: 5000-1200000
+
+instance_groups:
+
+- &docker-ig
+  instances: 1
+  stemcell: default
+  azs: [z1]
+  jobs:
+  - name: docker
+    properties:
+      listen_address: 0.0.0.0
+      tls: ((docker_server_tls))
+    release: docker
+  persistent_disk_type: 10GB
+  vm_type: large
+  name: server-0
+  networks:
+  - name: default
+    static_ips: [((docker_server_ip_0))]
+  vm_extensions: [docker0]
+
+- <<: *docker-ig
+  name: server-1
+  networks:
+  - name: default
+    static_ips: [((docker_server_ip_1))]
+  vm_extensions: [docker1]
+
+- <<: *docker-ig
+  name: server-2
+  networks:
+  - name: default
+    static_ips: [((docker_server_ip_2))]
+  vm_extensions: [docker2]
+
+- <<: *docker-ig
+  name: server-3
+  networks:
+  - name: default
+    static_ips: [((docker_server_ip_3))]
+  vm_extensions: [docker3]
+
+- <<: *docker-ig
+  name: server-4
+  networks:
+  - name: default
+    static_ips: [((docker_server_ip_4))]
+  vm_extensions: [docker4]
+
+- <<: *docker-ig
+  name: server-5
+  networks:
+  - name: default
+    static_ips: [((docker_server_ip_5))]
+  vm_extensions: [docker5]
+
+- <<: *docker-ig
+  name: server-6
+  networks:
+  - name: default
+    static_ips: [((docker_server_ip_6))]
+  vm_extensions: [docker6]
+
+- <<: *docker-ig
+  name: server-7
+  networks:
+  - name: default
+    static_ips: [((docker_server_ip_7))]
+  vm_extensions: [docker7]
+
+- <<: *docker-ig
+  name: server-8
+  networks:
+  - name: default
+    static_ips: [((docker_server_ip_8))]
+  vm_extensions: [docker8]
+
+- <<: *docker-ig
+  name: server-9
+  networks:
+  - name: default
+    static_ips: [((docker_server_ip_9))]
+  vm_extensions: [docker9]
+
+releases:
+- name: docker
+  url: file://((docker_release))
+  version: latest
+variables:
+- name: docker_ca
+  options:
+    common_name: docker_ca
+    is_ca: true
+  type: certificate
+- name: docker_server_tls
+  options:
+    alternative_names:
+    - ((docker_server_ip_0))
+    - ((docker_server_ip_1))
+    - ((docker_server_ip_2))
+    - ((docker_server_ip_3))
+    - ((docker_server_ip_4))
+    - ((docker_server_ip_5))
+    - ((docker_server_ip_6))
+    - ((docker_server_ip_7))
+    - ((docker_server_ip_8))
+    - ((docker_server_ip_9))
+    ca: docker_ca
+    common_name: docker
+    extended_key_usage:
+    - server_auth
+  type: certificate
+- name: docker_client_tls
+  options:
+    ca: docker_ca
+    common_name: client
+    extended_key_usage:
+    - client_auth
+  type: certificate

@@ -1,0 +1,5 @@
+internal_ip: 10.0.0.6
+director_name: bosh
+director_max_threads: 20
+number_workers: 20
+pg_max_connection: 1000
