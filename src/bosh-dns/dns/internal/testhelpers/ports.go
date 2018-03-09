@@ -4,30 +4,23 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strconv"
+	"sync/atomic"
 	"time"
 
+	"github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 )
 
+const basePort = 4567
+
+var portIndex int32 = -1
+
 func GetFreePort() (int, error) {
-	l, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return 0, err
+	maxPorts := 2000 / config.GinkgoConfig.ParallelTotal
+	if portIndex > int32(maxPorts-1) {
+		return 0, fmt.Errorf("Cannot find a free port to use")
 	}
-	l.Close()
-
-	_, port, err := net.SplitHostPort(l.Addr().String())
-	if err != nil {
-		return 0, err
-	}
-
-	intPort, err := strconv.Atoi(port)
-	if err != nil {
-		return 0, err
-	}
-
-	return intPort, nil
+	return basePort + int(atomic.AddInt32(&portIndex, 1)) + maxPorts*config.GinkgoConfig.ParallelNode, nil
 }
 
 func WaitForListeningTCP(port int) error {
