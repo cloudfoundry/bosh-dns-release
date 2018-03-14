@@ -30,6 +30,7 @@ var (
 	healthServerPath string
 	healthPort       = 8853
 	dnsPort          = 9953
+	apiPort          = 10053
 )
 
 func setupServers() {
@@ -51,8 +52,14 @@ func setupServers() {
 	Expect(err).ToNot(HaveOccurred())
 
 	dnsConfigContents, err := json.Marshal(map[string]interface{}{
-		"address":          "127.0.0.2",
-		"port":             dnsPort,
+		"address": "127.0.0.2",
+		"port":    dnsPort,
+		"api": map[string]interface{}{
+			"port":             apiPort,
+			"ca_file":          "../dns/api/assets/test_certs/test_ca.pem",
+			"certificate_file": "../dns/api/assets/test_certs/test_server.pem",
+			"private_key_file": "../dns/api/assets/test_certs/test_server.key",
+		},
 		"records_file":     "assets/records.json",
 		"alias_files_glob": "assets/aliases.json",
 		"upcheck_domains":  []string{"upcheck.bosh-dns."},
