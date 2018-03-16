@@ -23,7 +23,7 @@ instance_groups:
       tls: ((docker_server_tls))
     release: docker
   persistent_disk_type: 10GB
-  vm_type: large
+  vm_type: extra-large
   name: server-0
   networks:
   - name: default
