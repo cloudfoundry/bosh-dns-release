@@ -8,6 +8,7 @@ main() {
   local bosh_deployment_repo=$PWD/bosh-deployment
   local docker_release=$(echo $PWD/docker-release/*.tgz)
   local stemcell_path=$PWD/stemcell/*.tgz
+  local bosh_dns_release_tarball=$PWD/candidate-release/*.tgz
   local state_dir=$(mktemp -d)
 
   # Deploy docker hosts to director
@@ -18,6 +19,7 @@ main() {
       -v default_table_id=$(bosh int $BBL_STATE_DIR/vars/terraform.tfstate --path /modules/0/resources/aws_route_table.internal_route_table/primary/id)
 
     bosh upload-stemcell $stemcell_path
+    bosh upload-release $bosh_dns_release_tarball
 
     bosh -n deploy -d docker deployments/docker.yml \
       -l vars/docker-vars.yml \

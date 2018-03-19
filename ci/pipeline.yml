@@ -217,6 +217,7 @@ jobs:
       - get: stemcell
       - get: warden-stemcell
       - get: bosh-docker-cpi-release
+      - get: candidate-release
     - do:
       - task: setup-env
         file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
