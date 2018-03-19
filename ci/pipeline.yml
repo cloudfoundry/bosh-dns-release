@@ -140,8 +140,6 @@ jobs:
 - name: finalize-release
   plan:
     - aggregate:
-      - get: bosh-dns-release
-        passed: [test-acceptance, test-acceptance-windows]
       - get: candidate-release
         passed: [test-acceptance, brats-ubuntu, test-acceptance-windows]
       - get: version
@@ -155,9 +153,12 @@ jobs:
     - put: version
       params:
         file: bumped-version/number
+    - put: bosh-dns-release-master
+      params:
+        repository: bosh-dns-release-master
     - put: bosh-dns-release
       params:
-        repository: final-bosh-dns-release
+        repository: bosh-dns-release
         tag: /tmp/build/put/tag/tag-name
         annotate: /tmp/build/put/tag/annotate-msg
 
@@ -167,6 +168,15 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/bosh-dns-release
     branch: 0.1.x
+    private_key: {{github_deployment_key}}
+    ignore_paths:
+    - ci/docker
+
+- name: bosh-dns-release-master
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/bosh-dns-release
+    branch: master
     private_key: {{github_deployment_key}}
     ignore_paths:
     - ci/docker

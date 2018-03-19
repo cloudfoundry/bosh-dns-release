@@ -8,13 +8,13 @@ image_resource:
     tag: acceptance-tests
 
 inputs:
-  - name: bosh-dns-release
+  - name: bosh-dns-release-master
   - name: candidate-release
   - name: version
 
 outputs:
   - name: bumped-version
-  - name: final-bosh-dns-release
+  - name: bosh-dns-release-master-with-final
   - name: tag
 
 params:

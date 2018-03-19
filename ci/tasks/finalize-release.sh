@@ -6,13 +6,13 @@ VERSION=$(cat version/number)
 cp version/number bumped-version/number
 
 export ROOT_PATH=$PWD
-PROMOTED_REPO=$PWD/final-bosh-dns-release
+PROMOTED_MASTER=$PWD/bosh-dns-release-master-with-final
 
 export DEV_RELEASE_PATH=$ROOT_PATH/candidate-release/bosh*.tgz
 
-git clone ./bosh-dns-release $PROMOTED_REPO
+git clone ./bosh-dns-release-master $PROMOTED_MASTER
 
-pushd $PROMOTED_REPO
+pushd $PROMOTED_MASTER
   git status
 
   cat >> config/private.yml <<EOF
