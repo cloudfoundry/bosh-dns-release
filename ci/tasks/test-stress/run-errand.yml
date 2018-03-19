@@ -10,9 +10,6 @@ image_resource:
 inputs:
   - name: bbl-state
   - name: bosh-dns-release
-  - name: inner-bosh-vars
-
-outputs: []
 
 params:
   DEPLOYMENTS_OF_100: 10

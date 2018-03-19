@@ -1,0 +1,36 @@
+name: ((deployment_name))
+stemcells:
+- alias: default
+  os: ubuntu-trusty
+  version: latest
+update:
+  canaries: 0
+  canary_watch_time: 5000-1200000
+  max_in_flight: 20
+  serial: false
+  update_watch_time: 5000-1200000
+instance_groups:
+- instances: ((instances))
+  stemcell: default
+  azs: [d1, d2, d3, d4, d5, d6, d7, d8, d9, d10]
+  jobs:
+  - name: bosh-dns
+    release: bosh-dns
+  - name: dns-lookuper
+    release: dns-lookuper
+    properties:
+      deployment_count: ((deployment_count))
+      deployment_name_prefix: bosh-dns
+      instance_count: ((instances))
+  name: bosh-dns
+  networks:
+  - name: docker_net
+  vm_type: docker
+  vm_extensions: [tcp_22]
+releases:
+- name: bosh-dns
+  sha1: e38d3e5edd16ce2dca778440b636ab1ea61f892f
+  url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-release?v=0.0.11
+  version: 0.0.11
+- name: dns-lookuper
+  version: latest

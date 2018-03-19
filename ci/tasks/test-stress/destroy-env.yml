@@ -10,13 +10,14 @@ image_resource:
 inputs:
   - name: bbl-state
   - name: bosh-dns-release
-  - name: docker-vars
-  - name: stemcell
+
+outputs:
+  - name: cleanup-bbl-state
 
 params:
-  DEPLOYMENTS_OF_100: 10
-  PARALLEL_DEPLOYMENTS: 5
-  BBL_STATE_SUBDIRECTORY: test-stress/bbl-state
+  BBL_AWS_ACCESS_KEY_ID: ""
+  BBL_AWS_SECRET_ACCESS_KEY: ""
+  BBL_STATE_DIR: test-stress/bbl-state
 
 run:
-  path: bosh-dns-release/ci/tasks/test-stress/deploy-n.sh
+  path: bosh-dns-release/ci/tasks/test-stress/destroy-env.sh

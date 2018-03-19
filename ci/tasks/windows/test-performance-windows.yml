@@ -1,0 +1,17 @@
+---
+platform: windows
+
+params:
+  DATADOG_API_KEY: ~
+  DATADOG_ENVIRONMENT_TAG: ~
+
+inputs:
+  - name: bosh-dns-release
+
+run:
+  path: powershell
+  args:
+  - "-ExecutionPolicy"
+  - "Bypass"
+  - "-File"
+  - bosh-dns-release/ci/tasks/windows/test-performance-windows.ps1

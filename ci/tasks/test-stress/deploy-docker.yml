@@ -9,14 +9,16 @@ image_resource:
 
 inputs:
   - name: bbl-state
+  - name: bosh-deployment
   - name: bosh-dns-release
-  - name: docker-vars
   - name: stemcell
+  - name: docker-release
+
+outputs:
+  - name: docker-vars
 
 params:
-  DEPLOYMENTS_OF_100: 10
-  PARALLEL_DEPLOYMENTS: 5
   BBL_STATE_SUBDIRECTORY: test-stress/bbl-state
 
 run:
-  path: bosh-dns-release/ci/tasks/test-stress/deploy-n.sh
+  path: bosh-dns-release/ci/tasks/test-stress/deploy-docker.sh
