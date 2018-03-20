@@ -7,7 +7,6 @@ bosh int \
   -o ${BBL_STATE_DIR}/bosh-deployment/jumpbox-user.yml \
   -o ${BBL_STATE_DIR}/bosh-deployment/uaa.yml \
   -o ${BBL_STATE_DIR}/bosh-deployment/credhub.yml \
-  -o ${BBL_STATE_DIR}/bosh-deployment/experimental/dns-addon-with-api-certificates.yml \
   -o ${BBL_STATE_DIR}/bosh-deployment/aws/iam-instance-profile.yml \
   -o ${BBL_STATE_DIR}/bbl-ops-files/aws/bosh-director-ephemeral-ip-ops.yml \
   -o ${BBL_STATE_DIR}/bbl-ops-files/aws/bosh-director-encrypt-disk-ops.yml \
