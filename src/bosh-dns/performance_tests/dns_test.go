@@ -111,6 +111,8 @@ var _ = Describe("DNS", func() {
 
 		BeforeEach(func() {
 			signal = make(chan struct{})
+			shutdown = make(chan struct{})
+
 			logger := &fakes.FakeLogger{}
 			healthWatcher := &healthinessfakes.FakeHealthWatcher{}
 			fs := boshsys.NewOsFileSystem(logger)
