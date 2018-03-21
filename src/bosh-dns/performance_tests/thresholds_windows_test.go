@@ -13,8 +13,8 @@ func healthVitalsThresholds() VitalsThresholds {
 func healthTimeThresholds() TimeThresholds {
 	return TimeThresholds{
 		Med:   16 * time.Millisecond,
-		Pct90: 20 * time.Millisecond,
-		Pct95: 25 * time.Millisecond,
+		Pct90: 17 * time.Millisecond,
+		Pct95: 20 * time.Millisecond,
 	}
 }
 
@@ -28,7 +28,7 @@ func prodLikeVitalsThresholds() VitalsThresholds {
 
 func localZonesVitalsThresholds() VitalsThresholds {
 	return VitalsThresholds{
-		CPUPct99: 35,
+		CPUPct99: 30,
 		MemPct99: 36,
 		MemMax:   40,
 	}
@@ -36,9 +36,9 @@ func localZonesVitalsThresholds() VitalsThresholds {
 
 func localZonesTimeThresholds() TimeThresholds {
 	return TimeThresholds{
-		Med:   6 * time.Millisecond,
-		Pct90: 8 * time.Millisecond,
-		Pct95: 10 * time.Millisecond,
+		Med:   3 * time.Millisecond,
+		Pct90: 4 * time.Millisecond,
+		Pct95: 5 * time.Millisecond,
 	}
 }
 
