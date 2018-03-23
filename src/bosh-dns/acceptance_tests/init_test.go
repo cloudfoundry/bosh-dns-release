@@ -81,6 +81,13 @@ func noRecursorsOpsFile() string {
 	}
 }
 
+func excludedRecursorsOpsFile() string {
+	if testTargetOS == "windows" {
+		return "add-excluded-recursors-windows"
+	}
+	return "add-excluded-recursors"
+}
+
 func jsonServerAddress() string {
 	if testTargetOS == "windows" {
 		return "http://10.0.31.191:8081"

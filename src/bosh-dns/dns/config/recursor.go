@@ -1,5 +1,10 @@
 package config
 
+import (
+	"fmt"
+	"strings"
+)
+
 //go:generate counterfeiter . RecursorReader
 
 type RecursorReader interface {
@@ -30,7 +35,9 @@ func ConfigureRecursors(reader RecursorReader, shuffler StringShuffler, dnsConfi
 		shouldAdd := true
 
 		for _, excludedRecursor := range dnsConfig.ExcludedRecursors {
-			if recursor == excludedRecursor {
+			formattedRecursor := addPortIfNecessary(recursor)
+			excludedRecursor = addPortIfNecessary(excludedRecursor)
+			if formattedRecursor == excludedRecursor {
 				shouldAdd = false
 
 				break
@@ -45,4 +52,12 @@ func ConfigureRecursors(reader RecursorReader, shuffler StringShuffler, dnsConfi
 	dnsConfig.Recursors = shuffler.Shuffle(recursors)
 
 	return nil
+}
+
+func addPortIfNecessary(recursor string) string {
+	if strings.HasSuffix(recursor, ":53") {
+		return recursor
+	}
+
+	return fmt.Sprintf("%s:53", recursor)
 }

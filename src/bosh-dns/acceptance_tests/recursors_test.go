@@ -392,6 +392,8 @@ func ensureRecursorIsDefinedByBoshAgent() {
 	Expect(err).ToNot(HaveOccurred())
 	disableOverridePath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/ops/%s.yml", noRecursorsOpsFile()))
 	Expect(err).ToNot(HaveOccurred())
+	excludedRecursorsPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/ops/%s.yml", excludedRecursorsOpsFile()))
+	Expect(err).ToNot(HaveOccurred())
 	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
 	Expect(err).ToNot(HaveOccurred())
 
@@ -403,6 +405,7 @@ func ensureRecursorIsDefinedByBoshAgent() {
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 		"-o", disableOverridePath,
+		"-o", excludedRecursorsPath,
 		"--vars-store", "creds.yml",
 		manifestPath,
 	)
