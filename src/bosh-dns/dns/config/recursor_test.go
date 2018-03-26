@@ -25,13 +25,13 @@ var _ = Describe("Recursor", func() {
 
 	Context("when dns config does not have any recursors configured", func() {
 		BeforeEach(func() {
-			resolvConfReader.GetReturns([]string{"some-recursor-1:53", "some-recursor-2:53"}, nil)
+			resolvConfReader.GetReturns([]string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}, nil)
 		})
 
 		It("should generate recursors from the resolv.conf, shuffled", func() {
 			err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-1:53", "some-recursor-2:53"}))
+			Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}))
 			Expect(stringShuffler.ShuffleCallCount()).To(Equal(1))
 
 			Expect(resolvConfReader.GetCallCount()).To(Equal(1))
@@ -39,7 +39,7 @@ var _ = Describe("Recursor", func() {
 
 		Context("when unable to Get fails on RecursorReader", func() {
 			BeforeEach(func() {
-				resolvConfReader.GetReturns([]string{"some-recursor-1"}, errors.New("some-error"))
+				resolvConfReader.GetReturns([]string{"some-recursor-1:53"}, errors.New("some-error"))
 			})
 
 			It("should return the error", func() {
@@ -52,7 +52,7 @@ var _ = Describe("Recursor", func() {
 
 		Context("when excluding recursors", func() {
 			BeforeEach(func() {
-				dnsConfig.ExcludedRecursors = []string{"some-recursor-1"}
+				dnsConfig.ExcludedRecursors = []string{"some-recursor-1:53", "recursor-custom:1234"}
 			})
 
 			It("should exclude the recursor", func() {
@@ -67,7 +67,7 @@ var _ = Describe("Recursor", func() {
 	Context("when dns config does has recursors configured", func() {
 		BeforeEach(func() {
 			dnsConfig = config.Config{
-				Recursors: []string{"some-recursor-1", "some-recursor-2"},
+				Recursors: []string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"},
 			}
 		})
 
@@ -75,19 +75,19 @@ var _ = Describe("Recursor", func() {
 			err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(stringShuffler.ShuffleCallCount()).To(Equal(1))
-			Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-1", "some-recursor-2"}))
+			Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}))
 		})
 
 		Context("when excluding recursors", func() {
 			BeforeEach(func() {
-				dnsConfig.ExcludedRecursors = []string{"some-recursor-1"}
+				dnsConfig.ExcludedRecursors = []string{"some-recursor-1:53", "recursor-custom:1234"}
 			})
 
 			It("should exclude the recursor", func() {
 				err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(stringShuffler.ShuffleCallCount()).To(Equal(1))
-				Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-2"}))
+				Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-2:53"}))
 			})
 		})
 	})

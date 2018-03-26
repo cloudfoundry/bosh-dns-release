@@ -1,8 +1,6 @@
 package config
 
 import (
-	"fmt"
-
 	"bosh-dns/dns/manager"
 )
 
@@ -21,20 +19,19 @@ type recursorReader struct {
 }
 
 func (r recursorReader) Get() ([]string, error) {
-	recursors := []string{}
-
 	nameservers, err := r.manager.Read()
 	if err != nil {
 		return nil, err
 	}
 
+	validRecursors := []string{}
 	for _, server := range nameservers {
 		if r.isValid(server) {
-			recursors = append(recursors, fmt.Sprintf("%s:53", server))
+			validRecursors = append(validRecursors, server)
 		}
 	}
 
-	return recursors, nil
+	return AppendDefaultDNSPortIfMissing(validRecursors)
 }
 
 func (r recursorReader) isNameServer(s string) bool {

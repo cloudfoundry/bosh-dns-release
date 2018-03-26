@@ -101,6 +101,11 @@ func LoadFromFile(configFilePath string) (Config, error) {
 		return Config{}, err
 	}
 
+	c.ExcludedRecursors, err = AppendDefaultDNSPortIfMissing(c.ExcludedRecursors)
+	if err != nil {
+		return Config{}, err
+	}
+
 	return c, nil
 }
 
