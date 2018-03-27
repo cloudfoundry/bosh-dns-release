@@ -1,3 +1,5 @@
 - type: replace
   path: /networks/name=default/subnets/0/dns?
-  value: [172.17.0.1]
+  value:
+  - 172.17.0.1
+  - 172.19.19.19 # this is a non-existent recursor that we will exclude

@@ -66,15 +66,15 @@ var _ = Describe("RecursorReader", func() {
 
 	Context("when multiple recursors are configured", func() {
 		BeforeEach(func() {
-			dnsManager.ReadReturns([]string{"recursor-1", dnsServerDomainName, "recursor-2"}, nil)
+			dnsManager.ReadReturns([]string{dnsServerDomainName, "recursor-1", "recursor-2", "recursor-custom:1234"}, nil)
 		})
 
 		It("returns all entries except the DNS server itself", func() {
 			recursors, err := recursorReader.Get()
 
 			Expect(err).ToNot(HaveOccurred())
-			Expect(recursors).To(HaveLen(2))
-			Expect(recursors).To(ConsistOf("recursor-1:53", "recursor-2:53"))
+			Expect(recursors).To(HaveLen(3))
+			Expect(recursors).To(ConsistOf("recursor-1:53", "recursor-2:53", "recursor-custom:1234"))
 		})
 	})
 

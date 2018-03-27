@@ -52,7 +52,7 @@ var _ = Describe("Config", func() {
 			"address":            listenAddress,
 			"port":               listenPort,
 			"timeout":            timeout,
-			"excluded_recursors": []string{"169.254.169.254"},
+			"excluded_recursors": []string{"169.254.169.254:53", "169.10.10.10:1234"},
 			"recursor_timeout":   recursorTimeout,
 			"upcheck_domains":    upcheckDomains,
 			"health": map[string]interface{}{
@@ -96,7 +96,7 @@ var _ = Describe("Config", func() {
 			Port:              listenPort,
 			Timeout:           config.DurationJSON(timeoutDuration),
 			RecursorTimeout:   config.DurationJSON(recursorTimeoutDuration),
-			ExcludedRecursors: []string{"169.254.169.254"},
+			ExcludedRecursors: []string{"169.254.169.254:53", "169.10.10.10:1234"},
 			Recursors:         []string{},
 			UpcheckDomains:    []string{"upcheck.domain.", "health2.bosh."},
 			Health: config.HealthConfig{
