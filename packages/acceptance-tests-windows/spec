@@ -6,7 +6,7 @@ dependencies: []
 files:
 - bosh-dns/acceptance_tests/**/*
 - bosh-dns/healthcheck/healthclient/*
-- bosh-dns/test_yml_assets/*
+- bosh-dns/test_yml_assets/**/*
 - bosh-dns/vendor/**/*
 - exiter.ps1
 
