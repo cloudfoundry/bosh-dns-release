@@ -2,9 +2,10 @@
 
 set -e -o pipefail
 set -x
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 clean_up() {
-  fly -t production execute -x --privileged \
+  fly -t production execute --privileged \
     --config=$DIR/../ci/tasks/clean-up.yml \
     --inputs-from=bosh-dns-release/test-acceptance-windows
 }
@@ -12,7 +13,6 @@ clean_up() {
 trap "clean_up" EXIT
 
 main() {
-  DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
   tarball_dir=$(mktemp -d)
   bosh create-release --force --tarball=${tarball_dir}/bosh-windows-dns-release.tgz
   pushd $tarball_dir
@@ -21,7 +21,7 @@ main() {
 
   echo "### starting windows-specific tests..."
   # windows specfic
-  fly -t production execute -x --privileged \
+  fly -t production execute --privileged \
     --config=$DIR/../ci/tasks/test-acceptance-windows.yml \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
     --input=bosh-dns-release=$DIR/../ \
@@ -29,19 +29,18 @@ main() {
 
   # nameserver-disabled
   echo "### tests: nameserver-disabled"
-  fly -t production execute -x --privileged \
+  fly -t production execute --privileged \
     --config=$DIR/../ci/tasks/test-acceptance-windows-nameserver-disabled.yml \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
     --input=bosh-dns-release=$DIR/../
 
   # shared
   echo "### tests: shared"
-  fly -t production execute -x --privileged \
+  fly -t production execute --privileged \
     --config=$DIR/../ci/tasks/test-acceptance-windows-shared.yml \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
     --input=bosh-dns-release=$DIR/../ \
     --input=candidate-release=${tarball_dir}
-
 }
 
 main $@
