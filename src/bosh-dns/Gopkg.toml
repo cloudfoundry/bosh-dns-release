@@ -1,5 +1,10 @@
 required = ["github.com/onsi/ginkgo/ginkgo", "github.com/maxbrunsfeld/counterfeiter"]
 
+[prune]
+  unused-packages = true
+  non-go = true
+  go-tests = true
+
 [[constraint]]
   branch = "master"
   name = "github.com/cloudfoundry/bosh-utils"
@@ -27,7 +32,6 @@ required = ["github.com/onsi/ginkgo/ginkgo", "github.com/maxbrunsfeld/counterfei
 [[constraint]]
   branch = "master"
   name = "code.cloudfoundry.org/workpool"
-
 
 [[constraint]]
   name = "github.com/coredns/coredns"

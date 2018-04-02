@@ -4,7 +4,10 @@
 [[projects]]
   branch = "master"
   name = "code.cloudfoundry.org/clock"
-  packages = [".","fakeclock"]
+  packages = [
+    ".",
+    "fakeclock"
+  ]
   revision = "2269160ae1757f96bbb8c6475e6fa36c805e73e0"
 
 [[projects]]
@@ -34,13 +37,26 @@
 [[projects]]
   branch = "master"
   name = "github.com/cloudfoundry/bosh-utils"
-  packages = ["errors","httpclient","logger","logger/fakes","logger/loggerfakes","retrystrategy","system","system/fakes","uuid"]
+  packages = [
+    "errors",
+    "httpclient",
+    "logger",
+    "logger/fakes",
+    "logger/loggerfakes",
+    "retrystrategy",
+    "system",
+    "system/fakes",
+    "uuid"
+  ]
   revision = "ed55b4546683cfb2a9c6177ba1bfaa8ee6b37782"
 
 [[projects]]
   branch = "master"
   name = "github.com/cloudfoundry/gosigar"
-  packages = [".","sys/windows"]
+  packages = [
+    ".",
+    "sys/windows"
+  ]
   revision = "6ce1f0695dabb41475a8841fa1584afce1c34af7"
 
 [[projects]]
@@ -52,7 +68,22 @@
 [[projects]]
   branch = "bosh-develop"
   name = "github.com/coredns/coredns"
-  packages = ["core/dnsserver","middleware","middleware/cache","middleware/cache/freq","middleware/etcd/msg","middleware/metrics/vars","middleware/pkg/cache","middleware/pkg/dnsutil","middleware/pkg/edns","middleware/pkg/rcode","middleware/pkg/response","middleware/pkg/trace","pb","request"]
+  packages = [
+    "core/dnsserver",
+    "middleware",
+    "middleware/cache",
+    "middleware/cache/freq",
+    "middleware/etcd/msg",
+    "middleware/metrics/vars",
+    "middleware/pkg/cache",
+    "middleware/pkg/dnsutil",
+    "middleware/pkg/edns",
+    "middleware/pkg/rcode",
+    "middleware/pkg/response",
+    "middleware/pkg/trace",
+    "pb",
+    "request"
+  ]
   revision = "0fd0ca16aa72691378dc84946890c9f56fcbbe81"
   source = "github.com/bosh-dep-forks/coredns"
 
@@ -71,7 +102,13 @@
 [[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
-  packages = ["proto","ptypes","ptypes/any","ptypes/duration","ptypes/timestamp"]
+  packages = [
+    "proto",
+    "ptypes",
+    "ptypes/any",
+    "ptypes/duration",
+    "ptypes/timestamp"
+  ]
   revision = "6a1fa9404c0aebf36c879bc50152edcc953910d2"
 
 [[projects]]
@@ -88,13 +125,24 @@
 
 [[projects]]
   name = "github.com/maxbrunsfeld/counterfeiter"
-  packages = [".","arguments","astutil","generator","locator","model","terminal"]
+  packages = [
+    ".",
+    "arguments",
+    "astutil",
+    "generator",
+    "locator",
+    "model",
+    "terminal"
+  ]
   revision = "c1f2005ff133f81907ce72f3d20e1169799317fe"
   version = "v5"
 
 [[projects]]
   name = "github.com/mholt/caddy"
-  packages = [".","caddyfile"]
+  packages = [
+    ".",
+    "caddyfile"
+  ]
   revision = "bc56793d3b919b17080deaa427bb5f70a826f4d6"
   version = "v0.10.9"
 
@@ -113,18 +161,65 @@
 [[projects]]
   branch = "master"
   name = "github.com/onsi/ginkgo"
-  packages = [".","config","extensions/table","ginkgo","ginkgo/convert","ginkgo/interrupthandler","ginkgo/nodot","ginkgo/testrunner","ginkgo/testsuite","ginkgo/watch","internal/codelocation","internal/containernode","internal/failer","internal/leafnodes","internal/remote","internal/spec","internal/spec_iterator","internal/specrunner","internal/suite","internal/testingtproxy","internal/writer","reporters","reporters/stenographer","reporters/stenographer/support/go-colorable","reporters/stenographer/support/go-isatty","types"]
+  packages = [
+    ".",
+    "config",
+    "extensions/table",
+    "ginkgo",
+    "ginkgo/convert",
+    "ginkgo/interrupthandler",
+    "ginkgo/nodot",
+    "ginkgo/testrunner",
+    "ginkgo/testsuite",
+    "ginkgo/watch",
+    "internal/codelocation",
+    "internal/containernode",
+    "internal/failer",
+    "internal/leafnodes",
+    "internal/remote",
+    "internal/spec",
+    "internal/spec_iterator",
+    "internal/specrunner",
+    "internal/suite",
+    "internal/testingtproxy",
+    "internal/writer",
+    "reporters",
+    "reporters/stenographer",
+    "reporters/stenographer/support/go-colorable",
+    "reporters/stenographer/support/go-isatty",
+    "types"
+  ]
   revision = "11459a886d9cd66b319dac7ef1e917ee221372c9"
 
 [[projects]]
   branch = "master"
   name = "github.com/onsi/gomega"
-  packages = [".","format","gbytes","gexec","ghttp","internal/assertion","internal/asyncassertion","internal/oraclematcher","internal/testingtsupport","matchers","matchers/support/goraph/bipartitegraph","matchers/support/goraph/edge","matchers/support/goraph/node","matchers/support/goraph/util","types"]
+  packages = [
+    ".",
+    "format",
+    "gbytes",
+    "gexec",
+    "ghttp",
+    "internal/assertion",
+    "internal/asyncassertion",
+    "internal/oraclematcher",
+    "internal/testingtsupport",
+    "matchers",
+    "matchers/support/goraph/bipartitegraph",
+    "matchers/support/goraph/edge",
+    "matchers/support/goraph/node",
+    "matchers/support/goraph/util",
+    "types"
+  ]
   revision = "dcabb60a477c2b6f456df65037cb6708210fbb02"
 
 [[projects]]
   name = "github.com/opentracing/opentracing-go"
-  packages = [".","ext","log"]
+  packages = [
+    ".",
+    "ext",
+    "log"
+  ]
   revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
   version = "v1.0.2"
 
@@ -155,13 +250,20 @@
 [[projects]]
   branch = "master"
   name = "github.com/prometheus/common"
-  packages = ["expfmt","internal/bitbucket.org/ww/goautoneg","model"]
+  packages = [
+    "expfmt",
+    "internal/bitbucket.org/ww/goautoneg",
+    "model"
+  ]
   revision = "2f17f4a9d485bf34b4bfaccc273805040e4f86c8"
 
 [[projects]]
   branch = "master"
   name = "github.com/prometheus/procfs"
-  packages = [".","xfs"]
+  packages = [
+    ".",
+    "xfs"
+  ]
   revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
 
 [[projects]]
@@ -173,31 +275,79 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["curve25519","ed25519","ed25519/internal/edwards25519","ssh","ssh/terminal"]
+  packages = [
+    "curve25519",
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "ssh",
+    "ssh/terminal"
+  ]
   revision = "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","html","html/atom","html/charset","http2","http2/hpack","idna","internal/timeseries","lex/httplex","proxy","trace"]
+  packages = [
+    "context",
+    "html",
+    "html/atom",
+    "html/charset",
+    "http2",
+    "http2/hpack",
+    "idna",
+    "internal/timeseries",
+    "lex/httplex",
+    "proxy",
+    "trace"
+  ]
   revision = "054b33e6527139ad5b1ec2f6232c3b175bd9a30c"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "0131e684e801af603bb75e5d7f959b32442f327a"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
-  packages = ["encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/gen","internal/tag","internal/triegen","internal/ucd","internal/utf8internal","language","runes","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
+  packages = [
+    "encoding",
+    "encoding/charmap",
+    "encoding/htmlindex",
+    "encoding/internal",
+    "encoding/internal/identifier",
+    "encoding/japanese",
+    "encoding/korean",
+    "encoding/simplifiedchinese",
+    "encoding/traditionalchinese",
+    "encoding/unicode",
+    "internal/gen",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "internal/utf8internal",
+    "language",
+    "runes",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable"
+  ]
   revision = "836efe42bb4aa16aaa17b9c155d8813d336ed720"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/tools"
-  packages = ["go/ast/astutil","imports"]
+  packages = [
+    "go/ast/astutil",
+    "imports"
+  ]
   revision = "64890f4e2b733655fee5077a5435a8812404c3a3"
 
 [[projects]]
@@ -208,7 +358,23 @@
 
 [[projects]]
   name = "google.golang.org/grpc"
-  packages = [".","codes","connectivity","credentials","grpclb/grpc_lb_v1/messages","grpclog","internal","keepalive","metadata","naming","peer","stats","status","tap","transport"]
+  packages = [
+    ".",
+    "codes",
+    "connectivity",
+    "credentials",
+    "grpclb/grpc_lb_v1/messages",
+    "grpclog",
+    "internal",
+    "keepalive",
+    "metadata",
+    "naming",
+    "peer",
+    "stats",
+    "status",
+    "tap",
+    "transport"
+  ]
   revision = "f92cdcd7dcdc69e81b2d7b338479a19a8723cfa3"
   version = "v1.6.0"
 
@@ -221,6 +387,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8fdab4635cc27f38eab72480719ff0026164c484533b0777735e6559c96a0854"
+  inputs-digest = "20daafd94ea449518f127e35ff576fa6aa9be782ce075d1ec8d988c6dff16474"
   solver-name = "gps-cdcl"
   solver-version = 1
