@@ -4,7 +4,7 @@ set -e -o pipefail
 set -x
 
 clean_up() {
-  fly -t production execute -x --privileged \
+  fly -t production execute --privileged \
     --config=$DIR/../ci/tasks/clean-up.yml \
     --inputs-from=bosh-dns-release/test-acceptance-windows
 }
@@ -21,7 +21,7 @@ main() {
 
   echo "### starting windows-specific tests..."
   # windows specfic
-  fly -t production execute -x --privileged \
+  fly -t production execute --privileged \
     --config=$DIR/../ci/tasks/test-acceptance-windows.yml \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
     --input=bosh-dns-release=$DIR/../ \
@@ -29,14 +29,14 @@ main() {
 
   # nameserver-disabled
   echo "### tests: nameserver-disabled"
-  fly -t production execute -x --privileged \
+  fly -t production execute --privileged \
     --config=$DIR/../ci/tasks/test-acceptance-windows-nameserver-disabled.yml \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
     --input=bosh-dns-release=$DIR/../
 
   # shared
   echo "### tests: shared"
-  fly -t production execute -x --privileged \
+  fly -t production execute --privileged \
     --config=$DIR/../ci/tasks/test-acceptance-windows-shared.yml \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
     --input=bosh-dns-release=$DIR/../ \

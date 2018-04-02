@@ -141,13 +141,7 @@ var _ = Describe("Integration", func() {
 			client := setupSecureGet()
 
 			Eventually(func() map[string]string {
-				respData, err := secureGetRespBody(client, firstInstance.IP, 2345)
-				Expect(err).ToNot(HaveOccurred())
-
-				var respJson map[string]string
-				err = json.Unmarshal(respData, &respJson)
-				Expect(err).ToNot(HaveOccurred())
-				return respJson
+				return secureGetRespBody(client, firstInstance.IP, 2345)
 			}, 31*time.Second).Should(Equal(map[string]string{
 				"state": "running",
 			}))
@@ -221,13 +215,7 @@ var _ = Describe("Integration", func() {
 				client := setupSecureGet()
 
 				Eventually(func() map[string]string {
-					respData, err := secureGetRespBody(client, firstInstance.IP, 2345)
-					Expect(err).ToNot(HaveOccurred())
-
-					var respJson map[string]string
-					err = json.Unmarshal(respData, &respJson)
-					Expect(err).ToNot(HaveOccurred())
-					return respJson
+					return secureGetRespBody(client, firstInstance.IP, 2345)
 				}, 31*time.Second).Should(Equal(map[string]string{
 					"state": "running",
 				}))
@@ -235,13 +223,7 @@ var _ = Describe("Integration", func() {
 				runErrand("make-health-executable-job-unhealthy" + osSuffix)
 
 				Eventually(func() map[string]string {
-					respData, err := secureGetRespBody(client, firstInstance.IP, 2345)
-					Expect(err).ToNot(HaveOccurred())
-
-					var respJson map[string]string
-					err = json.Unmarshal(respData, &respJson)
-					Expect(err).ToNot(HaveOccurred())
-					return respJson
+					return secureGetRespBody(client, firstInstance.IP, 2345)
 				}, 31*time.Second).Should(Equal(map[string]string{
 					"state": "job-health-executable-fail",
 				}))
@@ -249,13 +231,7 @@ var _ = Describe("Integration", func() {
 				runErrand("make-health-executable-job-healthy" + osSuffix)
 
 				Eventually(func() map[string]string {
-					respData, err := secureGetRespBody(client, firstInstance.IP, 2345)
-					Expect(err).ToNot(HaveOccurred())
-
-					var respJson map[string]string
-					err = json.Unmarshal(respData, &respJson)
-					Expect(err).ToNot(HaveOccurred())
-					return respJson
+					return secureGetRespBody(client, firstInstance.IP, 2345)
 				}, 31*time.Second).Should(Equal(map[string]string{
 					"state": "running",
 				}))
@@ -334,20 +310,19 @@ func setupSecureGet() *httpclient.HTTPClient {
 	return tlsclient.New("health.bosh-dns", []byte(caCert), cert, logger)
 }
 
-func secureGetRespBody(client *httpclient.HTTPClient, hostname string, port int) ([]byte, error) {
-	resp, err := secureGet(client, hostname, port)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	return ioutil.ReadAll(resp.Body)
-}
-
-func secureGet(client *httpclient.HTTPClient, hostname string, port int) (*http.Response, error) {
+func secureGetRespBody(client *httpclient.HTTPClient, hostname string, port int) map[string]string {
 	resp, err := client.Get(fmt.Sprintf("https://%s:%d/health", hostname, port))
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	return resp, nil
+	Expect(err).NotTo(HaveOccurred())
+	defer resp.Body.Close()
+
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+	data, err := ioutil.ReadAll(resp.Body)
+	Expect(err).NotTo(HaveOccurred())
+
+	var respJson map[string]string
+	err = json.Unmarshal(data, &respJson)
+	Expect(err).ToNot(HaveOccurred())
+
+	return respJson
 }

@@ -36,7 +36,7 @@ func (hc *healthChecker) GetStatus(ip string) bool {
 	response, err := hc.client.Get(endpoint)
 	if err != nil {
 		return false
-	} else if response.StatusCode != 200 {
+	} else if response.StatusCode != http.StatusOK {
 		return false
 	}
 

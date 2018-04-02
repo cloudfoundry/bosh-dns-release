@@ -14,7 +14,7 @@ bosh create-release --force --tarball=${tarball_dir}/bosh-dns-release.tgz
 # workers exits 1 if not logged in
 fly -t production workers || fly -t production login
 
-fly -t production execute -x --privileged \
+fly -t production execute --privileged \
   --config=./ci/tasks/test-acceptance.yml \
   --inputs-from=bosh-dns-release/test-acceptance \
   --input=candidate-release=${tarball_dir} \

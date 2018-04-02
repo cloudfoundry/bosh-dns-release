@@ -62,13 +62,7 @@ var _ = Describe("HealthCheck server", func() {
 				)
 				Expect(err).NotTo(HaveOccurred())
 
-				respData, err := secureGetRespBody(client, configPort)
-				Expect(err).ToNot(HaveOccurred())
-
-				var respJson map[string]string
-				err = json.Unmarshal(respData, &respJson)
-				Expect(err).ToNot(HaveOccurred())
-
+				respJson := secureGetRespBody(client, configPort)
 				Expect(respJson).To(Equal(map[string]string{
 					"state": "running",
 				}))
@@ -92,13 +86,7 @@ var _ = Describe("HealthCheck server", func() {
 					)
 					Expect(err).NotTo(HaveOccurred())
 
-					respData, err := secureGetRespBody(client, configPort)
-					Expect(err).ToNot(HaveOccurred())
-
-					var respJson map[string]string
-					err = json.Unmarshal(respData, &respJson)
-					Expect(err).ToNot(HaveOccurred())
-
+					respJson := secureGetRespBody(client, configPort)
 					Expect(respJson).To(Equal(map[string]string{
 						"state": "running",
 					}))
@@ -122,12 +110,7 @@ var _ = Describe("HealthCheck server", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					Eventually(func() map[string]string {
-						respData, err := secureGetRespBody(client, configPort)
-						Expect(err).ToNot(HaveOccurred())
-						var respJson map[string]string
-						err = json.Unmarshal(respData, &respJson)
-						Expect(err).ToNot(HaveOccurred())
-						return respJson
+						return secureGetRespBody(client, configPort)
 					}, time.Second*2).Should(Equal(map[string]string{
 						"state": "job-health-executable-fail",
 					}))
@@ -150,13 +133,7 @@ var _ = Describe("HealthCheck server", func() {
 				)
 				Expect(err).NotTo(HaveOccurred())
 
-				respData, err := secureGetRespBody(client, configPort)
-				Expect(err).ToNot(HaveOccurred())
-
-				var respJson map[string]string
-				err = json.Unmarshal(respData, &respJson)
-				Expect(err).ToNot(HaveOccurred())
-
+				respJson := secureGetRespBody(client, configPort)
 				Expect(respJson).To(Equal(map[string]string{
 					"state": "stopped",
 				}))
@@ -173,7 +150,7 @@ var _ = Describe("HealthCheck server", func() {
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			_, err = secureGetRespBody(client, configPort)
+			_, err = secureGet(client, configPort)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("x509: certificate signed by unknown authority"))
 		})
@@ -202,20 +179,23 @@ var _ = Describe("HealthCheck server", func() {
 	})
 })
 
-func secureGetRespBody(client *httpclient.HTTPClient, port int) ([]byte, error) {
+func secureGetRespBody(client *httpclient.HTTPClient, port int) map[string]string {
 	resp, err := secureGet(client, port)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	return ioutil.ReadAll(resp.Body)
+	Expect(err).NotTo(HaveOccurred())
+	defer resp.Body.Close()
+
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+	data, err := ioutil.ReadAll(resp.Body)
+	Expect(err).NotTo(HaveOccurred())
+
+	var respJson map[string]string
+	err = json.Unmarshal(data, &respJson)
+	Expect(err).ToNot(HaveOccurred())
+
+	return respJson
 }
 
 func secureGet(client *httpclient.HTTPClient, port int) (*http.Response, error) {
-	resp, err := client.Get(fmt.Sprintf("https://127.0.0.1:%d/health", port))
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	return resp, nil
+	return client.Get(fmt.Sprintf("https://127.0.0.1:%d/health", port))
 }
