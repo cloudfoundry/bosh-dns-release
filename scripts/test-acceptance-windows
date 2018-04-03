@@ -4,9 +4,14 @@ set -e -o pipefail
 set -x
 
 clean_up() {
+  exit_code=$?
   fly -t production execute --privileged \
-    --config=$DIR/../ci/tasks/clean-up.yml \
+    --config="${DIR}/../ci/tasks/clean-up.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows
+
+  if [ $exit_code -ne 0 ]; then
+    echo "TESTS FAILED"
+  fi
 }
 
 trap "clean_up" EXIT
@@ -14,34 +19,36 @@ trap "clean_up" EXIT
 main() {
   DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
   tarball_dir=$(mktemp -d)
-  bosh create-release --force --tarball=${tarball_dir}/bosh-windows-dns-release.tgz
-  pushd $tarball_dir
+  bosh create-release --force --tarball="${tarball_dir}/bosh-windows-dns-release.tgz"
+  pushd "$tarball_dir"
     git init
   popd
+
+  task_dir="${DIR}/../ci/tasks/windows"
+  release_dir="${DIR}/../"
 
   echo "### starting windows-specific tests..."
   # windows specfic
   fly -t production execute --privileged \
-    --config=$DIR/../ci/tasks/test-acceptance-windows.yml \
+    --config="${task_dir}/test-acceptance-windows.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
-    --input=bosh-dns-release=$DIR/../ \
-    --input=candidate-release=${tarball_dir}
+    --input=bosh-dns-release="${release_dir}" \
+    --input=candidate-release="${tarball_dir}"
 
   # nameserver-disabled
   echo "### tests: nameserver-disabled"
   fly -t production execute --privileged \
-    --config=$DIR/../ci/tasks/test-acceptance-windows-nameserver-disabled.yml \
+    --config="${task_dir}/test-acceptance-windows-nameserver-disabled.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
-    --input=bosh-dns-release=$DIR/../
+    --input=bosh-dns-release="${release_dir}"
 
   # shared
   echo "### tests: shared"
   fly -t production execute --privileged \
-    --config=$DIR/../ci/tasks/test-acceptance-windows-shared.yml \
+    --config="${task_dir}/test-acceptance-windows-shared.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
-    --input=bosh-dns-release=$DIR/../ \
-    --input=candidate-release=${tarball_dir}
-
+    --input=bosh-dns-release="${release_dir}" \
+    --input=candidate-release="${tarball_dir}"
 }
 
-main $@
+main "$@"
