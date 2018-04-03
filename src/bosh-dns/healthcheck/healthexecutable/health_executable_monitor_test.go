@@ -1,6 +1,8 @@
 package healthexecutable_test
 
 import (
+	"runtime"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -17,13 +19,14 @@ import (
 
 var _ = Describe("HealthExecutableMonitor", func() {
 	var (
-		monitor         *healthexecutable.HealthExecutableMonitor
-		logger          *loggerfakes.FakeLogger
-		cmdRunner       *sysfakes.FakeCmdRunner
-		clock           *fakeclock.FakeClock
-		interval        time.Duration
-		executablePaths []string
-		signal          chan struct{}
+		monitor                *healthexecutable.HealthExecutableMonitor
+		logger                 *loggerfakes.FakeLogger
+		cmdRunner              *sysfakes.FakeCmdRunner
+		clock                  *fakeclock.FakeClock
+		interval               time.Duration
+		executablePaths        []string
+		signal                 chan struct{}
+		healthExecutablePrefix string
 	)
 
 	BeforeEach(func() {
@@ -31,7 +34,16 @@ var _ = Describe("HealthExecutableMonitor", func() {
 		clock = fakeclock.NewFakeClock(time.Now())
 		cmdRunner = sysfakes.NewFakeCmdRunner()
 		interval = time.Millisecond
-		executablePaths = []string{"e1", "e2", "e3"}
+
+		if runtime.GOOS == "windows" {
+			healthExecutablePrefix = "powershell.exe "
+		}
+
+		executablePaths = []string{
+			"e1",
+			"e2",
+			"e3",
+		}
 		signal = make(chan struct{})
 	})
 
@@ -52,19 +64,23 @@ var _ = Describe("HealthExecutableMonitor", func() {
 		}
 	})
 
+	addCmdResult := func(executablePath string, result sysfakes.FakeCmdResult) {
+		cmdRunner.AddCmdResult(healthExecutablePrefix+executablePath, result)
+	}
+
 	Context("when some executables go unhealthy and they become healthy again", func() {
 		BeforeEach(func() {
-			cmdRunner.AddCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
-			cmdRunner.AddCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0})
-			cmdRunner.AddCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
 
-			cmdRunner.AddCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
-			cmdRunner.AddCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 1})
-			cmdRunner.AddCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 1})
+			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
 
-			cmdRunner.AddCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
-			cmdRunner.AddCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0})
-			cmdRunner.AddCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
 		})
 
 		It("starts with status true", func() {
@@ -83,9 +99,9 @@ var _ = Describe("HealthExecutableMonitor", func() {
 
 	Context("when executing an executable returns an error", func() {
 		BeforeEach(func() {
-			cmdRunner.AddCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
-			cmdRunner.AddCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0, Error: errors.New("can't do that")})
-			cmdRunner.AddCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0, Error: errors.New("can't do that")})
+			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
 		})
 
 		It("logs an error", func() {
@@ -118,7 +134,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 			signal = nil
 
 			Eventually(clock.WatcherCount).Should(Equal(0))
-			cmdRunner.AddCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 1})
+			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 1})
 			clock.Increment(interval * 2)
 			Consistently(monitor.Status).Should(Equal(true))
 		})

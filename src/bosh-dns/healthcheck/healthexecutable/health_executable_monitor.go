@@ -55,6 +55,7 @@ func (m *HealthExecutableMonitor) Status() bool {
 func (m *HealthExecutableMonitor) run() {
 	ticker := m.clock.NewTicker(m.interval)
 	m.logger.Debug("HealthExecutableMonitor", "starting monitor for [%s] with interval %v", strings.Join(m.healthExecutablePaths, ", "), m.interval)
+
 	for {
 		select {
 		case <-m.shutdown:
@@ -63,8 +64,9 @@ func (m *HealthExecutableMonitor) run() {
 			return
 		case <-ticker.C():
 			var allSucceeded = true
+
 			for _, executable := range m.healthExecutablePaths {
-				_, _, exitStatus, err := m.cmdRunner.RunCommand(executable)
+				_, _, exitStatus, err := m.runExecutable(executable)
 				if err != nil {
 					allSucceeded = false
 					m.logger.Error("HealthExecutableMonitor", "Error occurred executing '%s': %v", executable, err)
@@ -72,6 +74,7 @@ func (m *HealthExecutableMonitor) run() {
 					allSucceeded = false
 				}
 			}
+
 			m.mutex.Lock()
 			m.status = allSucceeded
 			m.mutex.Unlock()
