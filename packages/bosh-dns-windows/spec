@@ -10,9 +10,9 @@ files:
 - bosh-dns/tlsclient/**/*
 - bosh-dns/vendor/**/*
 - exiter.ps1
-
 - debug/cli/**/*
 - debug/vendor/**/*
 
 excluded_files:
 - bosh-dns/vendor/github.com/bmatcuk/doublestar/test/**/*
+- bosh-dns/vendor/github.com/prometheus/procfs/fixtures/**/*
