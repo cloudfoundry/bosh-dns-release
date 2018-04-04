@@ -152,6 +152,7 @@ type Adapter struct {
 // Mac Address parts to look for, and identify non physical devices. There may be more, update me!
 var macAddrPartsToFilter []string = []string{
 	"00:03:FF",       // Microsoft Hyper-V, Virtual Server, Virtual PC
+	"00:15:5D",       // Microsoft Hyper-V, Virtual Server, Virtual PC
 	"0A:00:27",       // VirtualBox
 	"00:00:00:00:00", // Teredo Tunneling Pseudo-Interface
 	"00:50:56",       // VMware ESX 3, Server, Workstation, Player
