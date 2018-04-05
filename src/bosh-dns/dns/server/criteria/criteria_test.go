@@ -113,7 +113,7 @@ var _ = Describe("Criteria", func() {
 		},
 			Entry("Instance name", "instanceName", "id"),
 			Entry("Instance group", "instanceGroupName", "a-group"),
-			FEntry("Instance group", "instanceGroupName", "*a-group"),
+			Entry("Instance group", "instanceGroupName", "*a-group"),
 			Entry("Instance group", "instanceGroupName", "a-*"),
 			Entry("Instance group", "instanceGroupName", "*-group"),
 			Entry("Instance group", "instanceGroupName", "*"),
