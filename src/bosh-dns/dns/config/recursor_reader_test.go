@@ -66,7 +66,7 @@ var _ = Describe("RecursorReader", func() {
 
 	Context("when manager.Read returns empty string results", func() {
 		BeforeEach(func() {
-			dnsManager.ReadReturns([]string{"", "10.0.0.1", "my.dns.server"}, nil)
+			dnsManager.ReadReturns([]string{"", "10.0.0.1", "10.0.0.2"}, nil)
 		})
 
 		It("returns only non-empty strings`", func() {
@@ -74,13 +74,13 @@ var _ = Describe("RecursorReader", func() {
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(nameservers).To(HaveLen(2))
-			Expect(nameservers).To(ConsistOf("10.0.0.1:53", "my.dns.server:53"))
+			Expect(nameservers).To(ConsistOf("10.0.0.1:53", "10.0.0.2:53"))
 		})
 	})
 
 	Context("when multiple recursors are configured", func() {
 		BeforeEach(func() {
-			dnsManager.ReadReturns(append(dnsServerDomainNames, "recursor-1", "recursor-2", "recursor-custom:1234"), nil)
+			dnsManager.ReadReturns(append(dnsServerDomainNames, "189.8.0.9", "189.8.0.10", "189.10.10.10:1234"), nil)
 		})
 
 		It("returns all entries except the DNS server itself", func() {
@@ -88,7 +88,7 @@ var _ = Describe("RecursorReader", func() {
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(recursors).To(HaveLen(3))
-			Expect(recursors).To(ConsistOf("recursor-1:53", "recursor-2:53", "recursor-custom:1234"))
+			Expect(recursors).To(ConsistOf("189.8.0.9:53", "189.8.0.10:53", "189.10.10.10:1234"))
 		})
 	})
 

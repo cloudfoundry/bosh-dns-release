@@ -111,17 +111,24 @@ func LoadFromFile(configFilePath string) (Config, error) {
 
 func AppendDefaultDNSPortIfMissing(recursors []string) ([]string, error) {
 	recursorsWithPort := []string{}
-	for i := range recursors {
-		_, _, err := net.SplitHostPort(recursors[i])
+	for _, recursor := range recursors {
+		_, _, err := net.SplitHostPort(recursor)
+		cleanedUpRecursor := recursor
+
 		if err != nil {
-			if strings.Contains(err.Error(), "missing port in address") {
-				recursorsWithPort = append(recursorsWithPort, net.JoinHostPort(recursors[i], "53"))
+			if strings.Contains(err.Error(), "missing port in address") || strings.Contains(err.Error(), "too many colons in address") {
+				ip := net.ParseIP(recursor)
+				if ip == nil {
+					return []string{}, fmt.Errorf("Invalid IP address %s", recursor)
+				}
+
+				cleanedUpRecursor = net.JoinHostPort(ip.String(), "53")
 			} else {
 				return []string{}, err
 			}
-		} else {
-			recursorsWithPort = append(recursorsWithPort, recursors[i])
 		}
+
+		recursorsWithPort = append(recursorsWithPort, cleanedUpRecursor)
 	}
 	return recursorsWithPort, nil
 }

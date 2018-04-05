@@ -224,32 +224,30 @@ var _ = Describe("Config", func() {
 		})
 	})
 
-	Context("configurable recursors", func() {
+	It("defaults to no recursors", func() {
+		configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)
+
+		dnsConfig, err := config.LoadFromFile(configFilePath)
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(len(dnsConfig.Recursors)).To(Equal(0))
+	})
+
+	Context("AppendDefaultDNSPortIfMissing", func() {
 		It("allows multiple recursors to be configured with default port of 53", func() {
-			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursors": ["8.8.8.8","10.244.4.4:9700"]}`)
+			recursors, err := config.AppendDefaultDNSPortIfMissing([]string{"8.8.8.8", "10.244.4.4:9700", "2001:db8::1", "[2001:db8::1]:1234"})
+			Expect(err).NotTo(HaveOccurred())
 
-			dnsConfig, err := config.LoadFromFile(configFilePath)
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(dnsConfig.Recursors).To(ContainElement("8.8.8.8:53"))
-			Expect(dnsConfig.Recursors).To(ContainElement("10.244.4.4:9700"))
-		})
-
-		It("defaults to no recursors", func() {
-			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)
-
-			dnsConfig, err := config.LoadFromFile(configFilePath)
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(len(dnsConfig.Recursors)).To(Equal(0))
+			Expect(recursors).To(ContainElement("8.8.8.8:53"))
+			Expect(recursors).To(ContainElement("10.244.4.4:9700"))
+			Expect(recursors).To(ContainElement("[2001:db8::1]:53"))
+			Expect(recursors).To(ContainElement("[2001:db8::1]:1234"))
 		})
 
 		It("returns an error if the recursor address is malformed", func() {
-			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursors": ["::::::::::::"]}`)
-
-			_, err := config.LoadFromFile(configFilePath)
+			_, err := config.AppendDefaultDNSPortIfMissing([]string{"::::::::::::"})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("too many colons in address"))
+			Expect(err.Error()).To(ContainSubstring("Invalid IP address"))
 			Expect(err.Error()).To(ContainSubstring("::::::::::::"))
 		})
 	})
