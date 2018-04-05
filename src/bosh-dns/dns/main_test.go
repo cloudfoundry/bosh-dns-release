@@ -170,6 +170,9 @@ var _ = Describe("main", func() {
 				"one.alias.": ["my-instance.my-group.my-network.my-deployment.bosh."],
 				"internal.alias.": ["my-instance-2.my-group.my-network.my-deployment-2.bosh.","my-instance.my-group.my-network.my-deployment.bosh."],
 				"group.internal.alias.": ["*.my-group.my-network.my-deployment.bosh."],
+				"glob.internal.alias.": ["*.*y-group.my-network.my-deployment.bosh."],
+				"anotherglob.internal.alias.": ["*.my-group*.my-network.my-deployment.bosh."],
+				"yetanotherglob.internal.alias.": ["*.*.my-network.my-deployment.bosh."],
 				"ip.alias.": ["10.11.12.13"]
 			}`)))
 			Expect(err).NotTo(HaveOccurred())
@@ -596,6 +599,36 @@ var _ = Describe("main", func() {
 							Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.2"))
 
 							Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*INFO \- handlers\.DiscoveryHandler Request \[1\] \[group\.internal\.alias\.\] 0 \d+ns`))
+						})
+					})
+
+					Context("with glob aliases", func() {
+						It("returns all records belonging to the correct group", func() {
+							for _, globAlias := range []string{"glob.internal.alias.", "anotherglob.internal.alias.", "yetanotherglob.internal.alias."} {
+								m.Question = []dns.Question{{Name: globAlias, Qtype: dns.TypeA}}
+
+								response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+								Expect(err).NotTo(HaveOccurred())
+
+								Expect(response.Answer).To(HaveLen(2))
+								Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
+								Expect(response.Answer[0].Header().Name).To(Equal(globAlias))
+								Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
+								Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
+								Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
+
+								Expect(response.Answer[1].Header().Name).To(Equal(globAlias))
+								Expect(response.Answer[1].Header().Rrtype).To(Equal(dns.TypeA))
+								Expect(response.Answer[1].Header().Class).To(Equal(uint16(dns.ClassINET)))
+								Expect(response.Answer[1].Header().Ttl).To(Equal(uint32(0)))
+
+								ips := []string{response.Answer[0].(*dns.A).A.String(), response.Answer[1].(*dns.A).A.String()}
+								Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.2"))
+
+								Eventually(session.Out).Should(
+									gbytes.Say(`\[RequestLoggerHandler\].*INFO \- handlers\.DiscoveryHandler Request \[1\] \[.*glob\.internal\.alias\.\] 0 \d+ns`),
+								)
+							}
 						})
 					})
 				})

@@ -116,6 +116,23 @@ var _ = Describe("Integration", func() {
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 		})
 
+		It("resolves alias globs", func() {
+			for _, alias := range []string{"asterisk.alias.", "another.asterisk.alias.", "yetanother.asterisk.alias."} {
+				cmdArgs := fmt.Sprintf("-t A %s @%s", alias, firstInstance.IP)
+				cmd := exec.Command("dig", strings.Split(cmdArgs, " ")...)
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
+				Eventually(session.Out).Should(gbytes.Say("Got answer:"))
+				Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
+
+				Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			}
+		})
+
 		It("should resolve specified upcheck", func() {
 			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A upcheck.bosh-dns. @%s", firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)

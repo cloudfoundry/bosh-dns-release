@@ -33,6 +33,10 @@ instance_groups:
       recursor_timeout: 1s
       cache:
         enabled: true
+      aliases:
+        asterisk.alias: ["*.*-dns.default.bosh-dns.bosh."]
+        another.asterisk.alias: ["*.bosh-dns*.default.bosh-dns.bosh."]
+        yetanother.asterisk.alias: ["*.*.default.bosh-dns.bosh."]
   - name: configures-handler
     release: dns-acceptance
     properties:
