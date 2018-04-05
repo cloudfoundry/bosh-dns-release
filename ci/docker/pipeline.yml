@@ -1,3 +1,11 @@
+groups:
+- name: bosh-dns:docker
+  jobs:
+  - build-unit-tests-image
+  - build-acceptance-tests-windows-image
+  - build-acceptance-tests-image
+  - build-performance-tests-image
+
 jobs:
 - name: build-performance-tests-image
   public: true
