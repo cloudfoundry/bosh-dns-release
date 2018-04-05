@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"time"
 
 	"strings"
 
@@ -362,25 +361,25 @@ var _ = Describe("recursor", func() {
 				output = string(session.Out.Contents())
 
 				matches = re.FindStringSubmatch(output)
-				Expect(matches[2]).To(Equal("1"))
-
 				return matches[2]
 			}, "4s", "1s").Should(Equal("1"))
-			time.Sleep(1 * time.Second)
 
-			cmd = exec.Command("dig",
-				"+notcp", "always-different-with-timeout-example.com.",
-				fmt.Sprintf("@%s", firstInstance.IP),
-			)
-			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
+			Eventually(func() string {
+				cmd = exec.Command("dig",
+					"+notcp", "always-different-with-timeout-example.com.",
+					fmt.Sprintf("@%s", firstInstance.IP),
+				)
+				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
 
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
 
-			output = string(session.Out.Contents())
-			matches = re.FindStringSubmatch(output)
-			Expect(matches[2]).To(Equal("2"))
+				output = string(session.Out.Contents())
+				matches = re.FindStringSubmatch(output)
+				matches = re.FindStringSubmatch(output)
+				return matches[2]
+			}, "4s", "1s").Should(Equal("2"))
 		})
 	})
 })
