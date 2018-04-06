@@ -33,6 +33,10 @@ instance_groups:
       recursors: ["10.0.31.191:9955"]
       cache:
         enabled: true
+      aliases:
+        asterisk.alias: ["*.*-dns.default.bosh-dns.bosh."]
+        another.asterisk.alias: ["*.bosh-dns*.default.bosh-dns.bosh."]
+        yetanother.asterisk.alias: ["*.*.default.bosh-dns.bosh."]
   - name: windows-firewall-rules
     release: dns-acceptance
   - name: configures-handler
