@@ -6,34 +6,6 @@ required = ["github.com/onsi/ginkgo/ginkgo", "github.com/maxbrunsfeld/counterfei
   go-tests = true
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/cloudfoundry/bosh-utils"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/onsi/ginkgo"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/onsi/gomega"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/rcrowley/go-metrics"
-
-[[constraint]]
-  branch = "master"
-  name = "code.cloudfoundry.org/clock"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/pivotal-cf/paraphernalia"
-
-[[constraint]]
-  branch = "master"
-  name = "code.cloudfoundry.org/workpool"
-
-[[constraint]]
   name = "github.com/coredns/coredns"
   source = "github.com/bosh-dep-forks/coredns"
   branch = "bosh-develop"

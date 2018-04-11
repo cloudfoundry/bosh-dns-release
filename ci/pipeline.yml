@@ -2,6 +2,7 @@
 groups:
 - name: all
   jobs:
+  - bump-deps
   - test-unit
   - test-coredns-cache
   - test-unit-windows
@@ -20,6 +21,20 @@ groups:
   - bump-major
 
 jobs:
+- name: bump-deps
+  public: true
+  plan:
+    - get: bosh-dns-release
+    - task: bump-deps
+      file: bosh-dns-release/ci/tasks/bump-deps.yml
+    - task: test-unit
+      input_mapping:
+        bosh-dns-release: bumped-bosh-dns-release
+      file: bosh-dns-release/ci/tasks/test-unit.yml
+    - put: bosh-dns-release
+      params:
+        repository: bumped-dns-release
+
 - name: test-unit
   public: true
   plan:
