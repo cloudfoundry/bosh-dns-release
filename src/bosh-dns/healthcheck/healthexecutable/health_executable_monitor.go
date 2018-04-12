@@ -53,16 +53,16 @@ func (m *HealthExecutableMonitor) Status() bool {
 }
 
 func (m *HealthExecutableMonitor) run() {
-	ticker := m.clock.NewTicker(m.interval)
+	timer := m.clock.NewTimer(m.interval)
 	m.logger.Debug("HealthExecutableMonitor", "starting monitor for [%s] with interval %v", strings.Join(m.healthExecutablePaths, ", "), m.interval)
 
 	for {
 		select {
 		case <-m.shutdown:
 			m.logger.Debug("HealthExecutableMonitor", "stopping")
-			ticker.Stop()
+			timer.Stop()
 			return
-		case <-ticker.C():
+		case <-timer.C():
 			var allSucceeded = true
 
 			for _, executable := range m.healthExecutablePaths {
@@ -78,6 +78,8 @@ func (m *HealthExecutableMonitor) run() {
 			m.mutex.Lock()
 			m.status = allSucceeded
 			m.mutex.Unlock()
+
+			timer.Reset(m.interval)
 		}
 	}
 }
