@@ -24,6 +24,8 @@ jobs:
 - name: bump-deps
   public: true
   plan:
+    - get: daily-at-10am-utc
+      trigger: true
     - get: bosh-dns-release
     - task: bump-deps
       file: bosh-dns-release/ci/tasks/bump-deps.yml
@@ -466,6 +468,13 @@ resources:
 - name: every-10m
   type: time
   source: {interval: 10m}
+
+- name: daily-at-10am-utc
+  type: time
+  source:
+    start: 3:00 -0700
+    stop: 4:30 -0700
+    interval: 24h
 
 - name: stemcell
   type: bosh-io-stemcell
