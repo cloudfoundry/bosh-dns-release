@@ -102,9 +102,7 @@ func Field(field string, values []string) Matcher {
 }
 
 func globMatches(field, value string) bool {
-	if !strings.Contains(value, "*") {
-		return field == value
-	} else if value == "*" {
+	if value == "*" {
 		return true
 	} else if strings.HasPrefix(value, "*") {
 		return strings.HasSuffix(field, value[1:])
@@ -121,11 +119,20 @@ func FieldMatcher(field, value string) MatcherFunc {
 	case "instanceName":
 		return func(r *record.Record) bool { return r.ID == value }
 	case "instanceGroupName":
-		return func(r *record.Record) bool { return globMatches(r.Group, value) }
+		if strings.Contains(value, "*") {
+			return func(r *record.Record) bool { return globMatches(r.Group, value) }
+		}
+		return func(r *record.Record) bool { return r.Group == value }
 	case "network":
-		return func(r *record.Record) bool { return globMatches(r.Network, value) }
+		if strings.Contains(value, "*") {
+			return func(r *record.Record) bool { return globMatches(r.Network, value) }
+		}
+		return func(r *record.Record) bool { return r.Network == value }
 	case "deployment":
-		return func(r *record.Record) bool { return globMatches(r.Deployment, value) }
+		if strings.Contains(value, "*") {
+			return func(r *record.Record) bool { return globMatches(r.Deployment, value) }
+		}
+		return func(r *record.Record) bool { return r.Deployment == value }
 	case "domain":
 		return func(r *record.Record) bool { return r.Domain == value }
 
