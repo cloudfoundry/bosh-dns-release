@@ -4,20 +4,16 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
-	"time"
 )
-
-const waitTimeout = 5 * time.Second
 
 type WorkPool struct {
 	workQueue chan func()
 	stopping  chan struct{}
 	stopped   int32
 
-	mutex       sync.Mutex
-	maxWorkers  int
-	numWorkers  int
-	idleWorkers int
+	mutex      sync.Mutex
+	maxWorkers int
+	numWorkers int
 }
 
 func NewWorkPool(maxWorkers int) (*WorkPool, error) {
@@ -63,27 +59,12 @@ func (w *WorkPool) addWorker() bool {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
-	if w.idleWorkers > 0 || w.numWorkers == w.maxWorkers {
+	if w.numWorkers == w.maxWorkers {
 		return false
 	}
 
 	w.numWorkers++
 	go worker(w)
-	return true
-}
-
-func (w *WorkPool) workerStopping(force bool) bool {
-	w.mutex.Lock()
-	if !force {
-		if len(w.workQueue) <= w.numWorkers {
-			w.mutex.Unlock()
-			return false
-		}
-	}
-
-	w.numWorkers--
-	w.mutex.Unlock()
-
 	return true
 }
 
@@ -98,33 +79,22 @@ func (w *WorkPool) drain() {
 }
 
 func worker(w *WorkPool) {
-	timer := time.NewTimer(waitTimeout)
-	defer timer.Stop()
-
 	for {
 		if atomic.LoadInt32(&w.stopped) == 1 {
-			w.workerStopping(true)
+			w.mutex.Lock()
+			w.numWorkers--
+			w.mutex.Unlock()
 			return
 		}
 
 		select {
-		case <-timer.C:
-			if w.workerStopping(false) {
-				return
-			}
-			timer.Reset(waitTimeout)
-
 		case <-w.stopping:
-			w.workerStopping(true)
+			w.mutex.Lock()
+			w.numWorkers--
+			w.mutex.Unlock()
 			return
 
 		case work := <-w.workQueue:
-			timer.Stop()
-
-			w.mutex.Lock()
-			w.idleWorkers--
-			w.mutex.Unlock()
-
 		NOWORK:
 			for {
 				work()
@@ -136,12 +106,6 @@ func worker(w *WorkPool) {
 					break NOWORK
 				}
 			}
-
-			w.mutex.Lock()
-			w.idleWorkers++
-			w.mutex.Unlock()
-
-			timer.Reset(waitTimeout)
 		}
 	}
 }
