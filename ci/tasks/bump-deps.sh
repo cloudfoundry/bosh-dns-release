@@ -12,4 +12,6 @@ dep ensure -v -update
 
 git status
 git add vendor Gopkg.lock
+git config user.name "CI Bot"
+git config user.email "cf-bosh-eng@pivotal.io"
 git commit -m "Update vendored dependencies"
