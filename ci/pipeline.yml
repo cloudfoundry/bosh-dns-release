@@ -33,7 +33,7 @@ jobs:
       file: bosh-dns-release/ci/tasks/test-unit.yml
     - put: bosh-dns-release
       params:
-        repository: bumped-dns-release
+        repository: bumped-bosh-dns-release
 
 - name: test-unit
   public: true
