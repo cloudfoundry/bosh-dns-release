@@ -48,7 +48,7 @@
     "system/fakes",
     "uuid"
   ]
-  revision = "87d3668a74af6d395aae97a3764aac279abbaf42"
+  revision = "2c869a1a0ccef38c01c41d833db6eb02a23bd6e6"
 
 [[projects]]
   branch = "master"
@@ -319,7 +319,7 @@
     "unix",
     "windows"
   ]
-  revision = "3b87a42e500a6dc65dae1a55d0b641295971163e"
+  revision = "f6f352972f061230a99fbf49d1eb8073ebdb36cb"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -361,13 +361,13 @@
     "go/ast/astutil",
     "imports"
   ]
-  revision = "1c0c7a8ccea464136be9160da64d04309e424a3b"
+  revision = "d11f6ec946130207fd66b479a9a6def585b5110b"
 
 [[projects]]
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "51d0944304c3cbce4afe9e5247e21100037bff78"
+  revision = "7fd901a49ba6a7f87732eb344f6e3c5b19d1b200"
 
 [[projects]]
   name = "google.golang.org/grpc"
