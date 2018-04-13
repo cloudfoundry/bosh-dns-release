@@ -5,7 +5,6 @@ groups:
   - build-acceptance-tests-windows-image
   - build-acceptance-tests-image
   - build-performance-tests-image
-  - build-bumper-image
 
 jobs:
 - name: build-performance-tests-image
@@ -58,18 +57,7 @@ jobs:
       build: "repo/ci/docker/unit-tests"
     get_params:
       skip_download: true
-- name: build-bumper-image
-  public: true
-  serial: true
-  plan:
-  - aggregate:
-    - get: repo
-      trigger: true
-  - put: bumper-image
-    params:
-      build: "repo/ci/docker/bumper"
-    get_params:
-      skip_download: true
+
 resources:
 - name: repo
   type: git
@@ -111,14 +99,6 @@ resources:
   source:
     repository: bosh/bosh-dns-release
     tag: acceptance-tests-windows
-    email: {{dockerhub_email}}
-    username: {{dockerhub_username}}
-    password: {{dockerhub_password}}
-- name: bumper-image
-  type: docker-image
-  source:
-    repository: bosh/bosh-dns-release
-    tag: bumper
     email: {{dockerhub_email}}
     username: {{dockerhub_username}}
     password: {{dockerhub_password}}
