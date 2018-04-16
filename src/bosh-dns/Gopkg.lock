@@ -297,6 +297,7 @@
     "html",
     "html/atom",
     "html/charset",
+    "http/httpguts",
     "http2",
     "http2/hpack",
     "idna",
@@ -310,7 +311,7 @@
     "proxy",
     "trace"
   ]
-  revision = "61147c48b25b599e5b561d2e9c4f3e1ef489ca41"
+  revision = "a35a21de978d84ffc92f010a153705b170b2f9d1"
 
 [[projects]]
   branch = "master"
@@ -319,7 +320,7 @@
     "unix",
     "windows"
   ]
-  revision = "f6f352972f061230a99fbf49d1eb8073ebdb36cb"
+  revision = "2f57af4873d00d535c5c9028850aa2152e6a5566"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -361,7 +362,7 @@
     "go/ast/astutil",
     "imports"
   ]
-  revision = "d11f6ec946130207fd66b479a9a6def585b5110b"
+  revision = "d9caac373771d868e508d835ebc3294a9a611c50"
 
 [[projects]]
   branch = "master"
