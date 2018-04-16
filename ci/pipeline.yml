@@ -36,6 +36,7 @@ jobs:
     - put: bosh-dns-release
       params:
         repository: bumped-bosh-dns-release
+        rebase: true
 
 - name: test-unit
   public: true
