@@ -311,7 +311,7 @@
     "proxy",
     "trace"
   ]
-  revision = "a35a21de978d84ffc92f010a153705b170b2f9d1"
+  revision = "8d16fa6dc9a85c1cd3ed24ad08ff21cf94f10888"
 
 [[projects]]
   branch = "master"
@@ -320,7 +320,7 @@
     "unix",
     "windows"
   ]
-  revision = "2f57af4873d00d535c5c9028850aa2152e6a5566"
+  revision = "b126b21c05a91c856b027c16779c12e3bf236954"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -360,9 +360,10 @@
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
-    "imports"
+    "imports",
+    "internal/fastwalk"
   ]
-  revision = "d9caac373771d868e508d835ebc3294a9a611c50"
+  revision = "94b14834a20132093826ea5e2da5502a13908ad3"
 
 [[projects]]
   branch = "master"
