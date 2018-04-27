@@ -13,7 +13,7 @@ function NeedsToInstallGo() {
         return $true
     }
     $version = "$(go.exe version)"
-    if ($version -match 'go version go1\.[1-7]\.\d windows\/amd64') {
+    if ($version -ne 'go version go1.9.2 windows/amd64') {
         Write-Host "Installed version of Go is not supported, Go will be updated"
         return $true
     }
@@ -22,9 +22,9 @@ function NeedsToInstallGo() {
 }
 
 if (NeedsToInstallGo) {
-    Write-Host "Installing Go 1.8.3"
+    Write-Host "Installing Go 1.9.2"
 
-    Invoke-WebRequest 'https://storage.googleapis.com/golang/go1.8.3.windows-amd64.msi' `
+    Invoke-WebRequest 'https://storage.googleapis.com/golang/go1.9.2.windows-amd64.msi' `
         -UseBasicParsing -OutFile go.msi
 
     $p = Start-Process -FilePath "msiexec" `
