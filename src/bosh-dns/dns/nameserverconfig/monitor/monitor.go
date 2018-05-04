@@ -10,22 +10,20 @@ import (
 
 type Monitor struct {
 	logger     boshlog.Logger
-	address    string
 	dnsManager manager.DNSManager
 	signal     clock.Ticker
 }
 
-func NewMonitor(logger boshlog.Logger, address string, dnsManager manager.DNSManager, signal clock.Ticker) Monitor {
+func NewMonitor(logger boshlog.Logger, dnsManager manager.DNSManager, signal clock.Ticker) Monitor {
 	return Monitor{
 		logger:     logger,
-		address:    address,
 		dnsManager: dnsManager,
 		signal:     signal,
 	}
 }
 
 func (c Monitor) RunOnce() error {
-	err := c.dnsManager.SetPrimary(c.address)
+	err := c.dnsManager.SetPrimary()
 	if err != nil {
 		return bosherr.WrapError(err, "Updating nameserver configs")
 	}

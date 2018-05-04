@@ -20,13 +20,15 @@ var warningLine = "# This file was automatically updated by bosh-dns"
 var nameserverLineRegex = regexp.MustCompile("^nameserver (.+)")
 
 type resolvConfManager struct {
+	address   string
 	fs        boshsys.FileSystem
 	cmdRunner boshsys.CmdRunner
 	clock     clock.Clock
 }
 
-func NewResolvConfManager(clock clock.Clock, fs boshsys.FileSystem, cmdRunner boshsys.CmdRunner) *resolvConfManager {
+func NewResolvConfManager(address string, clock clock.Clock, fs boshsys.FileSystem, cmdRunner boshsys.CmdRunner) *resolvConfManager {
 	return &resolvConfManager{
+		address:   address,
 		fs:        fs,
 		cmdRunner: cmdRunner,
 		clock:     clock,
@@ -58,12 +60,12 @@ func (r *resolvConfManager) Read() ([]string, error) {
 	return nameservers, nil
 }
 
-func (r *resolvConfManager) SetPrimary(address string) error {
+func (r *resolvConfManager) SetPrimary() error {
 	writeString := fmt.Sprintf(`%s
 nameserver %s
-`, warningLine, address)
+`, warningLine, r.address)
 
-	if correct, _ := r.isCorrect(address); correct {
+	if correct, _ := r.isCorrect(r.address); correct {
 		return nil
 	}
 
@@ -73,7 +75,7 @@ nameserver %s
 			return bosherr.WrapError(err, "Reading existing head")
 		}
 
-		if !r.isStringCorrect(address, append) {
+		if !r.isStringCorrect(r.address, append) {
 			writeString = fmt.Sprintf("%s\n%s", writeString, append)
 		}
 	}
@@ -89,7 +91,7 @@ nameserver %s
 	}
 
 	for i := 0; i < MaxResolvConfRetries; i++ {
-		if correct, _ := r.isCorrect(address); correct {
+		if correct, _ := r.isCorrect(r.address); correct {
 			return nil
 		}
 

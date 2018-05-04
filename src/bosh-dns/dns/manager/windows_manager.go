@@ -45,6 +45,7 @@ Exit 0
 `
 
 type windowsManager struct {
+	address        string
 	runner         boshsys.CmdRunner
 	fs             boshsys.FileSystem
 	adapterFetcher AdapterFetcher
@@ -56,17 +57,17 @@ type AdapterFetcher interface {
 	Adapters() ([]Adapter, error)
 }
 
-func NewWindowsManager(runner boshsys.CmdRunner, fs boshsys.FileSystem, adapterFetcher AdapterFetcher) *windowsManager {
-	return &windowsManager{runner: runner, fs: fs, adapterFetcher: adapterFetcher}
+func NewWindowsManager(address string, runner boshsys.CmdRunner, fs boshsys.FileSystem, adapterFetcher AdapterFetcher) *windowsManager {
+	return &windowsManager{address: address, runner: runner, fs: fs, adapterFetcher: adapterFetcher}
 }
 
-func (manager *windowsManager) SetPrimary(address string) error {
+func (manager *windowsManager) SetPrimary() error {
 	servers, err := manager.Read()
 	if err != nil {
 		return err
 	}
 
-	if len(servers) > 0 && servers[0] == address {
+	if len(servers) > 0 && servers[0] == manager.address {
 		return nil
 	}
 
@@ -76,7 +77,7 @@ func (manager *windowsManager) SetPrimary(address string) error {
 	}
 	defer manager.fs.RemoveAll(filepath.Dir(scriptName))
 
-	_, _, _, err = manager.runner.RunCommand("powershell.exe", scriptName, address)
+	_, _, _, err = manager.runner.RunCommand("powershell.exe", scriptName, manager.address)
 	if err != nil {
 		return bosherr.WrapError(err, "Executing prepend-dns-server.ps1")
 	}

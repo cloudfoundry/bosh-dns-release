@@ -33,7 +33,7 @@ var _ = Describe("WindowsManager", func() {
 		fakeCmdRunner = &managerfakes.FakeCmdRunner{}
 		fakeFileSystem = systemfakes.NewFakeFileSystem()
 		fakeAdapterFetcher = &managerfakes.FakeAdapterFetcher{}
-		dnsManager = manager.NewWindowsManager(fakeCmdRunner, fakeFileSystem, fakeAdapterFetcher)
+		dnsManager = manager.NewWindowsManager(address, fakeCmdRunner, fakeFileSystem, fakeAdapterFetcher)
 	})
 
 	Describe("Read", func() {
@@ -156,7 +156,7 @@ var _ = Describe("WindowsManager", func() {
 				}, nil)
 				fakeCmdRunner.RunCommandReturns("", "", 1, errors.New("fake-err1"))
 
-				err := dnsManager.SetPrimary(address)
+				err := dnsManager.SetPrimary()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Executing prepend-dns-server.ps1"))
 				Expect(err.Error()).To(ContainSubstring("fake-err1"))
@@ -165,7 +165,7 @@ var _ = Describe("WindowsManager", func() {
 			It("errors for list", func() {
 				fakeAdapterFetcher.AdaptersReturns(nil, errors.New("Failed to fetch adapters"))
 
-				err := dnsManager.SetPrimary(address)
+				err := dnsManager.SetPrimary()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Failed to fetch adapters"))
 				Expect(err.Error()).To(ContainSubstring("Getting list of current DNS Servers"))
@@ -187,7 +187,7 @@ var _ = Describe("WindowsManager", func() {
 				return fmt.Sprintf("%s\r\n%s", "8.8.8.8", address), "", 0, nil
 			}
 
-			err := dnsManager.SetPrimary(address)
+			err := dnsManager.SetPrimary()
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeCmdRunner.RunCommandCallCount()).To(Equal(1))
@@ -208,7 +208,7 @@ var _ = Describe("WindowsManager", func() {
 				},
 			}, nil)
 
-			err := dnsManager.SetPrimary(address)
+			err := dnsManager.SetPrimary()
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeCmdRunner.RunCommandCallCount()).To(Equal(0))

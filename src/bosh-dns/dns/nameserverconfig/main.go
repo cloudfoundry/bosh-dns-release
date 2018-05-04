@@ -36,11 +36,10 @@ func main() {
 	realClock := clock.NewClock()
 	ticker := realClock.NewTicker(3 * time.Second)
 
-	dnsManager := newDNSManager(logger, realClock, fs)
+	dnsManager := newDNSManager(bindAddress, logger, realClock, fs)
 
 	monitor := monitor.NewMonitor(
 		logger,
-		bindAddress,
 		dnsManager,
 		ticker,
 	)

@@ -7,12 +7,10 @@ import (
 )
 
 type FakeDNSManager struct {
-	SetPrimaryStub        func(string) error
+	SetPrimaryStub        func() error
 	setPrimaryMutex       sync.RWMutex
-	setPrimaryArgsForCall []struct {
-		arg1 string
-	}
-	setPrimaryReturns struct {
+	setPrimaryArgsForCall []struct{}
+	setPrimaryReturns     struct {
 		result1 error
 	}
 	setPrimaryReturnsOnCall map[int]struct {
@@ -33,16 +31,14 @@ type FakeDNSManager struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeDNSManager) SetPrimary(arg1 string) error {
+func (fake *FakeDNSManager) SetPrimary() error {
 	fake.setPrimaryMutex.Lock()
 	ret, specificReturn := fake.setPrimaryReturnsOnCall[len(fake.setPrimaryArgsForCall)]
-	fake.setPrimaryArgsForCall = append(fake.setPrimaryArgsForCall, struct {
-		arg1 string
-	}{arg1})
-	fake.recordInvocation("SetPrimary", []interface{}{arg1})
+	fake.setPrimaryArgsForCall = append(fake.setPrimaryArgsForCall, struct{}{})
+	fake.recordInvocation("SetPrimary", []interface{}{})
 	fake.setPrimaryMutex.Unlock()
 	if fake.SetPrimaryStub != nil {
-		return fake.SetPrimaryStub(arg1)
+		return fake.SetPrimaryStub()
 	}
 	if specificReturn {
 		return ret.result1
@@ -54,12 +50,6 @@ func (fake *FakeDNSManager) SetPrimaryCallCount() int {
 	fake.setPrimaryMutex.RLock()
 	defer fake.setPrimaryMutex.RUnlock()
 	return len(fake.setPrimaryArgsForCall)
-}
-
-func (fake *FakeDNSManager) SetPrimaryArgsForCall(i int) string {
-	fake.setPrimaryMutex.RLock()
-	defer fake.setPrimaryMutex.RUnlock()
-	return fake.setPrimaryArgsForCall[i].arg1
 }
 
 func (fake *FakeDNSManager) SetPrimaryReturns(result1 error) {
@@ -131,11 +121,7 @@ func (fake *FakeDNSManager) Invocations() map[string][][]interface{} {
 	defer fake.setPrimaryMutex.RUnlock()
 	fake.readMutex.RLock()
 	defer fake.readMutex.RUnlock()
-	copiedInvocations := map[string][][]interface{}{}
-	for key, value := range fake.invocations {
-		copiedInvocations[key] = value
-	}
-	return copiedInvocations
+	return fake.invocations
 }
 
 func (fake *FakeDNSManager) recordInvocation(key string, args []interface{}) {

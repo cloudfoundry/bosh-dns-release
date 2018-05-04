@@ -116,7 +116,7 @@ func mainExitCode() int {
 	clock := clock.NewClock()
 	repoUpdate := make(chan struct{})
 
-	dnsManager := newDNSManager(logger, clock, fs)
+	dnsManager := newDNSManager(config.Address, logger, clock, fs)
 	recursorReader := dnsconfig.NewRecursorReader(dnsManager, listenIPs)
 	stringShuffler := shuffle.NewStringShuffler()
 	err = dnsconfig.ConfigureRecursors(recursorReader, stringShuffler, &config)

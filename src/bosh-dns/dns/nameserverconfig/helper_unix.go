@@ -9,6 +9,6 @@ import (
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
-func newDNSManager(logger logger.Logger, clock clock.Clock, fs boshsys.FileSystem) manager.DNSManager {
-	return manager.NewResolvConfManager(clock, fs, boshsys.NewExecCmdRunner(logger))
+func newDNSManager(address string, logger logger.Logger, clock clock.Clock, fs boshsys.FileSystem) manager.DNSManager {
+	return manager.NewResolvConfManager(address, clock, fs, boshsys.NewExecCmdRunner(logger))
 }

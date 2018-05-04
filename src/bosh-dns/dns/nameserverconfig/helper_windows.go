@@ -8,6 +8,6 @@ import (
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
-func newDNSManager(logger logger.Logger, _ clock.Clock, fs boshsys.FileSystem) manager.DNSManager {
-	return manager.NewWindowsManager(boshsys.NewExecCmdRunner(logger), fs, manager.WindowsAdapterFetcher{})
+func newDNSManager(address string, logger logger.Logger, _ clock.Clock, fs boshsys.FileSystem) manager.DNSManager {
+	return manager.NewWindowsManager(address, boshsys.NewExecCmdRunner(logger), fs, manager.WindowsAdapterFetcher{})
 }

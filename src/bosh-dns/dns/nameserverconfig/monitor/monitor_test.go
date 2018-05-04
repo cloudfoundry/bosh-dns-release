@@ -31,7 +31,7 @@ var _ = Describe("Monitor", func() {
 		dnsManager = &managerfakes.FakeDNSManager{}
 		fakeClock = fakeclock.NewFakeClock(time.Now())
 		ticker = fakeClock.NewTicker(time.Second)
-		applier = monitor.NewMonitor(logger, address, dnsManager, ticker)
+		applier = monitor.NewMonitor(logger, dnsManager, ticker)
 	})
 
 	Describe("RunOnce", func() {
@@ -41,7 +41,6 @@ var _ = Describe("Monitor", func() {
 			err := applier.RunOnce()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dnsManager.SetPrimaryCallCount()).To(Equal(1))
-			Expect(dnsManager.SetPrimaryArgsForCall(0)).To(Equal(address))
 		})
 
 		Context("dns manager fails", func() {
@@ -68,7 +67,7 @@ var _ = Describe("Monitor", func() {
 			BeforeEach(func() {
 				isWaiting = make(chan struct{})
 				stopWaiting = make(chan struct{})
-				dnsManager.SetPrimaryStub = func(s string) error {
+				dnsManager.SetPrimaryStub = func() error {
 					close(isWaiting)
 					<-stopWaiting
 					return nil

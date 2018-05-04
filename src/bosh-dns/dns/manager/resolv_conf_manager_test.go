@@ -26,7 +26,7 @@ var _ = Describe("ResolvConfManager", func() {
 		clock = fakeclock.NewFakeClock(time.Now())
 		fakeCmdRunner = boshsysfakes.NewFakeCmdRunner()
 		fs = boshsysfakes.NewFakeFileSystem()
-		dnsManager = manager.NewResolvConfManager(clock, fs, fakeCmdRunner)
+		dnsManager = manager.NewResolvConfManager("192.0.2.100", clock, fs, fakeCmdRunner)
 	})
 
 	Describe("Read", func() {
@@ -135,7 +135,7 @@ nameserver ns-2
 				fs.WriteFileError = errors.New("fake-err1")
 
 				go clock.WaitForWatcherAndIncrement(time.Second * 2)
-				err := dnsManager.SetPrimary("192.0.2.100")
+				err := dnsManager.SetPrimary()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Writing "))
 				Expect(err.Error()).To(ContainSubstring("fake-err1"))
@@ -147,7 +147,7 @@ nameserver ns-2
 				fakeCmdRunner.AddCmdResult("resolvconf -u", boshsysfakes.FakeCmdResult{ExitStatus: 1, Error: errors.New("fake-err1")})
 
 				go clock.WaitForWatcherAndIncrement(time.Second * 2)
-				err := dnsManager.SetPrimary("192.0.2.100")
+				err := dnsManager.SetPrimary()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Executing "))
 				Expect(err.Error()).To(ContainSubstring("fake-err1"))
@@ -163,7 +163,7 @@ nameserver ns-2
 						clock.WaitForWatcherAndIncrement(time.Second * 2)
 					}
 				}()
-				err := dnsManager.SetPrimary("192.0.2.100")
+				err := dnsManager.SetPrimary()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Failed to confirm nameserver "))
 			})
@@ -172,7 +172,7 @@ nameserver ns-2
 		It("skips if resolvconf already has our server", func() {
 			_ = fs.WriteFileString("/etc/resolv.conf", `nameserver 192.0.2.100`)
 
-			err := dnsManager.SetPrimary("192.0.2.100")
+			err := dnsManager.SetPrimary()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(fakeCmdRunner.RunCommands).To(HaveLen(0))
 		})
@@ -184,7 +184,7 @@ nameserver ns-2
 			})
 
 			go clock.WaitForWatcherAndIncrement(time.Second * 2)
-			err := dnsManager.SetPrimary("192.0.2.100")
+			err := dnsManager.SetPrimary()
 			Expect(err).NotTo(HaveOccurred())
 
 			contents, err := fs.ReadFileString("/etc/resolvconf/resolv.conf.d/head")
@@ -208,7 +208,7 @@ nameserver 8.8.8.8
 			Expect(err).NotTo(HaveOccurred())
 
 			go clock.WaitForWatcherAndIncrement(time.Second * 2)
-			err = dnsManager.SetPrimary("192.0.2.100")
+			err = dnsManager.SetPrimary()
 			Expect(err).NotTo(HaveOccurred())
 
 			contents, err := fs.ReadFileString("/etc/resolvconf/resolv.conf.d/head")
@@ -229,7 +229,7 @@ nameserver 192.0.3.2
 			})
 
 			go clock.WaitForWatcherAndIncrement(time.Second * 2)
-			err := dnsManager.SetPrimary("192.0.2.100")
+			err := dnsManager.SetPrimary()
 			Expect(err).NotTo(HaveOccurred())
 
 			contents, err := fs.ReadFileString("/etc/resolvconf/resolv.conf.d/head")
