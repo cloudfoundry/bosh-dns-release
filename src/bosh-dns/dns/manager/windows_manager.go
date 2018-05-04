@@ -1,9 +1,8 @@
 package manager
 
 import (
+	"fmt"
 	"path/filepath"
-
-	"strings"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
@@ -86,18 +85,12 @@ func (manager *windowsManager) SetPrimary() error {
 }
 
 func (manager *windowsManager) Read() ([]string, error) {
-	var servers []string
-
-	adapters, err := manager.getPhysicalAdapters()
+	adapter, err := manager.getPrimaryAdapter()
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Getting list of current DNS Servers")
 	}
 
-	for _, adapter := range adapters {
-		servers = append(servers, adapter.DNSServerAddresses...)
-	}
-
-	return servers, nil
+	return adapter.DNSServerAddresses, nil
 }
 
 func (manager *windowsManager) writeScript(name, contents string) (string, error) {
@@ -126,54 +119,32 @@ const (
 	IfTypeTunnel           uint32 = 131
 )
 
-func (manager *windowsManager) getPhysicalAdapters() ([]Adapter, error) {
-	var result []Adapter
-
+func (manager *windowsManager) getPrimaryAdapter() (Adapter, error) {
 	adapters, err := manager.adapterFetcher.Adapters()
 	if err != nil {
-		return nil, err
+		return Adapter{}, err
 	}
+
 	for _, adapter := range adapters {
-		if adapter.IfType != IfTypeSoftwareLoopback && adapter.IfType != IfTypeTunnel &&
-			adapter.OperStatus == IfOperStatusUp && adapter.isPhysicalInterface() {
-			result = append(result, adapter)
+		if adapter.IfType == IfTypeSoftwareLoopback || adapter.IfType == IfTypeTunnel {
+			continue
+		} else if adapter.OperStatus != IfOperStatusUp {
+			continue
+		}
+
+		for _, unicastAddress := range adapter.UnicastAddresses {
+			if unicastAddress == manager.address {
+				return adapter, nil
+			}
 		}
 	}
 
-	return result, nil
+	return Adapter{}, fmt.Errorf("Unable to find primary adapter for %s", manager.address)
 }
 
 type Adapter struct {
 	IfType             uint32
 	OperStatus         uint32
-	PhysicalAddress    string
+	UnicastAddresses   []string
 	DNSServerAddresses []string
-}
-
-// Mac Address parts to look for, and identify non physical devices. There may be more, update me!
-var macAddrPartsToFilter []string = []string{
-	"00:03:FF",       // Microsoft Hyper-V, Virtual Server, Virtual PC
-	"00:15:5D",       // Microsoft Hyper-V, Virtual Server, Virtual PC
-	"0A:00:27",       // VirtualBox
-	"00:00:00:00:00", // Teredo Tunneling Pseudo-Interface
-	"00:50:56",       // VMware ESX 3, Server, Workstation, Player
-	"00:1C:14",       // VMware ESX 3, Server, Workstation, Player
-	"00:0C:29",       // VMware ESX 3, Server, Workstation, Player
-	"00:05:69",       // VMware ESX 3, Server, Workstation, Player
-	"00:1C:42",       // Microsoft Hyper-V, Virtual Server, Virtual PC
-	"00:0F:4B",       // Virtual Iron 4
-	"00:16:3E",       // Red Hat Xen, Oracle VM, XenSource, Novell Xen
-	"08:00:27",       // Sun xVM VirtualBox
-}
-
-// Filters the possible physical interface address by comparing it to known popular VM Software adresses
-// and Teredo Tunneling Pseudo-Interface.
-func (a Adapter) isPhysicalInterface() bool {
-	for _, macPart := range macAddrPartsToFilter {
-		if strings.HasPrefix(strings.ToLower(a.PhysicalAddress), strings.ToLower(macPart)) {
-			return false
-		}
-	}
-
-	return true
 }

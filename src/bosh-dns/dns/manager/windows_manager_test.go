@@ -48,26 +48,20 @@ var _ = Describe("WindowsManager", func() {
 			})
 		})
 
-		Context("when adapters are found", func() {
+		Context("when adapter is found", func() {
 			It("filters out loopback adapters", func() {
 				fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
 					{
 						IfType:             manager.IfTypeSoftwareLoopback,
 						OperStatus:         manager.IfOperStatusUp,
-						PhysicalAddress:    "C1:F2:2A:44:73:5E",
+						UnicastAddresses:   []string{address},
 						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
-					},
-					{
-						IfType:             NotLoopBack,
-						OperStatus:         manager.IfOperStatusUp,
-						PhysicalAddress:    "A1:F2:2A:44:73:5F",
-						DNSServerAddresses: []string{"1.1.1.1"},
 					},
 				}, nil)
 
-				servers, err := dnsManager.Read()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(servers).To(ConsistOf("1.1.1.1"))
+				_, err := dnsManager.Read()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Unable to find primary adapter for %s", address)))
 			})
 
 			It("filters out tunnel adapters", func() {
@@ -75,55 +69,43 @@ var _ = Describe("WindowsManager", func() {
 					{
 						IfType:             manager.IfTypeTunnel,
 						OperStatus:         manager.IfOperStatusUp,
-						PhysicalAddress:    "C1:F2:2A:44:73:5E",
+						UnicastAddresses:   []string{address},
 						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
-					},
-					{
-						IfType:             NotTunnel,
-						OperStatus:         manager.IfOperStatusUp,
-						PhysicalAddress:    "A1:F2:2A:44:73:5F",
-						DNSServerAddresses: []string{"1.1.1.1"},
 					},
 				}, nil)
 
-				servers, err := dnsManager.Read()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(servers).To(ConsistOf("1.1.1.1"))
-			})
-
-			It("filters out non-physical adapters", func() {
-				fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
-					{
-						IfType:             NotLoopBack,
-						OperStatus:         manager.IfOperStatusUp,
-						PhysicalAddress:    "C1:F2:2A:44:73:5E",
-						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
-					},
-					{
-						IfType:             NotTunnel,
-						OperStatus:         manager.IfOperStatusUp,
-						PhysicalAddress:    "00:03:FF:44:73:5F",
-						DNSServerAddresses: []string{"1.1.1.1"},
-					},
-				}, nil)
-
-				servers, err := dnsManager.Read()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(servers).To(ConsistOf("8.8.8.8", "8.8.4.4"))
+				_, err := dnsManager.Read()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Unable to find primary adapter for %s", address)))
 			})
 
 			It("filter out non-up adapters", func() {
 				fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
 					{
+						IfType:             NotTunnel,
+						OperStatus:         NonUp,
+						UnicastAddresses:   []string{address},
+						DNSServerAddresses: []string{"1.1.1.1"},
+					},
+				}, nil)
+
+				_, err := dnsManager.Read()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Unable to find primary adapter for %s", address)))
+			})
+
+			It("returns matching adapter", func() {
+				fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
+					{
 						IfType:             NotLoopBack,
 						OperStatus:         manager.IfOperStatusUp,
-						PhysicalAddress:    "C1:F2:2A:44:73:5E",
+						UnicastAddresses:   []string{address},
 						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
 					},
 					{
 						IfType:             NotTunnel,
-						OperStatus:         NonUp,
-						PhysicalAddress:    "A1:F2:2A:44:73:5F",
+						OperStatus:         manager.IfOperStatusUp,
+						UnicastAddresses:   []string{"192.0.3.0"},
 						DNSServerAddresses: []string{"1.1.1.1"},
 					},
 				}, nil)
@@ -134,11 +116,12 @@ var _ = Describe("WindowsManager", func() {
 			})
 		})
 
-		It("returns an empty array when no servers are configured", func() {
+		It("returns an error when no servers are configured", func() {
 			fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{}, nil)
 
 			servers, err := dnsManager.Read()
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Getting list of current DNS Servers: Unable to find primary adapter for %s", address)))
 			Expect(servers).To(HaveLen(0))
 		})
 	})
@@ -150,7 +133,7 @@ var _ = Describe("WindowsManager", func() {
 					{
 						IfType:             NotLoopBack,
 						OperStatus:         manager.IfOperStatusUp,
-						PhysicalAddress:    "A1:F2:2A:44:73:5F",
+						UnicastAddresses:   []string{address},
 						DNSServerAddresses: []string{},
 					},
 				}, nil)
@@ -186,6 +169,14 @@ var _ = Describe("WindowsManager", func() {
 				Expect(err).NotTo(HaveOccurred())
 				return fmt.Sprintf("%s\r\n%s", "8.8.8.8", address), "", 0, nil
 			}
+			fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
+				{
+					IfType:             NotLoopBack,
+					OperStatus:         manager.IfOperStatusUp,
+					UnicastAddresses:   []string{address},
+					DNSServerAddresses: []string{},
+				},
+			}, nil)
 
 			err := dnsManager.SetPrimary()
 			Expect(err).NotTo(HaveOccurred())
@@ -203,7 +194,7 @@ var _ = Describe("WindowsManager", func() {
 				{
 					IfType:             NotLoopBack,
 					OperStatus:         manager.IfOperStatusUp,
-					PhysicalAddress:    "A1:F2:2A:44:73:5F",
+					UnicastAddresses:   []string{address},
 					DNSServerAddresses: []string{address, "1.1.1.1"},
 				},
 			}, nil)

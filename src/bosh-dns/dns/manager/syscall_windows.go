@@ -40,8 +40,8 @@ func (WindowsAdapterFetcher) Adapters() ([]Adapter, error) {
 		aas = append(aas, Adapter{
 			IfType:             aa.IfType,
 			OperStatus:         aa.OperStatus,
-			PhysicalAddress:    physicalAddrToString(aa.PhysicalAddress),
-			DNSServerAddresses: toArray(aa.FirstDnsServerAddress),
+			UnicastAddresses:   ipsFromSocketAddresses(socketAddressesFromIpAdapterUnicastAddress(aa.FirstUnicastAddress)),
+			DNSServerAddresses: ipsFromSocketAddresses(socketAddressesFromIpAdapterDnsServerAdapter(aa.FirstDnsServerAddress)),
 		})
 	}
 	return aas, nil
@@ -66,32 +66,38 @@ func sockaddrToIP(sockaddr windows.SocketAddress) (string, error) {
 	return "", nil
 }
 
-func toArray(dnsAddress *windows.IpAdapterDnsServerAdapter) []string {
-	var resolvers []string
+func ipsFromSocketAddresses(addresses []windows.SocketAddress) []string {
+	var results []string
 
-	for aa := dnsAddress; aa != nil; aa = aa.Next {
-		ipAddr, err := sockaddrToIP(aa.Address)
+	for _, address := range addresses {
+		ipAddr, err := sockaddrToIP(address)
 		if err != nil {
-			// just like whatever => fmt.Printf("Error: %s", err)
+			// error parsing socket address to IP
 			continue
 		}
-		resolvers = append(resolvers, ipAddr)
+
+		results = append(results, ipAddr)
 	}
 
-	return resolvers
+	return results
 }
 
-func physicalAddrToString(physAddr [8]byte) string {
-	if len(physAddr) == 0 {
-		return ""
+func socketAddressesFromIpAdapterUnicastAddress(addresses *windows.IpAdapterUnicastAddress) []windows.SocketAddress {
+	var results []windows.SocketAddress
+
+	for address := addresses; address != nil; address = address.Next {
+		results = append(results, address.Address)
 	}
-	buf := make([]byte, 0, len(physAddr)*3-1)
-	for i, b := range physAddr {
-		if i > 0 {
-			buf = append(buf, ':')
-		}
-		buf = append(buf, hexDigit[b>>4])
-		buf = append(buf, hexDigit[b&0xF])
+
+	return results
+}
+
+func socketAddressesFromIpAdapterDnsServerAdapter(addresses *windows.IpAdapterDnsServerAdapter) []windows.SocketAddress {
+	var results []windows.SocketAddress
+
+	for address := addresses; address != nil; address = address.Next {
+		results = append(results, address.Address)
 	}
-	return string(buf)
+
+	return results
 }
