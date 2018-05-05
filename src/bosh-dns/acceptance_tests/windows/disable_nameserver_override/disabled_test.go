@@ -8,7 +8,7 @@ import (
 
 	"bosh-dns/dns/manager"
 
-	"github.com/cloudfoundry/bosh-utils/logger"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
 
 	"github.com/onsi/gomega/gexec"
@@ -31,15 +31,18 @@ var _ = Describe("dns job: disable_nameserver_override", func() {
 
 		Context("external processes changing dns servers", func() {
 			var (
+				logger      boshlog.Logger
+				cmdRunner   system.CmdRunner
+				fs          system.FileSystem
 				existingDNS string
 				man         manager.DNSManager
 			)
 
 			BeforeEach(func() {
-				logger := logger.NewLogger(logger.LevelDebug)
-				cmdRunner := system.NewExecCmdRunner(logger)
-				fs := system.NewOsFileSystem(logger)
-				man = manager.NewWindowsManager(cmdRunner, fs, manager.WindowsAdapterFetcher{})
+				logger = boshlog.NewLogger(boshlog.LevelDebug)
+				cmdRunner = system.NewExecCmdRunner(logger)
+				fs = system.NewOsFileSystem(logger)
+				man = manager.NewWindowsManager("192.0.2.100", cmdRunner, fs, manager.WindowsAdapterFetcher{})
 
 				addresses, err := man.Read()
 				Expect(err).NotTo(HaveOccurred())
@@ -47,12 +50,13 @@ var _ = Describe("dns job: disable_nameserver_override", func() {
 			})
 
 			AfterEach(func() {
-				err := man.SetPrimary(existingDNS)
+				manager.NewWindowsManager(existingDNS, cmdRunner, fs, manager.WindowsAdapterFetcher{})
+				err := man.SetPrimary()
 				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("does not rewrite the nameserver configuration to our dns server", func() {
-				err := man.SetPrimary("192.0.2.100")
+				err := man.SetPrimary()
 				Expect(err).NotTo(HaveOccurred())
 
 				Consistently(func() string {

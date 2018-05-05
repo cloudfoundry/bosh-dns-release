@@ -114,6 +114,27 @@ var _ = Describe("WindowsManager", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(servers).To(ConsistOf("8.8.8.8", "8.8.4.4"))
 			})
+
+			It("returns the adapter if there is only one available", func() {
+				fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
+					{
+						IfType:             NotLoopBack,
+						OperStatus:         NonUp,
+						UnicastAddresses:   []string{"192.0.2.1"},
+						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
+					},
+					{
+						IfType:             NotTunnel,
+						OperStatus:         manager.IfOperStatusUp,
+						UnicastAddresses:   []string{"127.0.0.1"},
+						DNSServerAddresses: []string{"1.1.1.1"},
+					},
+				}, nil)
+
+				servers, err := dnsManager.Read()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(servers).To(ConsistOf("1.1.1.1"))
+			})
 		})
 
 		It("returns an error when no servers are configured", func() {

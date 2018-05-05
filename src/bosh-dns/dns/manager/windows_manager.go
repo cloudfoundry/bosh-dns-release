@@ -125,6 +125,8 @@ func (manager *windowsManager) getPrimaryAdapter() (Adapter, error) {
 		return Adapter{}, err
 	}
 
+	var candidateAdapters []Adapter
+
 	for _, adapter := range adapters {
 		if adapter.IfType == IfTypeSoftwareLoopback || adapter.IfType == IfTypeTunnel {
 			continue
@@ -132,6 +134,14 @@ func (manager *windowsManager) getPrimaryAdapter() (Adapter, error) {
 			continue
 		}
 
+		candidateAdapters = append(candidateAdapters, adapter)
+	}
+
+	if len(candidateAdapters) == 1 {
+		return candidateAdapters[0], nil
+	}
+
+	for _, adapter := range candidateAdapters {
 		for _, unicastAddress := range adapter.UnicastAddresses {
 			if unicastAddress == manager.address {
 				return adapter, nil
