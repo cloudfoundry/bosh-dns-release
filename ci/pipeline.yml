@@ -19,6 +19,7 @@ groups:
   - bbl-destroy
   - finalize-release
   - bump-major
+  - delivery
 
 jobs:
 - name: bump-deps
@@ -282,6 +283,8 @@ jobs:
   plan:
   - do:
     - aggregate:
+      - get: bosh-dns-src
+        resource: bosh-dns-release
       - get: brats-src
       - get: bosh-dns-release
         resource: candidate-release
@@ -368,6 +371,23 @@ jobs:
     - put: version
       params:
         bump: major
+
+- name: delivery
+  plan:
+    - aggregate:
+      - get: bosh-dns-release
+        version: every
+        trigger: true
+        passed:
+        - test-stress
+        - test-acceptance
+        - test-acceptance-windows
+        - test-acceptance-windows2016
+        - brats-ubuntu
+    - put: tracker-output
+      params:
+        repos:
+        - bosh-dns-release
 
 resources:
 - name: bosh-dns-release
@@ -486,3 +506,10 @@ resources:
   type: bosh-io-stemcell
   source:
     name: bosh-warden-boshlite-ubuntu-trusty-go_agent
+
+- name: tracker-output
+  type: tracker
+  source:
+    token: ((tracker_api_token))
+    project_id: "((tracker_project_id))"
+    tracker_url: https://www.pivotaltracker.com
