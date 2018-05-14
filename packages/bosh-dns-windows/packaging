@@ -6,7 +6,7 @@ trap { $host.SetShouldExit(1) }
 $BOSH_INSTALL_TARGET = Resolve-Path "${env:BOSH_INSTALL_TARGET}"
 
 Push-Location ${BOSH_INSTALL_TARGET}
-. "C:\var\vcap\packages\golang-1.9-windows\bosh\compile.ps1"
+. "C:\var\vcap\packages\golang-1-windows\bosh\compile.ps1"
 Pop-Location
 
 New-Item -ItemType "directory" -Force "${BOSH_INSTALL_TARGET}\src"
