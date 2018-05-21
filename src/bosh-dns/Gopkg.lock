@@ -8,7 +8,7 @@
     ".",
     "fakeclock"
   ]
-  revision = "e9dc86bbf0e5bbe6bf7ff5a6f71e048959b61f71"
+  revision = "02e53af36e6c978af692887ed449b74026d76fec"
 
 [[projects]]
   branch = "master"
@@ -48,7 +48,7 @@
     "system/fakes",
     "uuid"
   ]
-  revision = "b1888b0758ab1c20b935e761179b5de766186da5"
+  revision = "fad7a5ad622c066cf1b36eb44b9612cec680e48c"
 
 [[projects]]
   branch = "master"
@@ -149,8 +149,8 @@
 [[projects]]
   name = "github.com/miekg/dns"
   packages = ["."]
-  revision = "eac804ceef194db2da6ee80c728d7658c8c805ff"
-  version = "v1.0.6"
+  revision = "e57bf427e68187a27e22adceac868350d7a7079b"
+  version = "v1.0.7"
 
 [[projects]]
   branch = "master"
@@ -210,8 +210,8 @@
     "matchers/support/goraph/util",
     "types"
   ]
-  revision = "003f63b7f4cff3fc95357005358af2de0f5fe152"
-  version = "v1.3.0"
+  revision = "62bff4df71bdbc266561a0caee19f0594b17c240"
+  version = "v1.4.0"
 
 [[projects]]
   name = "github.com/opentracing/opentracing-go"
@@ -255,7 +255,7 @@
     "internal/bitbucket.org/ww/goautoneg",
     "model"
   ]
-  revision = "d811d2e9bf898806ecfb6ef6296774b13ffc314c"
+  revision = "7600349dcfe1abd18d72d3a1770870d9800a7801"
 
 [[projects]]
   branch = "master"
@@ -286,7 +286,7 @@
     "ssh",
     "ssh/terminal"
   ]
-  revision = "2d027ae1dddd4694d54f7a8b6cbe78dca8720226"
+  revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
 
 [[projects]]
   branch = "master"
@@ -310,7 +310,7 @@
     "proxy",
     "trace"
   ]
-  revision = "2491c5de3490fced2f6cff376127c667efeed857"
+  revision = "57065200b4b034a1c8ad54ff77069408c2218ae6"
 
 [[projects]]
   branch = "master"
@@ -319,7 +319,7 @@
     "unix",
     "windows"
   ]
-  revision = "d0faeb539838e250bd0a9db4182d48d4a1915181"
+  revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -362,13 +362,13 @@
     "imports",
     "internal/fastwalk"
   ]
-  revision = "48418e5732e1b1e2a10207c8007a5f959e422f20"
+  revision = "28aef64757f4d432485ab970b094e1af8b301e84"
 
 [[projects]]
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "86e600f69ee4704c6efbf6a2a40a5c10700e76c2"
+  revision = "11a468237815f3a3ddf9f7c6e8b6b3b382a24d15"
 
 [[projects]]
   name = "google.golang.org/grpc"
