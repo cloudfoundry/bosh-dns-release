@@ -6,8 +6,9 @@ func NewNopHealthWatcher() *nopHealthWatcher {
 	return &nopHealthWatcher{}
 }
 
-func (hw *nopHealthWatcher) IsHealthy(ip string) bool {
-	return true
+func (hw *nopHealthWatcher) IsHealthy(ip string) *bool {
+	res := true
+	return &res
 }
 
 func (hw *nopHealthWatcher) Track(ip string) {

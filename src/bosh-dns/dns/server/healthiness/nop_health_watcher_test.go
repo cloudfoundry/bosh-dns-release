@@ -39,7 +39,7 @@ var _ = Describe("NopHealthWatcher", func() {
 		})
 
 		It("is always healthy", func() {
-			Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
+			Expect(*healthWatcher.IsHealthy(ip)).To(BeTrue())
 		})
 	})
 })

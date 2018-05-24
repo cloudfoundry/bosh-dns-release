@@ -7,16 +7,16 @@ import (
 )
 
 type FakeHealthWatcher struct {
-	IsHealthyStub        func(ip string) bool
+	IsHealthyStub        func(ip string) *bool
 	isHealthyMutex       sync.RWMutex
 	isHealthyArgsForCall []struct {
 		ip string
 	}
 	isHealthyReturns struct {
-		result1 bool
+		result1 *bool
 	}
 	isHealthyReturnsOnCall map[int]struct {
-		result1 bool
+		result1 *bool
 	}
 	HealthStateStub        func(ip string) string
 	healthStateMutex       sync.RWMutex
@@ -48,7 +48,7 @@ type FakeHealthWatcher struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeHealthWatcher) IsHealthy(ip string) bool {
+func (fake *FakeHealthWatcher) IsHealthy(ip string) *bool {
 	fake.isHealthyMutex.Lock()
 	ret, specificReturn := fake.isHealthyReturnsOnCall[len(fake.isHealthyArgsForCall)]
 	fake.isHealthyArgsForCall = append(fake.isHealthyArgsForCall, struct {
@@ -77,22 +77,22 @@ func (fake *FakeHealthWatcher) IsHealthyArgsForCall(i int) string {
 	return fake.isHealthyArgsForCall[i].ip
 }
 
-func (fake *FakeHealthWatcher) IsHealthyReturns(result1 bool) {
+func (fake *FakeHealthWatcher) IsHealthyReturns(result1 *bool) {
 	fake.IsHealthyStub = nil
 	fake.isHealthyReturns = struct {
-		result1 bool
+		result1 *bool
 	}{result1}
 }
 
-func (fake *FakeHealthWatcher) IsHealthyReturnsOnCall(i int, result1 bool) {
+func (fake *FakeHealthWatcher) IsHealthyReturnsOnCall(i int, result1 *bool) {
 	fake.IsHealthyStub = nil
 	if fake.isHealthyReturnsOnCall == nil {
 		fake.isHealthyReturnsOnCall = make(map[int]struct {
-			result1 bool
+			result1 *bool
 		})
 	}
 	fake.isHealthyReturnsOnCall[i] = struct {
-		result1 bool
+		result1 *bool
 	}{result1}
 }
 
@@ -229,7 +229,11 @@ func (fake *FakeHealthWatcher) Invocations() map[string][][]interface{} {
 	defer fake.untrackMutex.RUnlock()
 	fake.runMutex.RLock()
 	defer fake.runMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeHealthWatcher) recordInvocation(key string, args []interface{}) {

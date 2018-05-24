@@ -19,7 +19,7 @@ type HealthChecker interface {
 //go:generate counterfeiter . HealthWatcher
 
 type HealthWatcher interface {
-	IsHealthy(ip string) bool
+	IsHealthy(ip string) *bool
 	HealthState(ip string) string
 	Track(ip string)
 	Untrack(ip string)
@@ -58,15 +58,16 @@ func (hw *healthWatcher) Track(ip string) {
 	})
 }
 
-func (hw *healthWatcher) IsHealthy(ip string) bool {
+func (hw *healthWatcher) IsHealthy(ip string) *bool {
 	hw.stateMutex.RLock()
 	defer hw.stateMutex.RUnlock()
 
 	if health, found := hw.state[ip]; found {
-		return health
+		return &health
 	}
+	result := true
 
-	return true
+	return &result
 }
 
 func (hw *healthWatcher) HealthState(ip string) string {

@@ -1494,16 +1494,19 @@ var _ = Describe("RecordSet", func() {
 			subscriptionChan = make(chan bool, 1)
 			fileReader.SubscribeReturns(subscriptionChan)
 
-			fakeHealthWatcher.IsHealthyStub = func(ip string) bool {
+			fakeHealthWatcher.IsHealthyStub = func(ip string) *bool {
+				result := false
 				switch ip {
 				case "123.123.123.123":
-					return true
+					return nil
 				case "123.123.123.5":
-					return true
+					result = true
 				case "123.123.123.246":
-					return false
+					result = false
+				case "246.246.246.247":
+					result = true
 				}
-				return false
+				return &result
 			}
 
 			aliasList = mustNewConfigFromMap(
@@ -1540,14 +1543,15 @@ var _ = Describe("RecordSet", func() {
 
 		Context("when an alias is supplied", func() {
 			BeforeEach(func() {
-				fakeHealthWatcher.IsHealthyStub = func(ip string) bool {
+				fakeHealthWatcher.IsHealthyStub = func(ip string) *bool {
+					result := false
 					switch ip {
 					case "246.246.246.246":
-						return false
+						result = false
 					case "246.246.246.247":
-						return true
+						result = true
 					}
-					return false
+					return &result
 				}
 
 				aliasList = mustNewConfigFromMap(
@@ -1583,25 +1587,19 @@ var _ = Describe("RecordSet", func() {
 		})
 
 		Context("when the 'smart' strategy is specified", func() {
-			It("returns only the healthy ips", func() {
+			It("returns only the healthy and unknown ips", func() {
 				ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(ips).To(ConsistOf("123.123.123.123"))
 				Eventually(fakeHealthWatcher.TrackCallCount).Should(Equal(2))
 				Expect(fakeHealthWatcher.TrackArgsForCall(0)).To(Equal("123.123.123.123"))
 				Expect(fakeHealthWatcher.TrackArgsForCall(1)).To(Equal("123.123.123.246"))
-
-				ips, err = recordSet.Resolve("q-s3.my-group.my-network.my-deployment.my-domain.")
-				Expect(err).NotTo(HaveOccurred())
-				Expect(ips).To(ConsistOf("123.123.123.123"))
-				Eventually(fakeHealthWatcher.TrackCallCount).Should(Equal(4))
-				Expect(fakeHealthWatcher.TrackArgsForCall(2)).To(Equal("123.123.123.123"))
-				Expect(fakeHealthWatcher.TrackArgsForCall(3)).To(Equal("123.123.123.246"))
 			})
 
 			Context("when all ips are un-healthy", func() {
 				BeforeEach(func() {
-					fakeHealthWatcher.IsHealthyReturns(false)
+					res := false
+					fakeHealthWatcher.IsHealthyReturns(&res)
 				})
 
 				It("returns all ips", func() {
@@ -1624,7 +1622,9 @@ var _ = Describe("RecordSet", func() {
 			It("returns only the healthy records", func() {
 				ips, err := recordSet.Resolve("q-s3.my-group.my-network.my-deployment.my-domain.")
 				Expect(err).NotTo(HaveOccurred())
-				Expect(ips).To(ConsistOf("123.123.123.123"))
+				Expect(ips).To(BeEmpty())
+				ips, err = recordSet.Resolve("q-s3.my-group.my-network.my-deployment.a1_domain2.")
+				Expect(ips).To(ConsistOf("246.246.246.247"))
 			})
 		})
 
@@ -1680,7 +1680,8 @@ var _ = Describe("RecordSet", func() {
 		Context("when the ips not under a tracked domain change", func() {
 			Describe("limiting tracked domains", func() {
 				BeforeEach(func() {
-					fakeHealthWatcher.IsHealthyReturns(true)
+					res := true
+					fakeHealthWatcher.IsHealthyReturns(&res)
 
 					jsonBytes := []byte(`{
 					"record_keys":

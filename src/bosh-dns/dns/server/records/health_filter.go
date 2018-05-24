@@ -22,7 +22,7 @@ type healthTracker interface {
 }
 
 type healthWatcher interface {
-	IsHealthy(ip string) bool
+	IsHealthy(ip string) *bool
 }
 
 func NewHealthFilter(nextFilter reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool) healthFilter {
@@ -36,14 +36,17 @@ func NewHealthFilter(nextFilter reducer, health chan<- record.Host, w healthWatc
 
 func (q *healthFilter) Filter(crit criteria.Criteria, recs []record.Record) []record.Record {
 	records := q.nextFilter.Filter(crit, recs)
-	var healthyRecords, unhealthyRecords []record.Record
+	var healthyRecords, unknownRecords, unhealthyRecords []record.Record
 	for _, r := range records {
 		if q.shouldTrack {
 			if fqdn, ok := crit["fqdn"]; ok {
 				q.health <- record.Host{IP: r.IP, FQDN: fqdn[0]}
 			}
 		}
-		if q.w.IsHealthy(r.IP) {
+		healthiness := q.w.IsHealthy(r.IP)
+		if healthiness == nil {
+			unknownRecords = append(unknownRecords, r)
+		} else if *healthiness {
 			healthyRecords = append(healthyRecords, r)
 		} else {
 			unhealthyRecords = append(unhealthyRecords, r)
@@ -55,18 +58,19 @@ func (q *healthFilter) Filter(crit criteria.Criteria, recs []record.Record) []re
 		healthStrategy = crit["s"][0]
 	}
 
+	maybeHealthyRecords := append(healthyRecords, unknownRecords...)
 	switch healthStrategy {
 	case "1": // unhealthy ones
 		return unhealthyRecords
 	case "3": // healthy
 		return healthyRecords
 	case "4": // all
-		return append(healthyRecords, unhealthyRecords...)
+		return append(maybeHealthyRecords, unhealthyRecords...)
 	default: // smart strategy
-		if len(healthyRecords) == 0 {
+		if len(maybeHealthyRecords) == 0 {
 			return unhealthyRecords
 		}
 
-		return healthyRecords
+		return maybeHealthyRecords
 	}
 }

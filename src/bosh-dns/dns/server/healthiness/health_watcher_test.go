@@ -55,7 +55,7 @@ var _ = Describe("HealthWatcher", func() {
 
 		Context("when the status is not known", func() {
 			It("is always healthy", func() {
-				Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
+				Expect(*healthWatcher.IsHealthy(ip)).To(BeTrue())
 			})
 
 			Context("and the status is being checked for the first time", func() {
@@ -88,7 +88,7 @@ var _ = Describe("HealthWatcher", func() {
 				})
 
 				It("returns healthy", func() {
-					Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
+					Expect(*healthWatcher.IsHealthy(ip)).To(BeTrue())
 				})
 			})
 
@@ -99,7 +99,7 @@ var _ = Describe("HealthWatcher", func() {
 				})
 
 				It("returns unhealthy", func() {
-					Expect(healthWatcher.IsHealthy(ip)).To(BeFalse())
+					Expect(*healthWatcher.IsHealthy(ip)).To(BeFalse())
 				})
 			})
 
@@ -109,23 +109,23 @@ var _ = Describe("HealthWatcher", func() {
 				})
 
 				It("goes unhealthy if the new status is stopped", func() {
-					Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
+					Expect(*healthWatcher.IsHealthy(ip)).To(BeTrue())
 					Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
 
 					fakeChecker.GetStatusReturns(false)
 
 					Consistently(func() bool {
-						return healthWatcher.IsHealthy(ip)
+						return *healthWatcher.IsHealthy(ip)
 					}).Should(BeTrue())
 
 					fakeClock.WaitForWatcherAndIncrement(interval)
 					Eventually(func() bool {
-						return healthWatcher.IsHealthy(ip)
+						return *healthWatcher.IsHealthy(ip)
 					}).Should(BeFalse())
 				})
 
 				It("logs that the status has changed", func() {
-					Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
+					Expect(*healthWatcher.IsHealthy(ip)).To(BeTrue())
 
 					fakeChecker.GetStatusReturns(false)
 
@@ -188,7 +188,7 @@ var _ = Describe("HealthWatcher", func() {
 				})
 
 				It("goes unhealthy if the new status is stopped", func() {
-					Expect(healthWatcher.IsHealthy(ip)).To(BeTrue())
+					Expect(*healthWatcher.IsHealthy(ip)).To(BeTrue())
 					Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
 
 					fakeChecker.GetStatusReturns(false)

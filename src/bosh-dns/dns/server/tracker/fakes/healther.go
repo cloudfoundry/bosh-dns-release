@@ -16,16 +16,16 @@ type Healther struct {
 	untrackArgsForCall []struct {
 		ip string
 	}
-	IsHealthyStub        func(ip string) bool
+	IsHealthyStub        func(ip string) *bool
 	isHealthyMutex       sync.RWMutex
 	isHealthyArgsForCall []struct {
 		ip string
 	}
 	isHealthyReturns struct {
-		result1 bool
+		result1 *bool
 	}
 	isHealthyReturnsOnCall map[int]struct {
-		result1 bool
+		result1 *bool
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
@@ -79,7 +79,7 @@ func (fake *Healther) UntrackArgsForCall(i int) string {
 	return fake.untrackArgsForCall[i].ip
 }
 
-func (fake *Healther) IsHealthy(ip string) bool {
+func (fake *Healther) IsHealthy(ip string) *bool {
 	fake.isHealthyMutex.Lock()
 	ret, specificReturn := fake.isHealthyReturnsOnCall[len(fake.isHealthyArgsForCall)]
 	fake.isHealthyArgsForCall = append(fake.isHealthyArgsForCall, struct {
@@ -108,22 +108,22 @@ func (fake *Healther) IsHealthyArgsForCall(i int) string {
 	return fake.isHealthyArgsForCall[i].ip
 }
 
-func (fake *Healther) IsHealthyReturns(result1 bool) {
+func (fake *Healther) IsHealthyReturns(result1 *bool) {
 	fake.IsHealthyStub = nil
 	fake.isHealthyReturns = struct {
-		result1 bool
+		result1 *bool
 	}{result1}
 }
 
-func (fake *Healther) IsHealthyReturnsOnCall(i int, result1 bool) {
+func (fake *Healther) IsHealthyReturnsOnCall(i int, result1 *bool) {
 	fake.IsHealthyStub = nil
 	if fake.isHealthyReturnsOnCall == nil {
 		fake.isHealthyReturnsOnCall = make(map[int]struct {
-			result1 bool
+			result1 *bool
 		})
 	}
 	fake.isHealthyReturnsOnCall[i] = struct {
-		result1 bool
+		result1 *bool
 	}{result1}
 }
 
@@ -136,7 +136,11 @@ func (fake *Healther) Invocations() map[string][][]interface{} {
 	defer fake.untrackMutex.RUnlock()
 	fake.isHealthyMutex.RLock()
 	defer fake.isHealthyMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *Healther) recordInvocation(key string, args []interface{}) {

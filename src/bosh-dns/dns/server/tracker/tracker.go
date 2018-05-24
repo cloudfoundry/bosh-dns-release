@@ -24,7 +24,7 @@ type limitedTranscript interface {
 type healther interface {
 	Track(ip string)
 	Untrack(ip string)
-	IsHealthy(ip string) bool
+	IsHealthy(ip string) *bool
 }
 
 //go:generate counterfeiter -o ./fakes/query.go --fake-name Query . query
