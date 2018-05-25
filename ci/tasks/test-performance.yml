@@ -4,8 +4,8 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: bosh/bosh-dns-release
-    tag: performance-tests
+    repository: golang
+    tag: 1
 
 params:
   DATADOG_API_KEY: ~

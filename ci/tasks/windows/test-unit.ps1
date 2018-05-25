@@ -6,36 +6,9 @@
 $env:GOPATH = Join-Path -Path $PWD "bosh-dns-release"
 $env:PATH = $env:GOPATH + "/bin;C:/go/bin;C:/var/vcap/bosh/bin;" + $env:PATH
 
-function NeedsToInstallGo() {
-    Write-Host "Checking if Go needs to be installed or updated..."
-    if ((Get-Command 'go.exe' -ErrorAction SilentlyContinue) -eq $null) {
-        Write-Host "Go.exe not found, Go will be installed"
-        return $true
-    }
-    $version = "$(go.exe version)"
-    if ($version -ne 'go version go1.9.2 windows/amd64') {
-        Write-Host "Installed version of Go is not supported, Go will be updated"
-        return $true
-    }
-    Write-Host "Found Go version '$version' installed on the system, skipping install"
-    return $false
-}
+cd $env:GOPATH
 
-if (NeedsToInstallGo) {
-    Write-Host "Installing Go 1.9.2"
-
-    Invoke-WebRequest 'https://storage.googleapis.com/golang/go1.9.2.windows-amd64.msi' `
-        -UseBasicParsing -OutFile go.msi
-
-    $p = Start-Process -FilePath "msiexec" `
-        -ArgumentList "/passive /norestart /i go.msi" `
-        -Wait -PassThru
-    if ($p.ExitCode -ne 0) {
-        throw "Golang MSI installation process returned error code: $($p.ExitCode)"
-    }
-
-    Write-Host "Successfully installed go version: $(go version)"
-}
+powershell.exe scripts/install-go.ps1
 
 cd $env:GOPATH/src/bosh-dns
 
