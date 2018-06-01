@@ -21,10 +21,10 @@ export TEST_MANIFEST_NAME="manifest"
 export NO_RECURSORS_OPS_FILE="no-recursors-configured"
 export LOCAL_RECURSOR_OPS_FILE="add-test-dns-nameservers"
 export TEST_TARGET_OS="linux"
-export BASE_STEMCELL="ubuntu-trusty"
 
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
-    -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/add-static-ips-to-cloud-config.yml > ${TEST_CLOUD_CONFIG_PATH}
+    -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/add-static-ips-to-cloud-config.yml \
+    > ${TEST_CLOUD_CONFIG_PATH}
 
 bosh -n update-cloud-config ${TEST_CLOUD_CONFIG_PATH} -v network=director_network
 
@@ -47,6 +47,7 @@ bosh -n deploy $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/manifests
    -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/use-dns-release-default-bind-and-alias-addresses.yml \
    -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/enable-health-manifest-ops.yml \
    -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/enable-require-dns-in-pre-start-ops.yml \
+   -v base_stemcell=${BASE_STEMCELL} \
    --vars-store dns-creds.yml
 
 pushd $GOPATH/src/bosh-dns/acceptance_tests/linux

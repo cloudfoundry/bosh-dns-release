@@ -52,7 +52,7 @@ releases:
 
 stemcells:
 - alias: default
-  os: ubuntu-trusty
+  os: ((base_stemcell))
   version: latest
 
 variables:

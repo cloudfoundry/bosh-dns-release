@@ -45,10 +45,13 @@ var _ = BeforeSuite(func() {
 	aliasProvidingPath, err := filepath.Abs("../../../dns-acceptance-release")
 	Expect(err).ToNot(HaveOccurred())
 
+	baseStemcell := assertEnvExists("BASE_STEMCELL")
+
 	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
 		"-n", "-d", boshDeployment, "deploy",
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
+		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-o", defaultBindOpsPath,
 		"-o", disableOverridePath,
 		"--vars-store", "dns-creds.yml",

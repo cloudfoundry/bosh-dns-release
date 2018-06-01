@@ -12,6 +12,7 @@ groups:
   - test-performance
   - test-performance-windows
   - test-acceptance
+  - test-acceptance-ubuntu-xenial
   - test-acceptance-windows
   - test-acceptance-windows2016
   - test-stress
@@ -49,6 +50,7 @@ jobs:
     - get: golang-release
       trigger: true
     - get: bosh-candidate-stemcell
+      resouce: bosh-ubuntu-trusty-candidate-stemcell
     - get: bosh-candidate-release
   - task: bump-golang-package
     file: bosh-dns-release/ci/tasks/bump-golang-package.yml
@@ -163,6 +165,7 @@ jobs:
       - get: bosh-dns-release
         passed: [create-release]
       - get: bosh-candidate-stemcell
+        resource: bosh-ubuntu-trusty-candidate-stemcell
       - get: bosh-candidate-release
       - get: candidate-release
         trigger: true
@@ -170,6 +173,27 @@ jobs:
     - task: test-acceptance
       privileged: true
       file: bosh-dns-release/ci/tasks/test-acceptance.yml
+      params:
+        BASE_STEMCELL: ubuntu-trusty
+
+- name: test-acceptance-ubuntu-xenial
+  public: true
+  serial: true
+  plan:
+    - aggregate:
+      - get: bosh-dns-release
+        passed: [create-release]
+      - get: bosh-candidate-stemcell
+        resource: bosh-ubuntu-xenial-candidate-stemcell
+      - get: bosh-candidate-release
+      - get: candidate-release
+        trigger: true
+        passed: [create-release]
+    - task: test-acceptance
+      privileged: true
+      file: bosh-dns-release/ci/tasks/test-acceptance.yml
+      params:
+        BASE_STEMCELL: ubuntu-xenial
 
 - name: test-acceptance-windows
   public: true
@@ -321,7 +345,7 @@ jobs:
         trigger: true
         passed: [create-release]
       - get: stemcell
-        resource: bosh-candidate-stemcell
+        resource: bosh-ubuntu-trusty-candidate-stemcell
       - get: bosh-release
     - task: test-brats # contain base manifest
       file: brats-src/ci/tasks/test-brats.yml
@@ -377,9 +401,9 @@ jobs:
   plan:
     - aggregate:
       - get: bosh-dns-release
-        passed: [test-acceptance, test-acceptance-windows, test-stress]
+        passed: [test-acceptance, test-acceptance-ubuntu-xenial, test-acceptance-windows, test-stress]
       - get: candidate-release
-        passed: [test-acceptance, brats-ubuntu, test-acceptance-windows]
+        passed: [test-acceptance, test-acceptance-ubuntu-xenial, brats-ubuntu, test-acceptance-windows]
       - get: version
     - task: finalize-release
       file: bosh-dns-release/ci/tasks/finalize-release.yml
@@ -411,6 +435,7 @@ jobs:
         passed:
         - test-stress
         - test-acceptance
+        - test-acceptance-ubuntu-xenial
         - test-acceptance-windows
         - test-acceptance-windows2016
         - brats-ubuntu
@@ -486,11 +511,17 @@ resources:
   source:
     repository: cppforlife/bosh-docker-cpi-release
 
-- name: bosh-candidate-stemcell
+- name: bosh-ubuntu-trusty-candidate-stemcell
   type: s3
   source:
     bucket: bosh-core-stemcells-candidate
     regexp: warden/bosh-stemcell-(.+)-warden-boshlite-ubuntu-trusty-go_agent.tgz
+
+- name: bosh-ubuntu-xenail-candidate-stemcell
+  type: s3
+  source:
+    bucket: bosh-core-stemcells-candidate
+    regexp: warden/bosh-stemcell-(.+)-warden-boshlite-ubuntu-xenial-go_agent.tgz
 
 - name: bosh-candidate-stemcell-windows
   type: s3

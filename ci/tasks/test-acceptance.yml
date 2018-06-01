@@ -13,7 +13,8 @@ inputs:
   - name: bosh-candidate-stemcell
   - name: bosh-candidate-release
 
-params: []
+params:
+  BASE_STEMCELL: ubuntu-trusty
 
 run:
   path: bosh-dns-release/ci/tasks/test-acceptance.sh
