@@ -10,7 +10,7 @@ image_resource:
 inputs:
   - name: bosh-dns-release
   - name: candidate-release
-  - name: bosh-candidate-stemcell
+  - name: bosh-stemcell
   - name: bosh-candidate-release
 
 params:

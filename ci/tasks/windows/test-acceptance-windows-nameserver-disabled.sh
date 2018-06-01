@@ -7,7 +7,7 @@ BBL_STATE_DIR=$ROOT_DIR/envs/$ENV_NAME
 
 source $BBL_STATE_DIR/.envrc
 
-bosh -n upload-stemcell $ROOT_DIR/bosh-candidate-stemcell-windows/*.tgz
+bosh -n upload-stemcell $ROOT_DIR/bosh-stemcell-windows/*.tgz
 
 export BOSH_DEPLOYMENT=bosh-dns-windows-acceptance
 

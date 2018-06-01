@@ -11,7 +11,7 @@ inputs:
   - name: bosh-dns-release
   - name: candidate-release
   - name: envs
-  - name: bosh-candidate-stemcell-windows
+  - name: bosh-stemcell-windows
 
 run:
   path: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.sh

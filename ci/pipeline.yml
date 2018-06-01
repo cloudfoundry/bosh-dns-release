@@ -49,8 +49,8 @@ jobs:
     - get: bosh-dns-release
     - get: golang-release
       trigger: true
-    - get: bosh-candidate-stemcell
-      resource: bosh-ubuntu-trusty-candidate-stemcell
+    - get: bosh-stemcell
+      resource: ubuntu-trusty-stemcell
     - get: bosh-candidate-release
   - task: bump-golang-package
     file: bosh-dns-release/ci/tasks/bump-golang-package.yml
@@ -164,8 +164,8 @@ jobs:
     - aggregate:
       - get: bosh-dns-release
         passed: [create-release]
-      - get: bosh-candidate-stemcell
-        resource: bosh-ubuntu-trusty-candidate-stemcell
+      - get: bosh-stemcell
+        resource: ubuntu-trusty-stemcell
       - get: bosh-candidate-release
       - get: candidate-release
         trigger: true
@@ -183,8 +183,8 @@ jobs:
     - aggregate:
       - get: bosh-dns-release
         passed: [create-release]
-      - get: bosh-candidate-stemcell
-        resource: bosh-ubuntu-xenial-candidate-stemcell
+      - get: bosh-stemcell
+        resource: ubuntu-xenial-stemcell
       - get: bosh-candidate-release
       - get: candidate-release
         trigger: true
@@ -212,7 +212,8 @@ jobs:
       - get: envs
       - get: bosh-deployment
       - get: gcp-linux-stemcell
-      - get: bosh-candidate-stemcell-windows
+      - get: bosh-stemcell-windows
+        resource: windows-2012-stemcell
       - get: bosh-candidate-release
       - get: candidate-release
         trigger: true
@@ -244,7 +245,8 @@ jobs:
       - get: envs
       - get: bosh-deployment
       - get: gcp-linux-stemcell
-      - get: bosh-candidate-stemcell-windows2016
+      - get: bosh-stemcell-windows
+        resource: windows-2016-stemcell
       - get: bosh-candidate-release
       - get: candidate-release
         passed:
@@ -254,22 +256,16 @@ jobs:
       file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
       params:
         WINDOWS_OS_VERSION: windows2016
-      input_mapping:
-        bosh-candidate-stemcell-windows: bosh-candidate-stemcell-windows2016
       timeout: 1h
     - task: windows-nameserver-disabled
       file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
       params:
         WINDOWS_OS_VERSION: windows2016
-      input_mapping:
-        bosh-candidate-stemcell-windows: bosh-candidate-stemcell-windows2016
       timeout: 1h
     - task: windows-shared
       file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.yml
       params:
         WINDOWS_OS_VERSION: windows2016
-      input_mapping:
-        bosh-candidate-stemcell-windows: bosh-candidate-stemcell-windows2016
       timeout: 1h
     ensure:
       task: clean-up
@@ -345,7 +341,7 @@ jobs:
         trigger: true
         passed: [create-release]
       - get: stemcell
-        resource: bosh-ubuntu-trusty-candidate-stemcell
+        resource: ubuntu-trusty-stemcell
       - get: bosh-release
     - task: test-brats # contain base manifest
       file: brats-src/ci/tasks/test-brats.yml
@@ -511,31 +507,25 @@ resources:
   source:
     repository: cppforlife/bosh-docker-cpi-release
 
-- name: bosh-ubuntu-trusty-candidate-stemcell
-  type: s3
+- name: ubuntu-trusty-stemcell
+  type: bosh-io-stemcell
   source:
-    bucket: bosh-core-stemcells-candidate
-    regexp: warden/bosh-stemcell-(.+)-warden-boshlite-ubuntu-trusty-go_agent.tgz
+    name: bosh-warden-boshlite-ubuntu-trusty-go_agent
 
-- name: bosh-ubuntu-xenial-candidate-stemcell
-  type: s3
+- name: ubuntu-xenial-stemcell
+  type: bosh-io-stemcell
   source:
-    bucket: bosh-core-stemcells-candidate
-    regexp: warden/bosh-stemcell-(.+)-warden-boshlite-ubuntu-xenial-go_agent.tgz
+    name: bosh-warden-boshlite-ubuntu-xenial-go_agent
 
-- name: bosh-candidate-stemcell-windows
-  type: s3
+- name: windows-2012-stemcell
+  type: bosh-io-stemcell
   source:
-    region_name: us-east-2
-    bucket: bosh-windows-stemcells-production
-    regexp: light-bosh-stemcell-(.+)-google-kvm-windows2012R2-go_agent.tgz
+    name: bosh-google-kvm-windows2012R2-go_agent
 
-- name: bosh-candidate-stemcell-windows2016
-  type: s3
+- name: windows-2016-stemcell
+  type: bosh-io-stemcell
   source:
-    bucket: bosh-windows-stemcells-production
-    regexp: 1709/light-bosh-stemcell-(.+)-google-kvm-windows2016-go_agent.tgz
-    region_name: us-east-2
+    name: bosh-google-kvm-windows2016-go_agent
 
 - name: bosh-candidate-release
   type: s3
