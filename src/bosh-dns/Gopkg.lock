@@ -69,7 +69,7 @@
   branch = "master"
   name = "github.com/cloudfoundry/socks5-proxy"
   packages = ["."]
-  revision = "75791c35e37dfa939d956361aaf9569e66c0e318"
+  revision = "3659db090cb23a57807b53e2f8580b2427dc2659"
 
 [[projects]]
   branch = "bosh-develop"
@@ -120,8 +120,8 @@
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
-  revision = "3247c84500bff8d9fb6d579d800f20b3e091582c"
-  version = "v1.0.0"
+  revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
+  version = "v1.0.1"
 
 [[projects]]
   name = "github.com/maxbrunsfeld/counterfeiter"
@@ -266,7 +266,7 @@
     "nfs",
     "xfs"
   ]
-  revision = "8b1c2da0d56deffdbb9e48d4414b4e674bd8083e"
+  revision = "94663424ae5ae9856b40a9f170762b4197024661"
 
 [[projects]]
   branch = "master"
@@ -286,7 +286,7 @@
     "ssh",
     "ssh/terminal"
   ]
-  revision = "a3beeb748656e13e54256fd2cde19e058f41f60f"
+  revision = "5ba7f63082460102a45837dbd1827e10f9479ac0"
 
 [[projects]]
   branch = "master"
@@ -310,7 +310,7 @@
     "proxy",
     "trace"
   ]
-  revision = "dfa909b99c79129e1100513e5cd36307665e5723"
+  revision = "1e491301e022f8f977054da4c2d852decd59571f"
 
 [[projects]]
   branch = "master"
@@ -368,7 +368,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "694d95ba50e67b2e363f3483057db5d4910c18f9"
+  revision = "81158efcc9f219c511e4d3c0d61a0e6e49c01a24"
 
 [[projects]]
   name = "google.golang.org/grpc"
