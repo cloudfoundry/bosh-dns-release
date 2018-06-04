@@ -49,9 +49,7 @@ func (q *healthFilter) Filter(crit criteria.Criteria, recs []record.Record) []re
 	records := q.nextFilter.Filter(crit, recs)
 	var wg sync.WaitGroup
 
-	q.addRecordsToWorkPool(crit, records, &wg)
-
-	q.waitForWaitGroupOrTimeout(&wg)
+	q.processRecords(crit, records, &wg)
 
 	healthyRecords, unhealthyRecords, maybeHealthyRecords := q.sortRecords(records)
 
@@ -76,22 +74,24 @@ func (q *healthFilter) Filter(crit criteria.Criteria, recs []record.Record) []re
 	}
 }
 
-func (q *healthFilter) addRecordsToWorkPool(criteria criteria.Criteria, records []record.Record, wg *sync.WaitGroup) {
+func (q *healthFilter) processRecords(criteria criteria.Criteria, records []record.Record, wg *sync.WaitGroup) {
+	usedWaitGroup := false
 	for _, r := range records {
-		wg.Add(1)
-		r := r
-		q.filterWorkPool.Submit(func() {
-			if q.shouldTrack {
-				defer wg.Done()
-				if fqdn, ok := criteria["fqdn"]; ok {
-					q.health <- record.Host{IP: r.IP, FQDN: fqdn[0]}
+		if q.shouldTrack {
+			if fqdn, ok := criteria["fqdn"]; ok {
+				q.health <- record.Host{IP: r.IP, FQDN: fqdn[0]}
 
-					if len(criteria["y"]) > 0 {
-						q.synchronousHealthCheck(criteria["y"][0], r.IP)
+				if len(criteria["y"]) > 0 {
+					if q.synchronousHealthCheck(criteria["y"][0], r.IP, wg) {
+						usedWaitGroup = true
 					}
 				}
 			}
-		})
+		}
+	}
+
+	if usedWaitGroup {
+		q.waitForWaitGroupOrTimeout(wg)
 	}
 }
 
@@ -136,16 +136,22 @@ func (q *healthFilter) sortRecords(records []record.Record) (healthyRecords, unh
 	return healthyRecords, unhealthyRecords, maybeHealthyRecords
 }
 
-func (q *healthFilter) synchronousHealthCheck(strategy, ip string) {
+func (q *healthFilter) synchronousHealthCheck(strategy, ip string, wg *sync.WaitGroup) bool {
+	usedWaitGroup := false
 	switch strategy {
 	case "0":
-		return
 	case "1":
 		if q.w.HealthState(ip) == healthiness.StateUnchecked {
-			q.w.RunCheck(ip)
+			wg.Add(1)
+			q.filterWorkPool.Submit(func() {
+				defer wg.Done()
+				q.w.RunCheck(ip)
+			})
 		}
+		usedWaitGroup = true
 	case "2":
 		// q.runCheck(ip) to be implemented in a future story
-		return
 	}
+
+	return usedWaitGroup
 }
