@@ -125,11 +125,7 @@ func (fake *LimitedTranscript) Invocations() map[string][][]interface{} {
 	defer fake.touchMutex.RUnlock()
 	fake.registryMutex.RLock()
 	defer fake.registryMutex.RUnlock()
-	copiedInvocations := map[string][][]interface{}{}
-	for key, value := range fake.invocations {
-		copiedInvocations[key] = value
-	}
-	return copiedInvocations
+	return fake.invocations
 }
 
 func (fake *LimitedTranscript) recordInvocation(key string, args []interface{}) {

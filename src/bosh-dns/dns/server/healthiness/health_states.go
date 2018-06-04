@@ -1,7 +1,10 @@
 package healthiness
 
+type HealthState string
+
 const (
-	StateUnknown   = "unknown"
-	StateHealthy   = "healthy"
-	StateUnhealthy = "unhealthy"
+	StateUnknown   HealthState = "unknown"
+	StateHealthy   HealthState = "healthy"
+	StateUnhealthy HealthState = "unhealthy"
+	StateUnchecked HealthState = "unchecked"
 )

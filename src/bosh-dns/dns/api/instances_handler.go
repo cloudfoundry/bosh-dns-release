@@ -10,7 +10,7 @@ import (
 
 //go:generate counterfeiter -o ./fakes/health_state_getter.go --fake-name HealthStateGetter . healthStateGetter
 type healthStateGetter interface {
-	HealthState(ip string) string
+	HealthStateString(ip string) string
 }
 
 //go:generate counterfeiter -o ./fakes/record_manager.go --fake-name RecordManager . recordManager
@@ -60,7 +60,7 @@ func (h *InstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Domain:      record.Domain,
 			AZ:          record.AZ,
 			Index:       record.InstanceIndex,
-			HealthState: h.healthStateGetter.HealthState(record.IP),
+			HealthState: h.healthStateGetter.HealthStateString(record.IP),
 		})
 	}
 }

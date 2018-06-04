@@ -13,17 +13,18 @@ import (
 //go:generate counterfeiter . HealthChecker
 
 type HealthChecker interface {
-	GetStatus(ip string) bool
+	GetStatus(ip string) HealthState
 }
 
 //go:generate counterfeiter . HealthWatcher
 
 type HealthWatcher interface {
-	IsHealthy(ip string) *bool
-	HealthState(ip string) string
+	HealthState(ip string) HealthState
+	HealthStateString(ip string) string
 	Track(ip string)
 	Untrack(ip string)
 	Run(signal <-chan struct{})
+	RunCheck(ip string)
 }
 
 type healthWatcher struct {
@@ -32,7 +33,7 @@ type healthWatcher struct {
 	clock         clock.Clock
 
 	checkWorkPool *workpool.WorkPool
-	state         map[string]bool
+	state         map[string]HealthState
 	stateMutex    *sync.RWMutex
 	logger        boshlog.Logger
 }
@@ -46,7 +47,7 @@ func NewHealthWatcher(checker HealthChecker, clock clock.Clock, checkInterval ti
 		clock:         clock,
 
 		checkWorkPool: wp,
-		state:         map[string]bool{},
+		state:         map[string]HealthState{},
 		stateMutex:    &sync.RWMutex{},
 		logger:        logger,
 	}
@@ -54,32 +55,23 @@ func NewHealthWatcher(checker HealthChecker, clock clock.Clock, checkInterval ti
 
 func (hw *healthWatcher) Track(ip string) {
 	hw.checkWorkPool.Submit(func() {
-		hw.runCheck(ip)
+		hw.RunCheck(ip)
 	})
 }
 
-func (hw *healthWatcher) IsHealthy(ip string) *bool {
-	hw.stateMutex.RLock()
-	defer hw.stateMutex.RUnlock()
-
-	if health, found := hw.state[ip]; found {
-		return &health
-	}
-	result := true
-
-	return &result
+func (hw *healthWatcher) HealthStateString(ip string) string {
+	return string(hw.HealthState(ip))
 }
 
-func (hw *healthWatcher) HealthState(ip string) string {
+func (hw *healthWatcher) HealthState(ip string) HealthState {
 	hw.stateMutex.RLock()
 	health, found := hw.state[ip]
 	hw.stateMutex.RUnlock()
 
 	if !found {
-		return StateUnknown
+		return StateUnchecked
 	}
-
-	return healthString(health)
+	return health
 }
 
 func (hw *healthWatcher) Untrack(ip string) {
@@ -100,7 +92,7 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 				// closing on ip, we need to ensure it's fixed within this context
 				ip := ip
 				hw.checkWorkPool.Submit(func() {
-					hw.runCheck(ip)
+					hw.RunCheck(ip)
 				})
 			}
 			hw.stateMutex.RUnlock()
@@ -112,7 +104,7 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 	}
 }
 
-func (hw *healthWatcher) runCheck(ip string) {
+func (hw *healthWatcher) RunCheck(ip string) {
 	isHealthy := hw.checker.GetStatus(ip)
 
 	hw.stateMutex.Lock()
@@ -122,20 +114,12 @@ func (hw *healthWatcher) runCheck(ip string) {
 
 	hw.stateMutex.Unlock()
 
-	oldState := healthString(wasHealthy)
-	newState := healthString(isHealthy)
+	oldState := wasHealthy
+	newState := isHealthy
 
 	if !found {
 		hw.logger.Debug("healthWatcher", "Initial state for IP <%s> is %s", ip, oldState)
 	} else if oldState != newState {
 		hw.logger.Debug("healthWatcher", "State for IP <%s> changed from %s to %s", ip, oldState, newState)
 	}
-}
-
-func healthString(healthy bool) string {
-	if healthy {
-		return StateHealthy
-	}
-
-	return StateUnhealthy
 }

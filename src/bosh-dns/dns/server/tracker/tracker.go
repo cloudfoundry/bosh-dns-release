@@ -24,7 +24,6 @@ type limitedTranscript interface {
 type healther interface {
 	Track(ip string)
 	Untrack(ip string)
-	IsHealthy(ip string) *bool
 }
 
 //go:generate counterfeiter -o ./fakes/query.go --fake-name Query . query
@@ -40,7 +39,6 @@ func Start(shutdown chan struct{}, subscription <-chan []record.Record, healthMo
 		trackedIPs:      map[string]map[string]struct{}{},
 		trackedIPsMutex: &sync.Mutex{},
 	}
-
 	go func() {
 		for {
 			select {
@@ -72,7 +70,6 @@ func (t *Tracker) monitor(ip, fqdn string) {
 	t.trackedIPs[ip] = map[string]struct{}{}
 	t.trackedIPs[ip][fqdn] = struct{}{}
 	t.trackedIPsMutex.Unlock()
-
 	t.h.Track(ip)
 }
 

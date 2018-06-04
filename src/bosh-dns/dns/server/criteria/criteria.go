@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var keyValueRegex = regexp.MustCompile("(a|i|s|m|n)([0-9]+)")
+var keyValueRegex = regexp.MustCompile("(a|i|s|m|n|y)([0-9]+)")
 var groupRegex = regexp.MustCompile("^q-g([0-9]+)$")
 
 type Criteria map[string][]string
@@ -29,7 +29,7 @@ func NewCriteria(fqdn string, domains []string) (Criteria, error) {
 func (c Criteria) Matcher() Matcher {
 	matcher := new(AndMatcher)
 	for field, values := range c {
-		if field == "s" || field == "fqdn" {
+		if field == "y" || field == "s" || field == "fqdn" {
 			continue
 		}
 		matcher.Append(Field(field, values))

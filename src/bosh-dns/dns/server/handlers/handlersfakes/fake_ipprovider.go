@@ -75,11 +75,7 @@ func (fake *FakeIPProvider) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.hasIPMutex.RLock()
 	defer fake.hasIPMutex.RUnlock()
-	copiedInvocations := map[string][][]interface{}{}
-	for key, value := range fake.invocations {
-		copiedInvocations[key] = value
-	}
-	return copiedInvocations
+	return fake.invocations
 }
 
 func (fake *FakeIPProvider) recordInvocation(key string, args []interface{}) {

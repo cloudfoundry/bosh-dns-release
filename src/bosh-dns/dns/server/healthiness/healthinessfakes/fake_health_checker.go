@@ -7,22 +7,22 @@ import (
 )
 
 type FakeHealthChecker struct {
-	GetStatusStub        func(ip string) bool
+	GetStatusStub        func(ip string) healthiness.HealthState
 	getStatusMutex       sync.RWMutex
 	getStatusArgsForCall []struct {
 		ip string
 	}
 	getStatusReturns struct {
-		result1 bool
+		result1 healthiness.HealthState
 	}
 	getStatusReturnsOnCall map[int]struct {
-		result1 bool
+		result1 healthiness.HealthState
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeHealthChecker) GetStatus(ip string) bool {
+func (fake *FakeHealthChecker) GetStatus(ip string) healthiness.HealthState {
 	fake.getStatusMutex.Lock()
 	ret, specificReturn := fake.getStatusReturnsOnCall[len(fake.getStatusArgsForCall)]
 	fake.getStatusArgsForCall = append(fake.getStatusArgsForCall, struct {
@@ -51,22 +51,22 @@ func (fake *FakeHealthChecker) GetStatusArgsForCall(i int) string {
 	return fake.getStatusArgsForCall[i].ip
 }
 
-func (fake *FakeHealthChecker) GetStatusReturns(result1 bool) {
+func (fake *FakeHealthChecker) GetStatusReturns(result1 healthiness.HealthState) {
 	fake.GetStatusStub = nil
 	fake.getStatusReturns = struct {
-		result1 bool
+		result1 healthiness.HealthState
 	}{result1}
 }
 
-func (fake *FakeHealthChecker) GetStatusReturnsOnCall(i int, result1 bool) {
+func (fake *FakeHealthChecker) GetStatusReturnsOnCall(i int, result1 healthiness.HealthState) {
 	fake.GetStatusStub = nil
 	if fake.getStatusReturnsOnCall == nil {
 		fake.getStatusReturnsOnCall = make(map[int]struct {
-			result1 bool
+			result1 healthiness.HealthState
 		})
 	}
 	fake.getStatusReturnsOnCall[i] = struct {
-		result1 bool
+		result1 healthiness.HealthState
 	}{result1}
 }
 
@@ -75,11 +75,7 @@ func (fake *FakeHealthChecker) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.getStatusMutex.RLock()
 	defer fake.getStatusMutex.RUnlock()
-	copiedInvocations := map[string][][]interface{}{}
-	for key, value := range fake.invocations {
-		copiedInvocations[key] = value
-	}
-	return copiedInvocations
+	return fake.invocations
 }
 
 func (fake *FakeHealthChecker) recordInvocation(key string, args []interface{}) {

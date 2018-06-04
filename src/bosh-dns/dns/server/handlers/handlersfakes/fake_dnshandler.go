@@ -49,11 +49,7 @@ func (fake *FakeDNSHandler) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.serveDNSMutex.RLock()
 	defer fake.serveDNSMutex.RUnlock()
-	copiedInvocations := map[string][][]interface{}{}
-	for key, value := range fake.invocations {
-		copiedInvocations[key] = value
-	}
-	return copiedInvocations
+	return fake.invocations
 }
 
 func (fake *FakeDNSHandler) recordInvocation(key string, args []interface{}) {

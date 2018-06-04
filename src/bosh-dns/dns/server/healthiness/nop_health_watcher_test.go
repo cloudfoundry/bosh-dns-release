@@ -1,10 +1,10 @@
 package healthiness_test
 
 import (
-	"bosh-dns/dns/server/healthiness"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/healthiness"
 )
 
 var _ = Describe("NopHealthWatcher", func() {
@@ -29,17 +29,5 @@ var _ = Describe("NopHealthWatcher", func() {
 	AfterEach(func() {
 		close(signal)
 		Eventually(stopped).Should(BeClosed())
-	})
-
-	Describe("IsHealthy", func() {
-		var ip string
-
-		BeforeEach(func() {
-			ip = "127.0.0.1"
-		})
-
-		It("is always healthy", func() {
-			Expect(*healthWatcher.IsHealthy(ip)).To(BeTrue())
-		})
 	})
 })

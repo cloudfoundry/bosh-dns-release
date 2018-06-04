@@ -65,11 +65,7 @@ func (fake *FakeDomainProvider) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.domainsMutex.RLock()
 	defer fake.domainsMutex.RUnlock()
-	copiedInvocations := map[string][][]interface{}{}
-	for key, value := range fake.invocations {
-		copiedInvocations[key] = value
-	}
-	return copiedInvocations
+	return fake.invocations
 }
 
 func (fake *FakeDomainProvider) recordInvocation(key string, args []interface{}) {

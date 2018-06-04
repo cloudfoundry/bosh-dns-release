@@ -147,11 +147,7 @@ func (fake *FakeHandlerFactory) Invocations() map[string][][]interface{} {
 	defer fake.createHTTPJSONHandlerMutex.RUnlock()
 	fake.createForwardHandlerMutex.RLock()
 	defer fake.createForwardHandlerMutex.RUnlock()
-	copiedInvocations := map[string][][]interface{}{}
-	for key, value := range fake.invocations {
-		copiedInvocations[key] = value
-	}
-	return copiedInvocations
+	return fake.invocations
 }
 
 func (fake *FakeHandlerFactory) recordInvocation(key string, args []interface{}) {

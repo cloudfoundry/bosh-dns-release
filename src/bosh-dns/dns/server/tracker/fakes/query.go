@@ -83,11 +83,7 @@ func (fake *Query) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.filterMutex.RLock()
 	defer fake.filterMutex.RUnlock()
-	copiedInvocations := map[string][][]interface{}{}
-	for key, value := range fake.invocations {
-		copiedInvocations[key] = value
-	}
-	return copiedInvocations
+	return fake.invocations
 }
 
 func (fake *Query) recordInvocation(key string, args []interface{}) {

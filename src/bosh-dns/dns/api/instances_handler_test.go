@@ -61,7 +61,7 @@ var _ = Describe("InstancesHandler", func() {
 
 	Context("when record set has records", func() {
 		BeforeEach(func() {
-			fakeHealthStateGetter.HealthStateStub = func(ip string) string {
+			fakeHealthStateGetter.HealthStateStringStub = func(ip string) string {
 				switch ip {
 				case "IP1":
 					return "potato"
