@@ -164,7 +164,7 @@ var _ = Describe("Integration", func() {
 			}))
 		})
 
-		It("stops returning IP addresses of instances that go unhealthy", func() {
+		It("stops returning IP addresses of instances whose status becomes unknown", func() {
 			var output string
 			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
 
@@ -185,6 +185,57 @@ var _ = Describe("Integration", func() {
 
 			stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
 				"stop", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID),
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+
+			defer func() {
+				stdOut, stdErr, exitStatus, err = cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
+					"start", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID),
+				)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+			}()
+
+			Eventually(func() string {
+				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				<-session.Exited
+				Expect(session.ExitCode()).To(BeZero())
+
+				output = string(session.Out.Contents())
+
+				return output
+			}, 60*time.Second, 1*time.Second).Should(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+			// ^ timeout = agent heartbeat updates health.json every 20s + dns checks healthiness every 20s + a buffer interval
+
+			Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP))
+			Expect(output).ToNot(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP))
+		})
+
+		It("stops returning IP addresses of instances that become unhealthy", func() {
+			var output string
+			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
+
+			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			<-session.Exited
+			Expect(session.ExitCode()).To(BeZero())
+
+			output = string(session.Out.Contents())
+			Expect(output).To(ContainSubstring("Got answer:"))
+			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
+			for _, info := range allDeployedInstances {
+				Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
+			}
+			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+
+			stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
+				"ssh", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID), "-c", "sudo /var/vcap/bosh/bin/monit stop bosh-dns-resolvconf",
 			)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))

@@ -1575,6 +1575,7 @@ var _ = Describe("RecordSet", func() {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(len(ips)).To(Equal(0))
 				})
+
 				It("will return records that eventually become unhealthy for the smart strategy", func() {
 					ips, err := recordSet.Resolve("q-s0y0.my-group.my-network.my-deployment.my-domain.")
 					Expect(err).NotTo(HaveOccurred())
@@ -1605,12 +1606,6 @@ var _ = Describe("RecordSet", func() {
 					})
 				})
 			})
-		})
-
-		It("does not re-track already-tracked IPs", func() {
-			ips, err := recordSet.Resolve("q-s0y1.my-group.my-network.my-deployment.my-domain.")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(ips).To(ConsistOf("123.123.123.123"))
 		})
 
 		Context("when an alias is supplied", func() {
@@ -1675,10 +1670,11 @@ var _ = Describe("RecordSet", func() {
 
 				Expect(err).ToNot(HaveOccurred())
 			})
+
 			It("returns only the healthy, unknown, and unchecked ips", func() {
 				ips, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
 				Expect(err).NotTo(HaveOccurred())
-				Expect(ips).To(ConsistOf("123.123.123.123", "246.246.246.246"))
+				Expect(ips).To(ConsistOf("246.246.246.246"))
 				Eventually(fakeHealthWatcher.TrackCallCount).Should(Equal(3))
 				Expect(func() []string {
 					var args []string
@@ -1761,7 +1757,7 @@ var _ = Describe("RecordSet", func() {
 			It("returns the new ones", func() {
 				Eventually(func() ([]string, error) {
 					return recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
-				}).Should(ConsistOf("123.123.123.123", "123.123.123.5"))
+				}).Should(ConsistOf("123.123.123.5"))
 			})
 
 			It("checks the health of new ones", func() {
@@ -1832,8 +1828,8 @@ var _ = Describe("RecordSet", func() {
 				ips, err := recordSet.Filter([]string{"q-s0.my-group.my-network.my-deployment.my-domain."}, false)
 				Consistently(fakeHealthWatcher.TrackCallCount).Should(Equal(0))
 				Expect(err).NotTo(HaveOccurred())
-				Expect(ips).To(ConsistOf([]record.Record{
-					{
+				Expect(ips).To(ConsistOf(
+					record.Record{
 						ID:            "instance0",
 						NumID:         "0",
 						Group:         "my-group",
@@ -1846,7 +1842,22 @@ var _ = Describe("RecordSet", func() {
 						AZ:            "az1",
 						AZID:          "1",
 						InstanceIndex: "1",
-					}}))
+					},
+					record.Record{
+						ID:            "instance1",
+						NumID:         "1",
+						Group:         "my-group",
+						GroupIDs:      []string{"1"},
+						Network:       "my-network",
+						NetworkID:     "1",
+						Deployment:    "my-deployment",
+						IP:            "123.123.123.246",
+						Domain:        "my-domain.",
+						AZ:            "az2",
+						AZID:          "2",
+						InstanceIndex: "2",
+					},
+				))
 			})
 		})
 	})

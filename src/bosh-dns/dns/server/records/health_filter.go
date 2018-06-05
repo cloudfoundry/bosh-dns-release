@@ -64,10 +64,10 @@ func (q *healthFilter) Filter(crit criteria.Criteria, recs []record.Record) []re
 	case "3": // healthy
 		return healthyRecords
 	case "4": // all
-		return append(maybeHealthyRecords, unhealthyRecords...)
+		return records
 	default: // smart strategy
 		if len(maybeHealthyRecords) == 0 {
-			return unhealthyRecords
+			return records
 		}
 
 		return maybeHealthyRecords
@@ -130,8 +130,7 @@ func (q *healthFilter) sortRecords(records []record.Record) (healthyRecords, unh
 		}
 	}
 
-	maybeHealthyRecords = append(healthyRecords, unknownRecords...)
-	maybeHealthyRecords = append(maybeHealthyRecords, uncheckedRecords...)
+	maybeHealthyRecords = append(healthyRecords, uncheckedRecords...)
 
 	return healthyRecords, unhealthyRecords, maybeHealthyRecords
 }
