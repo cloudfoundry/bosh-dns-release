@@ -47,9 +47,10 @@ func NewHealthFilter(nextFilter reducer, health chan<- record.Host, w healthWatc
 
 func (q *healthFilter) Filter(crit criteria.Criteria, recs []record.Record) []record.Record {
 	records := q.nextFilter.Filter(crit, recs)
-	var wg sync.WaitGroup
 
-	q.processRecords(crit, records, &wg)
+	if q.shouldTrack {
+		q.processRecords(crit, records)
+	}
 
 	healthyRecords, unhealthyRecords, maybeHealthyRecords := q.sortRecords(records)
 
@@ -74,17 +75,17 @@ func (q *healthFilter) Filter(crit criteria.Criteria, recs []record.Record) []re
 	}
 }
 
-func (q *healthFilter) processRecords(criteria criteria.Criteria, records []record.Record, wg *sync.WaitGroup) {
+func (q *healthFilter) processRecords(criteria criteria.Criteria, records []record.Record) {
+	wg := &sync.WaitGroup{}
 	usedWaitGroup := false
-	for _, r := range records {
-		if q.shouldTrack {
-			if fqdn, ok := criteria["fqdn"]; ok {
-				q.health <- record.Host{IP: r.IP, FQDN: fqdn[0]}
 
-				if len(criteria["y"]) > 0 {
-					if q.synchronousHealthCheck(criteria["y"][0], r.IP, wg) {
-						usedWaitGroup = true
-					}
+	for _, r := range records {
+		if fqdn, ok := criteria["fqdn"]; ok {
+			q.health <- record.Host{IP: r.IP, FQDN: fqdn[0]}
+
+			if len(criteria["y"]) > 0 {
+				if q.synchronousHealthCheck(criteria["y"][0], r.IP, wg) {
+					usedWaitGroup = true
 				}
 			}
 		}
@@ -97,11 +98,11 @@ func (q *healthFilter) processRecords(criteria criteria.Criteria, records []reco
 
 func (q *healthFilter) waitForWaitGroupOrTimeout(wg *sync.WaitGroup) {
 	timeout := time.After(1 * time.Second)
-	success := make(chan bool)
+	success := make(chan struct{})
 
 	go func() {
 		wg.Wait()
-		success <- true
+		close(success)
 	}()
 
 	for {
