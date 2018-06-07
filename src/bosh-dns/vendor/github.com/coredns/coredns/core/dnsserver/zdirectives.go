@@ -5,13 +5,14 @@ package dnsserver
 // Directives are registered in the order they should be
 // executed.
 //
-// Ordering is VERY important. Every middleware will
-// feel the effects of all other middleware below
+// Ordering is VERY important. Every plugin will
+// feel the effects of all other plugin below
 // (after) them during a request, but they must not
-// care what middleware above them are doing.
-
-var directives = []string{
+// care what plugin above them are doing.
+var Directives = []string{
 	"tls",
+	"reload",
+	"nsid",
 	"root",
 	"bind",
 	"debug",
@@ -21,24 +22,26 @@ var directives = []string{
 	"prometheus",
 	"errors",
 	"log",
-	"autopath",
 	"dnstap",
 	"chaos",
+	"loadbalance",
 	"cache",
 	"rewrite",
-	"loadbalance",
 	"dnssec",
+	"autopath",
 	"reverse",
+	"template",
 	"hosts",
+	"route53",
 	"federation",
 	"kubernetes",
 	"file",
 	"auto",
 	"secondary",
 	"etcd",
+	"forward",
 	"proxy",
 	"erratic",
 	"whoami",
-	"startup",
-	"shutdown",
+	"on",
 }

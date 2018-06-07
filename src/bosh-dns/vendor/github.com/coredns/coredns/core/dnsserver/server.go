@@ -2,23 +2,23 @@
 package dnsserver
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"net"
 	"runtime"
 	"sync"
 	"time"
 
-	"github.com/coredns/coredns/middleware"
-	"github.com/coredns/coredns/middleware/metrics/vars"
-	"github.com/coredns/coredns/middleware/pkg/edns"
-	"github.com/coredns/coredns/middleware/pkg/rcode"
-	"github.com/coredns/coredns/middleware/pkg/trace"
+	"github.com/coredns/coredns/plugin"
+	"github.com/coredns/coredns/plugin/metrics/vars"
+	"github.com/coredns/coredns/plugin/pkg/edns"
+	"github.com/coredns/coredns/plugin/pkg/log"
+	"github.com/coredns/coredns/plugin/pkg/rcode"
+	"github.com/coredns/coredns/plugin/pkg/trace"
 	"github.com/coredns/coredns/request"
 
 	"github.com/miekg/dns"
 	ot "github.com/opentracing/opentracing-go"
-	"golang.org/x/net/context"
 )
 
 // Server represents an instance of a server, which serves
@@ -35,13 +35,13 @@ type Server struct {
 	zones       map[string]*Config // zones keyed by their address
 	dnsWg       sync.WaitGroup     // used to wait on outstanding connections
 	connTimeout time.Duration      // the maximum duration of a graceful shutdown
-	trace       trace.Trace        // the trace middleware for the server
+	trace       trace.Trace        // the trace plugin for the server
 	debug       bool               // disable recover()
 	classChaos  bool               // allow non-INET class queries
 }
 
-// NewServer returns a new CoreDNS server and compiles all middleware in to it. By default CH class
-// queries are blocked unless the chaos or proxy is loaded.
+// NewServer returns a new CoreDNS server and compiles all plugins in to it. By default CH class
+// queries are blocked unless queries from enableChaos are loaded.
 func NewServer(addr string, group []*Config) (*Server, error) {
 
 	s := &Server{
@@ -61,29 +61,46 @@ func NewServer(addr string, group []*Config) (*Server, error) {
 	for _, site := range group {
 		if site.Debug {
 			s.debug = true
+			log.D = true
 		}
 		// set the config per zone
 		s.zones[site.Zone] = site
-		// compile custom middleware for everything
-		var stack middleware.Handler
-		for i := len(site.Middleware) - 1; i >= 0; i-- {
-			stack = site.Middleware[i](stack)
+		// compile custom plugin for everything
+		if site.registry != nil {
+			// this config is already computed with the chain of plugin
+			// set classChaos in accordance with previously registered plugins
+			for name := range enableChaos {
+				if _, ok := site.registry[name]; ok {
+					s.classChaos = true
+					break
+				}
+			}
+			// set trace handler in accordance with previously registered "trace" plugin
+			if handler, ok := site.registry["trace"]; ok {
+				s.trace = handler.(trace.Trace)
+			}
+			continue
+		}
+		var stack plugin.Handler
+		for i := len(site.Plugin) - 1; i >= 0; i-- {
+			stack = site.Plugin[i](stack)
 
 			// register the *handler* also
 			site.registerHandler(stack)
 
 			if s.trace == nil && stack.Name() == "trace" {
-				// we have to stash away the middleware, not the
+				// we have to stash away the plugin, not the
 				// Tracer object, because the Tracer won't be initialized yet
 				if t, ok := stack.(trace.Trace); ok {
 					s.trace = t
 				}
 			}
-			if stack.Name() == "chaos" || stack.Name() == "proxy" {
+			// Unblock CH class queries when any of these plugins are loaded.
+			if _, ok := enableChaos[stack.Name()]; ok {
 				s.classChaos = true
 			}
 		}
-		site.middlewareChain = stack
+		site.pluginChain = stack
 	}
 
 	return s, nil
@@ -94,7 +111,7 @@ func NewServer(addr string, group []*Config) (*Server, error) {
 func (s *Server) Serve(l net.Listener) error {
 	s.m.Lock()
 	s.server[tcp] = &dns.Server{Listener: l, Net: "tcp", Handler: dns.HandlerFunc(func(w dns.ResponseWriter, r *dns.Msg) {
-		ctx := context.Background()
+		ctx := context.WithValue(context.Background(), Key{}, s)
 		s.ServeDNS(ctx, w, r)
 	})}
 	s.m.Unlock()
@@ -107,7 +124,7 @@ func (s *Server) Serve(l net.Listener) error {
 func (s *Server) ServePacket(p net.PacketConn) error {
 	s.m.Lock()
 	s.server[udp] = &dns.Server{PacketConn: p, Net: "udp", Handler: dns.HandlerFunc(func(w dns.ResponseWriter, r *dns.Msg) {
-		ctx := context.Background()
+		ctx := context.WithValue(context.Background(), Key{}, s)
 		s.ServeDNS(ctx, w, r)
 	})}
 	s.m.Unlock()
@@ -177,25 +194,39 @@ func (s *Server) Address() string { return s.Addr }
 // ServeDNS is the entry point for every request to the address that s
 // is bound to. It acts as a multiplexer for the requests zonename as
 // defined in the request so that the correct zone
-// (configuration and middleware stack) will handle the request.
+// (configuration and plugin stack) will handle the request.
 func (s *Server) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) {
+	// The default dns.Mux checks the question section size, but we have our
+	// own mux here. Check if we have a question section. If not drop them here.
+	if r == nil || len(r.Question) == 0 {
+		DefaultErrorFunc(ctx, w, r, dns.RcodeServerFailure)
+		return
+	}
+
 	if !s.debug {
 		defer func() {
-			// In case the user doesn't enable error middleware, we still
+			// In case the user doesn't enable error plugin, we still
 			// need to make sure that we stay alive up here
 			if rec := recover(); rec != nil {
-				DefaultErrorFunc(w, r, dns.RcodeServerFailure)
+				vars.Panic.Inc()
+				DefaultErrorFunc(ctx, w, r, dns.RcodeServerFailure)
 			}
 		}()
 	}
 
 	if !s.classChaos && r.Question[0].Qclass != dns.ClassINET {
-		DefaultErrorFunc(w, r, dns.RcodeRefused)
+		DefaultErrorFunc(ctx, w, r, dns.RcodeRefused)
 		return
 	}
 
 	if m, err := edns.Version(r); err != nil { // Wrong EDNS version, return at once.
 		w.WriteMsg(m)
+		return
+	}
+
+	ctx, err := incrementDepthAndCheck(ctx)
+	if err != nil {
+		DefaultErrorFunc(ctx, w, r, dns.RcodeServerFailure)
 		return
 	}
 
@@ -217,12 +248,28 @@ func (s *Server) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 		}
 
 		if h, ok := s.zones[string(b[:l])]; ok {
+
+			// Set server's address in the context so plugins can reference back to this,
+			// This will makes those metrics unique.
+			ctx = context.WithValue(ctx, plugin.ServerCtx{}, s.Addr)
+
 			if r.Question[0].Qtype != dns.TypeDS {
-				rcode, _ := h.middlewareChain.ServeDNS(ctx, w, r)
-				if !middleware.ClientWrite(rcode) {
-					DefaultErrorFunc(w, r, rcode)
+				if h.FilterFunc == nil {
+					rcode, _ := h.pluginChain.ServeDNS(ctx, w, r)
+					if !plugin.ClientWrite(rcode) {
+						DefaultErrorFunc(ctx, w, r, rcode)
+					}
+					return
 				}
-				return
+				// FilterFunc is set, call it to see if we should use this handler.
+				// This is given to full query name.
+				if h.FilterFunc(q) {
+					rcode, _ := h.pluginChain.ServeDNS(ctx, w, r)
+					if !plugin.ClientWrite(rcode) {
+						DefaultErrorFunc(ctx, w, r, rcode)
+					}
+					return
+				}
 			}
 			// The type is DS, keep the handler, but keep on searching as maybe we are serving
 			// the parent as well and the DS should be routed to it - this will probably *misroute* DS
@@ -237,28 +284,30 @@ func (s *Server) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 		}
 	}
 
-	if dshandler != nil {
-		// DS request, and we found a zone, use the handler for the query
-		rcode, _ := dshandler.middlewareChain.ServeDNS(ctx, w, r)
-		if !middleware.ClientWrite(rcode) {
-			DefaultErrorFunc(w, r, rcode)
+	if r.Question[0].Qtype == dns.TypeDS && dshandler != nil && dshandler.pluginChain != nil {
+		// DS request, and we found a zone, use the handler for the query.
+		rcode, _ := dshandler.pluginChain.ServeDNS(ctx, w, r)
+		if !plugin.ClientWrite(rcode) {
+			DefaultErrorFunc(ctx, w, r, rcode)
 		}
 		return
 	}
 
 	// Wildcard match, if we have found nothing try the root zone as a last resort.
-	if h, ok := s.zones["."]; ok {
-		rcode, _ := h.middlewareChain.ServeDNS(ctx, w, r)
-		if !middleware.ClientWrite(rcode) {
-			DefaultErrorFunc(w, r, rcode)
+	if h, ok := s.zones["."]; ok && h.pluginChain != nil {
+
+		// See comment above.
+		ctx = context.WithValue(ctx, plugin.ServerCtx{}, s.Addr)
+
+		rcode, _ := h.pluginChain.ServeDNS(ctx, w, r)
+		if !plugin.ClientWrite(rcode) {
+			DefaultErrorFunc(ctx, w, r, rcode)
 		}
 		return
 	}
 
-	// Still here? Error out with REFUSED and some logging
-	remoteHost := w.RemoteAddr().String()
-	DefaultErrorFunc(w, r, dns.RcodeRefused)
-	log.Printf("[INFO] \"%s %s %s\" - No such zone at %s (Remote: %s)", dns.Type(r.Question[0].Qtype), dns.Class(r.Question[0].Qclass), q, s.Addr, remoteHost)
+	// Still here? Error out with REFUSED.
+	DefaultErrorFunc(ctx, w, r, dns.RcodeRefused)
 }
 
 // OnStartupComplete lists the sites served by this server
@@ -268,12 +317,14 @@ func (s *Server) OnStartupComplete() {
 		return
 	}
 
-	for zone, config := range s.zones {
-		fmt.Println(zone + ":" + config.Port)
+	out := startUpZones("", s.Addr, s.zones)
+	if out != "" {
+		fmt.Print(out)
 	}
+	return
 }
 
-// Tracer ... TODO: Add comment
+// Tracer returns the tracer in the server if defined.
 func (s *Server) Tracer() ot.Tracer {
 	if s.trace == nil {
 		return nil
@@ -283,7 +334,7 @@ func (s *Server) Tracer() ot.Tracer {
 }
 
 // DefaultErrorFunc responds to an DNS request with an error.
-func DefaultErrorFunc(w dns.ResponseWriter, r *dns.Msg, rc int) {
+func DefaultErrorFunc(ctx context.Context, w dns.ResponseWriter, r *dns.Msg, rc int) {
 	state := request.Request{W: w, Req: r}
 
 	answer := new(dns.Msg)
@@ -291,17 +342,48 @@ func DefaultErrorFunc(w dns.ResponseWriter, r *dns.Msg, rc int) {
 
 	state.SizeAndDo(answer)
 
-	vars.Report(state, vars.Dropped, rcode.ToString(rc), answer.Len(), time.Now())
+	vars.Report(ctx, state, vars.Dropped, rcode.ToString(rc), answer.Len(), time.Now())
 
 	w.WriteMsg(answer)
 }
 
+// incrementDepthAndCheck increments the loop counter in the context, and returns an error if
+// the counter exceeds the max number of re-entries
+func incrementDepthAndCheck(ctx context.Context) (context.Context, error) {
+	// Loop counter for self directed lookups
+	loop := ctx.Value(loopKey{})
+	if loop == nil {
+		ctx = context.WithValue(ctx, loopKey{}, 0)
+		return ctx, nil
+	}
+
+	iloop := loop.(int) + 1
+	if iloop > maxreentries {
+		return ctx, fmt.Errorf("too deep")
+	}
+	ctx = context.WithValue(ctx, loopKey{}, iloop)
+	return ctx, nil
+}
+
 const (
-	tcp = 0
-	udp = 1
+	tcp          = 0
+	udp          = 1
+	maxreentries = 10
 )
 
-var (
-	// Quiet mode will not show any informative output on initialization.
-	Quiet bool
+type (
+	// Key is the context key for the current server
+	Key     struct{}
+	loopKey struct{} // loopKey is the context key for counting self loops
 )
+
+// enableChaos is a map with plugin names for which we should open CH class queries as
+// we block these by default.
+var enableChaos = map[string]bool{
+	"chaos":   true,
+	"forward": true,
+	"proxy":   true,
+}
+
+// Quiet mode will not show any informative output on initialization.
+var Quiet bool

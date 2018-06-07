@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/coredns/coredns/middleware/cache"
+	"github.com/coredns/coredns/plugin/cache"
 	"github.com/miekg/dns"
 	"golang.org/x/net/context"
 
@@ -16,7 +16,7 @@ type CachingDNSHandler struct {
 }
 
 func NewCachingDNSHandler(next dns.Handler) CachingDNSHandler {
-	ca := cache.NewCache()
+	ca := cache.New()
 	ca.Next = corednsHandlerWrapper{Next: next}
 	ca.Zones = []string{"."}
 	return CachingDNSHandler{
