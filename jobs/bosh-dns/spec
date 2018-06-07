@@ -68,6 +68,9 @@ properties:
   override_nameserver:
     description: "Configure ourselves as the system nameserver (e.g. /etc/resolv.conf will be watched and overwritten)"
     default: true
+  agent_alias_enabled:
+    description: "Whether bosh dns would resolve the agent_id."
+    default: false
 
   handlers:
     description: "Array of handler configurations"

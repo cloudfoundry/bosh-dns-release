@@ -31,8 +31,9 @@ type RecordSet struct {
 	healthChan          chan record.Host
 	trackerSubscription chan []record.Record
 
-	domains []string
-	Records []record.Record
+	domains           []string
+	Records           []record.Record
+	AgentAliasEnabled bool
 }
 
 func NewRecordSet(
@@ -42,6 +43,7 @@ func NewRecordSet(
 	maximumTrackedDomains uint,
 	shutdownChan chan struct{},
 	logger boshlog.Logger,
+	AgentAliasEnabled bool,
 ) (*RecordSet, error) {
 	r := &RecordSet{
 		recordFileReader:    recordFileReader,
@@ -50,6 +52,7 @@ func NewRecordSet(
 		healthWatcher:       healthWatcher,
 		healthChan:          make(chan record.Host, 2),
 		trackerSubscription: make(chan []record.Record),
+		AgentAliasEnabled:   AgentAliasEnabled,
 	}
 
 	trackedDomains := tracker.NewPriorityLimitedTranscript(maximumTrackedDomains)
@@ -116,7 +119,6 @@ func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
 			finalIPs = append(finalIPs, expansion)
 		}
 	}
-
 	return finalIPs, nil
 }
 
@@ -185,6 +187,7 @@ func (r *RecordSet) update() {
 		return
 	}
 	records, err := createFromJSON(contents, r.logger)
+
 	if err != nil {
 		return
 	}
@@ -193,6 +196,14 @@ func (r *RecordSet) update() {
 	defer r.recordsMutex.Unlock()
 
 	r.Records = records
+
+	if r.AgentAliasEnabled {
+		for _, re := range r.Records {
+			r.aliasList.SetAlias(fmt.Sprintf("%s.", re.AgentID), []string{
+				fmt.Sprintf("%s.%s.%s.%s.%s", re.ID, re.Group, re.Network, re.Deployment, re.Domain),
+			})
+		}
+	}
 
 	r.trackerSubscription <- records
 
@@ -230,6 +241,7 @@ func createFromJSON(j []byte, logger boshlog.Logger) ([]record.Record, error) {
 	azIDIndex := -1
 	instanceIndexIndex := -1
 	groupIdsIndex := -1
+	agentIdIndex := -1
 
 	for i, k := range swap.Keys {
 		switch k {
@@ -257,6 +269,8 @@ func createFromJSON(j []byte, logger boshlog.Logger) ([]record.Record, error) {
 			azIDIndex = i
 		case "instance_index":
 			instanceIndexIndex = i
+		case "agent_id":
+			agentIdIndex = i
 		default:
 			continue
 		}
@@ -297,6 +311,8 @@ func createFromJSON(j []byte, logger boshlog.Logger) ([]record.Record, error) {
 		} else if !optionalStringValue(&record.NetworkID, info, networkIDIndex, "network_id", index, logger) {
 			continue
 		} else if !optionalStringValue(&record.NumID, info, numIDIndex, "num_id", index, logger) {
+			continue
+		} else if !optionalStringValue(&record.AgentID, info, agentIdIndex, "agent_id", index, logger) {
 			continue
 		} else if groupIdsIndex >= 0 && !assertStringArrayOfStringValue(&record.GroupIDs, info, groupIdsIndex, "group_ids", index, logger) {
 			continue

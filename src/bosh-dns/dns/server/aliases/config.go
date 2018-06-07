@@ -28,7 +28,7 @@ func NewConfigFromMap(load map[string][]string) (Config, error) {
 	config := NewConfig()
 
 	for alias, domains := range load {
-		err := config.setAlias(alias, domains)
+		err := config.SetAlias(alias, domains)
 		if err != nil {
 			return config, err
 		}
@@ -56,7 +56,7 @@ func (c *Config) UnmarshalJSON(j []byte) error {
 	return nil
 }
 
-func (c *Config) setAlias(alias string, domains []string) error {
+func (c *Config) SetAlias(alias string, domains []string) error {
 	if alias == "" {
 		return errors.New("bad alias format: empty alias qn")
 	}
@@ -78,6 +78,8 @@ func (c *Config) setAlias(alias string, domains []string) error {
 	} else {
 		c.aliases[dns.Fqdn(alias)] = qualifedDomains
 	}
+
+	c.aliasHosts = c.getAliasHosts()
 
 	return nil
 }

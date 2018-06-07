@@ -25,8 +25,9 @@ type Config struct {
 
 	API APIConfig `json:"api"`
 
-	Health HealthConfig `json:"health"`
-	Cache  Cache        `json:"cache"`
+	Health            HealthConfig `json:"health"`
+	Cache             Cache        `json:"cache"`
+	AgentAliasEnabled bool         `json:"agent_alias_enabled,omitempty"`
 }
 
 type APIConfig struct {
