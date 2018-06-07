@@ -149,8 +149,16 @@ var _ = Describe("Integration", func() {
 	})
 
 	Context("Instance health", func() {
+		var (
+			osSuffix string
+		)
+
 		BeforeEach(func() {
-			ensureHealthEndpointDeployed()
+			osSuffix = ""
+			if testTargetOS == "windows" {
+				osSuffix = "-windows"
+			}
+			ensureHealthEndpointDeployed("-o", "../test_yml_assets/ops/enable-stop-a-job"+osSuffix+".yml")
 			firstInstance = allDeployedInstances[0]
 		})
 
@@ -234,14 +242,10 @@ var _ = Describe("Integration", func() {
 			}
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 
-			stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
-				"ssh", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID), "-c", "sudo /var/vcap/bosh/bin/monit stop bosh-dns-resolvconf",
-			)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+			runErrand("stop-a-job" + osSuffix)
 
 			defer func() {
-				stdOut, stdErr, exitStatus, err = cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
+				stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
 					"start", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID),
 				)
 				Expect(err).ToNot(HaveOccurred())
@@ -270,20 +274,21 @@ var _ = Describe("Integration", func() {
 			var (
 				osSuffix string
 			)
+
 			BeforeEach(func() {
 				osSuffix = ""
 				if testTargetOS == "windows" {
 					osSuffix = "-windows"
 				}
 				ensureHealthEndpointDeployed("-o", "../test_yml_assets/ops/enable-healthy-executable-job"+osSuffix+".yml")
-				firstInstance = allDeployedInstances[0]
 			})
 
 			It("changes the health endpoint return value based on how the executable exits", func() {
 				client := setupSecureGet()
+				lastInstance := allDeployedInstances[1]
 
 				Eventually(func() map[string]string {
-					return secureGetRespBody(client, firstInstance.IP, 2345)
+					return secureGetRespBody(client, lastInstance.IP, 2345)
 				}, 31*time.Second).Should(Equal(map[string]string{
 					"state": "running",
 				}))
@@ -291,7 +296,7 @@ var _ = Describe("Integration", func() {
 				runErrand("make-health-executable-job-unhealthy" + osSuffix)
 
 				Eventually(func() map[string]string {
-					return secureGetRespBody(client, firstInstance.IP, 2345)
+					return secureGetRespBody(client, lastInstance.IP, 2345)
 				}, 31*time.Second).Should(Equal(map[string]string{
 					"state": "job-health-executable-fail",
 				}))
@@ -299,7 +304,7 @@ var _ = Describe("Integration", func() {
 				runErrand("make-health-executable-job-healthy" + osSuffix)
 
 				Eventually(func() map[string]string {
-					return secureGetRespBody(client, firstInstance.IP, 2345)
+					return secureGetRespBody(client, lastInstance.IP, 2345)
 				}, 31*time.Second).Should(Equal(map[string]string{
 					"state": "running",
 				}))
@@ -313,6 +318,7 @@ func runErrand(errandName string) {
 		boshBinaryPath, "-n",
 		"-d", boshDeployment,
 		"run-errand", errandName,
+		"--instance", "bosh-dns/1",
 	), GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
 	Eventually(session, time.Minute).Should(gexec.Exit(0))

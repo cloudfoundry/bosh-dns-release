@@ -1,0 +1,7 @@
+---
+
+- type: replace
+  path: /instance_groups/0/jobs/-
+  value:
+    name: stop-a-job
+    release: dns-acceptance

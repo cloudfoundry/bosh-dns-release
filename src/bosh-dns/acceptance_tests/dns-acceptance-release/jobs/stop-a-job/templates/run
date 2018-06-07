@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sudo /var/vcap/bosh/bin/monit stop bosh-dns-resolvconf

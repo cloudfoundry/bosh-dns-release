@@ -1,0 +1,9 @@
+---
+name: stop-a-job-windows
+
+templates:
+  run.ps1.erb: bin/run.ps1
+
+packages: []
+
+properties: {}
