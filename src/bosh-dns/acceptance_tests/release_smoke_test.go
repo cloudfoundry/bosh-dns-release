@@ -242,7 +242,8 @@ var _ = Describe("Integration", func() {
 			}
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 
-			runErrand("stop-a-job" + osSuffix)
+			instanceSlug := fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID)
+			runErrand("stop-a-job" + osSuffix, instanceSlug)
 
 			defer func() {
 				stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
@@ -286,6 +287,7 @@ var _ = Describe("Integration", func() {
 			It("changes the health endpoint return value based on how the executable exits", func() {
 				client := setupSecureGet()
 				lastInstance := allDeployedInstances[1]
+				lastInstanceSlug := fmt.Sprintf("%s/%s", lastInstance.InstanceGroup, lastInstance.InstanceID)
 
 				Eventually(func() map[string]string {
 					return secureGetRespBody(client, lastInstance.IP, 2345)
@@ -293,7 +295,7 @@ var _ = Describe("Integration", func() {
 					"state": "running",
 				}))
 
-				runErrand("make-health-executable-job-unhealthy" + osSuffix)
+				runErrand("make-health-executable-job-unhealthy" + osSuffix, lastInstanceSlug)
 
 				Eventually(func() map[string]string {
 					return secureGetRespBody(client, lastInstance.IP, 2345)
@@ -301,7 +303,7 @@ var _ = Describe("Integration", func() {
 					"state": "job-health-executable-fail",
 				}))
 
-				runErrand("make-health-executable-job-healthy" + osSuffix)
+				runErrand("make-health-executable-job-healthy" + osSuffix, lastInstanceSlug)
 
 				Eventually(func() map[string]string {
 					return secureGetRespBody(client, lastInstance.IP, 2345)
@@ -313,12 +315,12 @@ var _ = Describe("Integration", func() {
 	})
 })
 
-func runErrand(errandName string) {
+func runErrand(errandName string, instanceSlug string) {
 	session, err := gexec.Start(exec.Command(
 		boshBinaryPath, "-n",
 		"-d", boshDeployment,
 		"run-errand", errandName,
-		"--instance", "bosh-dns/1",
+		"--instance", instanceSlug,
 	), GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
 	Eventually(session, time.Minute).Should(gexec.Exit(0))
