@@ -8,7 +8,7 @@ files:
 - bosh-dns/tlsclient/**/*
 - bosh-dns/test_yml_assets/**/*
 - bosh-dns/vendor/**/*
-- bosh-cli/bosh-cli-2.0.16-linux-amd64
+- bosh-cli/bosh-cli-3.0.1-linux-amd64
 
 excluded_files:
 - bosh-dns/vendor/github.com/bmatcuk/doublestar/test/**/*

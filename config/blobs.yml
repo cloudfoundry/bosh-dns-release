@@ -1,4 +1,4 @@
-bosh-cli/bosh-cli-2.0.16-linux-amd64:
-  size: 19625703
-  object_id: 1b1f40b5-35df-4eb9-65bf-8eab56a9b48f
-  sha: 09edb717dcceeb948f109ef882d2a3366f21c5c4
+bosh-cli/bosh-cli-3.0.1-linux-amd64:
+  size: 27636423
+  object_id: d60ca228-48f6-46a0-7f38-efe41fc65830
+  sha: ccc893bab8b219e9e4a628ed044ebca6c6de9ca0
