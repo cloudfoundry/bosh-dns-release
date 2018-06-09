@@ -86,15 +86,7 @@ func mainExitCode() int {
 		return 1
 	}
 
-	aliasConfiguration, err := aliases.ConfigFromGlob(
-		fs,
-		aliases.NewFSLoader(fs),
-		config.AliasFilesGlob,
-	)
-	if err != nil {
-		logger.Error(logTag, fmt.Sprintf("loading alias configuration: %s", err.Error()))
-		return 1
-	}
+	aliasesProvider := aliases.NewAutoRefreshAliasesProvider(logger, config.AliasFilesGlob, fs, time.Minute)
 
 	handlersConfiguration, err := handlersconfig.ConfigFromGlob(
 		fs,
@@ -141,7 +133,7 @@ func mainExitCode() int {
 	shutdown := make(chan struct{})
 
 	fileReader := records.NewFileReader(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
-	recordSet, err := records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger)
+	recordSet, err := records.NewRecordSet(fileReader, aliasesProvider, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger)
 
 	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)

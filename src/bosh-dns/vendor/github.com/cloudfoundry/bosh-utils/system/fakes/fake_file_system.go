@@ -80,7 +80,7 @@ type FakeFileSystem struct {
 	RemoveAllStub removeAllFn
 
 	ReadAndFollowLinkError error
-	ReadlinkError error
+	ReadlinkError          error
 
 	StatWithOptsCallCount int
 	StatCallCount         int
