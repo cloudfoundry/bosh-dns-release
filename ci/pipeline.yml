@@ -340,7 +340,7 @@ jobs:
         resource: candidate-release
         trigger: true
         passed: [create-release]
-      - get: stemcell
+      - get: candidate-warden-ubuntu-stemcell
         resource: ubuntu-trusty-stemcell
       - get: bosh-release
     - task: test-brats # contain base manifest
@@ -484,7 +484,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cloudfoundry/bosh
-    branch: 264.x
+    branch: 266.x
 
 - name: bosh-release
   type: bosh-io-release
