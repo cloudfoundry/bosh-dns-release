@@ -26,4 +26,4 @@ params:
   ENV_NAME: ""
 
 run:
-  path: bosh-dns-release/ci/tasks/bbl-up.sh
+  path: bosh-dns-release/ci/tasks/windows/bbl-up.sh

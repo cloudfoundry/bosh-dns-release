@@ -24,4 +24,4 @@ params:
   ENV_NAME: ""
 
 run:
-  path: bosh-dns-release/ci/tasks/bbl-destroy.sh
+  path: bosh-dns-release/ci/tasks/windows/bbl-destroy.sh
