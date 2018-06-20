@@ -18,5 +18,5 @@ run:
   path: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.sh
 
 params:
-  ENV_NAME: default
-  WINDOWS_OS_VERSION: windows2012R2
+  ENV_NAME: ""
+  WINDOWS_OS_VERSION: ""

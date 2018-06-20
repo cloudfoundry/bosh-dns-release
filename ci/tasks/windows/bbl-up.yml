@@ -23,7 +23,7 @@ params:
   BBL_GCP_ZONE: us-central1-a
   BBL_GCP_REGION: us-central1
   BBL_IAAS: gcp
-  ENV_NAME: default
+  ENV_NAME: ""
 
 run:
   path: bosh-dns-release/ci/tasks/bbl-up.sh
