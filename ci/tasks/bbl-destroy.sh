@@ -36,7 +36,7 @@ BBL_STATE_DIR=$REPO_DIR/$ENV_NAME
 
 source $BBL_STATE_DIR/.envrc
 
-$BOSH_BINARY_PATH deployments | awk '{ print $1 }' | xargs -n1 $BOSH_BINARY_PATH -n delete-deployment -d
+$BOSH_BINARY_PATH deployments | awk '{ print $1 }' | xargs -n1 $BOSH_BINARY_PATH -n delete-deployment --force -d
 
 $BOSH_BINARY_PATH -n clean-up --all
 
