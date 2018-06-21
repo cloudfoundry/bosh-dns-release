@@ -383,7 +383,7 @@ jobs:
         resource: candidate-release
         trigger: true
         passed: [create-release]
-      - get: candidate-warden-ubuntu-stemcell
+      - get: stemcell
         resource: ubuntu-trusty-stemcell
       - get: bosh-release
     - task: test-brats # contain base manifest
@@ -398,6 +398,8 @@ jobs:
         BOSH_DIRECTOR_RELEASE_VERSION: "latest"
         DNS_RELEASE_FILE_PATH: "dns-release"
         DNS_RELEASE_VERSION: "create"
+        FOCUS_SPEC: "BoshDns"
+        STEMCELL_OS: "ubuntu-trusty"
 
 - name: finalize-release
   serial_groups:
@@ -492,7 +494,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cloudfoundry/bosh
-    branch: 266.x
+    branch: master
 
 - name: bosh-release
   type: bosh-io-release
