@@ -1,5 +1,5 @@
 ---
-name: bosh-dns-windows-acceptance
+name: ((deployment_name))
 
 update:
   canaries: 5

@@ -222,24 +222,25 @@ jobs:
           params:
             repository: envs
             rebase: true
-      - task: windows
-        file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
-        params:
-          WINDOWS_OS_VERSION: windows2012R2
-          ENV_NAME: windows2012R2
-        timeout: 1h
-      - task: windows-nameserver-disabled
-        file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
-        params:
-          WINDOWS_OS_VERSION: windows2012R2
-          ENV_NAME: windows2012R2
-        timeout: 1h
-      - task: windows-shared
-        file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.yml
-        params:
-          WINDOWS_OS_VERSION: windows2012R2
-          ENV_NAME: windows2012R2
-        timeout: 1h
+      - aggregate:
+        - task: windows
+          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
+          params:
+            WINDOWS_OS_VERSION: windows2012R2
+            ENV_NAME: windows2012R2
+          timeout: 1h
+        - task: windows-nameserver-disabled
+          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
+          params:
+            WINDOWS_OS_VERSION: windows2012R2
+            ENV_NAME: windows2012R2
+          timeout: 1h
+        - task: windows-shared
+          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.yml
+          params:
+            WINDOWS_OS_VERSION: windows2012R2
+            ENV_NAME: windows2012R2
+          timeout: 1h
       ensure:
         task: bbl-destroy
         file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
@@ -283,24 +284,25 @@ jobs:
           params:
             repository: envs
             rebase: true
-      - task: windows
-        file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
-        params:
-          WINDOWS_OS_VERSION: windows2016
-          ENV_NAME: windows2016
-        timeout: 1h
-      - task: windows-nameserver-disabled
-        file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
-        params:
-          WINDOWS_OS_VERSION: windows2016
-          ENV_NAME: windows2016
-        timeout: 1h
-      - task: windows-shared
-        file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.yml
-        params:
-          WINDOWS_OS_VERSION: windows2016
-          ENV_NAME: windows2016
-        timeout: 1h
+      - aggregate:
+        - task: windows
+          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
+          params:
+            WINDOWS_OS_VERSION: windows2016
+            ENV_NAME: windows2016
+          timeout: 1h
+        - task: windows-nameserver-disabled
+          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
+          params:
+            WINDOWS_OS_VERSION: windows2016
+            ENV_NAME: windows2016
+          timeout: 1h
+        - task: windows-shared
+          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.yml
+          params:
+            WINDOWS_OS_VERSION: windows2016
+            ENV_NAME: windows2016
+          timeout: 1h
       ensure:
         task: bbl-destroy
         file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml

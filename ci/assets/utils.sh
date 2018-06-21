@@ -41,7 +41,7 @@ clean_up_director() {
 
   # Ensure the environment is clean
   if [[ -z "$deployment_name" ]]; then
-    bosh deployments --column=name | xargs -n1 bosh delete-deployment --force -n -d
+    bosh deployments --column=name | xargs -n1 -P5 bosh delete-deployment --force -n -d
   else
     bosh delete-deployment -d $deployment_name -n --force
   fi
