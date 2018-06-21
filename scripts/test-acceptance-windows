@@ -3,20 +3,48 @@
 set -e -o pipefail
 set -x
 
-clean_up() {
-  exit_code=$?
-  fly -t production execute --privileged \
-    --config="${DIR}/../ci/tasks/clean-up.yml" \
-    --inputs-from=bosh-dns-release/test-acceptance-windows
+setup_env() {
+  local task_dir=$1
 
-  if [ $exit_code -ne 0 ]; then
-    echo "TESTS FAILED"
-  fi
+  mkdir -p "$PWD/envs"
+  pushd "$PWD/envs"
+    git init
+  popd
+
+  echo "### bbl-uping environment ${env_name}"
+
+  set -ex
+  ENV_NAME="${env_name}" \
+  BBL_GCP_SERVICE_ACCOUNT_KEY="$( bosh int <(lpass show --notes 'dns-release pipeline vars') --path=/bbl_gcp_service_account_key_id )" \
+  fly -t production execute --privileged \
+    --config="${task_dir}/bbl-up.yml" \
+    --include-ignored \
+    --inputs-from=bosh-dns-release/test-acceptance-windows \
+    --input=bosh-dns-release="${release_dir}" \
+    --input=envs="$PWD/envs" \
+    --output=envs="$PWD/envs"
+  set +ex
 }
 
-trap "clean_up" EXIT
+destroy_env() {
+  local task_dir=$1
+
+  ENV_NAME="${env_name}" \
+  BBL_GCP_SERVICE_ACCOUNT_KEY="$( bosh int <(lpass show --notes 'dns-release pipeline vars') --path=/bbl_gcp_service_account_key_id )" \
+  fly -t production execute --privileged --include-ignored \
+    --config="${task_dir}/bbl-destroy.yml" \
+    --input=bosh-dns-release="${release_dir}" \
+    --input=envs="$PWD/envs"
+    --output=envs="$PWD/envs"
+}
 
 main() {
+  local option=$1
+  local windows_version=${$2:-"windows2012R2"}
+
+  env_name=$(hostname -s|tr '[:upper:]' '[:lower:]')-local
+  mkdir -p "$PWD/envs"
+
   DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
   tarball_dir=$(mktemp -d)
   bosh create-release --force --tarball="${tarball_dir}/bosh-windows-dns-release.tgz"
@@ -27,28 +55,43 @@ main() {
   task_dir="${DIR}/../ci/tasks/windows"
   release_dir="${DIR}/../"
 
+  setup_env "${task_dir}"
+
   echo "### starting windows-specific tests..."
   # windows specfic
+  ENV_NAME="${env_name}" WINDOWS_OS_VERSION="${windows_version}" \
   fly -t production execute --privileged \
     --config="${task_dir}/test-acceptance-windows.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
     --input=bosh-dns-release="${release_dir}" \
-    --input=candidate-release="${tarball_dir}"
+    --input=candidate-release="${tarball_dir}" \
+    --input=envs="$PWD/envs"
 
   # nameserver-disabled
   echo "### tests: nameserver-disabled"
+  ENV_NAME="${env_name}" WINDOWS_OS_VERSION="${windows_version}" \
   fly -t production execute --privileged \
     --config="${task_dir}/test-acceptance-windows-nameserver-disabled.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
-    --input=bosh-dns-release="${release_dir}"
+    --input=bosh-dns-release="${release_dir}" \
+    --input=candidate-release="${tarball_dir}" \
+    --input=envs="$PWD/envs"
 
   # shared
   echo "### tests: shared"
+  ENV_NAME="${env_name}" WINDOWS_OS_VERSION="${windows_version}" \
   fly -t production execute --privileged \
     --config="${task_dir}/test-acceptance-windows-shared.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
     --input=bosh-dns-release="${release_dir}" \
-    --input=candidate-release="${tarball_dir}"
+    --input=candidate-release="${tarball_dir}" \
+    --input=envs="$PWD/envs"
+
+  if [[ "${option}" = "keep-alive" ]]; then
+    exit
+  fi
+
+  destroy_env "${task_dir}"
 }
 
 main "$@"

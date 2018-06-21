@@ -15,6 +15,7 @@ releases/**/*.tgz
 releases/*.tgz
 src/bosh-dns/acceptance_tests/linux/override_nameserver/disabled/dns-creds.yml
 tags
+envs
 
 # Golang
 /bin/
