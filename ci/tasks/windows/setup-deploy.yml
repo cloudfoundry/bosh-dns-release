@@ -1,0 +1,22 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v5
+
+inputs:
+inputs:
+  - name: bosh-dns-release
+  - name: envs
+  - name: bosh-stemcell-windows
+  - name: gcp-linux-stemcell
+  - name: candidate-release
+
+params:
+  ENV_NAME:
+
+run:
+  path: bosh-dns-release/ci/tasks/windows/setup-deploy.sh

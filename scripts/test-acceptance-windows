@@ -1,11 +1,8 @@
 #!/bin/bash
 
 set -e -o pipefail
-set -x
 
 setup_env() {
-  local task_dir=$1
-
   mkdir -p "$PWD/envs"
   pushd "$PWD/envs"
     git init
@@ -13,34 +10,104 @@ setup_env() {
 
   echo "### bbl-uping environment ${env_name}"
 
-  set -ex
   ENV_NAME="${env_name}" \
   BBL_GCP_SERVICE_ACCOUNT_KEY="$( bosh int <(lpass show --notes 'dns-release pipeline vars') --path=/bbl_gcp_service_account_key_id )" \
-  fly -t production execute --privileged \
+  fly -t production execute --privileged --include-ignored \
     --config="${task_dir}/bbl-up.yml" \
-    --include-ignored \
-    --inputs-from=bosh-dns-release/test-acceptance-windows \
     --input=bosh-dns-release="${release_dir}" \
     --input=envs="$PWD/envs" \
     --output=envs="$PWD/envs"
-  set +ex
+
+  echo "### uploading release and stemcells"
+  # windows specfic
+  ENV_NAME="${env_name}" \
+  fly -t production execute --privileged --include-ignored \
+    --config="${task_dir}/setup-deploy.yml" \
+    --inputs-from=bosh-dns-release/test-acceptance-windows \
+    --input=bosh-dns-release="${release_dir}" \
+    --input=envs="$PWD/envs"
 }
 
 destroy_env() {
-  local task_dir=$1
-
   ENV_NAME="${env_name}" \
   BBL_GCP_SERVICE_ACCOUNT_KEY="$( bosh int <(lpass show --notes 'dns-release pipeline vars') --path=/bbl_gcp_service_account_key_id )" \
   fly -t production execute --privileged --include-ignored \
     --config="${task_dir}/bbl-destroy.yml" \
     --input=bosh-dns-release="${release_dir}" \
-    --input=envs="$PWD/envs"
+    --input=envs="$PWD/envs" \
     --output=envs="$PWD/envs"
 }
 
+run_tests() {
+  echo "### starting windows-specific tests..."
+  # windows specfic
+  ENV_NAME="${env_name}" WINDOWS_OS_VERSION="${windows_version}" \
+  fly -t production execute --privileged \
+    --config="${task_dir}/test-acceptance-windows.yml" \
+    --inputs-from=bosh-dns-release/test-acceptance-windows \
+    --input=bosh-dns-release="${release_dir}" \
+    --input=envs="$PWD/envs"
+
+  # nameserver-disabled
+  echo "### tests: nameserver-disabled"
+  ENV_NAME="${env_name}" WINDOWS_OS_VERSION="${windows_version}" \
+  fly -t production execute --privileged \
+    --config="${task_dir}/test-acceptance-windows-nameserver-disabled.yml" \
+    --inputs-from=bosh-dns-release/test-acceptance-windows \
+    --input=bosh-dns-release="${release_dir}" \
+    --input=envs="$PWD/envs"
+
+  # shared
+  echo "### tests: shared"
+  ENV_NAME="${env_name}" WINDOWS_OS_VERSION="${windows_version}" \
+  fly -t production execute --privileged \
+    --config="${task_dir}/test-acceptance-windows-shared.yml" \
+    --inputs-from=bosh-dns-release/test-acceptance-windows \
+    --input=bosh-dns-release="${release_dir}" \
+    --input=envs="$PWD/envs"
+}
+
 main() {
-  local option=$1
-  local windows_version=${$2:-"windows2012R2"}
+  local destroy=true
+  local skip_bbl=false
+  local windows_version=windows2012R2
+
+  while getopts ":adthw:" opt; do
+    case ${opt} in
+      a )
+        echo "Keep-alive option detected (-a)."
+        echo "Environment will be left around after run."
+        echo "Remember to delete with \`$0 -d\`"
+        destroy=false
+        ;;
+      d )
+        echo "Destroy-only option detected (-d)."
+        echo "Environment will be destroyed."
+        destroy=only
+        ;;
+      t )
+        skip_bbl=true
+        ;;
+      w )
+        windows_version="$OPTARG"
+        ;;
+      h )
+        echo "Usage: $0 [-h|-a|-w WINDOWS_OS_VERSION]"
+        echo "     $0 -h                      Display this help message."
+        echo "     $0 a                       Do not destroy environment after running tests."
+        echo "     $0 d                       Destroy-only mode. Will destroy existing environment left around from previous run."
+        echo "     $0 t                       Skip bbl-up. Will only run the tests. WARNING: you need to have setup the environment prior to running this."
+        echo "     $0 w WINDOWS_OS_VERSION    Windows stemcell version to use (windows2016 or windows2012R2 [default])."
+        exit 0
+        ;;
+      \? )
+        echo "Invalid Option: -$OPTARG" 1>&2
+        exit 1
+        ;;
+    esac
+  done
+
+  lpass status
 
   env_name=$(hostname -s|tr '[:upper:]' '[:lower:]')-local
   mkdir -p "$PWD/envs"
@@ -55,43 +122,20 @@ main() {
   task_dir="${DIR}/../ci/tasks/windows"
   release_dir="${DIR}/../"
 
-  setup_env "${task_dir}"
-
-  echo "### starting windows-specific tests..."
-  # windows specfic
-  ENV_NAME="${env_name}" WINDOWS_OS_VERSION="${windows_version}" \
-  fly -t production execute --privileged \
-    --config="${task_dir}/test-acceptance-windows.yml" \
-    --inputs-from=bosh-dns-release/test-acceptance-windows \
-    --input=bosh-dns-release="${release_dir}" \
-    --input=candidate-release="${tarball_dir}" \
-    --input=envs="$PWD/envs"
-
-  # nameserver-disabled
-  echo "### tests: nameserver-disabled"
-  ENV_NAME="${env_name}" WINDOWS_OS_VERSION="${windows_version}" \
-  fly -t production execute --privileged \
-    --config="${task_dir}/test-acceptance-windows-nameserver-disabled.yml" \
-    --inputs-from=bosh-dns-release/test-acceptance-windows \
-    --input=bosh-dns-release="${release_dir}" \
-    --input=candidate-release="${tarball_dir}" \
-    --input=envs="$PWD/envs"
-
-  # shared
-  echo "### tests: shared"
-  ENV_NAME="${env_name}" WINDOWS_OS_VERSION="${windows_version}" \
-  fly -t production execute --privileged \
-    --config="${task_dir}/test-acceptance-windows-shared.yml" \
-    --inputs-from=bosh-dns-release/test-acceptance-windows \
-    --input=bosh-dns-release="${release_dir}" \
-    --input=candidate-release="${tarball_dir}" \
-    --input=envs="$PWD/envs"
-
-  if [[ "${option}" = "keep-alive" ]]; then
+  if [[ "$destroy" = "only" ]]; then
+    destroy_env
     exit
   fi
 
-  destroy_env "${task_dir}"
+  if [[ "$skip_bbl" = "false" ]]; then
+    setup_env
+  fi
+
+  run_tests
+
+  if [[ "$destroy" = "true" ]]; then
+    destroy_env
+  fi
 }
 
 main "$@"

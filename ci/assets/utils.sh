@@ -13,7 +13,7 @@ source_bbl_env() {
   trap kill_ssh EXIT
 
   set +x
-  eval "$(bbl print-env --state-dir=$bbl_state_dir)"
+  eval "$(bbl print-env --state-dir="$bbl_state_dir")"
   set -x
 }
 
@@ -37,13 +37,15 @@ commit_bbl_state_dir() {
 }
 
 clean_up_director() {
-  local deployment_name=${1}
+  local deployment_name=${1:-""}
 
   # Ensure the environment is clean
   if [[ -z "$deployment_name" ]]; then
-    bosh deployments --column=name | xargs -n1 -P5 bosh delete-deployment --force -n -d
+    if [ "$(bosh deployments --column=name | wc -l)" -gt 0 ]; then
+      bosh deployments --column=name | xargs -n1 -P5 bosh delete-deployment --force -n -d
+    fi
   else
-    bosh delete-deployment -d $deployment_name -n --force
+    bosh delete-deployment -d "$deployment_name" -n --force
   fi
 
   # Clean-up old artifacts

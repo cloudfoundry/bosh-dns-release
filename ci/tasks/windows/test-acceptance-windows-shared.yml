@@ -9,10 +9,7 @@ image_resource:
 
 inputs:
   - name: bosh-dns-release
-  - name: candidate-release
   - name: envs
-  - name: bosh-stemcell-windows
-  - name: gcp-linux-stemcell
 
 run:
   path: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.sh

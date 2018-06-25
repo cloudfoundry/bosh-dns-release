@@ -5,10 +5,9 @@ set -eu -o pipefail
 ROOT_DIR=$PWD
 BBL_STATE_DIR=$ROOT_DIR/envs/$ENV_NAME
 
-source $BBL_STATE_DIR/.envrc
-
-bosh -n upload-stemcell $ROOT_DIR/bosh-stemcell-windows/*.tgz
-bosh upload-release $ROOT_DIR/candidate-release/*.tgz
+pushd $BBL_STATE_DIR
+  source .envrc
+popd
 
 export BOSH_DEPLOYMENT=bosh-dns-windows-acceptance-nameserver-disabled
 

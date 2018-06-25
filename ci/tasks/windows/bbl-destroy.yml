@@ -5,7 +5,7 @@ image_resource:
   type: docker-image
   source:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
-    tag: v2.5.0
+    tag: v5
 
 inputs:
   - name: bosh-dns-release
@@ -17,11 +17,11 @@ outputs:
 
 params:
   BBL_GCP_SERVICE_ACCOUNT_KEY:
+  ENV_NAME:
   BBL_GCP_PROJECT_ID: cf-bosh-core
   BBL_GCP_ZONE: us-central1-a
   BBL_GCP_REGION: us-central1
   BBL_IAAS: gcp
-  ENV_NAME: ""
 
 run:
   path: bosh-dns-release/ci/tasks/windows/bbl-destroy.sh
