@@ -16,6 +16,8 @@ bosh int \
   -o ${TEST_STRESS_ASSETS}/director/ops/disable-hm.yml \
   -l ${TEST_STRESS_ASSETS}/director/vars.yml \
   -v docker_cpi_release=$BOSH_DOCKER_CPI_RELEASE_TARBALL \
+  -v access_key_id=$BBL_AWS_ACCESS_KEY_ID \
+  -v secret_access_key=$BBL_AWS_SECRET_ACCESS_KEY \
   > ${BBL_STATE_DIR}/director-manifest.yml
 
 bosh create-env ${BBL_STATE_DIR}/director-manifest.yml \
