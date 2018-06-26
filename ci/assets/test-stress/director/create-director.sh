@@ -9,7 +9,6 @@ bosh int \
   -o ${BBL_STATE_DIR}/bosh-deployment/credhub.yml \
   -o ${BBL_STATE_DIR}/bosh-deployment/aws/iam-instance-profile.yml \
   -o ${BBL_STATE_DIR}/bbl-ops-files/aws/bosh-director-ephemeral-ip-ops.yml \
-  -o ${BBL_STATE_DIR}/bbl-ops-files/aws/encrypted-disk.yml \
   -o ${TEST_STRESS_ASSETS}/director/ops/add-docker-cpi-release.yml \
   -o ${TEST_STRESS_ASSETS}/director/ops/configure-max-threads.yml \
   -o ${TEST_STRESS_ASSETS}/director/ops/configure-workers.yml \
