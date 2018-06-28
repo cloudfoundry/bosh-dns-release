@@ -5,7 +5,7 @@ set -eu -o pipefail
 ROOT_DIR=$PWD
 BBL_STATE_DIR=$ROOT_DIR/envs/$ENV_NAME
 
-pushd $BBL_STATE_DIR
+pushd "${BBL_STATE_DIR}"
   source .envrc
 popd
 

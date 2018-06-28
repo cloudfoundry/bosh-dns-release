@@ -90,7 +90,7 @@ func excludedRecursorsOpsFile() string {
 
 func jsonServerAddress() string {
 	if testTargetOS == "windows" {
-		return "http://10.0.31.191:8081"
+		return "http://10.0.16.191:8081"
 	}
 	return "http://172.17.0.1:8081"
 }
