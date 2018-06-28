@@ -13,7 +13,7 @@ main() {
 
   # Deploy docker hosts to director
   pushd bosh-dns-release/ci/assets/test-stress/docker-hosts-deployment
-    bosh update-cloud-config "${BBL_STATE_DIR}/cloud-config/cloud-config.yml" \
+    bosh -n update-cloud-config "${BBL_STATE_DIR}/cloud-config/cloud-config.yml" \
       -o "${BBL_STATE_DIR}/cloud-config/ops.yml"
       -o ops/docker-addressable-zones-template.yml \
       -v jumpbox_table_id=$(bosh int $BBL_STATE_DIR/vars/terraform.tfstate --path /modules/0/resources/aws_route_table.bosh_route_table/primary/id) \
