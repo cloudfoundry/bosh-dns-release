@@ -6,27 +6,37 @@ description: "errand to run the shared acceptance tests"
 templates:
   run.erb: bin/run
   ca.crt.erb: ca.crt
+  jumpbox.key.erb: jumpbox.key
 
 packages:
-  - golang-1-linux
-  - acceptance-tests
+- golang-1-linux
+- acceptance-tests
 
 properties:
-    bosh_ca_cert:
-        description: ""
-        default:
-    bosh_client_secret:
-        description: ""
-        default:
-    bosh_client:
-        description: ""
-        default:
-    bosh_environment:
-        description: ""
-        default:
-    bosh_deployment:
-        description: ""
-        default:
-    base_stemcell:
-        description: ""
-        default: ubuntu-trusty
+  bosh_ca_cert:
+    description: ""
+    default:
+  bosh_client_secret:
+    description: ""
+    default:
+  bosh_client:
+    description: ""
+    default:
+  bosh_environment:
+    description: ""
+    default:
+  bosh_deployment:
+    description: ""
+    default:
+  base_stemcell:
+    description: ""
+    default: ubuntu-trusty
+  bosh_jumpbox_user:
+    description: ""
+    default: jumpbox
+  bosh_jumpbox_private_key:
+    description: ""
+    default:
+  bosh_jumpbox_address:
+    description: ""
+    default:

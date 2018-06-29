@@ -11,6 +11,11 @@ export BOSH_ENVIRONMENT=<%= p('bosh_environment') %>
 export BOSH_DEPLOYMENT=<%= p('bosh_deployment') %>
 export BASE_STEMCELL=<%= p('base_stemcell') %>
 
+<% if p('bosh_jumpbox_address') != "" %>
+export JUMPBOX_KEY_PATH="/var/vcap/jobs/acceptance-tests/jumpbox.key"
+export BOSH_ALL_PROXY="ssh+socks5://<%= p('bosh_jumpbox_user') %>@<%= p('bosh_jumpbox_address') %>?private-key=${JUMPBOX_KEY_PATH}"
+<% end %>
+
 export TEST_MANIFEST_NAME="dns-windows"
 export NO_RECURSORS_OPS_FILE="no-recursors-configured-windows"
 export LOCAL_RECURSOR_OPS_FILE="add-test-dns-nameservers-windows"
