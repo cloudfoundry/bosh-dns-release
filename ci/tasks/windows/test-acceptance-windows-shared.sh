@@ -17,7 +17,7 @@ bosh -n -d bosh-dns-shared-acceptance \
   -v bosh_environment="$BOSH_ENVIRONMENT" \
   -v base_stemcell=$WINDOWS_OS_VERSION \
   -v bosh_deployment=bosh-dns \
-  -v jumpbox_private_key="$(cat $JUMPBOX_PRIVATE_KEY)" \
+  --var-file jumpbox_private_key="$JUMPBOX_PRIVATE_KEY" \
   -v jumpbox_address="$JUMPBOX_ADDRESS" \
   --vars-store dns-creds.yml
 
@@ -25,4 +25,4 @@ pushd $ROOT_DIR/bosh-dns-release/src/bosh-dns/acceptance_tests/dns-acceptance-re
    bosh create-release --force && bosh upload-release --rebase
 popd
 
-bosh -d bosh-dns-shared-acceptance run-errand acceptance-tests --keep-alive
+bosh -d bosh-dns-shared-acceptance run-errand acceptance-tests
