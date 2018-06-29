@@ -21,9 +21,11 @@ deploy_n() {
   local test_stress_assets=$5
 
   pushd $test_stress_assets/bosh-workspace
-    bosh update-config -n --name=docker cloud cloud-config.yml
+    bosh -v
 
-    bosh update-config -n --name=docker cpi cpi-config.yml \
+    bosh update-config -n --name=docker --type=cloud cloud-config.yml
+
+    bosh update-config -n --name=docker --type=cpi cpi-config.yml \
       -l ${state_dir}/docker-vars-store.yml \
       -l $test_stress_assets/docker-hosts-deployment/vars/docker-vars.yml \
       -l ${BBL_STATE_DIR}/vars/director-vars-file.yml
