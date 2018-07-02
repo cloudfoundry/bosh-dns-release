@@ -1,4 +1,10 @@
 cpis:
+- name: default
+  type: aws
+  properties: {}
+  migrated_from:
+  - name: ""
+
 - name: docker-1
   type: docker
   properties:
