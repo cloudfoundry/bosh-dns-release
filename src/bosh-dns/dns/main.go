@@ -135,7 +135,7 @@ func mainExitCode() int {
 		}
 		healthChecker := healthiness.NewHealthChecker(httpClient, config.Health.Port)
 		checkInterval := time.Duration(config.Health.CheckInterval)
-		healthWatcher = healthiness.NewHealthWatcher(healthChecker, clock, checkInterval, logger)
+		healthWatcher = healthiness.NewHealthWatcher(1000, healthChecker, clock, checkInterval, logger)
 	}
 
 	shutdown := make(chan struct{})

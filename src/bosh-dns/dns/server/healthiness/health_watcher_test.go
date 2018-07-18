@@ -30,7 +30,7 @@ var _ = Describe("HealthWatcher", func() {
 		fakeClock = fakeclock.NewFakeClock(time.Now())
 		fakeLogger = &loggerfakes.FakeLogger{}
 		interval = time.Second
-		healthWatcher = healthiness.NewHealthWatcher(fakeChecker, fakeClock, interval, fakeLogger)
+		healthWatcher = healthiness.NewHealthWatcher(1, fakeChecker, fakeClock, interval, fakeLogger)
 		signal = make(chan struct{})
 		stopped = make(chan struct{})
 
@@ -112,10 +112,41 @@ var _ = Describe("HealthWatcher", func() {
 					Expect(healthWatcher.HealthState(ip)).To(Equal(healthiness.StateHealthy))
 
 					fakeChecker.GetStatusReturns(healthiness.StateUnhealthy)
-					healthWatcher.RunCheck(ip)
+					fakeClock.WaitForWatcherAndIncrement(interval)
 
-					Eventually(healthWatcher.HealthState(ip)).Should(Equal(healthiness.StateUnhealthy))
+					Eventually(func() healthiness.HealthState {
+						return healthWatcher.HealthState(ip)
+					}).Should(Equal(healthiness.StateUnhealthy))
 				})
+			})
+		})
+
+		Context("tracking multiple ip addresses", func() {
+			BeforeEach(func() {
+				ip = "127.0.0.1"
+				fakeChecker.GetStatusReturns(healthiness.StateHealthy)
+
+				// Track more IPs to exercise potential racey behaviors
+				healthWatcher.Track("1.1.1.1")
+				healthWatcher.Track("2.2.2.2")
+				healthWatcher.Track("3.3.3.3")
+			})
+
+			JustBeforeEach(func() {
+				healthWatcher.Track(ip)
+				Eventually(fakeChecker.GetStatusCallCount).Should(Equal(4))
+			})
+
+			It("returns new statuses when they change", func(done Done) {
+				Eventually(func() healthiness.HealthState {
+					return healthWatcher.HealthState(ip)
+				}).Should(Equal(healthiness.StateHealthy))
+				fakeChecker.GetStatusReturns(healthiness.StateUnhealthy)
+				fakeClock.WaitForWatcherAndIncrement(interval)
+				Eventually(func() healthiness.HealthState {
+					return healthWatcher.HealthState(ip)
+				}).Should(Equal(healthiness.StateUnhealthy))
+				close(done)
 			})
 		})
 	})

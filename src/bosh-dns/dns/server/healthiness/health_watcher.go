@@ -31,6 +31,7 @@ type healthWatcher struct {
 	checker       HealthChecker
 	checkInterval time.Duration
 	clock         clock.Clock
+	workpoolSize  int
 
 	checkWorkPool *workpool.WorkPool
 	state         map[string]HealthState
@@ -38,13 +39,14 @@ type healthWatcher struct {
 	logger        boshlog.Logger
 }
 
-func NewHealthWatcher(checker HealthChecker, clock clock.Clock, checkInterval time.Duration, logger boshlog.Logger) *healthWatcher {
-	wp, _ := workpool.NewWorkPool(1000)
+func NewHealthWatcher(workpoolSize int, checker HealthChecker, clock clock.Clock, checkInterval time.Duration, logger boshlog.Logger) *healthWatcher {
+	wp, _ := workpool.NewWorkPool(workpoolSize)
 
 	return &healthWatcher{
 		checker:       checker,
 		checkInterval: checkInterval,
 		clock:         clock,
+		workpoolSize:  workpoolSize,
 
 		checkWorkPool: wp,
 		state:         map[string]HealthState{},
@@ -87,15 +89,21 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 	for {
 		select {
 		case <-timer.C():
+			works := []func(){}
+
 			hw.stateMutex.RLock()
 			for ip := range hw.state {
 				// closing on ip, we need to ensure it's fixed within this context
 				ip := ip
-				hw.checkWorkPool.Submit(func() {
+
+				works = append(works, func() {
 					hw.RunCheck(ip)
 				})
 			}
 			hw.stateMutex.RUnlock()
+
+			throttler, _ := workpool.NewThrottler(hw.workpoolSize, works)
+			throttler.Work()
 
 			timer.Reset(hw.checkInterval)
 		case <-signal:
