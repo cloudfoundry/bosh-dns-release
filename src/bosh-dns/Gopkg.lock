@@ -25,8 +25,8 @@
 [[projects]]
   name = "github.com/bmatcuk/doublestar"
   packages = ["."]
-  revision = "b3608229437ba4dc33dae64d56a79a2a73f1f6b2"
-  version = "v1.0.9"
+  revision = "d8311f3021765eaae68173768a540b6592f19977"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
@@ -318,7 +318,7 @@
     "ssh",
     "ssh/terminal"
   ]
-  revision = "56440b844dfe139a8ac053f4ecac0b20b79058f4"
+  revision = "de0752318171da717af4ce24d0a2e8626afaeb11"
 
 [[projects]]
   branch = "master"
@@ -342,7 +342,7 @@
     "proxy",
     "trace"
   ]
-  revision = "f4c29de78a2a91c00474a2e689954305c350adf9"
+  revision = "c39426892332e1bb5ec0a434a079bf82f5d30c54"
 
 [[projects]]
   branch = "master"
@@ -351,7 +351,7 @@
     "unix",
     "windows"
   ]
-  revision = "0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe"
+  revision = "98c5dad5d1a0e8a73845ecc8897d0bd56586511d"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -394,13 +394,13 @@
     "imports",
     "internal/fastwalk"
   ]
-  revision = "3c07937fe18c27668fd78bbaed3d6b8b39e202ea"
+  revision = "27709f6afec43b6c6d899bd199bf0f39c731216c"
 
 [[projects]]
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "daca94659cb50e9f37c1b834680f2e46358f10b0"
+  revision = "383e8b2c3b9e36c4076b235b32537292176bae20"
 
 [[projects]]
   name = "google.golang.org/grpc"
