@@ -131,8 +131,8 @@ var _ = Describe("RecordSet", func() {
 			averageTime := totalTime / time.Duration(count)
 			averageTimeLastRecord := totalTimeLastRecord / time.Duration(count)
 
-			Expect(averageTime).To(BeNumerically("<", 2000))
-			Expect(averageTimeLastRecord).To(BeNumerically("<", 2000))
+			Expect(averageTime).To(BeNumerically("<", 2500))
+			Expect(averageTimeLastRecord).To(BeNumerically("<", 2500))
 		})
 	})
 
