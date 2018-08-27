@@ -18,7 +18,6 @@ import (
 var _ = Describe("Monitor", func() {
 	var (
 		logger     *fakes.FakeLogger
-		address    string
 		applier    monitor.Monitor
 		dnsManager *managerfakes.FakeDNSManager
 		fakeClock  *fakeclock.FakeClock
@@ -27,7 +26,6 @@ var _ = Describe("Monitor", func() {
 
 	BeforeEach(func() {
 		logger = &fakes.FakeLogger{}
-		address = "some-address"
 		dnsManager = &managerfakes.FakeDNSManager{}
 		fakeClock = fakeclock.NewFakeClock(time.Now())
 		ticker = fakeClock.NewTicker(time.Second)
