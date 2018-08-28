@@ -36,11 +36,11 @@ func NewHealthExecutableMonitor(
 		clock:                 clock,
 		interval:              interval,
 		shutdown:              shutdown,
-		status:                true,
 		mutex:                 &sync.Mutex{},
 		logger:                logger,
 	}
 
+	monitor.runChecks()
 	go monitor.run()
 
 	return monitor
@@ -63,23 +63,26 @@ func (m *HealthExecutableMonitor) run() {
 			timer.Stop()
 			return
 		case <-timer.C():
-			var allSucceeded = true
-
-			for _, executable := range m.healthExecutablePaths {
-				_, _, exitStatus, err := m.runExecutable(executable)
-				if err != nil {
-					allSucceeded = false
-					m.logger.Error("HealthExecutableMonitor", "Error occurred executing '%s': %v", executable, err)
-				} else if exitStatus != 0 {
-					allSucceeded = false
-				}
-			}
-
-			m.mutex.Lock()
-			m.status = allSucceeded
-			m.mutex.Unlock()
-
+			m.runChecks()
 			timer.Reset(m.interval)
 		}
 	}
+}
+
+func (m *HealthExecutableMonitor) runChecks() {
+	var allSucceeded = true
+
+	for _, executable := range m.healthExecutablePaths {
+		_, _, exitStatus, err := m.runExecutable(executable)
+		if err != nil {
+			allSucceeded = false
+			m.logger.Error("HealthExecutableMonitor", "Error occurred executing '%s': %v", executable, err)
+		} else if exitStatus != 0 {
+			allSucceeded = false
+		}
+	}
+
+	m.mutex.Lock()
+	m.status = allSucceeded
+	m.mutex.Unlock()
 }

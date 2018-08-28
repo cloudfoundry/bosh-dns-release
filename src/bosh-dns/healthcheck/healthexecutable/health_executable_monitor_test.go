@@ -81,19 +81,27 @@ var _ = Describe("HealthExecutableMonitor", func() {
 			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
 			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0})
 			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
+
+			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0})
+			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 1})
 		})
 
-		It("starts with status true", func() {
+		It("starts with the result of the first set of commands", func() {
+			Expect(cmdRunner.RunCommands).To(HaveLen(3))
 			Expect(monitor.Status()).To(BeTrue())
 		})
 
 		It("returns status accordingly", func() {
 			clock.WaitForWatcherAndIncrement(interval)
+			Eventually(monitor.Status).Should(BeFalse())
+			Eventually(cmdRunner.RunCommands).Should(HaveLen(6))
+			clock.WaitForWatcherAndIncrement(interval)
 			Eventually(monitor.Status).Should(BeTrue())
+			Eventually(cmdRunner.RunCommands).Should(HaveLen(9))
 			clock.WaitForWatcherAndIncrement(interval)
 			Eventually(monitor.Status).Should(BeFalse())
-			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(BeTrue())
+			Eventually(cmdRunner.RunCommands).Should(HaveLen(12))
 		})
 	})
 
@@ -105,9 +113,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 		})
 
 		It("logs an error", func() {
-			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(BeFalse())
-
+			Expect(monitor.Status()).To(BeFalse())
 			Expect(logger.ErrorCallCount()).To(Equal(1))
 			logTag, template, interpols := logger.ErrorArgsForCall(0)
 			Expect(logTag).To(Equal("HealthExecutableMonitor"))
@@ -128,15 +134,17 @@ var _ = Describe("HealthExecutableMonitor", func() {
 
 	Context("when shutting down", func() {
 		It("stops calling the executables", func() {
+			Eventually(cmdRunner.RunCommands).Should(HaveLen(3))
+			Eventually(monitor.Status).Should(Equal(false))
 			Eventually(clock.WatcherCount).Should(Equal(1))
 
 			close(signal)
 			signal = nil
 
 			Eventually(clock.WatcherCount).Should(Equal(0))
-			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 1})
 			clock.Increment(interval * 2)
-			Consistently(monitor.Status).Should(Equal(true))
+			Consistently(cmdRunner.RunCommands).Should(HaveLen(3))
+			Consistently(monitor.Status).Should(Equal(false))
 		})
 	})
 })
