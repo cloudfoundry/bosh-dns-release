@@ -9,7 +9,13 @@ import (
 )
 
 const prependDNSServer = `
-param ($DNSAddress = $(throw "DNSAddress parameter is required."))
+param (
+	[Parameter(Mandatory=$true)]
+	[String]$DNSAddress,
+
+	[Parameter(Mandatory=$true)]
+	[String]$InterfaceName
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -18,20 +24,16 @@ function DnsServers($interface) {
 }
 
 try {
-  # identify our interface
-  [array]$routeable_interfaces = Get-WmiObject Win32_NetworkAdapterConfiguration | Where { $_.IpAddress -AND ($_.IpAddress | Where { $addr = [Net.IPAddress] $_; $addr.AddressFamily -eq "InterNetwork" -AND ($addr.address -BAND ([Net.IPAddress] "255.255.0.0").address) -ne ([Net.IPAddress] "169.254.0.0").address }) }
-  $interface = (Get-WmiObject Win32_NetworkAdapter | Where { $_.DeviceID -eq $routeable_interfaces[0].Index }).netconnectionid
-
   # avoid prepending if we happen to already be at the top to try and avoid races
-  [array]$servers = DnsServers($interface)
-  if($servers[0] -eq $DNSAddress) {
+  [array]$servers = DnsServers($InterfaceName)
+  if($servers.Count -ge 1 -and $servers[0] -eq $DNSAddress) {
     Exit 0
   }
 
-  Set-DnsClientServerAddress -InterfaceAlias $interface -ServerAddresses (,$DNSAddress + $servers)
+  Set-DnsClientServerAddress -InterfaceAlias $InterfaceName -ServerAddresses (,$DNSAddress + $servers)
 
   # read back the servers in case set silently failed
-  [array]$servers = DnsServers($interface)
+  [array]$servers = DnsServers($InterfaceName)
   if($servers[0] -ne $DNSAddress) {
       Write-Error "Failed to set '${DNSAddress}' as the first dns client server address"
   }
@@ -70,13 +72,18 @@ func (manager *windowsManager) SetPrimary() error {
 		return nil
 	}
 
+	primaryAdapter, err := manager.getPrimaryAdapter()
+	if err != nil {
+		return err
+	}
+
 	scriptName, err := manager.writeScript("prepend-dns-server", prependDNSServer)
 	if err != nil {
 		return bosherr.WrapError(err, "Creating prepend-dns-server.ps1")
 	}
 	defer manager.fs.RemoveAll(filepath.Dir(scriptName))
 
-	_, _, _, err = manager.runner.RunCommand("powershell.exe", scriptName, manager.address)
+	_, _, _, err = manager.runner.RunCommand("powershell.exe", scriptName, manager.address, fmt.Sprintf(`"%s"`,primaryAdapter.FriendlyName))
 	if err != nil {
 		return bosherr.WrapError(err, "Executing prepend-dns-server.ps1")
 	}
@@ -157,4 +164,5 @@ type Adapter struct {
 	OperStatus         uint32
 	UnicastAddresses   []string
 	DNSServerAddresses []string
+	FriendlyName string
 }
