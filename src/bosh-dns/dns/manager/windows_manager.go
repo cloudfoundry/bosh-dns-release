@@ -83,7 +83,7 @@ func (manager *windowsManager) SetPrimary() error {
 	}
 	defer manager.fs.RemoveAll(filepath.Dir(scriptName))
 
-	_, _, _, err = manager.runner.RunCommand("powershell.exe", scriptName, manager.address, fmt.Sprintf(`"%s"`,primaryAdapter.FriendlyName))
+	_, _, _, err = manager.runner.RunCommand("powershell.exe", scriptName, manager.address, fmt.Sprintf(`"%s"`, primaryAdapter.FriendlyName))
 	if err != nil {
 		return bosherr.WrapError(err, "Executing prepend-dns-server.ps1")
 	}
@@ -164,5 +164,5 @@ type Adapter struct {
 	OperStatus         uint32
 	UnicastAddresses   []string
 	DNSServerAddresses []string
-	FriendlyName string
+	FriendlyName       string
 }

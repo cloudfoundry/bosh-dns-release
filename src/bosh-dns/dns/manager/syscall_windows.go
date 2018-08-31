@@ -42,7 +42,7 @@ func (WindowsAdapterFetcher) Adapters() ([]Adapter, error) {
 			OperStatus:         aa.OperStatus,
 			UnicastAddresses:   ipsFromSocketAddresses(socketAddressesFromIpAdapterUnicastAddress(aa.FirstUnicastAddress)),
 			DNSServerAddresses: ipsFromSocketAddresses(socketAddressesFromIpAdapterDnsServerAdapter(aa.FirstDnsServerAddress)),
-			FriendlyName: syscall.UTF16ToString((*(*[10000]uint16)(unsafe.Pointer(aa.FriendlyName)))[:]),
+			FriendlyName:       syscall.UTF16ToString((*(*[10000]uint16)(unsafe.Pointer(aa.FriendlyName)))[:]),
 		})
 	}
 	return aas, nil
