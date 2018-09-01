@@ -99,8 +99,8 @@
     "plugin/test",
     "request"
   ]
-  revision = "2e322f6e8a54f18c6aef9c25a7c432c291a3d9f7"
-  version = "v1.2.0"
+  revision = "eb51e8bac90fac86d34c9e1cb89b04ea0936b034"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "master"
@@ -123,8 +123,8 @@
 [[projects]]
   name = "github.com/google/uuid"
   packages = ["."]
-  revision = "064e2069ce9c359c118179501254f67d7d37ba24"
-  version = "0.2"
+  revision = "d460ce9f8df2e77fb1ba55ca87fafed96c607494"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -318,7 +318,7 @@
     "ssh",
     "ssh/terminal"
   ]
-  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
+  revision = "182538f80094b6a8efaade63a8fd8e0d9d5843dd"
 
 [[projects]]
   branch = "master"
@@ -342,7 +342,7 @@
     "proxy",
     "trace"
   ]
-  revision = "4bcd98cce591d8c7061bf313d7a3cbad05b58549"
+  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
 
 [[projects]]
   branch = "master"
@@ -351,7 +351,7 @@
     "unix",
     "windows"
   ]
-  revision = "4910a1d54f876d7b22162a85f4d066d3ee649450"
+  revision = "fa5fdf94c78965f1aa8423f0cc50b8b8d728b05a"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -394,13 +394,13 @@
     "imports",
     "internal/fastwalk"
   ]
-  revision = "6c1c5e93cdc185a6ddf8f821166b3e631b0f8a72"
+  revision = "7ca132754999accbaa5c1735eda29e7ce0f3bf03"
 
 [[projects]]
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "c66870c02cf823ceb633bcd05be3c7cda29976f4"
+  revision = "11092d34479b07829b72e10713b159248caf5dad"
 
 [[projects]]
   name = "google.golang.org/grpc"
