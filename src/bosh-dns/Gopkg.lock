@@ -318,7 +318,7 @@
     "ssh",
     "ssh/terminal"
   ]
-  revision = "182538f80094b6a8efaade63a8fd8e0d9d5843dd"
+  revision = "0709b304e793a5edb4a2c0145f281ecdc20838a4"
 
 [[projects]]
   branch = "master"
@@ -342,7 +342,7 @@
     "proxy",
     "trace"
   ]
-  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
+  revision = "161cd47e91fd58ac17490ef4d742dc98bb4cf60e"
 
 [[projects]]
   branch = "master"
@@ -351,7 +351,7 @@
     "unix",
     "windows"
   ]
-  revision = "fa5fdf94c78965f1aa8423f0cc50b8b8d728b05a"
+  revision = "917fdcba135dcbaccd57425db91723541b4427c8"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -394,7 +394,7 @@
     "imports",
     "internal/fastwalk"
   ]
-  revision = "7ca132754999accbaa5c1735eda29e7ce0f3bf03"
+  revision = "0aa4b8830f481fed77b73cf7cea2bc3129e05148"
 
 [[projects]]
   branch = "master"
