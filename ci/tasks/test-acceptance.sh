@@ -41,6 +41,11 @@ pushd $GOPATH/src/bosh-dns/acceptance_tests
     ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
 popd
 
+# Need to delete the bosh-dns runtime config because bbl uses a hard-coded
+# bosh-deployment which specifies a bosh-dns version that may conflict with the
+# one we are trying to test.
+bosh delete-config --type=runtime --name=default -n
+
 bosh -n deploy $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/manifests/dns-linux.yml \
    -v acceptance_release_path=$ROOT_DIR/bosh-dns-release/src/bosh-dns/acceptance_tests/dns-acceptance-release \
    -v health_server_port=2345 \
