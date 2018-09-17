@@ -177,8 +177,8 @@
 [[projects]]
   name = "github.com/miekg/dns"
   packages = ["."]
-  revision = "5a2b9fab83ff0f8bfc99684bd5f43a37abe560f1"
-  version = "v1.0.8"
+  revision = "426ea785a99b1dad4755492b923feb327d9251a6"
+  version = "v1.0.9"
 
 [[projects]]
   branch = "master"
@@ -238,8 +238,8 @@
     "matchers/support/goraph/util",
     "types"
   ]
-  revision = "b6ea1ea48f981d0f615a154a45eabb9dd466556d"
-  version = "v1.4.1"
+  revision = "7615b9433f86a8bdf29709bf288bc4fd0636a369"
+  version = "v1.4.2"
 
 [[projects]]
   name = "github.com/opentracing/opentracing-go"
@@ -318,7 +318,7 @@
     "ssh",
     "ssh/terminal"
   ]
-  revision = "0709b304e793a5edb4a2c0145f281ecdc20838a4"
+  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
 
 [[projects]]
   branch = "master"
@@ -342,7 +342,7 @@
     "proxy",
     "trace"
   ]
-  revision = "161cd47e91fd58ac17490ef4d742dc98bb4cf60e"
+  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
 
 [[projects]]
   branch = "master"
@@ -351,7 +351,7 @@
     "unix",
     "windows"
   ]
-  revision = "917fdcba135dcbaccd57425db91723541b4427c8"
+  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -394,13 +394,13 @@
     "imports",
     "internal/fastwalk"
   ]
-  revision = "0aa4b8830f481fed77b73cf7cea2bc3129e05148"
+  revision = "677d2ff680c188ddb7dcd2bfa6bc7d3f2f2f75b2"
 
 [[projects]]
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "11092d34479b07829b72e10713b159248caf5dad"
+  revision = "4b56f30a1fd96a133a036b62cdd2a249883dd89b"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -432,8 +432,8 @@
     "status",
     "tap"
   ]
-  revision = "32fb0ac620c32ba40a4626ddf94d90d12cce3455"
-  version = "v1.14.0"
+  revision = "8dea3dc473e90c8179e519d91302d0597c0ca1d1"
+  version = "v1.15.0"
 
 [[projects]]
   name = "gopkg.in/fsnotify.v1"
