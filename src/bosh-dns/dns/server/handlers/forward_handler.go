@@ -56,6 +56,11 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 
 	err := r.recursors.PerformStrategically(func(recursor string) error {
 		exchangeAnswer, _, err := client.Exchange(request, recursor)
+
+		if exchangeAnswer != nil && exchangeAnswer.MsgHdr.Rcode == dns.RcodeServerFailure {
+			err = fmt.Errorf("Received SERVFAIL from upstream (recursor: %s)", recursor)
+		}
+
 		if err == nil || err == dns.ErrTruncated {
 			response := r.compressIfNeeded(responseWriter, request, exchangeAnswer)
 

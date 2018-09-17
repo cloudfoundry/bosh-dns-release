@@ -81,6 +81,28 @@ var _ = Describe("ForwardHandler", func() {
 			})
 		})
 
+		Context("when the recursor returns SERVFAIL", func() {
+			var msg *dns.Msg
+
+			BeforeEach(func() {
+				fakeExchanger.ExchangeReturns(&dns.Msg{
+					MsgHdr: dns.MsgHdr{
+						Rcode: dns.RcodeServerFailure,
+					},
+				}, 0, nil)
+				msg = &dns.Msg{}
+			})
+
+			It("returns an error", func() {
+				fakeRecursorPool.PerformStrategicallyStub = func(f func(string) error) error {
+					Expect(f("127.0.0.1")).To(MatchError("Received SERVFAIL from upstream (recursor: 127.0.0.1)"))
+					return nil
+				}
+
+				recursionHandler.ServeDNS(fakeWriter, msg)
+			})
+		})
+
 		Context("when no working recursors are configured", func() {
 			var msg *dns.Msg
 
