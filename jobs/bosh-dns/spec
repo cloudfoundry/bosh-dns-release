@@ -126,3 +126,7 @@ properties:
   health.max_tracked_queries:
     description: "Maximum number of DNS resolved FQDNs to maintain live health info for"
     default: 2000
+
+  experimental_run_as_root:
+    description: "Execute the bosh-dns process as root"
+    default: false
