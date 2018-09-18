@@ -15,6 +15,11 @@ main() {
   bosh upload-release $ROOT_DIR/candidate-release/*.tgz
   bosh -n upload-stemcell $ROOT_DIR/bosh-stemcell-windows/*.tgz
   bosh -n upload-stemcell $ROOT_DIR/gcp-linux-stemcell/*.tgz
+
+  # Need to delete the bosh-dns runtime config because bbl uses a hard-coded
+  # bosh-deployment which specifies a bosh-dns version that may conflict with the
+  # one we are trying to test.
+  bosh delete-config --type=runtime --name=dns -n
 }
 
 main
