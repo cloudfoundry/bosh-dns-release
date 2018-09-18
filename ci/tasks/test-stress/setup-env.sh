@@ -19,6 +19,13 @@ main() {
     cp $TEST_STRESS_ASSETS/director/*.sh .
 
     bbl --debug up
+
+    eval "$(bbl print-env)"
+
+    # Need to delete the bosh-dns runtime config because bbl uses a hard-coded
+    # bosh-deployment which specifies a bosh-dns version that may conflict with the
+    # one we are trying to test.
+    bosh delete-config --type=runtime --name=dns -n
   popd
 }
 
