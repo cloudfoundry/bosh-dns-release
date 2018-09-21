@@ -56,7 +56,7 @@ function start_dns() {
   ulimit -n 65536
 
   pushd ${JOB_DIR}
-  chpst -u vcap:vcap \
+  <% unless p('experimental_run_as_root') %>chpst -u vcap:vcap \<% end %>
     "${DNS_PACKAGE}/bin/bosh-dns" \
     --config "${JOB_DIR}/config/config.json" \
     1>> ${LOG_DIR}/bosh_dns.stdout.log \
