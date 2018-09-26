@@ -21,14 +21,24 @@ type Health struct {
 	State string `json:"state"`
 }
 
+func generateStatus(status string) healthStatus {
+	groupState := map[string]string{
+		"q-g1.bosh": status,
+		"q-g2.bosh": status,
+	}
+	return healthStatus{State: status, GroupState: groupState}
+}
+
 var _ = Describe("HealthCheck server", func() {
 	var (
-		status string
-		logger boshlog.Logger
+		expectedStatus healthStatus
+		status         string
+		logger         boshlog.Logger
 	)
 
 	BeforeEach(func() {
 		status = "running"
+		expectedStatus = generateStatus(status)
 		logger = boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
 	})
 
@@ -39,6 +49,15 @@ var _ = Describe("HealthCheck server", func() {
 
 			err = ioutil.WriteFile(healthFile.Name(), healthRaw, 0777)
 			Expect(err).ToNot(HaveOccurred())
+
+			_, err = recordsFile.Write([]byte(fmt.Sprint(`{
+				"record_keys": ["id", "num_id", "instance_group", "group_ids", "az", "az_id","network", "deployment", "ip", "domain"],
+				"record_infos": [
+				["my-instance", "123", "my-group", ["1"], "az1", "1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
+				["my-instance-1", "456", "my-group", ["2"], "az2", "2", "my-network", "my-deployment", "127.0.0.2", "bosh"]
+				]
+			}`)))
+			Expect(err).NotTo(HaveOccurred())
 
 			startServer()
 		})
@@ -63,9 +82,7 @@ var _ = Describe("HealthCheck server", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				respJson := secureGetRespBody(client, configPort)
-				Expect(respJson).To(Equal(map[string]string{
-					"state": "running",
-				}))
+				Expect(respJson).To(Equal(expectedStatus))
 			})
 		})
 
@@ -87,9 +104,7 @@ var _ = Describe("HealthCheck server", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					respJson := secureGetRespBody(client, configPort)
-					Expect(respJson).To(Equal(map[string]string{
-						"state": "running",
-					}))
+					Expect(respJson).To(Equal(expectedStatus))
 				})
 			})
 
@@ -109,11 +124,9 @@ var _ = Describe("HealthCheck server", func() {
 					)
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(func() map[string]string {
+					Eventually(func() healthStatus {
 						return secureGetRespBody(client, configPort)
-					}, time.Second*2).Should(Equal(map[string]string{
-						"state": "job-health-executable-fail",
-					}))
+					}, time.Second*2).Should(Equal(generateStatus("stopped")))
 				})
 			})
 		})
@@ -121,6 +134,7 @@ var _ = Describe("HealthCheck server", func() {
 		Describe("when the vm is unhealthy", func() {
 			BeforeEach(func() {
 				status = "stopped"
+				expectedStatus = generateStatus(status)
 			})
 
 			It("returns unhealthy json output", func() {
@@ -134,9 +148,7 @@ var _ = Describe("HealthCheck server", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				respJson := secureGetRespBody(client, configPort)
-				Expect(respJson).To(Equal(map[string]string{
-					"state": "stopped",
-				}))
+				Expect(respJson).To(Equal(expectedStatus))
 			})
 		})
 
@@ -179,7 +191,12 @@ var _ = Describe("HealthCheck server", func() {
 	})
 })
 
-func secureGetRespBody(client *httpclient.HTTPClient, port int) map[string]string {
+type healthStatus struct {
+	State      string            `json:"state"`
+	GroupState map[string]string `json:"group_state"`
+}
+
+func secureGetRespBody(client *httpclient.HTTPClient, port int) healthStatus {
 	resp, err := secureGet(client, port)
 	Expect(err).NotTo(HaveOccurred())
 	defer resp.Body.Close()
@@ -189,7 +206,7 @@ func secureGetRespBody(client *httpclient.HTTPClient, port int) map[string]strin
 	data, err := ioutil.ReadAll(resp.Body)
 	Expect(err).NotTo(HaveOccurred())
 
-	var respJson map[string]string
+	var respJson healthStatus
 	err = json.Unmarshal(data, &respJson)
 	Expect(err).ToNot(HaveOccurred())
 

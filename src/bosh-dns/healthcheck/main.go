@@ -50,6 +50,8 @@ func mainExitCode() int {
 
 	healthExecutableMonitor := healthexecutable.NewHealthExecutableMonitor(
 		executablePaths,
+		config.HealthFileName,
+		config.RecordsFileName,
 		cmdRunner,
 		clock.NewClock(),
 		interval,
