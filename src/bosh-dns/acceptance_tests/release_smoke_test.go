@@ -165,10 +165,13 @@ var _ = Describe("Integration", func() {
 		It("returns a healthy response when the instance is running", func() {
 			client := setupSecureGet()
 
-			Eventually(func() map[string]string {
+			Eventually(func() map[string]interface{} {
 				return secureGetRespBody(client, firstInstance.IP, 2345)
-			}, 31*time.Second).Should(Equal(map[string]string{
+			}, 31*time.Second).Should(Equal(map[string]interface{}{
 				"state": "running",
+				"group_state": map[string]interface{}{
+					"q-g1.bosh": "running",
+				},
 			}))
 		})
 
@@ -243,7 +246,7 @@ var _ = Describe("Integration", func() {
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 
 			instanceSlug := fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID)
-			runErrand("stop-a-job" + osSuffix, instanceSlug)
+			runErrand("stop-a-job"+osSuffix, instanceSlug)
 
 			defer func() {
 				stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
@@ -289,26 +292,35 @@ var _ = Describe("Integration", func() {
 				lastInstance := allDeployedInstances[1]
 				lastInstanceSlug := fmt.Sprintf("%s/%s", lastInstance.InstanceGroup, lastInstance.InstanceID)
 
-				Eventually(func() map[string]string {
+				Eventually(func() map[string]interface{} {
 					return secureGetRespBody(client, lastInstance.IP, 2345)
-				}, 31*time.Second).Should(Equal(map[string]string{
+				}, 31*time.Second).Should(Equal(map[string]interface{}{
 					"state": "running",
+					"group_state": map[string]interface{}{
+						"q-g1.bosh": "running",
+					},
 				}))
 
-				runErrand("make-health-executable-job-unhealthy" + osSuffix, lastInstanceSlug)
+				runErrand("make-health-executable-job-unhealthy"+osSuffix, lastInstanceSlug)
 
-				Eventually(func() map[string]string {
+				Eventually(func() map[string]interface{} {
 					return secureGetRespBody(client, lastInstance.IP, 2345)
-				}, 31*time.Second).Should(Equal(map[string]string{
-					"state": "job-health-executable-fail",
+				}, 31*time.Second).Should(Equal(map[string]interface{}{
+					"state": "stopped",
+					"group_state": map[string]interface{}{
+						"q-g1.bosh": "stopped",
+					},
 				}))
 
-				runErrand("make-health-executable-job-healthy" + osSuffix, lastInstanceSlug)
+				runErrand("make-health-executable-job-healthy"+osSuffix, lastInstanceSlug)
 
-				Eventually(func() map[string]string {
+				Eventually(func() map[string]interface{} {
 					return secureGetRespBody(client, lastInstance.IP, 2345)
-				}, 31*time.Second).Should(Equal(map[string]string{
+				}, 31*time.Second).Should(Equal(map[string]interface{}{
 					"state": "running",
+					"group_state": map[string]interface{}{
+						"q-g1.bosh": "running",
+					},
 				}))
 			})
 		})
@@ -386,7 +398,7 @@ func setupSecureGet() *httpclient.HTTPClient {
 	return tlsclient.New("health.bosh-dns", []byte(caCert), cert, logger)
 }
 
-func secureGetRespBody(client *httpclient.HTTPClient, hostname string, port int) map[string]string {
+func secureGetRespBody(client *httpclient.HTTPClient, hostname string, port int) map[string]interface{} {
 	resp, err := client.Get(fmt.Sprintf("https://%s:%d/health", hostname, port))
 	Expect(err).NotTo(HaveOccurred())
 	defer resp.Body.Close()
@@ -396,7 +408,7 @@ func secureGetRespBody(client *httpclient.HTTPClient, hostname string, port int)
 	data, err := ioutil.ReadAll(resp.Body)
 	Expect(err).NotTo(HaveOccurred())
 
-	var respJson map[string]string
+	var respJson map[string]interface{}
 	err = json.Unmarshal(data, &respJson)
 	Expect(err).ToNot(HaveOccurred())
 
