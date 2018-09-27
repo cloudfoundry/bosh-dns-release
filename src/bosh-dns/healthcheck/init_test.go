@@ -32,7 +32,6 @@ var (
 	sess                *gexec.Session
 	cmd                 *exec.Cmd
 	healthFile          *os.File
-	recordsFile         *os.File
 	configFile          *os.File
 	healthExecutableDir string
 	configPort          int
@@ -57,9 +56,6 @@ var _ = BeforeEach(func() {
 	healthFile, err = ioutil.TempFile("", "health.json")
 	Expect(err).ToNot(HaveOccurred())
 
-	recordsFile, err = ioutil.TempFile("", "records.json")
-	Expect(err).ToNot(HaveOccurred())
-
 	healthExecutableDir, err = ioutil.TempDir("", "health-executables")
 	Expect(err).ToNot(HaveOccurred())
 
@@ -71,7 +67,6 @@ var _ = BeforeEach(func() {
 		PrivateKeyFile:           "assets/test_certs/test_server.key",
 		CAFile:                   "assets/test_certs/test_ca.pem",
 		HealthFileName:           healthFile.Name(),
-		RecordsFileName:          recordsFile.Name(),
 		HealthExecutablesGlob:    filepath.Join(healthExecutableDir, "*"),
 		HealthExecutableInterval: dnsconfig.DurationJSON(time.Millisecond),
 	})

@@ -1,8 +1,6 @@
 package healthserver
 
 import (
-	"bosh-dns/healthcheck/healthexecutable"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,7 +19,7 @@ type HealthServer interface {
 }
 
 type HealthExecutable interface {
-	Status() healthexecutable.Status
+	Status() bool
 }
 
 type concreteHealthServer struct {
@@ -29,11 +27,6 @@ type concreteHealthServer struct {
 	fs                 system.FileSystem
 	healthJsonFileName string
 	healthExecutable   HealthExecutable
-}
-
-type healthResponse struct {
-	State      string            `json:"state"`
-	GroupState map[string]string `json:"group_state"`
 }
 
 const logTag = "healthServer"
@@ -92,27 +85,19 @@ func (c *concreteHealthServer) healthEntryPoint(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
+	healthRaw, err := ioutil.ReadFile(c.healthJsonFileName)
 
-	status := c.healthExecutable.Status()
-
-	var statusBoolToString = map[bool]string{true: "running", false: "stopped"}
-
-	healthResponse := healthResponse{
-		State:      statusBoolToString[status.VmStatus],
-		GroupState: map[string]string{},
-	}
-
-	for groupName, groupStatus := range status.GroupStatus {
-		healthResponse.GroupState[groupName] = statusBoolToString[groupStatus]
-	}
-
-	responseBytes, err := json.Marshal(healthResponse)
 	if err != nil {
-		c.logger.Error(logTag, "Failed to marshal response data %s. error: %s", responseBytes, err)
+		c.logger.Error(logTag, "Failed to read healthcheck data %s. error: %s", string(healthRaw), err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	w.Write(responseBytes)
+	w.Header().Add("Content-Type", "application/json")
+
+	if c.healthExecutable.Status() {
+		w.Write(healthRaw)
+	} else {
+		w.Write([]byte(`{"state":"job-health-executable-fail"}`))
+	}
 }

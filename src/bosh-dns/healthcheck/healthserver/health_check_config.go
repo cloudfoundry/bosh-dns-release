@@ -9,7 +9,6 @@ type HealthCheckConfig struct {
 	PrivateKeyFile           string              `json:"private_key_file"`
 	CAFile                   string              `json:"ca_file"`
 	HealthFileName           string              `json:"health_file_name"`
-	RecordsFileName          string              `json:"records_file_name"`
 	HealthExecutablesGlob    string              `json:"health_executables_glob"`
 	HealthExecutableInterval config.DurationJSON `json:"health_executable_interval"`
 }
