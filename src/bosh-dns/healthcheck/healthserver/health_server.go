@@ -1,6 +1,8 @@
 package healthserver
 
 import (
+	"bosh-dns/healthcheck/healthexecutable"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,7 +12,6 @@ import (
 	"io/ioutil"
 
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
 	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
@@ -19,24 +20,20 @@ type HealthServer interface {
 }
 
 type HealthExecutable interface {
-	Status() bool
+	Status() healthexecutable.HealthResult
 }
 
 type concreteHealthServer struct {
-	logger             boshlog.Logger
-	fs                 system.FileSystem
-	healthJsonFileName string
-	healthExecutable   HealthExecutable
+	logger           boshlog.Logger
+	healthExecutable HealthExecutable
 }
 
 const logTag = "healthServer"
 
-func NewHealthServer(logger boshlog.Logger, fs system.FileSystem, healthFileName string, healthExecutable HealthExecutable) HealthServer {
+func NewHealthServer(logger boshlog.Logger, healthFileName string, healthExecutable HealthExecutable) HealthServer {
 	return &concreteHealthServer{
-		logger:             logger,
-		fs:                 fs,
-		healthJsonFileName: healthFileName,
-		healthExecutable:   healthExecutable,
+		logger:           logger,
+		healthExecutable: healthExecutable,
 	}
 }
 
@@ -85,19 +82,15 @@ func (c *concreteHealthServer) healthEntryPoint(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	healthRaw, err := ioutil.ReadFile(c.healthJsonFileName)
+	w.Header().Add("Content-Type", "application/json")
 
+	status := c.healthExecutable.Status()
+	statusData, err := json.Marshal(status)
 	if err != nil {
-		c.logger.Error(logTag, "Failed to read healthcheck data %s. error: %s", string(healthRaw), err)
+		c.logger.Error(logTag, "failed to marshal healthcheck data: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-
-	if c.healthExecutable.Status() {
-		w.Write(healthRaw)
-	} else {
-		w.Write([]byte(`{"state":"job-health-executable-fail"}`))
-	}
+	w.Write(statusData)
 }

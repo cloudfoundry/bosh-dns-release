@@ -1,6 +1,9 @@
 package healthexecutable
 
 import (
+	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"strings"
 	"time"
 
@@ -11,18 +14,31 @@ import (
 	"github.com/cloudfoundry/bosh-utils/system"
 )
 
+type HealthStatus string
+
+const (
+	StatusRunning HealthStatus = "running"
+	StatusStopped HealthStatus = "stopped"
+)
+
+type HealthResult struct {
+	State HealthStatus
+}
+
 type HealthExecutableMonitor struct {
-	healthExecutablePaths []string
-	cmdRunner             system.CmdRunner
 	clock                 clock.Clock
+	cmdRunner             system.CmdRunner
+	healthExecutablePaths []string
+	healthFilePath        string
 	interval              time.Duration
-	shutdown              chan struct{}
-	status                bool
-	mutex                 *sync.Mutex
 	logger                logger.Logger
+	mutex                 *sync.Mutex
+	shutdown              chan struct{}
+	status                HealthResult
 }
 
 func NewHealthExecutableMonitor(
+	healthFilePath string,
 	healthExecutablePaths []string,
 	cmdRunner system.CmdRunner,
 	clock clock.Clock,
@@ -31,13 +47,17 @@ func NewHealthExecutableMonitor(
 	logger logger.Logger,
 ) *HealthExecutableMonitor {
 	monitor := &HealthExecutableMonitor{
-		healthExecutablePaths: healthExecutablePaths,
-		cmdRunner:             cmdRunner,
 		clock:                 clock,
+		cmdRunner:             cmdRunner,
+		healthExecutablePaths: healthExecutablePaths,
+		healthFilePath:        healthFilePath,
 		interval:              interval,
-		shutdown:              shutdown,
-		mutex:                 &sync.Mutex{},
 		logger:                logger,
+		mutex:                 &sync.Mutex{},
+		shutdown:              shutdown,
+		status: HealthResult{
+			State: StatusStopped,
+		},
 	}
 
 	monitor.runChecks()
@@ -46,7 +66,7 @@ func NewHealthExecutableMonitor(
 	return monitor
 }
 
-func (m *HealthExecutableMonitor) Status() bool {
+func (m *HealthExecutableMonitor) Status() HealthResult {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	return m.status
@@ -69,20 +89,50 @@ func (m *HealthExecutableMonitor) run() {
 	}
 }
 
-func (m *HealthExecutableMonitor) runChecks() {
-	var allSucceeded = true
+type agentHealth struct {
+	State HealthStatus `json:"state"`
+}
 
+func (m *HealthExecutableMonitor) runChecks() {
+	err := m.readAgentHealth()
+	if err != nil {
+		m.mutex.Lock()
+		m.status.State = StatusStopped
+		m.mutex.Unlock()
+		return
+	}
+
+	allStatus := StatusRunning
 	for _, executable := range m.healthExecutablePaths {
 		_, _, exitStatus, err := m.runExecutable(executable)
 		if err != nil {
-			allSucceeded = false
+			allStatus = StatusStopped
 			m.logger.Error("HealthExecutableMonitor", "Error occurred executing '%s': %v", executable, err)
 		} else if exitStatus != 0 {
-			allSucceeded = false
+			allStatus = StatusStopped
 		}
 	}
 
 	m.mutex.Lock()
-	m.status = allSucceeded
+	m.status.State = allStatus
 	m.mutex.Unlock()
+}
+
+func (m *HealthExecutableMonitor) readAgentHealth() error {
+	data, err := ioutil.ReadFile(m.healthFilePath)
+	if err != nil {
+		return err
+	}
+
+	var agentHealthResult agentHealth
+	err = json.Unmarshal(data, &agentHealthResult)
+	if err != nil {
+		return err
+	}
+
+	if agentHealthResult.State != StatusRunning {
+		return errors.New("state is not running")
+	}
+
+	return nil
 }

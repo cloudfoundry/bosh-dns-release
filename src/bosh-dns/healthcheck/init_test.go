@@ -28,13 +28,14 @@ func TestHealthCheck(t *testing.T) {
 }
 
 var (
+	cmd                 *exec.Cmd
+	configFile          *os.File
+	configPort          int
+	healthExecutableDir string
+	healthFile          *os.File
 	pathToServer        string
 	sess                *gexec.Session
-	cmd                 *exec.Cmd
-	healthFile          *os.File
-	configFile          *os.File
-	healthExecutableDir string
-	configPort          int
+	tmpDir              string
 )
 
 var _ = SynchronizedBeforeSuite(func() []byte {
@@ -50,25 +51,28 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 var _ = BeforeEach(func() {
 	var err error
 
-	configFile, err = ioutil.TempFile("", "config.json")
+	tmpDir, err = ioutil.TempDir("", "bosh-dns")
 	Expect(err).ToNot(HaveOccurred())
 
-	healthFile, err = ioutil.TempFile("", "health.json")
+	configFile, err = ioutil.TempFile(tmpDir, "config.json")
 	Expect(err).ToNot(HaveOccurred())
 
-	healthExecutableDir, err = ioutil.TempDir("", "health-executables")
+	healthFile, err = ioutil.TempFile(tmpDir, "health.json")
+	Expect(err).ToNot(HaveOccurred())
+
+	healthExecutableDir, err = ioutil.TempDir(tmpDir, "health-executables")
 	Expect(err).ToNot(HaveOccurred())
 
 	configPort = 1234 + config.GinkgoConfig.ParallelNode
 
 	configContents, err := json.Marshal(healthserver.HealthCheckConfig{
-		Port:                     configPort,
-		CertificateFile:          "assets/test_certs/test_server.pem",
-		PrivateKeyFile:           "assets/test_certs/test_server.key",
 		CAFile:                   "assets/test_certs/test_ca.pem",
-		HealthFileName:           healthFile.Name(),
-		HealthExecutablesGlob:    filepath.Join(healthExecutableDir, "*"),
+		CertificateFile:          "assets/test_certs/test_server.pem",
 		HealthExecutableInterval: dnsconfig.DurationJSON(time.Millisecond),
+		HealthExecutablesGlob:    filepath.Join(healthExecutableDir, "*"),
+		HealthFileName:           healthFile.Name(),
+		Port:                     configPort,
+		PrivateKeyFile:           "assets/test_certs/test_server.key",
 	})
 	Expect(err).NotTo(HaveOccurred())
 
@@ -77,7 +81,7 @@ var _ = BeforeEach(func() {
 })
 
 var _ = AfterEach(func() {
-	os.RemoveAll(healthExecutableDir)
+	Expect(os.RemoveAll(tmpDir)).To(Succeed())
 
 	if cmd.Process != nil {
 		Eventually(sess.Kill()).Should(gexec.Exit())

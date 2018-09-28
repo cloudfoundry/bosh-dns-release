@@ -33,6 +33,8 @@ var _ = Describe("HealthCheck server", func() {
 	})
 
 	Describe("/health", func() {
+		var client *httpclient.HTTPClient
+
 		JustBeforeEach(func() {
 			healthRaw, err := json.Marshal(Health{State: status})
 			Expect(err).ToNot(HaveOccurred())
@@ -41,6 +43,15 @@ var _ = Describe("HealthCheck server", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			startServer()
+
+			client, err = tlsclient.NewFromFiles(
+				"health.bosh-dns",
+				"assets/test_certs/test_ca.pem",
+				"assets/test_certs/test_client.pem",
+				"assets/test_certs/test_client.key",
+				logger,
+			)
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("reject non-TLS connections", func() {
@@ -53,19 +64,8 @@ var _ = Describe("HealthCheck server", func() {
 
 		Describe("when the vm is healthy", func() {
 			It("returns healthy json output", func() {
-				client, err := tlsclient.NewFromFiles(
-					"health.bosh-dns",
-					"assets/test_certs/test_ca.pem",
-					"assets/test_certs/test_client.pem",
-					"assets/test_certs/test_client.key",
-					logger,
-				)
-				Expect(err).NotTo(HaveOccurred())
-
-				respJson := secureGetRespBody(client, configPort)
-				Expect(respJson).To(Equal(map[string]string{
-					"state": "running",
-				}))
+				resp := secureGetRespBody(client, configPort)
+				Expect(resp.State).To(Equal("running"))
 			})
 		})
 
@@ -77,19 +77,8 @@ var _ = Describe("HealthCheck server", func() {
 				})
 
 				It("returns healthy json output", func() {
-					client, err := tlsclient.NewFromFiles(
-						"health.bosh-dns",
-						"assets/test_certs/test_ca.pem",
-						"assets/test_certs/test_client.pem",
-						"assets/test_certs/test_client.key",
-						logger,
-					)
-					Expect(err).NotTo(HaveOccurred())
-
-					respJson := secureGetRespBody(client, configPort)
-					Expect(respJson).To(Equal(map[string]string{
-						"state": "running",
-					}))
+					resp := secureGetRespBody(client, configPort)
+					Expect(resp.State).To(Equal("running"))
 				})
 			})
 
@@ -100,20 +89,9 @@ var _ = Describe("HealthCheck server", func() {
 				})
 
 				It("returns unhealthy json output", func() {
-					client, err := tlsclient.NewFromFiles(
-						"health.bosh-dns",
-						"assets/test_certs/test_ca.pem",
-						"assets/test_certs/test_client.pem",
-						"assets/test_certs/test_client.key",
-						logger,
-					)
-					Expect(err).NotTo(HaveOccurred())
-
-					Eventually(func() map[string]string {
-						return secureGetRespBody(client, configPort)
-					}, time.Second*2).Should(Equal(map[string]string{
-						"state": "job-health-executable-fail",
-					}))
+					Eventually(func() string {
+						return secureGetRespBody(client, configPort).State
+					}, time.Second*2).Should(Equal("stopped"))
 				})
 			})
 		})
@@ -124,19 +102,8 @@ var _ = Describe("HealthCheck server", func() {
 			})
 
 			It("returns unhealthy json output", func() {
-				client, err := tlsclient.NewFromFiles(
-					"health.bosh-dns",
-					"assets/test_certs/test_ca.pem",
-					"assets/test_certs/test_client.pem",
-					"assets/test_certs/test_client.key",
-					logger,
-				)
-				Expect(err).NotTo(HaveOccurred())
-
-				respJson := secureGetRespBody(client, configPort)
-				Expect(respJson).To(Equal(map[string]string{
-					"state": "stopped",
-				}))
+				resp := secureGetRespBody(client, configPort)
+				Expect(resp.State).To(Equal("stopped"))
 			})
 		})
 
@@ -179,7 +146,7 @@ var _ = Describe("HealthCheck server", func() {
 	})
 })
 
-func secureGetRespBody(client *httpclient.HTTPClient, port int) map[string]string {
+func secureGetRespBody(client *httpclient.HTTPClient, port int) Health {
 	resp, err := secureGet(client, port)
 	Expect(err).NotTo(HaveOccurred())
 	defer resp.Body.Close()
@@ -189,11 +156,11 @@ func secureGetRespBody(client *httpclient.HTTPClient, port int) map[string]strin
 	data, err := ioutil.ReadAll(resp.Body)
 	Expect(err).NotTo(HaveOccurred())
 
-	var respJson map[string]string
-	err = json.Unmarshal(data, &respJson)
+	var healthResp Health
+	err = json.Unmarshal(data, &healthResp)
 	Expect(err).ToNot(HaveOccurred())
 
-	return respJson
+	return healthResp
 }
 
 func secureGet(client *httpclient.HTTPClient, port int) (*http.Response, error) {
