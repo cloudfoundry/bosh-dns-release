@@ -7,13 +7,12 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
 	dnsconfig "bosh-dns/dns/config"
-	"bosh-dns/healthcheck/healthserver"
+	"bosh-dns/healthcheck/healthconfig"
 
 	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/gomega/gexec"
@@ -28,14 +27,14 @@ func TestHealthCheck(t *testing.T) {
 }
 
 var (
-	cmd                 *exec.Cmd
-	configFile          *os.File
-	configPort          int
-	healthExecutableDir string
-	healthFile          *os.File
-	pathToServer        string
-	sess                *gexec.Session
-	tmpDir              string
+	cmd          *exec.Cmd
+	configFile   *os.File
+	configPort   int
+	healthFile   *os.File
+	jobsDir      string
+	pathToServer string
+	sess         *gexec.Session
+	tmpDir       string
 )
 
 var _ = SynchronizedBeforeSuite(func() []byte {
@@ -60,17 +59,18 @@ var _ = BeforeEach(func() {
 	healthFile, err = ioutil.TempFile(tmpDir, "health.json")
 	Expect(err).ToNot(HaveOccurred())
 
-	healthExecutableDir, err = ioutil.TempDir(tmpDir, "health-executables")
+	jobsDir, err = ioutil.TempDir(tmpDir, "job-metadata")
 	Expect(err).ToNot(HaveOccurred())
 
 	configPort = 1234 + config.GinkgoConfig.ParallelNode
 
-	configContents, err := json.Marshal(healthserver.HealthCheckConfig{
+	configContents, err := json.Marshal(healthconfig.HealthCheckConfig{
 		CAFile:                   "assets/test_certs/test_ca.pem",
 		CertificateFile:          "assets/test_certs/test_server.pem",
 		HealthExecutableInterval: dnsconfig.DurationJSON(time.Millisecond),
-		HealthExecutablesGlob:    filepath.Join(healthExecutableDir, "*"),
+		HealthExecutablePath:     "healthy",
 		HealthFileName:           healthFile.Name(),
+		JobsDir:                  jobsDir,
 		Port:                     configPort,
 		PrivateKeyFile:           "assets/test_certs/test_server.key",
 	})

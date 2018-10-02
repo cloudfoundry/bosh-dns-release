@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"bosh-dns/healthcheck/healthconfig"
 	"bosh-dns/healthcheck/healthexecutable"
 	"time"
 
@@ -23,7 +24,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 	var (
 		clock                  *fakeclock.FakeClock
 		cmdRunner              *sysfakes.FakeCmdRunner
-		executablePaths        []string
+		jobs                   []healthconfig.Job
 		healthExecutablePrefix string
 		healthFile             *os.File
 		interval               time.Duration
@@ -57,11 +58,8 @@ var _ = Describe("HealthExecutableMonitor", func() {
 			healthExecutablePrefix = "powershell.exe "
 		}
 
-		executablePaths = []string{
-			"e1",
-			"e2",
-			"e3",
-		}
+		jobs = []healthconfig.Job{}
+
 		signal = make(chan struct{})
 
 		writeState("running")
@@ -70,7 +68,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 	JustBeforeEach(func() {
 		monitor = healthexecutable.NewHealthExecutableMonitor(
 			healthFile.Name(),
-			executablePaths,
+			jobs,
 			cmdRunner,
 			clock,
 			interval,
@@ -92,40 +90,55 @@ var _ = Describe("HealthExecutableMonitor", func() {
 		cmdRunner.AddCmdResult(healthExecutablePrefix+executablePath, result)
 	}
 
-	Context("when the agent's health file reports a failure", func() {
-		BeforeEach(func() {
-			executablePaths = []string{}
-		})
+	It("returns status true", func() {
+		clock.WaitForWatcherAndIncrement(interval)
+		Consistently(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+			State:      healthexecutable.StatusRunning,
+			GroupState: make(map[string]healthexecutable.HealthStatus),
+		}))
+	})
 
+	Context("when the agent's health file reports a failure", func() {
 		It("returns the unhealthy state", func() {
-			Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusRunning}))
+			Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
+				State:      healthexecutable.StatusRunning,
+				GroupState: make(map[string]healthexecutable.HealthStatus),
+			}))
 
 			writeState("stopped")
 			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusStopped}))
+			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+				State:      healthexecutable.StatusStopped,
+				GroupState: make(map[string]healthexecutable.HealthStatus),
+			}))
 
 			writeState("running")
 			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusRunning}))
+			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+				State:      healthexecutable.StatusRunning,
+				GroupState: make(map[string]healthexecutable.HealthStatus),
+			}))
 
 			writeState("stopped")
 			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusStopped}))
+			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+				State:      healthexecutable.StatusStopped,
+				GroupState: make(map[string]healthexecutable.HealthStatus),
+			}))
 		})
 	})
 
 	Context("when the agent's health file is invalid", func() {
-		BeforeEach(func() {
-			executablePaths = []string{}
-		})
-
 		Context("with invalid json", func() {
 			BeforeEach(func() {
 				writeState(`{"{`)
 			})
 
 			It("returns the unhealthy state", func() {
-				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusStopped}))
+				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
+					State:      healthexecutable.StatusStopped,
+					GroupState: make(map[string]healthexecutable.HealthStatus),
+				}))
 			})
 		})
 
@@ -135,88 +148,273 @@ var _ = Describe("HealthExecutableMonitor", func() {
 			})
 
 			It("returns the unhealthy state", func() {
-				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusStopped}))
+				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
+					State:      healthexecutable.StatusStopped,
+					GroupState: make(map[string]healthexecutable.HealthStatus),
+				}))
 			})
 		})
 	})
 
-	Context("when some executables go unhealthy and they become healthy again", func() {
+	Context("when jobs have executables defined", func() {
 		BeforeEach(func() {
-			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
-			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0})
-			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
-
-			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
-			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 1})
-			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
-
-			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
-			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0})
-			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
-
-			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
-			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0})
-			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 1})
+			jobs = []healthconfig.Job{
+				{HealthExecutablePath: "e1"},
+				{HealthExecutablePath: "e2"},
+				{HealthExecutablePath: "e3"},
+			}
 		})
 
-		It("starts with the result of the first set of commands", func() {
-			Expect(cmdRunner.RunCommands).To(HaveLen(3))
-			Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusRunning}))
+		Context("when some executables go unhealthy and they become healthy again", func() {
+			BeforeEach(func() {
+				addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[1].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[2].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+
+				addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[1].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 1})
+				addCmdResult(jobs[2].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+
+				addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[1].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[2].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+
+				addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[1].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[2].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 1})
+			})
+
+			It("starts with the result of the first set of commands", func() {
+				Expect(cmdRunner.RunCommands).To(HaveLen(3))
+				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
+					State:      healthexecutable.StatusRunning,
+					GroupState: make(map[string]healthexecutable.HealthStatus),
+				}))
+			})
+
+			It("returns status accordingly", func() {
+				clock.WaitForWatcherAndIncrement(interval)
+				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State:      healthexecutable.StatusStopped,
+					GroupState: make(map[string]healthexecutable.HealthStatus),
+				}))
+				Eventually(cmdRunner.RunCommands).Should(HaveLen(6))
+
+				clock.WaitForWatcherAndIncrement(interval)
+				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State:      healthexecutable.StatusRunning,
+					GroupState: make(map[string]healthexecutable.HealthStatus),
+				}))
+				Eventually(cmdRunner.RunCommands).Should(HaveLen(9))
+
+				clock.WaitForWatcherAndIncrement(interval)
+				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State:      healthexecutable.StatusStopped,
+					GroupState: make(map[string]healthexecutable.HealthStatus),
+				}))
+				Eventually(cmdRunner.RunCommands).Should(HaveLen(12))
+			})
 		})
 
-		It("returns status accordingly", func() {
-			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusStopped}))
-			Eventually(cmdRunner.RunCommands).Should(HaveLen(6))
-			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusRunning}))
-			Eventually(cmdRunner.RunCommands).Should(HaveLen(9))
-			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusStopped}))
-			Eventually(cmdRunner.RunCommands).Should(HaveLen(12))
+		Context("when executing an executable returns an error", func() {
+			BeforeEach(func() {
+				addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[1].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0, Error: errors.New("can't do that")})
+				addCmdResult(jobs[2].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+			})
+
+			It("logs an error", func() {
+				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
+					State:      healthexecutable.StatusStopped,
+					GroupState: make(map[string]healthexecutable.HealthStatus),
+				}))
+				Expect(logger.ErrorCallCount()).To(Equal(1))
+				logTag, template, interpols := logger.ErrorArgsForCall(0)
+				Expect(logTag).To(Equal("HealthExecutableMonitor"))
+				Expect(fmt.Sprintf(template, interpols...)).To(Equal("Error occurred executing 'e2': can't do that"))
+			})
+		})
+
+		Context("when shutting down", func() {
+			It("stops calling the executables", func() {
+				Eventually(cmdRunner.RunCommands).Should(HaveLen(3))
+				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State:      healthexecutable.StatusStopped,
+					GroupState: make(map[string]healthexecutable.HealthStatus),
+				}))
+				Eventually(clock.WatcherCount).Should(Equal(1))
+
+				close(signal)
+				signal = nil
+
+				Eventually(clock.WatcherCount).Should(Equal(0))
+				clock.Increment(interval * 2)
+				Consistently(cmdRunner.RunCommands).Should(HaveLen(3))
+				Consistently(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State:      healthexecutable.StatusStopped,
+					GroupState: make(map[string]healthexecutable.HealthStatus),
+				}))
+			})
 		})
 	})
 
-	Context("when executing an executable returns an error", func() {
-		BeforeEach(func() {
-			addCmdResult(executablePaths[0], sysfakes.FakeCmdResult{ExitStatus: 0})
-			addCmdResult(executablePaths[1], sysfakes.FakeCmdResult{ExitStatus: 0, Error: errors.New("can't do that")})
-			addCmdResult(executablePaths[2], sysfakes.FakeCmdResult{ExitStatus: 0})
+	Context("when there are groups present", func() {
+		Context("and the groups have no executables", func() {
+			BeforeEach(func() {
+				jobs = []healthconfig.Job{
+					{HealthExecutablePath: "", Groups: []string{"1"}},
+					{HealthExecutablePath: "", Groups: []string{"2"}},
+					{HealthExecutablePath: "", Groups: []string{"3"}},
+				}
+			})
+
+			It("reports the VM state as the group status", func() {
+				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
+					State: healthexecutable.StatusRunning,
+					GroupState: map[string]healthexecutable.HealthStatus{
+						"1": healthexecutable.StatusRunning,
+						"2": healthexecutable.StatusRunning,
+						"3": healthexecutable.StatusRunning,
+					},
+				}))
+
+				writeState("stopped")
+				clock.WaitForWatcherAndIncrement(interval)
+				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State: healthexecutable.StatusStopped,
+					GroupState: map[string]healthexecutable.HealthStatus{
+						"1": healthexecutable.StatusStopped,
+						"2": healthexecutable.StatusStopped,
+						"3": healthexecutable.StatusStopped,
+					},
+				}))
+
+				writeState("running")
+				clock.WaitForWatcherAndIncrement(interval)
+				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State: healthexecutable.StatusRunning,
+					GroupState: map[string]healthexecutable.HealthStatus{
+						"1": healthexecutable.StatusRunning,
+						"2": healthexecutable.StatusRunning,
+						"3": healthexecutable.StatusRunning,
+					},
+				}))
+
+				writeState("stopped")
+				clock.WaitForWatcherAndIncrement(interval)
+				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State: healthexecutable.StatusStopped,
+					GroupState: map[string]healthexecutable.HealthStatus{
+						"1": healthexecutable.StatusStopped,
+						"2": healthexecutable.StatusStopped,
+						"3": healthexecutable.StatusStopped,
+					},
+				}))
+			})
 		})
 
-		It("logs an error", func() {
-			Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusStopped}))
-			Expect(logger.ErrorCallCount()).To(Equal(1))
-			logTag, template, interpols := logger.ErrorArgsForCall(0)
-			Expect(logTag).To(Equal("HealthExecutableMonitor"))
-			Expect(fmt.Sprintf(template, interpols...)).To(Equal("Error occurred executing 'e2': can't do that"))
-		})
-	})
+		Context("and the groups have executables", func() {
+			BeforeEach(func() {
+				jobs = []healthconfig.Job{
+					{HealthExecutablePath: "e1", Groups: []string{"1"}},
+					{HealthExecutablePath: "e2", Groups: []string{"2"}},
+					{HealthExecutablePath: "", Groups: []string{"3"}},
+				}
 
-	Context("when no executables are defined", func() {
-		BeforeEach(func() {
-			executablePaths = []string{}
-		})
+				addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[1].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
 
-		It("always returns status true", func() {
-			clock.WaitForWatcherAndIncrement(interval)
-			Consistently(monitor.Status).Should(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusRunning}))
-		})
-	})
+				addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[1].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 1})
 
-	Context("when shutting down", func() {
-		It("stops calling the executables", func() {
-			Eventually(cmdRunner.RunCommands).Should(HaveLen(3))
-			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusStopped}))
-			Eventually(clock.WatcherCount).Should(Equal(1))
+				addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				addCmdResult(jobs[1].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
 
-			close(signal)
-			signal = nil
+				addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 1})
+				addCmdResult(jobs[1].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+			})
 
-			Eventually(clock.WatcherCount).Should(Equal(0))
-			clock.Increment(interval * 2)
-			Consistently(cmdRunner.RunCommands).Should(HaveLen(3))
-			Consistently(monitor.Status).Should(Equal(healthexecutable.HealthResult{State: healthexecutable.StatusStopped}))
+			It("reports the executable status for each group", func() {
+				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
+					State: healthexecutable.StatusRunning,
+					GroupState: map[string]healthexecutable.HealthStatus{
+						"1": healthexecutable.StatusRunning,
+						"2": healthexecutable.StatusRunning,
+						"3": healthexecutable.StatusRunning,
+					},
+				}))
+
+				clock.WaitForWatcherAndIncrement(interval)
+				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State: healthexecutable.StatusStopped,
+					GroupState: map[string]healthexecutable.HealthStatus{
+						"1": healthexecutable.StatusRunning,
+						"2": healthexecutable.StatusStopped,
+						"3": healthexecutable.StatusStopped,
+					},
+				}))
+
+				clock.WaitForWatcherAndIncrement(interval)
+				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State: healthexecutable.StatusRunning,
+					GroupState: map[string]healthexecutable.HealthStatus{
+						"1": healthexecutable.StatusRunning,
+						"2": healthexecutable.StatusRunning,
+						"3": healthexecutable.StatusRunning,
+					},
+				}))
+
+				clock.WaitForWatcherAndIncrement(interval)
+				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+					State: healthexecutable.StatusStopped,
+					GroupState: map[string]healthexecutable.HealthStatus{
+						"1": healthexecutable.StatusStopped,
+						"2": healthexecutable.StatusRunning,
+						"3": healthexecutable.StatusStopped,
+					},
+				}))
+			})
+
+			Context("when there are duplicate executables across groups", func() {
+				BeforeEach(func() {
+					jobs = []healthconfig.Job{
+						{HealthExecutablePath: "duplicate-executable", Groups: []string{"1"}},
+						{HealthExecutablePath: "duplicate-executable", Groups: []string{"2"}},
+					}
+
+					addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+					addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 1})
+					addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
+				})
+
+				It("only executes the executable once", func() {
+					Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
+						State: healthexecutable.StatusRunning,
+						GroupState: map[string]healthexecutable.HealthStatus{
+							"1": healthexecutable.StatusRunning,
+							"2": healthexecutable.StatusRunning,
+						},
+					}))
+
+					clock.WaitForWatcherAndIncrement(interval)
+					Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+						State: healthexecutable.StatusStopped,
+						GroupState: map[string]healthexecutable.HealthStatus{
+							"1": healthexecutable.StatusStopped,
+							"2": healthexecutable.StatusStopped,
+						},
+					}))
+
+					clock.WaitForWatcherAndIncrement(interval)
+					Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
+						State: healthexecutable.StatusRunning,
+						GroupState: map[string]healthexecutable.HealthStatus{
+							"1": healthexecutable.StatusRunning,
+							"2": healthexecutable.StatusRunning,
+						},
+					}))
+				})
+			})
 		})
 	})
 })

@@ -1,6 +1,7 @@
 package healthserver
 
 import (
+	"bosh-dns/healthcheck/healthconfig"
 	"bosh-dns/healthcheck/healthexecutable"
 	"encoding/json"
 	"fmt"
@@ -15,8 +16,10 @@ import (
 	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
+const CN = "health.bosh-dns"
+
 type HealthServer interface {
-	Serve(config *HealthCheckConfig)
+	Serve(config *healthconfig.HealthCheckConfig)
 }
 
 type HealthExecutable interface {
@@ -37,7 +40,7 @@ func NewHealthServer(logger boshlog.Logger, healthFileName string, healthExecuta
 	}
 }
 
-func (c *concreteHealthServer) Serve(config *HealthCheckConfig) {
+func (c *concreteHealthServer) Serve(config *healthconfig.HealthCheckConfig) {
 	http.HandleFunc("/health", c.healthEntryPoint)
 
 	caCert, err := ioutil.ReadFile(config.CAFile)

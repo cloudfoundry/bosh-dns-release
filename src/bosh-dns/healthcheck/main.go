@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
+	"bosh-dns/healthcheck/healthconfig"
 	"bosh-dns/healthcheck/healthexecutable"
 	"bosh-dns/healthcheck/healthserver"
 
@@ -20,6 +20,10 @@ import (
 )
 
 var healthServer healthserver.HealthServer
+
+type LinkJson struct {
+	Group string `json:"group"`
+}
 
 func main() {
 	os.Exit(mainExitCode())
@@ -34,23 +38,23 @@ func mainExitCode() int {
 
 	config, err := getConfig()
 	if err != nil {
-		logger.Error(logTag, fmt.Sprintf("Error: %v", err.Error()))
+		logger.Error(logTag, fmt.Sprintf("failed parsing config: %v", err.Error()))
 		return 1
 	}
 	shutdown := make(chan struct{})
 
-	fs := boshsys.NewOsFileSystem(logger)
 	cmdRunner := boshsys.NewExecCmdRunner(logger)
 	interval := time.Duration(config.HealthExecutableInterval)
-	executablePaths, err := fs.Glob(config.HealthExecutablesGlob)
+
+	jobs, err := healthconfig.ParseJobs(config.JobsDir, config.HealthExecutablePath)
 	if err != nil {
-		logger.Error(logTag, fmt.Sprintf("Error: %v", err.Error()))
+		logger.Error(logTag, fmt.Sprintf("failed parsing jobs: %v", err.Error()))
 		return 1
 	}
 
 	healthExecutableMonitor := healthexecutable.NewHealthExecutableMonitor(
 		config.HealthFileName,
-		executablePaths,
+		jobs,
 		cmdRunner,
 		clock.NewClock(),
 		interval,
@@ -72,9 +76,8 @@ func mainExitCode() int {
 	return 0
 }
 
-func getConfig() (*healthserver.HealthCheckConfig, error) {
+func getConfig() (*healthconfig.HealthCheckConfig, error) {
 	var configFile string
-	var config *healthserver.HealthCheckConfig
 
 	if len(os.Args) > 1 {
 		configFile = os.Args[1]
@@ -82,16 +85,19 @@ func getConfig() (*healthserver.HealthCheckConfig, error) {
 		return nil, errors.New("Expected config file path argument")
 	}
 
-	configRaw, err := ioutil.ReadFile(configFile)
+	f, err := os.Open(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't open config file for health. error: %s", err)
 	}
+	defer f.Close()
 
-	config = &healthserver.HealthCheckConfig{}
-	err = json.Unmarshal(configRaw, config)
+	decoder := json.NewDecoder(f)
+
+	config := healthconfig.HealthCheckConfig{}
+	err = decoder.Decode(&config)
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't decode config file for health. error: %s", err)
 	}
 
-	return config, nil
+	return &config, nil
 }

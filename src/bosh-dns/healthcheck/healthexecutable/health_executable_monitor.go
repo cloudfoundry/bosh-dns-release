@@ -1,10 +1,9 @@
 package healthexecutable
 
 import (
+	"bosh-dns/healthcheck/healthconfig"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
-	"strings"
 	"time"
 
 	"sync"
@@ -22,24 +21,29 @@ const (
 )
 
 type HealthResult struct {
-	State HealthStatus
+	State      HealthStatus            `json:"state"`
+	GroupState map[string]HealthStatus `json:"group_state"`
+}
+
+type agentHealth struct {
+	State HealthStatus `json:"state"`
 }
 
 type HealthExecutableMonitor struct {
-	clock                 clock.Clock
-	cmdRunner             system.CmdRunner
-	healthExecutablePaths []string
-	healthFilePath        string
-	interval              time.Duration
-	logger                logger.Logger
-	mutex                 *sync.Mutex
-	shutdown              chan struct{}
-	status                HealthResult
+	clock          clock.Clock
+	cmdRunner      system.CmdRunner
+	healthFilePath string
+	interval       time.Duration
+	jobs           []healthconfig.Job
+	logger         logger.Logger
+	mutex          *sync.Mutex
+	shutdown       chan struct{}
+	status         HealthResult
 }
 
 func NewHealthExecutableMonitor(
 	healthFilePath string,
-	healthExecutablePaths []string,
+	jobs []healthconfig.Job,
 	cmdRunner system.CmdRunner,
 	clock clock.Clock,
 	interval time.Duration,
@@ -47,14 +51,14 @@ func NewHealthExecutableMonitor(
 	logger logger.Logger,
 ) *HealthExecutableMonitor {
 	monitor := &HealthExecutableMonitor{
-		clock:                 clock,
-		cmdRunner:             cmdRunner,
-		healthExecutablePaths: healthExecutablePaths,
-		healthFilePath:        healthFilePath,
-		interval:              interval,
-		logger:                logger,
-		mutex:                 &sync.Mutex{},
-		shutdown:              shutdown,
+		clock:          clock,
+		cmdRunner:      cmdRunner,
+		healthFilePath: healthFilePath,
+		interval:       interval,
+		jobs:           jobs,
+		logger:         logger,
+		mutex:          &sync.Mutex{},
+		shutdown:       shutdown,
 		status: HealthResult{
 			State: StatusStopped,
 		},
@@ -74,7 +78,7 @@ func (m *HealthExecutableMonitor) Status() HealthResult {
 
 func (m *HealthExecutableMonitor) run() {
 	timer := m.clock.NewTimer(m.interval)
-	m.logger.Debug("HealthExecutableMonitor", "starting monitor for [%s] with interval %v", strings.Join(m.healthExecutablePaths, ", "), m.interval)
+	m.logger.Debug("HealthExecutableMonitor", "starting monitor with interval %v", m.interval)
 
 	for {
 		select {
@@ -89,50 +93,84 @@ func (m *HealthExecutableMonitor) run() {
 	}
 }
 
-type agentHealth struct {
-	State HealthStatus `json:"state"`
-}
-
 func (m *HealthExecutableMonitor) runChecks() {
-	err := m.readAgentHealth()
-	if err != nil {
-		m.mutex.Lock()
-		m.status.State = StatusStopped
-		m.mutex.Unlock()
-		return
-	}
+	agentStatus := m.readAgentHealth()
 
-	allStatus := StatusRunning
-	for _, executable := range m.healthExecutablePaths {
-		_, _, exitStatus, err := m.runExecutable(executable)
-		if err != nil {
-			allStatus = StatusStopped
-			m.logger.Error("HealthExecutableMonitor", "Error occurred executing '%s': %v", executable, err)
-		} else if exitStatus != 0 {
-			allStatus = StatusStopped
+	groupState := make(map[string]HealthStatus)
+	groupsWithoutExecutable := []string{}
+	checkedResults := make(map[string]HealthStatus)
+
+	allStatus := agentStatus
+	for _, job := range m.jobs {
+		if job.HealthExecutablePath == "" {
+			groupsWithoutExecutable = append(groupsWithoutExecutable, job.Groups...)
+			continue
+		}
+
+		var executableStatus HealthStatus
+		var ok bool
+		if executableStatus, ok = checkedResults[job.HealthExecutablePath]; !ok {
+			executableStatus = m.executableStatus(job.HealthExecutablePath)
+			checkedResults[job.HealthExecutablePath] = executableStatus
+		}
+
+		setStateForGroupIDs(groupState, job.Groups, executableStatus)
+
+		if notRunning(executableStatus) {
+			allStatus = executableStatus
 		}
 	}
 
-	m.mutex.Lock()
-	m.status.State = allStatus
-	m.mutex.Unlock()
+	setStateForGroupIDs(groupState, groupsWithoutExecutable, allStatus)
+
+	m.setHealthResult(allStatus, groupState)
 }
 
-func (m *HealthExecutableMonitor) readAgentHealth() error {
+func (m *HealthExecutableMonitor) setHealthResult(status HealthStatus, groupState map[string]HealthStatus) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	m.status = HealthResult{State: status, GroupState: groupState}
+}
+
+func (m *HealthExecutableMonitor) executableStatus(executablePath string) HealthStatus {
+	_, _, exitStatus, err := m.runExecutable(executablePath)
+	if err != nil {
+		m.logger.Error("HealthExecutableMonitor", "Error occurred executing '%s': %s", executablePath, err.Error())
+		return StatusStopped
+	}
+
+	if exitStatus != 0 {
+		return StatusStopped
+	}
+
+	return StatusRunning
+}
+
+func (m *HealthExecutableMonitor) readAgentHealth() HealthStatus {
 	data, err := ioutil.ReadFile(m.healthFilePath)
 	if err != nil {
-		return err
+		return StatusStopped
 	}
 
 	var agentHealthResult agentHealth
 	err = json.Unmarshal(data, &agentHealthResult)
 	if err != nil {
-		return err
+		return StatusStopped
 	}
 
-	if agentHealthResult.State != StatusRunning {
-		return errors.New("state is not running")
+	if notRunning(agentHealthResult.State) {
+		return StatusStopped
 	}
 
-	return nil
+	return StatusRunning
+}
+
+func setStateForGroupIDs(groupState map[string]HealthStatus, groupIDs []string, status HealthStatus) {
+	for _, groupID := range groupIDs {
+		groupState[groupID] = status
+	}
+}
+
+func notRunning(status HealthStatus) bool {
+	return status != StatusRunning
 }

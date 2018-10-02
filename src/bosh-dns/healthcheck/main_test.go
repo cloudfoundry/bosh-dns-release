@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
@@ -18,18 +19,24 @@ import (
 )
 
 type Health struct {
-	State string `json:"state"`
+	State      string            `json:"state"`
+	GroupState map[string]string `json:"group_state,omitempty"`
 }
 
 var _ = Describe("HealthCheck server", func() {
 	var (
-		status string
-		logger boshlog.Logger
+		jobADir string
+		logger  boshlog.Logger
+		status  string
 	)
 
 	BeforeEach(func() {
 		status = "running"
 		logger = boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
+
+		jobADir = filepath.Join(jobsDir, "job-a")
+		err := os.MkdirAll(jobADir, 0777)
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	Describe("/health", func() {
@@ -69,10 +76,43 @@ var _ = Describe("HealthCheck server", func() {
 			})
 		})
 
+		Context("when groups are present", func() {
+			BeforeEach(func() {
+				err := os.MkdirAll(filepath.Join(jobADir, ".bosh"), 0777)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = ioutil.WriteFile(filepath.Join(jobADir, ".bosh", "links.json"), []byte(`[{"link":"service","group":"1"},{"group":"i-am-a-group"}]`), 0700)
+				Expect(err).ToNot(HaveOccurred())
+
+				err = ioutil.WriteFile(filepath.Join(jobADir, "healthy"), []byte("#!/bin/bash\nexit 0"), 0700)
+				Expect(err).ToNot(HaveOccurred())
+
+				jobBDir := filepath.Join(jobsDir, "job-b")
+				err = os.MkdirAll(filepath.Join(jobBDir, ".bosh"), 0777)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = ioutil.WriteFile(filepath.Join(jobBDir, ".bosh", "links.json"), []byte(`[{"link":"service","group":"2"}]`), 0700)
+				Expect(err).ToNot(HaveOccurred())
+
+				err = ioutil.WriteFile(filepath.Join(jobBDir, "healthy"), []byte("#!/bin/bash\nexit 1"), 0700)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("returns group health status in the json output", func() {
+				resp := secureGetRespBody(client, configPort)
+				Expect(resp.State).To(Equal("stopped"))
+				Expect(resp.GroupState).To(Equal(map[string]string{
+					"1":            "running",
+					"i-am-a-group": "running",
+					"2":            "stopped",
+				}))
+			})
+		})
+
 		Context("when a health executable exists", func() {
 			Describe("when the vm is healthy and the job health executable reports healthy", func() {
 				BeforeEach(func() {
-					err := ioutil.WriteFile(filepath.Join(healthExecutableDir, "good.ps1"), []byte("#!/bin/bash\nexit 0"), 0700)
+					err := ioutil.WriteFile(filepath.Join(jobADir, "healthy"), []byte("#!/bin/bash\nexit 0"), 0700)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -84,7 +124,7 @@ var _ = Describe("HealthCheck server", func() {
 
 			Describe("when the vm is healthy, but the job health executable reports unhealthy", func() {
 				BeforeEach(func() {
-					err := ioutil.WriteFile(filepath.Join(healthExecutableDir, "bad.ps1"), []byte("#!/bin/bash\nexit 1"), 0700)
+					err := ioutil.WriteFile(filepath.Join(jobADir, "healthy"), []byte("#!/bin/bash\nexit 1"), 0700)
 					Expect(err).ToNot(HaveOccurred())
 				})
 

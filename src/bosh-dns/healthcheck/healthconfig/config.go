@@ -1,4 +1,4 @@
-package healthserver
+package healthconfig
 
 import "bosh-dns/dns/config"
 
@@ -11,8 +11,8 @@ type HealthCheckConfig struct {
 	PrivateKeyFile  string `json:"private_key_file"`
 
 	HealthExecutableInterval config.DurationJSON `json:"health_executable_interval"`
-	HealthExecutablesGlob    string              `json:"health_executables_glob"`
+	HealthExecutablePath     string              `json:"health_executable_path"`
 	HealthFileName           string              `json:"health_file_name"`
-}
 
-const CN = "health.bosh-dns"
+	JobsDir string `json:"jobs_dir"`
+}

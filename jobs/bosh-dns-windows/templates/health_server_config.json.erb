@@ -1,11 +1,12 @@
 <%=
 {
-  port: p('health.server.port'),
-  certificate_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/health/server.crt',
-  private_key_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/health/server.key',
   ca_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/health/server_ca.crt',
-  health_file_name: '/var/vcap/instance/health.json',
-  health_executables_glob: "/var/vcap/jobs/*/bin/dns/healthy.ps1",
+  certificate_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/health/server.crt',
   health_executable_interval: "5s",
+  health_executable_path: "bin/dns/healthy.ps1",
+  health_file_name: '/var/vcap/instance/health.json',
+  jobs_dir: "/var/vcap/jobs",
+  port: p('health.server.port'),
+  private_key_file: '/var/vcap/jobs/bosh-dns-windows/config/certs/health/server.key',
 }.to_json
 %>
