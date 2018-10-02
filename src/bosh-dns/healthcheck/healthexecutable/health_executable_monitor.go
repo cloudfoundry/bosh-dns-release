@@ -22,7 +22,7 @@ const (
 
 type HealthResult struct {
 	State      HealthStatus            `json:"state"`
-	GroupState map[string]HealthStatus `json:"group_state"`
+	GroupState map[string]HealthStatus `json:"group_state,omitempty"`
 }
 
 type agentHealth struct {
