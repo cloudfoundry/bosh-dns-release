@@ -1,6 +1,7 @@
 package healthexecutable
 
 import (
+	"bosh-dns/healthcheck/api"
 	"bosh-dns/healthcheck/healthconfig"
 	"encoding/json"
 	"io/ioutil"
@@ -13,20 +14,8 @@ import (
 	"github.com/cloudfoundry/bosh-utils/system"
 )
 
-type HealthStatus string
-
-const (
-	StatusRunning HealthStatus = "running"
-	StatusFailing HealthStatus = "failing"
-)
-
-type HealthResult struct {
-	State      HealthStatus            `json:"state"`
-	GroupState map[string]HealthStatus `json:"group_state,omitempty"`
-}
-
 type agentHealth struct {
-	State HealthStatus `json:"state"`
+	State api.HealthStatus `json:"state"`
 }
 
 type Monitor struct {
@@ -38,7 +27,7 @@ type Monitor struct {
 	logger         logger.Logger
 	mutex          *sync.Mutex
 	shutdown       chan struct{}
-	status         HealthResult
+	status         api.HealthResult
 }
 
 func NewMonitor(
@@ -59,8 +48,8 @@ func NewMonitor(
 		logger:         logger,
 		mutex:          &sync.Mutex{},
 		shutdown:       shutdown,
-		status: HealthResult{
-			State: StatusFailing,
+		status: api.HealthResult{
+			State: api.StatusFailing,
 		},
 	}
 
@@ -70,7 +59,7 @@ func NewMonitor(
 	return monitor
 }
 
-func (m *Monitor) Status() HealthResult {
+func (m *Monitor) Status() api.HealthResult {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	return m.status
@@ -96,9 +85,9 @@ func (m *Monitor) run() {
 func (m *Monitor) runChecks() {
 	agentStatus := m.readAgentHealth()
 
-	groupState := make(map[string]HealthStatus)
+	groupState := make(map[string]api.HealthStatus)
 	groupsWithoutExecutable := []string{}
-	checkedResults := make(map[string]HealthStatus)
+	checkedResults := make(map[string]api.HealthStatus)
 
 	allStatus := agentStatus
 	for _, job := range m.jobs {
@@ -107,7 +96,7 @@ func (m *Monitor) runChecks() {
 			continue
 		}
 
-		var executableStatus HealthStatus
+		var executableStatus api.HealthStatus
 		var ok bool
 		if executableStatus, ok = checkedResults[job.HealthExecutablePath]; !ok {
 			executableStatus = m.executableStatus(job.HealthExecutablePath)
@@ -126,51 +115,51 @@ func (m *Monitor) runChecks() {
 	m.setHealthResult(allStatus, groupState)
 }
 
-func (m *Monitor) setHealthResult(status HealthStatus, groupState map[string]HealthStatus) {
+func (m *Monitor) setHealthResult(status api.HealthStatus, groupState map[string]api.HealthStatus) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	m.status = HealthResult{State: status, GroupState: groupState}
+	m.status = api.HealthResult{State: status, GroupState: groupState}
 }
 
-func (m *Monitor) executableStatus(executablePath string) HealthStatus {
+func (m *Monitor) executableStatus(executablePath string) api.HealthStatus {
 	_, _, exitStatus, err := m.runExecutable(executablePath)
 	if err != nil {
 		m.logger.Error("Monitor", "Error occurred executing '%s': %s", executablePath, err.Error())
-		return StatusFailing
+		return api.StatusFailing
 	}
 
 	if exitStatus != 0 {
-		return StatusFailing
+		return api.StatusFailing
 	}
 
-	return StatusRunning
+	return api.StatusRunning
 }
 
-func (m *Monitor) readAgentHealth() HealthStatus {
+func (m *Monitor) readAgentHealth() api.HealthStatus {
 	data, err := ioutil.ReadFile(m.healthFilePath)
 	if err != nil {
-		return StatusFailing
+		return api.StatusFailing
 	}
 
 	var agentHealthResult agentHealth
 	err = json.Unmarshal(data, &agentHealthResult)
 	if err != nil {
-		return StatusFailing
+		return api.StatusFailing
 	}
 
 	if notRunning(agentHealthResult.State) {
-		return StatusFailing
+		return api.StatusFailing
 	}
 
-	return StatusRunning
+	return api.StatusRunning
 }
 
-func setStateForGroupIDs(groupState map[string]HealthStatus, groupIDs []string, status HealthStatus) {
+func setStateForGroupIDs(groupState map[string]api.HealthStatus, groupIDs []string, status api.HealthStatus) {
 	for _, groupID := range groupIDs {
 		groupState[groupID] = status
 	}
 }
 
-func notRunning(status HealthStatus) bool {
-	return status != StatusRunning
+func notRunning(status api.HealthStatus) bool {
+	return status != api.StatusRunning
 }

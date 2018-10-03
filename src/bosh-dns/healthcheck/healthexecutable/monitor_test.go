@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"bosh-dns/healthcheck/api"
 	"bosh-dns/healthcheck/healthconfig"
 	"bosh-dns/healthcheck/healthexecutable"
 	"time"
@@ -91,38 +92,38 @@ var _ = Describe("Monitor", func() {
 
 	It("returns status true", func() {
 		clock.WaitForWatcherAndIncrement(interval)
-		Consistently(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-			State:      healthexecutable.StatusRunning,
-			GroupState: make(map[string]healthexecutable.HealthStatus),
+		Consistently(monitor.Status).Should(Equal(api.HealthResult{
+			State:      api.StatusRunning,
+			GroupState: make(map[string]api.HealthStatus),
 		}))
 	})
 
 	Context("when the agent's health file reports a failure", func() {
 		It("returns the unhealthy state", func() {
-			Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-				State:      healthexecutable.StatusRunning,
-				GroupState: make(map[string]healthexecutable.HealthStatus),
+			Expect(monitor.Status()).To(Equal(api.HealthResult{
+				State:      api.StatusRunning,
+				GroupState: make(map[string]api.HealthStatus),
 			}))
 
 			writeState("failing")
 			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-				State:      healthexecutable.StatusFailing,
-				GroupState: make(map[string]healthexecutable.HealthStatus),
+			Eventually(monitor.Status).Should(Equal(api.HealthResult{
+				State:      api.StatusFailing,
+				GroupState: make(map[string]api.HealthStatus),
 			}))
 
 			writeState("running")
 			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-				State:      healthexecutable.StatusRunning,
-				GroupState: make(map[string]healthexecutable.HealthStatus),
+			Eventually(monitor.Status).Should(Equal(api.HealthResult{
+				State:      api.StatusRunning,
+				GroupState: make(map[string]api.HealthStatus),
 			}))
 
 			writeState("failing")
 			clock.WaitForWatcherAndIncrement(interval)
-			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-				State:      healthexecutable.StatusFailing,
-				GroupState: make(map[string]healthexecutable.HealthStatus),
+			Eventually(monitor.Status).Should(Equal(api.HealthResult{
+				State:      api.StatusFailing,
+				GroupState: make(map[string]api.HealthStatus),
 			}))
 		})
 	})
@@ -134,9 +135,9 @@ var _ = Describe("Monitor", func() {
 			})
 
 			It("returns the unhealthy state", func() {
-				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusFailing,
-					GroupState: make(map[string]healthexecutable.HealthStatus),
+				Expect(monitor.Status()).To(Equal(api.HealthResult{
+					State:      api.StatusFailing,
+					GroupState: make(map[string]api.HealthStatus),
 				}))
 			})
 		})
@@ -148,9 +149,9 @@ var _ = Describe("Monitor", func() {
 			})
 
 			It("returns the unhealthy state", func() {
-				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusFailing,
-					GroupState: make(map[string]healthexecutable.HealthStatus),
+				Expect(monitor.Status()).To(Equal(api.HealthResult{
+					State:      api.StatusFailing,
+					GroupState: make(map[string]api.HealthStatus),
 				}))
 			})
 		})
@@ -186,31 +187,31 @@ var _ = Describe("Monitor", func() {
 
 			It("starts with the result of the first set of commands", func() {
 				Expect(cmdRunner.RunCommands).To(HaveLen(3))
-				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusRunning,
-					GroupState: make(map[string]healthexecutable.HealthStatus),
+				Expect(monitor.Status()).To(Equal(api.HealthResult{
+					State:      api.StatusRunning,
+					GroupState: make(map[string]api.HealthStatus),
 				}))
 			})
 
 			It("returns status accordingly", func() {
 				clock.WaitForWatcherAndIncrement(interval)
-				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusFailing,
-					GroupState: make(map[string]healthexecutable.HealthStatus),
+				Eventually(monitor.Status).Should(Equal(api.HealthResult{
+					State:      api.StatusFailing,
+					GroupState: make(map[string]api.HealthStatus),
 				}))
 				Eventually(cmdRunner.RunCommands).Should(HaveLen(6))
 
 				clock.WaitForWatcherAndIncrement(interval)
-				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusRunning,
-					GroupState: make(map[string]healthexecutable.HealthStatus),
+				Eventually(monitor.Status).Should(Equal(api.HealthResult{
+					State:      api.StatusRunning,
+					GroupState: make(map[string]api.HealthStatus),
 				}))
 				Eventually(cmdRunner.RunCommands).Should(HaveLen(9))
 
 				clock.WaitForWatcherAndIncrement(interval)
-				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusFailing,
-					GroupState: make(map[string]healthexecutable.HealthStatus),
+				Eventually(monitor.Status).Should(Equal(api.HealthResult{
+					State:      api.StatusFailing,
+					GroupState: make(map[string]api.HealthStatus),
 				}))
 				Eventually(cmdRunner.RunCommands).Should(HaveLen(12))
 			})
@@ -224,9 +225,9 @@ var _ = Describe("Monitor", func() {
 			})
 
 			It("logs an error", func() {
-				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusFailing,
-					GroupState: make(map[string]healthexecutable.HealthStatus),
+				Expect(monitor.Status()).To(Equal(api.HealthResult{
+					State:      api.StatusFailing,
+					GroupState: make(map[string]api.HealthStatus),
 				}))
 				Expect(logger.ErrorCallCount()).To(Equal(1))
 				logTag, template, interpols := logger.ErrorArgsForCall(0)
@@ -238,9 +239,9 @@ var _ = Describe("Monitor", func() {
 		Context("when shutting down", func() {
 			It("stops calling the executables", func() {
 				Eventually(cmdRunner.RunCommands).Should(HaveLen(3))
-				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusFailing,
-					GroupState: make(map[string]healthexecutable.HealthStatus),
+				Eventually(monitor.Status).Should(Equal(api.HealthResult{
+					State:      api.StatusFailing,
+					GroupState: make(map[string]api.HealthStatus),
 				}))
 				Eventually(clock.WatcherCount).Should(Equal(1))
 
@@ -250,9 +251,9 @@ var _ = Describe("Monitor", func() {
 				Eventually(clock.WatcherCount).Should(Equal(0))
 				clock.Increment(interval * 2)
 				Consistently(cmdRunner.RunCommands).Should(HaveLen(3))
-				Consistently(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusFailing,
-					GroupState: make(map[string]healthexecutable.HealthStatus),
+				Consistently(monitor.Status).Should(Equal(api.HealthResult{
+					State:      api.StatusFailing,
+					GroupState: make(map[string]api.HealthStatus),
 				}))
 			})
 		})
@@ -269,45 +270,45 @@ var _ = Describe("Monitor", func() {
 			})
 
 			It("reports the VM state as the group status", func() {
-				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusRunning,
-					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusRunning,
-						"2": healthexecutable.StatusRunning,
-						"3": healthexecutable.StatusRunning,
+				Expect(monitor.Status()).To(Equal(api.HealthResult{
+					State: api.StatusRunning,
+					GroupState: map[string]api.HealthStatus{
+						"1": api.StatusRunning,
+						"2": api.StatusRunning,
+						"3": api.StatusRunning,
 					},
 				}))
 
 				writeState("failing")
 				clock.WaitForWatcherAndIncrement(interval)
-				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusFailing,
-					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusFailing,
-						"2": healthexecutable.StatusFailing,
-						"3": healthexecutable.StatusFailing,
+				Eventually(monitor.Status).Should(Equal(api.HealthResult{
+					State: api.StatusFailing,
+					GroupState: map[string]api.HealthStatus{
+						"1": api.StatusFailing,
+						"2": api.StatusFailing,
+						"3": api.StatusFailing,
 					},
 				}))
 
 				writeState("running")
 				clock.WaitForWatcherAndIncrement(interval)
-				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusRunning,
-					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusRunning,
-						"2": healthexecutable.StatusRunning,
-						"3": healthexecutable.StatusRunning,
+				Eventually(monitor.Status).Should(Equal(api.HealthResult{
+					State: api.StatusRunning,
+					GroupState: map[string]api.HealthStatus{
+						"1": api.StatusRunning,
+						"2": api.StatusRunning,
+						"3": api.StatusRunning,
 					},
 				}))
 
 				writeState("failing")
 				clock.WaitForWatcherAndIncrement(interval)
-				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusFailing,
-					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusFailing,
-						"2": healthexecutable.StatusFailing,
-						"3": healthexecutable.StatusFailing,
+				Eventually(monitor.Status).Should(Equal(api.HealthResult{
+					State: api.StatusFailing,
+					GroupState: map[string]api.HealthStatus{
+						"1": api.StatusFailing,
+						"2": api.StatusFailing,
+						"3": api.StatusFailing,
 					},
 				}))
 			})
@@ -335,42 +336,42 @@ var _ = Describe("Monitor", func() {
 			})
 
 			It("reports the executable status for each group", func() {
-				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusRunning,
-					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusRunning,
-						"2": healthexecutable.StatusRunning,
-						"3": healthexecutable.StatusRunning,
+				Expect(monitor.Status()).To(Equal(api.HealthResult{
+					State: api.StatusRunning,
+					GroupState: map[string]api.HealthStatus{
+						"1": api.StatusRunning,
+						"2": api.StatusRunning,
+						"3": api.StatusRunning,
 					},
 				}))
 
 				clock.WaitForWatcherAndIncrement(interval)
-				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusFailing,
-					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusRunning,
-						"2": healthexecutable.StatusFailing,
-						"3": healthexecutable.StatusFailing,
+				Eventually(monitor.Status).Should(Equal(api.HealthResult{
+					State: api.StatusFailing,
+					GroupState: map[string]api.HealthStatus{
+						"1": api.StatusRunning,
+						"2": api.StatusFailing,
+						"3": api.StatusFailing,
 					},
 				}))
 
 				clock.WaitForWatcherAndIncrement(interval)
-				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusRunning,
-					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusRunning,
-						"2": healthexecutable.StatusRunning,
-						"3": healthexecutable.StatusRunning,
+				Eventually(monitor.Status).Should(Equal(api.HealthResult{
+					State: api.StatusRunning,
+					GroupState: map[string]api.HealthStatus{
+						"1": api.StatusRunning,
+						"2": api.StatusRunning,
+						"3": api.StatusRunning,
 					},
 				}))
 
 				clock.WaitForWatcherAndIncrement(interval)
-				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusFailing,
-					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusFailing,
-						"2": healthexecutable.StatusRunning,
-						"3": healthexecutable.StatusFailing,
+				Eventually(monitor.Status).Should(Equal(api.HealthResult{
+					State: api.StatusFailing,
+					GroupState: map[string]api.HealthStatus{
+						"1": api.StatusFailing,
+						"2": api.StatusRunning,
+						"3": api.StatusFailing,
 					},
 				}))
 			})
@@ -388,29 +389,29 @@ var _ = Describe("Monitor", func() {
 				})
 
 				It("only executes the executable once", func() {
-					Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-						State: healthexecutable.StatusRunning,
-						GroupState: map[string]healthexecutable.HealthStatus{
-							"1": healthexecutable.StatusRunning,
-							"2": healthexecutable.StatusRunning,
+					Expect(monitor.Status()).To(Equal(api.HealthResult{
+						State: api.StatusRunning,
+						GroupState: map[string]api.HealthStatus{
+							"1": api.StatusRunning,
+							"2": api.StatusRunning,
 						},
 					}))
 
 					clock.WaitForWatcherAndIncrement(interval)
-					Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-						State: healthexecutable.StatusFailing,
-						GroupState: map[string]healthexecutable.HealthStatus{
-							"1": healthexecutable.StatusFailing,
-							"2": healthexecutable.StatusFailing,
+					Eventually(monitor.Status).Should(Equal(api.HealthResult{
+						State: api.StatusFailing,
+						GroupState: map[string]api.HealthStatus{
+							"1": api.StatusFailing,
+							"2": api.StatusFailing,
 						},
 					}))
 
 					clock.WaitForWatcherAndIncrement(interval)
-					Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-						State: healthexecutable.StatusRunning,
-						GroupState: map[string]healthexecutable.HealthStatus{
-							"1": healthexecutable.StatusRunning,
-							"2": healthexecutable.StatusRunning,
+					Eventually(monitor.Status).Should(Equal(api.HealthResult{
+						State: api.StatusRunning,
+						GroupState: map[string]api.HealthStatus{
+							"1": api.StatusRunning,
+							"2": api.StatusRunning,
 						},
 					}))
 				})

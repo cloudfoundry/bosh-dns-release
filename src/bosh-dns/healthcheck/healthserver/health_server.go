@@ -1,8 +1,8 @@
 package healthserver
 
 import (
+	"bosh-dns/healthcheck/api"
 	"bosh-dns/healthcheck/healthconfig"
-	"bosh-dns/healthcheck/healthexecutable"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -23,7 +23,7 @@ type HealthServer interface {
 }
 
 type HealthExecutable interface {
-	Status() healthexecutable.HealthResult
+	Status() api.HealthResult
 }
 
 type concreteHealthServer struct {
