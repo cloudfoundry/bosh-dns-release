@@ -7,6 +7,7 @@ import (
 	"bosh-dns/dns/server/record"
 	"bosh-dns/dns/server/records"
 	"bosh-dns/dns/server/records/recordsfakes"
+	"bosh-dns/healthcheck/api"
 	"encoding/json"
 	"errors"
 	"strings"
@@ -53,7 +54,7 @@ var _ = Describe("RecordSet", func() {
 		aliasList = mustNewConfigFromMap(map[string][]string{})
 		fakeHealthWatcher = &healthinessfakes.FakeHealthWatcher{}
 		shutdownChan = make(chan struct{})
-		fakeHealthWatcher.HealthStateReturns(healthiness.StateHealthy)
+		fakeHealthWatcher.HealthStateReturns(api.StatusRunning)
 	})
 
 	AfterEach(func() {
@@ -1493,7 +1494,7 @@ var _ = Describe("RecordSet", func() {
 	Context("when health watching is enabled", func() {
 		var subscriptionChan chan bool
 
-		getHealthState := func(initial *bool, responseStateFromHealthinessServer healthiness.HealthState) healthiness.HealthState {
+		getHealthState := func(initial *bool, responseStateFromHealthinessServer api.HealthStatus) api.HealthStatus {
 			if *initial {
 				*initial = false
 				return healthiness.StateUnchecked
@@ -1506,18 +1507,18 @@ var _ = Describe("RecordSet", func() {
 			fileReader = &recordsfakes.FakeFileReader{}
 			subscriptionChan = make(chan bool, 1)
 			fileReader.SubscribeReturns(subscriptionChan)
-			fakeHealthWatcher.HealthStateStub = func(ip string) healthiness.HealthState {
+			fakeHealthWatcher.HealthStateStub = func(ip string) api.HealthStatus {
 				switch ip {
 				case "123.123.123.123":
 					return healthiness.StateUnknown
 				case "123.123.123.5":
-					return healthiness.StateHealthy
+					return api.StatusRunning
 				case "123.123.123.246":
-					return healthiness.StateUnhealthy
+					return api.StatusFailing
 				case "246.246.246.246":
 					return healthiness.StateUnchecked
 				case "246.246.246.247":
-					return healthiness.StateHealthy
+					return api.StatusRunning
 				}
 				return "should never get here"
 			}
@@ -1554,14 +1555,14 @@ var _ = Describe("RecordSet", func() {
 				initial2 := true
 				initial3 := true
 				initial4 := true
-				fakeHealthWatcher.HealthStateStub = func(ip string) healthiness.HealthState {
+				fakeHealthWatcher.HealthStateStub = func(ip string) api.HealthStatus {
 					switch ip {
 					case "123.123.123.123":
 						return getHealthState(&initial1, healthiness.StateUnknown)
 					case "246.246.246.246":
-						return getHealthState(&initial2, healthiness.StateHealthy)
+						return getHealthState(&initial2, api.StatusRunning)
 					case "123.123.123.246":
-						return getHealthState(&initial3, healthiness.StateUnhealthy)
+						return getHealthState(&initial3, api.StatusFailing)
 					case "246.246.246.247":
 						return getHealthState(&initial4, healthiness.StateUnchecked)
 					}
@@ -1610,12 +1611,12 @@ var _ = Describe("RecordSet", func() {
 
 		Context("when an alias is supplied", func() {
 			BeforeEach(func() {
-				fakeHealthWatcher.HealthStateStub = func(ip string) healthiness.HealthState {
+				fakeHealthWatcher.HealthStateStub = func(ip string) api.HealthStatus {
 					switch ip {
 					case "246.246.246.246":
-						return healthiness.StateUnhealthy
+						return api.StatusFailing
 					case "246.246.246.247":
-						return healthiness.StateHealthy
+						return api.StatusRunning
 					}
 					return "should never get here"
 				}
@@ -1687,7 +1688,7 @@ var _ = Describe("RecordSet", func() {
 
 			Context("when all ips are un-healthy", func() {
 				BeforeEach(func() {
-					fakeHealthWatcher.HealthStateReturns(healthiness.StateUnhealthy)
+					fakeHealthWatcher.HealthStateReturns(api.StatusFailing)
 				})
 
 				It("returns all ips", func() {
@@ -1781,7 +1782,7 @@ var _ = Describe("RecordSet", func() {
 		Context("when the ips not under a tracked domain change", func() {
 			Describe("limiting tracked domains", func() {
 				BeforeEach(func() {
-					fakeHealthWatcher.HealthStateReturns(healthiness.StateHealthy)
+					fakeHealthWatcher.HealthStateReturns(api.StatusRunning)
 
 					jsonBytes := []byte(`{
 					"record_keys":

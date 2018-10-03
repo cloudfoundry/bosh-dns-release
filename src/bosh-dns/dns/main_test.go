@@ -404,7 +404,7 @@ var _ = Describe("main", func() {
 							Domain:      "bosh.",
 							AZ:          "az1",
 							Index:       "",
-							HealthState: "healthy",
+							HealthState: "running",
 						},
 						{
 							ID:          "my-instance-1",
@@ -415,7 +415,7 @@ var _ = Describe("main", func() {
 							Domain:      "bosh.",
 							AZ:          "az2",
 							Index:       "",
-							HealthState: "unhealthy",
+							HealthState: "failing",
 						},
 						{
 							ID:          "my-instance-2",
@@ -437,7 +437,7 @@ var _ = Describe("main", func() {
 							Domain:      "foo.",
 							AZ:          "az1",
 							Index:       "",
-							HealthState: "unhealthy",
+							HealthState: "failing",
 						},
 						{
 							ID:          "my-instance-2",

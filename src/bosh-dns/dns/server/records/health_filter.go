@@ -9,6 +9,7 @@ import (
 	"bosh-dns/dns/server/criteria"
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/record"
+	"bosh-dns/healthcheck/api"
 )
 
 type healthFilter struct {
@@ -29,7 +30,7 @@ type healthTracker interface {
 }
 
 type healthWatcher interface {
-	HealthState(ip string) healthiness.HealthState
+	HealthState(ip string) api.HealthStatus
 	Track(ip string)
 	RunCheck(ip string)
 }
@@ -120,9 +121,9 @@ func (q *healthFilter) sortRecords(records []record.Record) (healthyRecords, unh
 
 	for _, r := range records {
 		switch q.w.HealthState(r.IP) {
-		case healthiness.StateHealthy:
+		case api.StatusRunning:
 			healthyRecords = append(healthyRecords, r)
-		case healthiness.StateUnhealthy:
+		case api.StatusFailing:
 			unhealthyRecords = append(unhealthyRecords, r)
 		case healthiness.StateUnknown:
 			unknownRecords = append(unknownRecords, r)

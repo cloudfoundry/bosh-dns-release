@@ -1,5 +1,7 @@
 package healthiness
 
+import "bosh-dns/healthcheck/api"
+
 type nopHealthWatcher struct{}
 
 func NewNopHealthWatcher() *nopHealthWatcher {
@@ -9,12 +11,12 @@ func NewNopHealthWatcher() *nopHealthWatcher {
 func (hw *nopHealthWatcher) Track(ip string) {
 }
 
-func (hw *nopHealthWatcher) HealthState(ip string) HealthState {
-	return StateHealthy
+func (hw *nopHealthWatcher) HealthState(ip string) api.HealthStatus {
+	return api.StatusRunning
 }
 
 func (hw *nopHealthWatcher) HealthStateString(ip string) string {
-	return string(StateHealthy)
+	return string(api.StatusRunning)
 }
 
 func (hw *nopHealthWatcher) Untrack(ip string) {}

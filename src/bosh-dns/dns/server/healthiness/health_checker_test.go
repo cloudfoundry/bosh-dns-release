@@ -8,6 +8,7 @@ import (
 
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/healthiness/healthinessfakes"
+	"bosh-dns/healthcheck/api"
 
 	"net/http"
 
@@ -43,34 +44,34 @@ var _ = Describe("HealthChecker", func() {
 	})
 
 	Describe("GetStatus", func() {
-		Context("when healthy", func() {
+		Context("when instance is healthy", func() {
 			BeforeEach(func() {
 				ip = "127.0.0.1"
 				responseBody = `{"state":"running"}`
 			})
 
 			It("returns state healthy", func() {
-				Expect(healthChecker.GetStatus(ip)).To(Equal(healthiness.StateHealthy))
+				Expect(healthChecker.GetStatus(ip)).To(Equal(api.StatusRunning))
 				Expect(fakeClient.GetCallCount()).To(Equal(1))
 				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://%s:8081/health", ip)))
 			})
 
 			It("brackets IPv6 addresses", func() {
 				ip := "2601:0646:0102:0095:0000:0000:0000:0024"
-				Expect(healthChecker.GetStatus(ip)).To(Equal(healthiness.StateHealthy))
+				Expect(healthChecker.GetStatus(ip)).To(Equal(api.StatusRunning))
 				Expect(fakeClient.GetCallCount()).To(Equal(1))
 				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://[%s]:8081/health", ip)))
 			})
 		})
 
-		Context("when unhealthy", func() {
+		Context("when instance is unhealthy", func() {
 			BeforeEach(func() {
 				ip = "127.0.0.2"
 				responseBody = `{"state":"failing"}`
 			})
 
 			It("returns state unhealthy", func() {
-				Expect(healthChecker.GetStatus(ip)).To(Equal(healthiness.StateUnhealthy))
+				Expect(healthChecker.GetStatus(ip)).To(Equal(api.StatusFailing))
 				Expect(fakeClient.GetCallCount()).To(Equal(1))
 				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://%s:8081/health", ip)))
 			})

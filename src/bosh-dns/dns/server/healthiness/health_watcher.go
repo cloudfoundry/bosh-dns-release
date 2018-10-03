@@ -1,6 +1,7 @@
 package healthiness
 
 import (
+	"bosh-dns/healthcheck/api"
 	"sync"
 	"time"
 
@@ -13,13 +14,13 @@ import (
 //go:generate counterfeiter . HealthChecker
 
 type HealthChecker interface {
-	GetStatus(ip string) HealthState
+	GetStatus(ip string) api.HealthStatus
 }
 
 //go:generate counterfeiter . HealthWatcher
 
 type HealthWatcher interface {
-	HealthState(ip string) HealthState
+	HealthState(ip string) api.HealthStatus
 	HealthStateString(ip string) string
 	Track(ip string)
 	Untrack(ip string)
@@ -34,7 +35,7 @@ type healthWatcher struct {
 	workpoolSize  int
 
 	checkWorkPool *workpool.WorkPool
-	state         map[string]HealthState
+	state         map[string]api.HealthStatus
 	stateMutex    *sync.RWMutex
 	logger        boshlog.Logger
 }
@@ -49,7 +50,7 @@ func NewHealthWatcher(workpoolSize int, checker HealthChecker, clock clock.Clock
 		workpoolSize:  workpoolSize,
 
 		checkWorkPool: wp,
-		state:         map[string]HealthState{},
+		state:         map[string]api.HealthStatus{},
 		stateMutex:    &sync.RWMutex{},
 		logger:        logger,
 	}
@@ -65,7 +66,7 @@ func (hw *healthWatcher) HealthStateString(ip string) string {
 	return string(hw.HealthState(ip))
 }
 
-func (hw *healthWatcher) HealthState(ip string) HealthState {
+func (hw *healthWatcher) HealthState(ip string) api.HealthStatus {
 	hw.stateMutex.RLock()
 	health, found := hw.state[ip]
 	hw.stateMutex.RUnlock()

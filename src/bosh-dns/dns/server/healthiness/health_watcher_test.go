@@ -5,6 +5,7 @@ import (
 
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/healthiness/healthinessfakes"
+	"bosh-dns/healthcheck/api"
 
 	"code.cloudfoundry.org/clock/fakeclock"
 
@@ -84,39 +85,39 @@ var _ = Describe("HealthWatcher", func() {
 			Context("and the ip is healthy", func() {
 				BeforeEach(func() {
 					ip = "127.0.0.2"
-					fakeChecker.GetStatusReturns(healthiness.StateHealthy)
+					fakeChecker.GetStatusReturns(api.StatusRunning)
 				})
 
 				It("returns healthy", func() {
-					Expect(healthWatcher.HealthState(ip)).To(Equal(healthiness.StateHealthy))
+					Expect(healthWatcher.HealthState(ip)).To(Equal(api.StatusRunning))
 				})
 			})
 
 			Context("and the ip is unhealthy", func() {
 				BeforeEach(func() {
 					ip = "127.0.0.3"
-					fakeChecker.GetStatusReturns(healthiness.StateUnhealthy)
+					fakeChecker.GetStatusReturns(api.StatusFailing)
 				})
 
 				It("returns unhealthy", func() {
-					Expect(healthWatcher.HealthState(ip)).To(Equal(healthiness.StateUnhealthy))
+					Expect(healthWatcher.HealthState(ip)).To(Equal(api.StatusFailing))
 				})
 			})
 
 			Context("and the status changes", func() {
 				BeforeEach(func() {
-					fakeChecker.GetStatusReturns(healthiness.StateHealthy)
+					fakeChecker.GetStatusReturns(api.StatusRunning)
 				})
 
 				It("returns the new status", func() {
-					Expect(healthWatcher.HealthState(ip)).To(Equal(healthiness.StateHealthy))
+					Expect(healthWatcher.HealthState(ip)).To(Equal(api.StatusRunning))
 
-					fakeChecker.GetStatusReturns(healthiness.StateUnhealthy)
+					fakeChecker.GetStatusReturns(api.StatusFailing)
 					fakeClock.WaitForWatcherAndIncrement(interval)
 
-					Eventually(func() healthiness.HealthState {
+					Eventually(func() api.HealthStatus {
 						return healthWatcher.HealthState(ip)
-					}).Should(Equal(healthiness.StateUnhealthy))
+					}).Should(Equal(api.StatusFailing))
 				})
 			})
 		})
@@ -124,7 +125,7 @@ var _ = Describe("HealthWatcher", func() {
 		Context("tracking multiple ip addresses", func() {
 			BeforeEach(func() {
 				ip = "127.0.0.1"
-				fakeChecker.GetStatusReturns(healthiness.StateHealthy)
+				fakeChecker.GetStatusReturns(api.StatusRunning)
 
 				// Track more IPs to exercise potential racey behaviors
 				healthWatcher.Track("1.1.1.1")
@@ -138,14 +139,14 @@ var _ = Describe("HealthWatcher", func() {
 			})
 
 			It("returns new statuses when they change", func(done Done) {
-				Eventually(func() healthiness.HealthState {
+				Eventually(func() api.HealthStatus {
 					return healthWatcher.HealthState(ip)
-				}).Should(Equal(healthiness.StateHealthy))
-				fakeChecker.GetStatusReturns(healthiness.StateUnhealthy)
+				}).Should(Equal(api.StatusRunning))
+				fakeChecker.GetStatusReturns(api.StatusFailing)
 				fakeClock.WaitForWatcherAndIncrement(interval)
-				Eventually(func() healthiness.HealthState {
+				Eventually(func() api.HealthStatus {
 					return healthWatcher.HealthState(ip)
-				}).Should(Equal(healthiness.StateUnhealthy))
+				}).Should(Equal(api.StatusFailing))
 				close(done)
 			})
 		})

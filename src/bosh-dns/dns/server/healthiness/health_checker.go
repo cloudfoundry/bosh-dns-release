@@ -1,6 +1,7 @@
 package healthiness
 
 import (
+	"bosh-dns/healthcheck/api"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -27,10 +28,10 @@ func NewHealthChecker(client HTTPClientGetter, port int) HealthChecker {
 }
 
 type healthStatus struct {
-	State string
+	State api.HealthStatus
 }
 
-func (hc *healthChecker) GetStatus(ip string) HealthState {
+func (hc *healthChecker) GetStatus(ip string) api.HealthStatus {
 	endpoint := fmt.Sprintf("https://%s/health", net.JoinHostPort(ip, fmt.Sprintf("%d", hc.port)))
 
 	response, err := hc.client.Get(endpoint)
@@ -51,9 +52,9 @@ func (hc *healthChecker) GetStatus(ip string) HealthState {
 		return StateUnknown
 	}
 
-	if parsedResponse.State == "running" {
-		return StateHealthy
+	if parsedResponse.State == api.StatusRunning {
+		return api.StatusRunning
 	}
 
-	return StateUnhealthy
+	return api.StatusFailing
 }

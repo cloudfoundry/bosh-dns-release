@@ -3,20 +3,21 @@ package healthinessfakes
 
 import (
 	"bosh-dns/dns/server/healthiness"
+	"bosh-dns/healthcheck/api"
 	"sync"
 )
 
 type FakeHealthWatcher struct {
-	HealthStateStub        func(ip string) healthiness.HealthState
+	HealthStateStub        func(ip string) api.HealthStatus
 	healthStateMutex       sync.RWMutex
 	healthStateArgsForCall []struct {
 		ip string
 	}
 	healthStateReturns struct {
-		result1 healthiness.HealthState
+		result1 api.HealthStatus
 	}
 	healthStateReturnsOnCall map[int]struct {
-		result1 healthiness.HealthState
+		result1 api.HealthStatus
 	}
 	HealthStateStringStub        func(ip string) string
 	healthStateStringMutex       sync.RWMutex
@@ -53,7 +54,7 @@ type FakeHealthWatcher struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeHealthWatcher) HealthState(ip string) healthiness.HealthState {
+func (fake *FakeHealthWatcher) HealthState(ip string) api.HealthStatus {
 	fake.healthStateMutex.Lock()
 	ret, specificReturn := fake.healthStateReturnsOnCall[len(fake.healthStateArgsForCall)]
 	fake.healthStateArgsForCall = append(fake.healthStateArgsForCall, struct {
@@ -82,22 +83,22 @@ func (fake *FakeHealthWatcher) HealthStateArgsForCall(i int) string {
 	return fake.healthStateArgsForCall[i].ip
 }
 
-func (fake *FakeHealthWatcher) HealthStateReturns(result1 healthiness.HealthState) {
+func (fake *FakeHealthWatcher) HealthStateReturns(result1 api.HealthStatus) {
 	fake.HealthStateStub = nil
 	fake.healthStateReturns = struct {
-		result1 healthiness.HealthState
+		result1 api.HealthStatus
 	}{result1}
 }
 
-func (fake *FakeHealthWatcher) HealthStateReturnsOnCall(i int, result1 healthiness.HealthState) {
+func (fake *FakeHealthWatcher) HealthStateReturnsOnCall(i int, result1 api.HealthStatus) {
 	fake.HealthStateStub = nil
 	if fake.healthStateReturnsOnCall == nil {
 		fake.healthStateReturnsOnCall = make(map[int]struct {
-			result1 healthiness.HealthState
+			result1 api.HealthStatus
 		})
 	}
 	fake.healthStateReturnsOnCall[i] = struct {
-		result1 healthiness.HealthState
+		result1 api.HealthStatus
 	}{result1}
 }
 
@@ -260,7 +261,11 @@ func (fake *FakeHealthWatcher) Invocations() map[string][][]interface{} {
 	defer fake.runMutex.RUnlock()
 	fake.runCheckMutex.RLock()
 	defer fake.runCheckMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeHealthWatcher) recordInvocation(key string, args []interface{}) {

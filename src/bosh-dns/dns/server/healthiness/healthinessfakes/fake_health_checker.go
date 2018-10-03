@@ -3,26 +3,27 @@ package healthinessfakes
 
 import (
 	"bosh-dns/dns/server/healthiness"
+	"bosh-dns/healthcheck/api"
 	"sync"
 )
 
 type FakeHealthChecker struct {
-	GetStatusStub        func(ip string) healthiness.HealthState
+	GetStatusStub        func(ip string) api.HealthStatus
 	getStatusMutex       sync.RWMutex
 	getStatusArgsForCall []struct {
 		ip string
 	}
 	getStatusReturns struct {
-		result1 healthiness.HealthState
+		result1 api.HealthStatus
 	}
 	getStatusReturnsOnCall map[int]struct {
-		result1 healthiness.HealthState
+		result1 api.HealthStatus
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeHealthChecker) GetStatus(ip string) healthiness.HealthState {
+func (fake *FakeHealthChecker) GetStatus(ip string) api.HealthStatus {
 	fake.getStatusMutex.Lock()
 	ret, specificReturn := fake.getStatusReturnsOnCall[len(fake.getStatusArgsForCall)]
 	fake.getStatusArgsForCall = append(fake.getStatusArgsForCall, struct {
@@ -51,22 +52,22 @@ func (fake *FakeHealthChecker) GetStatusArgsForCall(i int) string {
 	return fake.getStatusArgsForCall[i].ip
 }
 
-func (fake *FakeHealthChecker) GetStatusReturns(result1 healthiness.HealthState) {
+func (fake *FakeHealthChecker) GetStatusReturns(result1 api.HealthStatus) {
 	fake.GetStatusStub = nil
 	fake.getStatusReturns = struct {
-		result1 healthiness.HealthState
+		result1 api.HealthStatus
 	}{result1}
 }
 
-func (fake *FakeHealthChecker) GetStatusReturnsOnCall(i int, result1 healthiness.HealthState) {
+func (fake *FakeHealthChecker) GetStatusReturnsOnCall(i int, result1 api.HealthStatus) {
 	fake.GetStatusStub = nil
 	if fake.getStatusReturnsOnCall == nil {
 		fake.getStatusReturnsOnCall = make(map[int]struct {
-			result1 healthiness.HealthState
+			result1 api.HealthStatus
 		})
 	}
 	fake.getStatusReturnsOnCall[i] = struct {
-		result1 healthiness.HealthState
+		result1 api.HealthStatus
 	}{result1}
 }
 
@@ -75,7 +76,11 @@ func (fake *FakeHealthChecker) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.getStatusMutex.RLock()
 	defer fake.getStatusMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeHealthChecker) recordInvocation(key string, args []interface{}) {
