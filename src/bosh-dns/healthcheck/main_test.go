@@ -84,7 +84,7 @@ var _ = Describe("HealthCheck server", func() {
 				err = ioutil.WriteFile(filepath.Join(jobADir, ".bosh", "links.json"), []byte(`[{"link":"service","group":"1"},{"group":"i-am-a-group"}]`), 0700)
 				Expect(err).ToNot(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(jobADir, "healthy"), []byte("#!/bin/bash\nexit 0"), 0700)
+				err = ioutil.WriteFile(filepath.Join(jobADir, healthExecutablePath), []byte("#!/bin/bash\nexit 0"), 0700)
 				Expect(err).ToNot(HaveOccurred())
 
 				jobBDir := filepath.Join(jobsDir, "job-b")
@@ -94,7 +94,7 @@ var _ = Describe("HealthCheck server", func() {
 				err = ioutil.WriteFile(filepath.Join(jobBDir, ".bosh", "links.json"), []byte(`[{"link":"service","group":"2"}]`), 0700)
 				Expect(err).ToNot(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(jobBDir, "healthy"), []byte("#!/bin/bash\nexit 1"), 0700)
+				err = ioutil.WriteFile(filepath.Join(jobBDir, healthExecutablePath), []byte("#!/bin/bash\nexit 1"), 0700)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -112,7 +112,7 @@ var _ = Describe("HealthCheck server", func() {
 		Context("when a health executable exists", func() {
 			Describe("when the vm is healthy and the job health executable reports healthy", func() {
 				BeforeEach(func() {
-					err := ioutil.WriteFile(filepath.Join(jobADir, "healthy"), []byte("#!/bin/bash\nexit 0"), 0700)
+					err := ioutil.WriteFile(filepath.Join(jobADir, healthExecutablePath), []byte("#!/bin/bash\nexit 0"), 0700)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -124,7 +124,7 @@ var _ = Describe("HealthCheck server", func() {
 
 			Describe("when the vm is healthy, but the job health executable reports unhealthy", func() {
 				BeforeEach(func() {
-					err := ioutil.WriteFile(filepath.Join(jobADir, "healthy"), []byte("#!/bin/bash\nexit 1"), 0700)
+					err := ioutil.WriteFile(filepath.Join(jobADir, healthExecutablePath), []byte("#!/bin/bash\nexit 1"), 0700)
 					Expect(err).ToNot(HaveOccurred())
 				})
 

@@ -34,13 +34,12 @@ var _ = Describe("Monitor", func() {
 	)
 
 	writeState := func(status string) {
-		Expect(healthFile.Truncate(0)).To(Succeed())
+		h, err := os.OpenFile(healthFile.Name(), os.O_WRONLY, 0644)
+		Expect(err).ToNot(HaveOccurred())
 
-		_, err := healthFile.Seek(0, 0)
+		_, err = h.Write([]byte(fmt.Sprintf(`{"state":"%s"}`, status)))
 		Expect(err).NotTo(HaveOccurred())
-
-		_, err = healthFile.Write([]byte(fmt.Sprintf(`{"state":"%s"}`, status)))
-		Expect(err).NotTo(HaveOccurred())
+		Expect(h.Close()).To(Succeed())
 	}
 
 	BeforeEach(func() {
@@ -53,6 +52,7 @@ var _ = Describe("Monitor", func() {
 
 		healthFile, err = ioutil.TempFile("", "health-executable-state")
 		Expect(err).NotTo(HaveOccurred())
+		Expect(healthFile.Close()).To(Succeed())
 
 		if runtime.GOOS == "windows" {
 			healthExecutablePrefix = "powershell.exe "
@@ -78,7 +78,6 @@ var _ = Describe("Monitor", func() {
 	})
 
 	AfterEach(func() {
-		Expect(healthFile.Close()).To(Succeed())
 		Expect(os.RemoveAll(healthFile.Name())).To(Succeed())
 
 		if signal != nil {
@@ -144,7 +143,8 @@ var _ = Describe("Monitor", func() {
 
 		Context("missing file", func() {
 			BeforeEach(func() {
-				os.RemoveAll(healthFile.Name())
+				err := os.RemoveAll(healthFile.Name())
+				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("returns the unhealthy state", func() {

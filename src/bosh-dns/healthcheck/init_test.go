@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -27,14 +28,15 @@ func TestHealthCheck(t *testing.T) {
 }
 
 var (
-	cmd          *exec.Cmd
-	configFile   *os.File
-	configPort   int
-	healthFile   *os.File
-	jobsDir      string
-	pathToServer string
-	sess         *gexec.Session
-	tmpDir       string
+	cmd                  *exec.Cmd
+	configFile           *os.File
+	configPort           int
+	healthFile           *os.File
+	jobsDir              string
+	pathToServer         string
+	sess                 *gexec.Session
+	tmpDir               string
+	healthExecutablePath string
 )
 
 var _ = SynchronizedBeforeSuite(func() []byte {
@@ -64,11 +66,16 @@ var _ = BeforeEach(func() {
 
 	configPort = 1234 + config.GinkgoConfig.ParallelNode
 
+	healthExecutablePath = "healthy"
+	if runtime.GOOS == "windows" {
+		healthExecutablePath = "healthy.ps1"
+	}
+
 	configContents, err := json.Marshal(healthconfig.HealthCheckConfig{
 		CAFile:                   "assets/test_certs/test_ca.pem",
 		CertificateFile:          "assets/test_certs/test_server.pem",
 		HealthExecutableInterval: dnsconfig.DurationJSON(time.Millisecond),
-		HealthExecutablePath:     "healthy",
+		HealthExecutablePath:     healthExecutablePath,
 		HealthFileName:           healthFile.Name(),
 		JobsDir:                  jobsDir,
 		Port:                     configPort,
@@ -78,14 +85,17 @@ var _ = BeforeEach(func() {
 
 	err = ioutil.WriteFile(configFile.Name(), []byte(configContents), 0666)
 	Expect(err).ToNot(HaveOccurred())
+	Expect(configFile.Close()).To(Succeed())
 })
 
 var _ = AfterEach(func() {
-	Expect(os.RemoveAll(tmpDir)).To(Succeed())
-
 	if cmd.Process != nil {
 		Eventually(sess.Kill()).Should(gexec.Exit())
 	}
+
+	Expect(healthFile.Close()).To(Succeed())
+
+	Expect(os.RemoveAll(tmpDir)).To(Succeed())
 })
 
 var _ = SynchronizedAfterSuite(func() {
