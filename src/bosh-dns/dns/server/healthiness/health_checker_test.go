@@ -66,7 +66,7 @@ var _ = Describe("HealthChecker", func() {
 		Context("when unhealthy", func() {
 			BeforeEach(func() {
 				ip = "127.0.0.2"
-				responseBody = `{"state":"stopped"}`
+				responseBody = `{"state":"failing"}`
 			})
 
 			It("returns state unhealthy", func() {

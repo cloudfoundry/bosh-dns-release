@@ -295,7 +295,7 @@ var _ = Describe("Integration", func() {
 
 				Eventually(func() healthResponse {
 					return secureGetRespBody(client, lastInstance.IP, 2345)
-				}, 31*time.Second).Should(Equal(healthResponse{State: "stopped"}))
+				}, 31*time.Second).Should(Equal(healthResponse{State: "failing"}))
 
 				runErrand("make-health-executable-job-healthy"+osSuffix, lastInstanceSlug)
 

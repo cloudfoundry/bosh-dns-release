@@ -20,7 +20,7 @@ import (
 	sysfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
 )
 
-var _ = Describe("HealthExecutableMonitor", func() {
+var _ = Describe("Monitor", func() {
 	var (
 		clock                  *fakeclock.FakeClock
 		cmdRunner              *sysfakes.FakeCmdRunner
@@ -29,7 +29,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 		healthFile             *os.File
 		interval               time.Duration
 		logger                 *loggerfakes.FakeLogger
-		monitor                *healthexecutable.HealthExecutableMonitor
+		monitor                *healthexecutable.Monitor
 		signal                 chan struct{}
 	)
 
@@ -66,7 +66,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 	})
 
 	JustBeforeEach(func() {
-		monitor = healthexecutable.NewHealthExecutableMonitor(
+		monitor = healthexecutable.NewMonitor(
 			healthFile.Name(),
 			jobs,
 			cmdRunner,
@@ -105,10 +105,10 @@ var _ = Describe("HealthExecutableMonitor", func() {
 				GroupState: make(map[string]healthexecutable.HealthStatus),
 			}))
 
-			writeState("stopped")
+			writeState("failing")
 			clock.WaitForWatcherAndIncrement(interval)
 			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-				State:      healthexecutable.StatusStopped,
+				State:      healthexecutable.StatusFailing,
 				GroupState: make(map[string]healthexecutable.HealthStatus),
 			}))
 
@@ -119,10 +119,10 @@ var _ = Describe("HealthExecutableMonitor", func() {
 				GroupState: make(map[string]healthexecutable.HealthStatus),
 			}))
 
-			writeState("stopped")
+			writeState("failing")
 			clock.WaitForWatcherAndIncrement(interval)
 			Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-				State:      healthexecutable.StatusStopped,
+				State:      healthexecutable.StatusFailing,
 				GroupState: make(map[string]healthexecutable.HealthStatus),
 			}))
 		})
@@ -136,7 +136,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 
 			It("returns the unhealthy state", func() {
 				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusStopped,
+					State:      healthexecutable.StatusFailing,
 					GroupState: make(map[string]healthexecutable.HealthStatus),
 				}))
 			})
@@ -149,7 +149,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 
 			It("returns the unhealthy state", func() {
 				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusStopped,
+					State:      healthexecutable.StatusFailing,
 					GroupState: make(map[string]healthexecutable.HealthStatus),
 				}))
 			})
@@ -195,7 +195,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 			It("returns status accordingly", func() {
 				clock.WaitForWatcherAndIncrement(interval)
 				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusStopped,
+					State:      healthexecutable.StatusFailing,
 					GroupState: make(map[string]healthexecutable.HealthStatus),
 				}))
 				Eventually(cmdRunner.RunCommands).Should(HaveLen(6))
@@ -209,7 +209,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 
 				clock.WaitForWatcherAndIncrement(interval)
 				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusStopped,
+					State:      healthexecutable.StatusFailing,
 					GroupState: make(map[string]healthexecutable.HealthStatus),
 				}))
 				Eventually(cmdRunner.RunCommands).Should(HaveLen(12))
@@ -225,12 +225,12 @@ var _ = Describe("HealthExecutableMonitor", func() {
 
 			It("logs an error", func() {
 				Expect(monitor.Status()).To(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusStopped,
+					State:      healthexecutable.StatusFailing,
 					GroupState: make(map[string]healthexecutable.HealthStatus),
 				}))
 				Expect(logger.ErrorCallCount()).To(Equal(1))
 				logTag, template, interpols := logger.ErrorArgsForCall(0)
-				Expect(logTag).To(Equal("HealthExecutableMonitor"))
+				Expect(logTag).To(Equal("Monitor"))
 				Expect(fmt.Sprintf(template, interpols...)).To(Equal("Error occurred executing 'e2': can't do that"))
 			})
 		})
@@ -239,7 +239,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 			It("stops calling the executables", func() {
 				Eventually(cmdRunner.RunCommands).Should(HaveLen(3))
 				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusStopped,
+					State:      healthexecutable.StatusFailing,
 					GroupState: make(map[string]healthexecutable.HealthStatus),
 				}))
 				Eventually(clock.WatcherCount).Should(Equal(1))
@@ -251,7 +251,7 @@ var _ = Describe("HealthExecutableMonitor", func() {
 				clock.Increment(interval * 2)
 				Consistently(cmdRunner.RunCommands).Should(HaveLen(3))
 				Consistently(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State:      healthexecutable.StatusStopped,
+					State:      healthexecutable.StatusFailing,
 					GroupState: make(map[string]healthexecutable.HealthStatus),
 				}))
 			})
@@ -278,14 +278,14 @@ var _ = Describe("HealthExecutableMonitor", func() {
 					},
 				}))
 
-				writeState("stopped")
+				writeState("failing")
 				clock.WaitForWatcherAndIncrement(interval)
 				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusStopped,
+					State: healthexecutable.StatusFailing,
 					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusStopped,
-						"2": healthexecutable.StatusStopped,
-						"3": healthexecutable.StatusStopped,
+						"1": healthexecutable.StatusFailing,
+						"2": healthexecutable.StatusFailing,
+						"3": healthexecutable.StatusFailing,
 					},
 				}))
 
@@ -300,14 +300,14 @@ var _ = Describe("HealthExecutableMonitor", func() {
 					},
 				}))
 
-				writeState("stopped")
+				writeState("failing")
 				clock.WaitForWatcherAndIncrement(interval)
 				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusStopped,
+					State: healthexecutable.StatusFailing,
 					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusStopped,
-						"2": healthexecutable.StatusStopped,
-						"3": healthexecutable.StatusStopped,
+						"1": healthexecutable.StatusFailing,
+						"2": healthexecutable.StatusFailing,
+						"3": healthexecutable.StatusFailing,
 					},
 				}))
 			})
@@ -346,11 +346,11 @@ var _ = Describe("HealthExecutableMonitor", func() {
 
 				clock.WaitForWatcherAndIncrement(interval)
 				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusStopped,
+					State: healthexecutable.StatusFailing,
 					GroupState: map[string]healthexecutable.HealthStatus{
 						"1": healthexecutable.StatusRunning,
-						"2": healthexecutable.StatusStopped,
-						"3": healthexecutable.StatusStopped,
+						"2": healthexecutable.StatusFailing,
+						"3": healthexecutable.StatusFailing,
 					},
 				}))
 
@@ -366,11 +366,11 @@ var _ = Describe("HealthExecutableMonitor", func() {
 
 				clock.WaitForWatcherAndIncrement(interval)
 				Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-					State: healthexecutable.StatusStopped,
+					State: healthexecutable.StatusFailing,
 					GroupState: map[string]healthexecutable.HealthStatus{
-						"1": healthexecutable.StatusStopped,
+						"1": healthexecutable.StatusFailing,
 						"2": healthexecutable.StatusRunning,
-						"3": healthexecutable.StatusStopped,
+						"3": healthexecutable.StatusFailing,
 					},
 				}))
 			})
@@ -398,10 +398,10 @@ var _ = Describe("HealthExecutableMonitor", func() {
 
 					clock.WaitForWatcherAndIncrement(interval)
 					Eventually(monitor.Status).Should(Equal(healthexecutable.HealthResult{
-						State: healthexecutable.StatusStopped,
+						State: healthexecutable.StatusFailing,
 						GroupState: map[string]healthexecutable.HealthStatus{
-							"1": healthexecutable.StatusStopped,
-							"2": healthexecutable.StatusStopped,
+							"1": healthexecutable.StatusFailing,
+							"2": healthexecutable.StatusFailing,
 						},
 					}))
 

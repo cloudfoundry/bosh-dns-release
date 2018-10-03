@@ -346,8 +346,8 @@ var _ = Describe("main", func() {
 					healthServers = []*ghttp.Server{
 						newFakeHealthServer("127.0.0.1", "running"),
 						// sudo ifconfig lo0 alias 127.0.0.2, 3 up # on osx
-						newFakeHealthServer("127.0.0.2", "stopped"),
-						newFakeHealthServer("127.0.0.3", "stopped"),
+						newFakeHealthServer("127.0.0.2", "failing"),
+						newFakeHealthServer("127.0.0.3", "failing"),
 					}
 				})
 
@@ -1143,7 +1143,7 @@ var _ = Describe("main", func() {
 					healthServers = []*ghttp.Server{
 						newFakeHealthServer("127.0.0.1", "running"),
 						// sudo ifconfig lo0 alias 127.0.0.2 up # on osx
-						newFakeHealthServer("127.0.0.2", "stopped"),
+						newFakeHealthServer("127.0.0.2", "failing"),
 					}
 				})
 
@@ -1207,7 +1207,7 @@ var _ = Describe("main", func() {
 
 				BeforeEach(func() {
 					checkInterval = time.Minute
-					brokenServer = newFakeHealthServer("127.0.0.2", "stopped")
+					brokenServer = newFakeHealthServer("127.0.0.2", "failing")
 					brokenServer.RouteToHandler("GET", "/health", ghttp.RespondWith(http.StatusGatewayTimeout, ``))
 
 					healthServers = []*ghttp.Server{

@@ -100,11 +100,11 @@ var _ = Describe("HealthCheck server", func() {
 
 			It("returns group health status in the json output", func() {
 				resp := secureGetRespBody(client, configPort)
-				Expect(resp.State).To(Equal("stopped"))
+				Expect(resp.State).To(Equal("failing"))
 				Expect(resp.GroupState).To(Equal(map[string]string{
 					"1":            "running",
 					"i-am-a-group": "running",
-					"2":            "stopped",
+					"2":            "failing",
 				}))
 			})
 		})
@@ -131,19 +131,19 @@ var _ = Describe("HealthCheck server", func() {
 				It("returns unhealthy json output", func() {
 					Eventually(func() string {
 						return secureGetRespBody(client, configPort).State
-					}, time.Second*2).Should(Equal("stopped"))
+					}, time.Second*2).Should(Equal("failing"))
 				})
 			})
 		})
 
 		Describe("when the vm is unhealthy", func() {
 			BeforeEach(func() {
-				status = "stopped"
+				status = "failing"
 			})
 
 			It("returns unhealthy json output", func() {
 				resp := secureGetRespBody(client, configPort)
-				Expect(resp.State).To(Equal("stopped"))
+				Expect(resp.State).To(Equal("failing"))
 			})
 		})
 

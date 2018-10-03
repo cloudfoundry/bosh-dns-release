@@ -52,7 +52,7 @@ func mainExitCode() int {
 		return 1
 	}
 
-	healthExecutableMonitor := healthexecutable.NewHealthExecutableMonitor(
+	healthExecutableMonitor := healthexecutable.NewMonitor(
 		config.HealthFileName,
 		jobs,
 		cmdRunner,

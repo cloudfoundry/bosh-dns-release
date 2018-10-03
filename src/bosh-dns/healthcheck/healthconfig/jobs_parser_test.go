@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("HealthExecutableMonitor", func() {
+var _ = Describe("ParseJobs", func() {
 	var jobsDir string
 
 	BeforeEach(func() {
