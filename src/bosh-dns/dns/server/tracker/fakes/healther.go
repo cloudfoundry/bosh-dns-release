@@ -75,7 +75,11 @@ func (fake *Healther) Invocations() map[string][][]interface{} {
 	defer fake.trackMutex.RUnlock()
 	fake.untrackMutex.RLock()
 	defer fake.untrackMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *Healther) recordInvocation(key string, args []interface{}) {

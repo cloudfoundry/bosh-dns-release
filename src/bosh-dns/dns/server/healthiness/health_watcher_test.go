@@ -57,20 +57,20 @@ var _ = Describe("HealthWatcher", func() {
 		Context("when the status is not known", func() {
 			Context("and the ip is not known because it's not tracked", func() {
 				It("returns unchecked", func() {
-					Expect(healthWatcher.HealthState(ip)).To(Equal(healthiness.StateUnchecked))
+					Expect(healthWatcher.HealthState(ip).State).To(Equal(healthiness.StateUnchecked))
 				})
 			})
 
 			Context("and the ip is known", func() {
 				JustBeforeEach(func() {
-					fakeChecker.GetStatusReturns(healthiness.StateUnknown)
+					fakeChecker.GetStatusReturns(api.HealthResult{State: healthiness.StateUnknown})
 					healthWatcher.Track(ip)
 					Eventually(fakeChecker.GetStatusCallCount).Should(Equal(1))
 					Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
 				})
 
 				It("returns unknown", func() {
-					Expect(healthWatcher.HealthState(ip)).To(Equal(healthiness.StateUnknown))
+					Expect(healthWatcher.HealthState(ip).State).To(Equal(healthiness.StateUnknown))
 				})
 			})
 		})
@@ -85,39 +85,39 @@ var _ = Describe("HealthWatcher", func() {
 			Context("and the ip is healthy", func() {
 				BeforeEach(func() {
 					ip = "127.0.0.2"
-					fakeChecker.GetStatusReturns(api.StatusRunning)
+					fakeChecker.GetStatusReturns(api.HealthResult{State: api.StatusRunning})
 				})
 
 				It("returns healthy", func() {
-					Expect(healthWatcher.HealthState(ip)).To(Equal(api.StatusRunning))
+					Expect(healthWatcher.HealthState(ip)).To(Equal(api.HealthResult{State: api.StatusRunning}))
 				})
 			})
 
 			Context("and the ip is unhealthy", func() {
 				BeforeEach(func() {
 					ip = "127.0.0.3"
-					fakeChecker.GetStatusReturns(api.StatusFailing)
+					fakeChecker.GetStatusReturns(api.HealthResult{State: api.StatusFailing})
 				})
 
 				It("returns unhealthy", func() {
-					Expect(healthWatcher.HealthState(ip)).To(Equal(api.StatusFailing))
+					Expect(healthWatcher.HealthState(ip)).To(Equal(api.HealthResult{State: api.StatusFailing}))
 				})
 			})
 
 			Context("and the status changes", func() {
 				BeforeEach(func() {
-					fakeChecker.GetStatusReturns(api.StatusRunning)
+					fakeChecker.GetStatusReturns(api.HealthResult{State: api.StatusRunning})
 				})
 
 				It("returns the new status", func() {
-					Expect(healthWatcher.HealthState(ip)).To(Equal(api.StatusRunning))
+					Expect(healthWatcher.HealthState(ip)).To(Equal(api.HealthResult{State: api.StatusRunning}))
 
-					fakeChecker.GetStatusReturns(api.StatusFailing)
+					fakeChecker.GetStatusReturns(api.HealthResult{State: api.StatusFailing})
 					fakeClock.WaitForWatcherAndIncrement(interval)
 
-					Eventually(func() api.HealthStatus {
+					Eventually(func() api.HealthResult {
 						return healthWatcher.HealthState(ip)
-					}).Should(Equal(api.StatusFailing))
+					}).Should(Equal(api.HealthResult{State: api.StatusFailing}))
 				})
 			})
 		})
@@ -125,7 +125,7 @@ var _ = Describe("HealthWatcher", func() {
 		Context("tracking multiple ip addresses", func() {
 			BeforeEach(func() {
 				ip = "127.0.0.1"
-				fakeChecker.GetStatusReturns(api.StatusRunning)
+				fakeChecker.GetStatusReturns(api.HealthResult{State: api.StatusRunning})
 
 				// Track more IPs to exercise potential racey behaviors
 				healthWatcher.Track("1.1.1.1")
@@ -140,12 +140,12 @@ var _ = Describe("HealthWatcher", func() {
 
 			It("returns new statuses when they change", func(done Done) {
 				Eventually(func() api.HealthStatus {
-					return healthWatcher.HealthState(ip)
+					return healthWatcher.HealthState(ip).State
 				}).Should(Equal(api.StatusRunning))
-				fakeChecker.GetStatusReturns(api.StatusFailing)
+				fakeChecker.GetStatusReturns(api.HealthResult{State: api.StatusFailing})
 				fakeClock.WaitForWatcherAndIncrement(interval)
 				Eventually(func() api.HealthStatus {
-					return healthWatcher.HealthState(ip)
+					return healthWatcher.HealthState(ip).State
 				}).Should(Equal(api.StatusFailing))
 				close(done)
 			})

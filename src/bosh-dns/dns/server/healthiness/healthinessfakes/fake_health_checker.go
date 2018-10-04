@@ -8,22 +8,22 @@ import (
 )
 
 type FakeHealthChecker struct {
-	GetStatusStub        func(ip string) api.HealthStatus
+	GetStatusStub        func(ip string) api.HealthResult
 	getStatusMutex       sync.RWMutex
 	getStatusArgsForCall []struct {
 		ip string
 	}
 	getStatusReturns struct {
-		result1 api.HealthStatus
+		result1 api.HealthResult
 	}
 	getStatusReturnsOnCall map[int]struct {
-		result1 api.HealthStatus
+		result1 api.HealthResult
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeHealthChecker) GetStatus(ip string) api.HealthStatus {
+func (fake *FakeHealthChecker) GetStatus(ip string) api.HealthResult {
 	fake.getStatusMutex.Lock()
 	ret, specificReturn := fake.getStatusReturnsOnCall[len(fake.getStatusArgsForCall)]
 	fake.getStatusArgsForCall = append(fake.getStatusArgsForCall, struct {
@@ -52,22 +52,22 @@ func (fake *FakeHealthChecker) GetStatusArgsForCall(i int) string {
 	return fake.getStatusArgsForCall[i].ip
 }
 
-func (fake *FakeHealthChecker) GetStatusReturns(result1 api.HealthStatus) {
+func (fake *FakeHealthChecker) GetStatusReturns(result1 api.HealthResult) {
 	fake.GetStatusStub = nil
 	fake.getStatusReturns = struct {
-		result1 api.HealthStatus
+		result1 api.HealthResult
 	}{result1}
 }
 
-func (fake *FakeHealthChecker) GetStatusReturnsOnCall(i int, result1 api.HealthStatus) {
+func (fake *FakeHealthChecker) GetStatusReturnsOnCall(i int, result1 api.HealthResult) {
 	fake.GetStatusStub = nil
 	if fake.getStatusReturnsOnCall == nil {
 		fake.getStatusReturnsOnCall = make(map[int]struct {
-			result1 api.HealthStatus
+			result1 api.HealthResult
 		})
 	}
 	fake.getStatusReturnsOnCall[i] = struct {
-		result1 api.HealthStatus
+		result1 api.HealthResult
 	}{result1}
 }
 

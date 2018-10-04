@@ -31,30 +31,26 @@ type healthStatus struct {
 	State api.HealthStatus
 }
 
-func (hc *healthChecker) GetStatus(ip string) api.HealthStatus {
+func (hc *healthChecker) GetStatus(ip string) api.HealthResult {
 	endpoint := fmt.Sprintf("https://%s/health", net.JoinHostPort(ip, fmt.Sprintf("%d", hc.port)))
 
 	response, err := hc.client.Get(endpoint)
 	if err != nil {
-		return StateUnknown
+		return api.HealthResult{State: StateUnknown}
 	} else if response.StatusCode != http.StatusOK {
-		return StateUnknown
+		return api.HealthResult{State: StateUnknown}
 	}
 
 	responseBytes, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return StateUnknown // untested
+		return api.HealthResult{State: StateUnknown} // untested
 	}
 
-	var parsedResponse healthStatus
+	var parsedResponse api.HealthResult
 	err = json.Unmarshal(responseBytes, &parsedResponse)
 	if err != nil {
-		return StateUnknown
+		return api.HealthResult{State: StateUnknown}
 	}
 
-	if parsedResponse.State == api.StatusRunning {
-		return api.StatusRunning
-	}
-
-	return api.StatusFailing
+	return parsedResponse
 }

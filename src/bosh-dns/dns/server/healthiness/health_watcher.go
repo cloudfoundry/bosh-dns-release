@@ -14,13 +14,13 @@ import (
 //go:generate counterfeiter . HealthChecker
 
 type HealthChecker interface {
-	GetStatus(ip string) api.HealthStatus
+	GetStatus(ip string) api.HealthResult
 }
 
 //go:generate counterfeiter . HealthWatcher
 
 type HealthWatcher interface {
-	HealthState(ip string) api.HealthStatus
+	HealthState(ip string) api.HealthResult
 	HealthStateString(ip string) string
 	Track(ip string)
 	Untrack(ip string)
@@ -35,7 +35,7 @@ type healthWatcher struct {
 	workpoolSize  int
 
 	checkWorkPool *workpool.WorkPool
-	state         map[string]api.HealthStatus
+	state         map[string]api.HealthResult
 	stateMutex    *sync.RWMutex
 	logger        boshlog.Logger
 }
@@ -50,7 +50,7 @@ func NewHealthWatcher(workpoolSize int, checker HealthChecker, clock clock.Clock
 		workpoolSize:  workpoolSize,
 
 		checkWorkPool: wp,
-		state:         map[string]api.HealthStatus{},
+		state:         map[string]api.HealthResult{},
 		stateMutex:    &sync.RWMutex{},
 		logger:        logger,
 	}
@@ -63,16 +63,16 @@ func (hw *healthWatcher) Track(ip string) {
 }
 
 func (hw *healthWatcher) HealthStateString(ip string) string {
-	return string(hw.HealthState(ip))
+	return string(hw.HealthState(ip).State)
 }
 
-func (hw *healthWatcher) HealthState(ip string) api.HealthStatus {
+func (hw *healthWatcher) HealthState(ip string) api.HealthResult {
 	hw.stateMutex.RLock()
 	health, found := hw.state[ip]
 	hw.stateMutex.RUnlock()
 
 	if !found {
-		return StateUnchecked
+		return api.HealthResult{State: StateUnchecked}
 	}
 	return health
 }
@@ -114,21 +114,21 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 }
 
 func (hw *healthWatcher) RunCheck(ip string) {
-	isHealthy := hw.checker.GetStatus(ip)
+	healthInfo := hw.checker.GetStatus(ip)
 
 	hw.stateMutex.Lock()
 
 	wasHealthy, found := hw.state[ip]
-	hw.state[ip] = isHealthy
+	hw.state[ip] = healthInfo
 
 	hw.stateMutex.Unlock()
 
 	oldState := wasHealthy
-	newState := isHealthy
+	newState := healthInfo
 
 	if !found {
-		hw.logger.Debug("healthWatcher", "Initial state for IP <%s> is %s", ip, oldState)
-	} else if oldState != newState {
-		hw.logger.Debug("healthWatcher", "State for IP <%s> changed from %s to %s", ip, oldState, newState)
+		hw.logger.Debug("healthWatcher", "Initial state for IP <%s> is %s", ip, oldState.State)
+	} else if oldState.State != newState.State {
+		hw.logger.Debug("healthWatcher", "State for IP <%s> changed from %s to %s", ip, oldState.State, newState.State)
 	}
 }

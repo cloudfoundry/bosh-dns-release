@@ -30,7 +30,7 @@ type healthTracker interface {
 }
 
 type healthWatcher interface {
-	HealthState(ip string) api.HealthStatus
+	HealthState(ip string) api.HealthResult
 	Track(ip string)
 	RunCheck(ip string)
 }
@@ -120,7 +120,7 @@ func (q *healthFilter) sortRecords(records []record.Record) (healthyRecords, unh
 	var unknownRecords, uncheckedRecords []record.Record
 
 	for _, r := range records {
-		switch q.w.HealthState(r.IP) {
+		switch q.w.HealthState(r.IP).State {
 		case api.StatusRunning:
 			healthyRecords = append(healthyRecords, r)
 		case api.StatusFailing:
@@ -142,7 +142,7 @@ func (q *healthFilter) synchronousHealthCheck(strategy, ip string, wg *sync.Wait
 	switch strategy {
 	case "0":
 	case "1":
-		if q.w.HealthState(ip) == healthiness.StateUnchecked {
+		if q.w.HealthState(ip).State == healthiness.StateUnchecked {
 			wg.Add(1)
 			q.filterWorkPool.Submit(func() {
 				defer wg.Done()

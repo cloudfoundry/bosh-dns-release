@@ -51,14 +51,14 @@ var _ = Describe("HealthChecker", func() {
 			})
 
 			It("returns state healthy", func() {
-				Expect(healthChecker.GetStatus(ip)).To(Equal(api.StatusRunning))
+				Expect(healthChecker.GetStatus(ip).State).To(Equal(api.StatusRunning))
 				Expect(fakeClient.GetCallCount()).To(Equal(1))
 				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://%s:8081/health", ip)))
 			})
 
 			It("brackets IPv6 addresses", func() {
 				ip := "2601:0646:0102:0095:0000:0000:0000:0024"
-				Expect(healthChecker.GetStatus(ip)).To(Equal(api.StatusRunning))
+				Expect(healthChecker.GetStatus(ip).State).To(Equal(api.StatusRunning))
 				Expect(fakeClient.GetCallCount()).To(Equal(1))
 				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://[%s]:8081/health", ip)))
 			})
@@ -71,7 +71,7 @@ var _ = Describe("HealthChecker", func() {
 			})
 
 			It("returns state unhealthy", func() {
-				Expect(healthChecker.GetStatus(ip)).To(Equal(api.StatusFailing))
+				Expect(healthChecker.GetStatus(ip).State).To(Equal(api.StatusFailing))
 				Expect(fakeClient.GetCallCount()).To(Equal(1))
 				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://%s:8081/health", ip)))
 			})
@@ -85,7 +85,7 @@ var _ = Describe("HealthChecker", func() {
 			It("returns state unknown", func() {
 				fakeClient.GetReturns(nil, errors.New("fake connect err"))
 
-				Expect(healthChecker.GetStatus(ip)).To(Equal(healthiness.StateUnknown))
+				Expect(healthChecker.GetStatus(ip).State).To(Equal(healthiness.StateUnknown))
 				Expect(fakeClient.GetCallCount()).To(Equal(1))
 				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://%s:8081/health", ip)))
 			})
@@ -98,7 +98,7 @@ var _ = Describe("HealthChecker", func() {
 			})
 
 			It("returns state unknown", func() {
-				Expect(healthChecker.GetStatus(ip)).To(Equal(healthiness.StateUnknown))
+				Expect(healthChecker.GetStatus(ip).State).To(Equal(healthiness.StateUnknown))
 				Expect(fakeClient.GetCallCount()).To(Equal(1))
 				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://%s:8081/health", ip)))
 			})
@@ -111,7 +111,7 @@ var _ = Describe("HealthChecker", func() {
 			})
 
 			It("returns state unknown", func() {
-				Expect(healthChecker.GetStatus(ip)).To(Equal(healthiness.StateUnknown))
+				Expect(healthChecker.GetStatus(ip).State).To(Equal(healthiness.StateUnknown))
 				Expect(fakeClient.GetCallCount()).To(Equal(1))
 				Expect(fakeClient.GetArgsForCall(0)).To(Equal(fmt.Sprintf("https://%s:8081/health", ip)))
 			})
