@@ -26,7 +26,7 @@ type RecordSet struct {
 	subscriberssMutex   sync.RWMutex
 	subscribers         []chan bool
 	logger              boshlog.Logger
-	aliasList           aliases.Config
+	aliasList           aliases.AliasesProvider
 	healthWatcher       healthiness.HealthWatcher
 	healthChan          chan record.Host
 	trackerSubscription chan []record.Record
@@ -37,7 +37,7 @@ type RecordSet struct {
 
 func NewRecordSet(
 	recordFileReader FileReader,
-	aliasList aliases.Config,
+	aliasList aliases.AliasesProvider,
 	healthWatcher healthiness.HealthWatcher,
 	maximumTrackedDomains uint,
 	shutdownChan chan struct{},
