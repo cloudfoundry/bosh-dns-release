@@ -137,7 +137,7 @@ var _ = Describe("HealthFilter", func() {
 				Entry("unchecked", record.Record{IP: "4.4.4.4"}, false),
 			)
 		})
-		Context("health strategy healty only", func() {
+		Context("health strategy healthy only", func() {
 			BeforeEach(func() {
 				healthStrategy = "3"
 			})
@@ -182,6 +182,119 @@ var _ = Describe("HealthFilter", func() {
 				Entry("unknown", record.Record{IP: "3.3.3.3"}, true),
 				Entry("unchecked", record.Record{IP: "4.4.4.4"}, true),
 			)
+		})
+
+		Context("link health querying", func() {
+			Context("with healthy health-strategy", func() {
+
+				BeforeEach(func() {
+					healthStrategy = "3"
+				})
+				DescribeTable("when querying link healthiness", func(runningLinks, failingLinks, queriedLinks []string) {
+					result := api.HealthResult{
+						State:      api.StatusRunning,
+						GroupState: map[string]api.HealthStatus{},
+					}
+					for _, runningLink := range runningLinks {
+						result.GroupState[runningLink] = api.StatusRunning
+					}
+					for _, failingLink := range failingLinks {
+						result.GroupState[failingLink] = api.StatusFailing
+					}
+
+					fakeHealthWatcher.HealthStateReturns(result)
+
+					localCrit := crit.(criteria.Criteria)
+					allQueriedAreRunning := true
+					for _, queriedLink := range queriedLinks {
+						localCrit["g"] = append(localCrit["g"], queriedLink)
+						if allQueriedAreRunning {
+
+							for _, failingLink := range failingLinks {
+								if queriedLink == failingLink {
+									allQueriedAreRunning = false
+								}
+							}
+						}
+					}
+					crit = localCrit
+
+					fakeFilter.FilterReturns([]record.Record{record.Record{IP: "1.1.1.1"}})
+					results := healthFilter.Filter(crit, []record.Record{
+						record.Record{IP: "1.1.1.1"},
+					})
+
+					if allQueriedAreRunning {
+						Expect(results).To(ConsistOf([]record.Record{
+							record.Record{IP: "1.1.1.1"},
+						}))
+					} else {
+						Expect(results).To(BeEmpty())
+					}
+				},
+					Entry("when there is a single queried and running link", []string{"1"}, []string{}, []string{"1"}),
+					Entry("when there is a single queried and failing link", []string{}, []string{"1"}, []string{"1"}),
+					Entry("when there are multiple queried links and all are running", []string{"1", "2"}, []string{}, []string{"1", "2"}),
+					Entry("when there are multiple queried links and some are running", []string{"1"}, []string{"2"}, []string{"1", "2"}),
+					Entry("when there are multiple queried links and all are failing", []string{}, []string{"1", "2"}, []string{"1", "2"}),
+					Entry("when a queried link does not exist", []string{}, []string{}, []string{"1", "2"}),
+				)
+			})
+
+			Context("with multiple records and default health strategy", func() {
+				BeforeEach(func() {
+					healthStrategy = "0"
+				})
+
+				It("honors link health", func() {
+					localCrit := crit.(criteria.Criteria)
+					localCrit["g"] = []string{"1", "2"}
+					crit = localCrit
+
+					recs := []record.Record{
+						record.Record{
+							IP: "1.1.1.1",
+						},
+						record.Record{
+							IP: "2.2.2.2",
+						},
+						record.Record{
+							IP: "3.3.3.3",
+						},
+					}
+
+					fakeHealthWatcher.HealthStateStub = func(ip string) api.HealthResult {
+						switch ip {
+						case "1.1.1.1":
+							return api.HealthResult{
+								State: api.StatusRunning,
+								GroupState: map[string]api.HealthStatus{
+									"1": api.StatusRunning,
+								},
+							}
+						case "2.2.2.2":
+							return api.HealthResult{
+								State: api.StatusRunning,
+								GroupState: map[string]api.HealthStatus{
+									"2": api.StatusFailing,
+								},
+							}
+						case "3.3.3.3":
+							return api.HealthResult{
+								State: healthiness.StateUnchecked,
+							}
+						}
+						return api.HealthResult{}
+					}
+
+					fakeFilter.FilterReturns(recs)
+					results := healthFilter.Filter(crit, recs)
+					Expect(results).To(ConsistOf([]record.Record{
+						record.Record{IP: "1.1.1.1"},
+						record.Record{IP: "3.3.3.3"},
+					}))
+				})
+			})
 		})
 	})
 

@@ -44,7 +44,9 @@ var _ = Describe("Tracker", func() {
 				"qs-foo.now.update.me":  []record.Record{{IP: "4.4.4.4", Domain: "qs-foo.dont.remove.me"}},
 			}
 
-			qf.FilterStub = func(crit criteria.Criteria, recs []record.Record) []record.Record {
+			qf.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
+				crit := mm.(criteria.Criteria)
+
 				return nameIP[crit["fqdn"][0]]
 			}
 

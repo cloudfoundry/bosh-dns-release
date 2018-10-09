@@ -53,7 +53,7 @@ func (q *healthFilter) Filter(mm criteria.MatchMaker, recs []record.Record) []re
 		q.processRecords(crit, records)
 	}
 
-	healthyRecords, unhealthyRecords, maybeHealthyRecords := q.sortRecords(records)
+	healthyRecords, unhealthyRecords, maybeHealthyRecords := q.sortRecords(records, crit["g"])
 
 	healthStrategy := "0"
 	if len(crit["s"]) > 0 {
@@ -116,11 +116,11 @@ func (q *healthFilter) waitForWaitGroupOrTimeout(wg *sync.WaitGroup) {
 	}
 }
 
-func (q *healthFilter) sortRecords(records []record.Record) (healthyRecords, unhealthyRecords, maybeHealthyRecords []record.Record) {
+func (q *healthFilter) sortRecords(records []record.Record, queriedGroupIDs []string) (healthyRecords, unhealthyRecords, maybeHealthyRecords []record.Record) {
 	var unknownRecords, uncheckedRecords []record.Record
 
 	for _, r := range records {
-		switch q.w.HealthState(r.IP).State {
+		switch q.interpretHealthState(r.IP, queriedGroupIDs) {
 		case api.StatusRunning:
 			healthyRecords = append(healthyRecords, r)
 		case api.StatusFailing:
@@ -135,6 +135,18 @@ func (q *healthFilter) sortRecords(records []record.Record) (healthyRecords, unh
 	maybeHealthyRecords = append(healthyRecords, uncheckedRecords...)
 
 	return healthyRecords, unhealthyRecords, maybeHealthyRecords
+}
+
+func (q *healthFilter) interpretHealthState(ip string, queriedGroupIDs []string) api.HealthStatus {
+	queriedHealthState := q.w.HealthState(ip)
+	for _, groupID := range queriedGroupIDs {
+		if groupState, ok := queriedHealthState.GroupState[groupID]; ok {
+			if groupState == api.StatusFailing {
+				return api.StatusFailing
+			}
+		}
+	}
+	return queriedHealthState.State
 }
 
 func (q *healthFilter) synchronousHealthCheck(strategy, ip string, wg *sync.WaitGroup) bool {
