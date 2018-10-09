@@ -121,7 +121,11 @@ func (fake *FakeFileReader) Invocations() map[string][][]interface{} {
 	defer fake.getMutex.RUnlock()
 	fake.subscribeMutex.RLock()
 	defer fake.subscribeMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeFileReader) recordInvocation(key string, args []interface{}) {

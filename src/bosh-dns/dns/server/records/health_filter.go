@@ -13,16 +13,12 @@ import (
 )
 
 type healthFilter struct {
-	nextFilter     reducer
+	nextFilter     Reducer
 	health         chan<- record.Host
 	w              healthWatcher
 	shouldTrack    bool
 	domain         string
 	filterWorkPool *workpool.WorkPool
-}
-
-type reducer interface {
-	Filter(criteria.Criteria, []record.Record) []record.Record
 }
 
 type healthTracker interface {
@@ -35,7 +31,7 @@ type healthWatcher interface {
 	RunCheck(ip string)
 }
 
-func NewHealthFilter(nextFilter reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool) healthFilter {
+func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool) healthFilter {
 	wp, _ := workpool.NewWorkPool(1000)
 	return healthFilter{
 		nextFilter:     nextFilter,
@@ -46,7 +42,11 @@ func NewHealthFilter(nextFilter reducer, health chan<- record.Host, w healthWatc
 	}
 }
 
-func (q *healthFilter) Filter(crit criteria.Criteria, recs []record.Record) []record.Record {
+func (q *healthFilter) Filter(mm criteria.MatchMaker, recs []record.Record) []record.Record {
+	crit, ok := mm.(criteria.Criteria)
+	if !ok {
+		crit, _ = criteria.NewCriteria("", []string{})
+	}
 	records := q.nextFilter.Filter(crit, recs)
 
 	if q.shouldTrack {

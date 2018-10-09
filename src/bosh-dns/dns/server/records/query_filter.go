@@ -7,12 +7,12 @@ import (
 
 type QueryFilter struct{}
 
-func (q *QueryFilter) Filter(crit criteria.Criteria, recs []record.Record) []record.Record {
-	matcher := crit.Matcher()
+func (q *QueryFilter) Filter(mm criteria.MatchMaker, recs []record.Record) []record.Record {
+	m := mm.Matcher()
 	var records []record.Record
 
 	for _, record := range recs {
-		if matcher.Match(&record) {
+		if m.Match(&record) {
 			records = append(records, record)
 		}
 	}

@@ -28,7 +28,7 @@ type healther interface {
 
 //go:generate counterfeiter -o ./fakes/query.go --fake-name Query . query
 type query interface {
-	Filter(criteria.Criteria, []record.Record) []record.Record
+	Filter(criteria.MatchMaker, []record.Record) []record.Record
 }
 
 func Start(shutdown chan struct{}, subscription <-chan []record.Record, healthMonitor <-chan record.Host, trackedDomains limitedTranscript, healther healther, qf query) {

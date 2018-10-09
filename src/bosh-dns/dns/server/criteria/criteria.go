@@ -38,6 +38,12 @@ func (c Criteria) Matcher() Matcher {
 	return matcher
 }
 
+//go:generate counterfeiter . MatchMaker
+type MatchMaker interface {
+	Matcher() Matcher
+}
+
+//go:generate counterfeiter . Matcher
 type Matcher interface {
 	Match(r *record.Record) bool
 }

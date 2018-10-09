@@ -30,6 +30,7 @@ type RecordSet struct {
 	healthWatcher       healthiness.HealthWatcher
 	healthChan          chan record.Host
 	trackerSubscription chan []record.Record
+	filtererFactory     FiltererFactory
 
 	domains []string
 	Records []record.Record
@@ -42,6 +43,7 @@ func NewRecordSet(
 	maximumTrackedDomains uint,
 	shutdownChan chan struct{},
 	logger boshlog.Logger,
+	filtererFactory FiltererFactory,
 ) (*RecordSet, error) {
 	r := &RecordSet{
 		recordFileReader:    recordFileReader,
@@ -50,6 +52,7 @@ func NewRecordSet(
 		healthWatcher:       healthWatcher,
 		healthChan:          make(chan record.Host, 2),
 		trackerSubscription: make(chan []record.Record),
+		filtererFactory:     filtererFactory,
 	}
 
 	trackedDomains := tracker.NewPriorityLimitedTranscript(maximumTrackedDomains)
@@ -153,7 +156,7 @@ func (r *RecordSet) Filter(resolutions []string, shouldTrack bool) ([]record.Rec
 		errs         []error
 	)
 
-	qf := NewHealthFilter(&QueryFilter{}, r.healthChan, r.healthWatcher, shouldTrack)
+	qf := r.filtererFactory.NewFilterer(r.healthChan, shouldTrack)
 	for _, resolution := range resolutions {
 		crit, err := criteria.NewCriteria(resolution, r.domains)
 		if err != nil {
