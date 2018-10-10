@@ -8,7 +8,10 @@ import (
 	"bosh-dns/dns/server/records"
 	"bosh-dns/dns/server/records/recordsfakes"
 	"bosh-dns/healthcheck/api"
+	"sync"
 	"time"
+
+	"code.cloudfoundry.org/clock/fakeclock"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -27,16 +30,19 @@ var _ = Describe("HealthFilter", func() {
 		healthFilter      records.Reducer
 		shouldTrack       bool
 		healthChan        chan record.Host
+		waitGroup         *sync.WaitGroup
 		fakeHealthWatcher *healthinessfakes.FakeHealthWatcher
-		// recs              []record.Record
-		healthStrategy string
-		syncStrategy   string
-		fqdn           string
-		crit           criteria.MatchMaker
+		clock             *fakeclock.FakeClock
+		healthStrategy    string
+		syncStrategy      string
+		fqdn              string
+		crit              criteria.MatchMaker
 	)
 
 	BeforeEach(func() {
 		fakeFilter = &recordsfakes.FakeReducer{}
+		waitGroup = &sync.WaitGroup{}
+		clock = fakeclock.NewFakeClock(time.Now())
 		fakeHealthWatcher = &healthinessfakes.FakeHealthWatcher{}
 		fqdn = "my-domain.some.fqdn.bosh."
 		healthChan = make(chan record.Host, 2)
@@ -66,7 +72,7 @@ var _ = Describe("HealthFilter", func() {
 	})
 
 	JustBeforeEach(func() {
-		hf := records.NewHealthFilter(fakeFilter, healthChan, fakeHealthWatcher, shouldTrack)
+		hf := records.NewHealthFilter(fakeFilter, healthChan, fakeHealthWatcher, shouldTrack, clock, waitGroup)
 		healthFilter = &hf
 		crit = criteria.Criteria{
 			"s":    []string{healthStrategy},
@@ -399,16 +405,17 @@ var _ = Describe("HealthFilter", func() {
 				Context("when it takes too long to check health", func() {
 					BeforeEach(func() {
 						fakeHealthWatcher.RunCheckStub = func(ip string) {
-							time.Sleep(1100 * time.Millisecond)
-							fakeHealthWatcher.HealthStateReturns(api.HealthResult{State: api.StatusRunning})
+							clock.Increment(2 * time.Second)
 						}
-						fakeHealthWatcher.HealthStateReturns(api.HealthResult{State: healthiness.StateUnchecked})
+						fakeHealthWatcher.HealthStateStub = func(ip string) api.HealthResult {
+							return api.HealthResult{State: healthiness.StateUnchecked}
+						}
 					})
 
 					It("times out", func() {
-						results := healthFilter.Filter(crit, recs)
-
-						Expect(results).To(BeEmpty())
+						waitGroup.Add(1)
+						healthFilter.Filter(crit, recs)
+						waitGroup.Done()
 					})
 				})
 			})

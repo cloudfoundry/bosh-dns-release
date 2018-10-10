@@ -4,6 +4,9 @@ import (
 	"bosh-dns/dns/server/criteria"
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/record"
+	"sync"
+
+	"code.cloudfoundry.org/clock"
 )
 
 //go:generate counterfeiter . Filterer
@@ -21,7 +24,7 @@ type healthFiltererFactory struct {
 }
 
 func (hff *healthFiltererFactory) NewFilterer(healthChan chan record.Host, shouldTrack bool) Filterer {
-	hf := NewHealthFilter(&QueryFilter{}, healthChan, hff.healthWatcher, shouldTrack)
+	hf := NewHealthFilter(&QueryFilter{}, healthChan, hff.healthWatcher, shouldTrack, clock.NewClock(), &sync.WaitGroup{})
 	return &hf
 }
 

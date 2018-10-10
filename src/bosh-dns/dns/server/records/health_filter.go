@@ -10,15 +10,19 @@ import (
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/record"
 	"bosh-dns/healthcheck/api"
+
+	"code.cloudfoundry.org/clock"
 )
 
 type healthFilter struct {
 	nextFilter     Reducer
 	health         chan<- record.Host
 	w              healthWatcher
+	wg             *sync.WaitGroup
 	shouldTrack    bool
 	domain         string
 	filterWorkPool *workpool.WorkPool
+	clock          clock.Clock
 }
 
 type healthTracker interface {
@@ -31,14 +35,16 @@ type healthWatcher interface {
 	RunCheck(ip string)
 }
 
-func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool) healthFilter {
+func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool, clock clock.Clock, wg *sync.WaitGroup) healthFilter {
 	wp, _ := workpool.NewWorkPool(1000)
 	return healthFilter{
 		nextFilter:     nextFilter,
 		health:         health,
 		w:              w,
+		wg:             wg,
 		shouldTrack:    shouldTrack,
 		filterWorkPool: wp,
+		clock:          clock,
 	}
 }
 
@@ -77,7 +83,6 @@ func (q *healthFilter) Filter(mm criteria.MatchMaker, recs []record.Record) []re
 }
 
 func (q *healthFilter) processRecords(criteria criteria.Criteria, records []record.Record) {
-	wg := &sync.WaitGroup{}
 	usedWaitGroup := false
 
 	for _, r := range records {
@@ -85,7 +90,7 @@ func (q *healthFilter) processRecords(criteria criteria.Criteria, records []reco
 			q.health <- record.Host{IP: r.IP, FQDN: fqdn[0]}
 
 			if len(criteria["y"]) > 0 {
-				if q.synchronousHealthCheck(criteria["y"][0], r.IP, wg) {
+				if q.synchronousHealthCheck(criteria["y"][0], r.IP) {
 					usedWaitGroup = true
 				}
 			}
@@ -93,16 +98,16 @@ func (q *healthFilter) processRecords(criteria criteria.Criteria, records []reco
 	}
 
 	if usedWaitGroup {
-		q.waitForWaitGroupOrTimeout(wg)
+		q.waitForWaitGroupOrTimeout()
 	}
 }
 
-func (q *healthFilter) waitForWaitGroupOrTimeout(wg *sync.WaitGroup) {
-	timeout := time.After(1 * time.Second)
+func (q *healthFilter) waitForWaitGroupOrTimeout() {
+	timeout := q.clock.After(1 * time.Second)
 	success := make(chan struct{})
 
 	go func() {
-		wg.Wait()
+		q.wg.Wait()
 		close(success)
 	}()
 
@@ -149,15 +154,15 @@ func (q *healthFilter) interpretHealthState(ip string, queriedGroupIDs []string)
 	return queriedHealthState.State
 }
 
-func (q *healthFilter) synchronousHealthCheck(strategy, ip string, wg *sync.WaitGroup) bool {
+func (q *healthFilter) synchronousHealthCheck(strategy, ip string) bool {
 	usedWaitGroup := false
 	switch strategy {
 	case "0":
 	case "1":
 		if q.w.HealthState(ip).State == healthiness.StateUnchecked {
-			wg.Add(1)
+			q.wg.Add(1)
 			q.filterWorkPool.Submit(func() {
-				defer wg.Done()
+				defer q.wg.Done()
 				q.w.RunCheck(ip)
 			})
 		}
