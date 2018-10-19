@@ -144,14 +144,18 @@ func (q *healthFilter) sortRecords(records []record.Record, queriedGroupIDs []st
 
 func (q *healthFilter) interpretHealthState(ip string, queriedGroupIDs []string) api.HealthStatus {
 	queriedHealthState := q.w.HealthState(ip)
+	healthState := queriedHealthState.State
+
 	for _, groupID := range queriedGroupIDs {
 		if groupState, ok := queriedHealthState.GroupState[groupID]; ok {
 			if groupState == api.StatusFailing {
 				return api.StatusFailing
 			}
+			healthState = groupState
 		}
 	}
-	return queriedHealthState.State
+
+	return healthState
 }
 
 func (q *healthFilter) synchronousHealthCheck(strategy, ip string) bool {

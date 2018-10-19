@@ -197,8 +197,12 @@ var _ = Describe("HealthFilter", func() {
 					healthStrategy = "3"
 				})
 				DescribeTable("when querying link healthiness", func(runningLinks, failingLinks, queriedLinks []string) {
+					vmState := api.StatusRunning
+					if len(failingLinks) > 0 {
+						vmState = api.StatusFailing
+					}
 					result := api.HealthResult{
-						State:      api.StatusRunning,
+						State:      vmState,
 						GroupState: map[string]api.HealthStatus{},
 					}
 					for _, runningLink := range runningLinks {
@@ -242,6 +246,8 @@ var _ = Describe("HealthFilter", func() {
 					Entry("when there is a single queried and failing link", []string{}, []string{"1"}, []string{"1"}),
 					Entry("when there are multiple queried links and all are running", []string{"1", "2"}, []string{}, []string{"1", "2"}),
 					Entry("when there are multiple queried links and some are running", []string{"1"}, []string{"2"}, []string{"1", "2"}),
+					Entry("when there are multiple queried links and some are running", []string{"1"}, []string{"2"}, []string{"1"}),
+					Entry("when there are multiple queried links and some are running", []string{"1"}, []string{"2"}, []string{"2"}),
 					Entry("when there are multiple queried links and all are failing", []string{}, []string{"1", "2"}, []string{"1", "2"}),
 					Entry("when a queried link does not exist", []string{}, []string{}, []string{"1", "2"}),
 				)
