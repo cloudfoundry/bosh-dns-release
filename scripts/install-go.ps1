@@ -3,6 +3,7 @@ trap {
   exit 1
 }
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 choco install -y mingw
 choco install -y jq
@@ -24,6 +25,7 @@ if ((Get-Command 'go.exe' -ErrorAction SilentlyContinue) -ne $null) {
 
 Write-Host "Installing $GO_VERSION"
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Invoke-WebRequest "https://storage.googleapis.com/golang/$GO_VERSION.windows-amd64.msi" ` -UseBasicParsing -OutFile go.msi
 
 $p = Start-Process -FilePath "msiexec" ` -ArgumentList "/passive /norestart /i go.msi" ` -Wait -PassThru
