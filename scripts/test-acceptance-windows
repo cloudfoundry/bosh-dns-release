@@ -10,21 +10,29 @@ setup_env() {
 
   echo "### bbl-uping environment ${env_name}"
 
+  local bosh_candidate_release_flag=
+  if [[ ! -z "$BOSH_RELEASE_TARBALL_LOCATION" ]]; then
+    bosh_candidate_release_flag="--input=bosh-candidate-release=$BOSH_RELEASE_TARBALL_LOCATION"
+  fi
+
   ENV_NAME="${env_name}" \
   BBL_GCP_SERVICE_ACCOUNT_KEY="$( bosh int <(lpass show --notes 'dns-release pipeline vars') --path=/bbl_gcp_service_account_key_id )" \
   fly -t production execute --privileged --include-ignored \
     --config="${task_dir}/bbl-up.yml" \
     --input=bosh-dns-release="${release_dir}" \
     --input=envs="$PWD/envs" \
+    $bosh_candidate_release_flag \
     --output=envs="$PWD/envs"
+}
 
+upload_dependencies() {
   echo "### uploading release and stemcells"
   # windows specfic
   ENV_NAME="${env_name}" \
   fly -t production execute --privileged --include-ignored \
     --config="${task_dir}/setup-deploy.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
-    --input=bosh-dns-release="${release_dir}" \
+    --input=candidate-release="${tarball_dir}" \
     --input=envs="$PWD/envs"
 }
 
@@ -71,8 +79,9 @@ main() {
   local destroy=true
   local skip_bbl=false
   local windows_version=windows2012R2
+  local bosh_repo=
 
-  while getopts ":adthw:" opt; do
+  while getopts ":adthw:c:" opt; do
     case ${opt} in
       a )
         echo "Keep-alive option detected (-a)."
@@ -91,13 +100,17 @@ main() {
       w )
         windows_version="$OPTARG"
         ;;
+      c )
+        bosh_repo="$OPTARG"
+        ;;
       h )
-        echo "Usage: $0 [-h|-a|-w WINDOWS_OS_VERSION]"
-        echo "     $0 -h                      Display this help message."
-        echo "     $0 a                       Do not destroy environment after running tests."
-        echo "     $0 d                       Destroy-only mode. Will destroy existing environment left around from previous run."
-        echo "     $0 t                       Skip bbl-up. Will only run the tests. WARNING: you need to have setup the environment prior to running this."
-        echo "     $0 w WINDOWS_OS_VERSION    Windows stemcell version to use (windows2016 or windows2012R2 [default])."
+        echo "Usage: $0 [-h|-a|-w WINDOWS_OS_VERSION|-c BOSH_CANDIDATE_RELEASE_CONTAINING_DIR]"
+        echo "     $0 -h                     Display this help message."
+        echo "     $0 -a                     Do not destroy environment after running tests."
+        echo "     $0 -d                     Destroy-only mode. Will destroy existing environment left around from previous run."
+        echo "     $0 -t                     Skip bbl-up. Will only run the tests. WARNING: you need to have setup the environment prior to running this."
+        echo "     $0 -w WINDOWS_OS_VERSION  Windows stemcell version to use (windows2016 or windows2012R2 [default])."
+        echo "     $0 -c BOSH_REPO           Location of the BOSH repo."
         exit 0
         ;;
       \? )
@@ -113,14 +126,19 @@ main() {
   mkdir -p "$PWD/envs"
 
   DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-  tarball_dir=$(mktemp -d)
-  bosh create-release --force --tarball="${tarball_dir}/bosh-windows-dns-release.tgz"
-  pushd "$tarball_dir"
-    git init
-  popd
 
   task_dir="${DIR}/../ci/tasks/windows"
   release_dir="${DIR}/../"
+
+  tarball_dir=$(mktemp -d)
+  bosh create-release --force --tarball="${tarball_dir}/bosh-windows-dns-release.tgz" --dir "${release_dir}"
+
+  if [[ ! -z "$bosh_repo" ]]; then
+    export BOSH_RELEASE_TARBALL_LOCATION=$(mktemp -d)
+    pushd "$bosh_repo"
+      bosh create-release --force --tarball="${BOSH_RELEASE_TARBALL_LOCATION}/bosh-release.tgz"
+    popd
+  fi
 
   if [[ "$destroy" = "only" ]]; then
     destroy_env
@@ -131,6 +149,7 @@ main() {
     setup_env
   fi
 
+  upload_dependencies
   run_tests
 
   if [[ "$destroy" = "true" ]]; then

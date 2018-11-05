@@ -4,7 +4,10 @@ set -exu
 
 ROOT_DIR=$PWD
 
-start-bosh -o /usr/local/bosh-deployment/local-dns.yml
+start-bosh \
+    -o /usr/local/bosh-deployment/local-bosh-release-tarball.yml \
+    -o /usr/local/bosh-deployment/local-dns.yml \
+    -v local_bosh_release="$(echo -n $PWD/bosh-candidate-release/*.tgz)"
 
 source /tmp/local-bosh/director/env
 

@@ -25,4 +25,4 @@ pushd $ROOT_DIR/bosh-dns-release/src/bosh-dns/acceptance_tests/dns-acceptance-re
    bosh create-release --force && bosh upload-release --rebase
 popd
 
-bosh -d bosh-dns-shared-acceptance run-errand acceptance-tests
+bosh -d bosh-dns-shared-acceptance run-errand acceptance-tests --keep-alive

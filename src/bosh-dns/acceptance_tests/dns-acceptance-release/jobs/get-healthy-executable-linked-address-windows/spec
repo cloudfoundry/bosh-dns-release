@@ -1,0 +1,9 @@
+---
+name: get-healthy-executable-linked-address-windows
+
+templates:
+  run.ps1.erb: bin/run.ps1
+
+packages: []
+
+properties: {}

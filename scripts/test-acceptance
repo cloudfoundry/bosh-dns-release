@@ -18,4 +18,5 @@ fly -t production execute --privileged \
   --config=./ci/tasks/test-acceptance.yml \
   --inputs-from=bosh-dns-release/test-acceptance \
   --input=candidate-release=${tarball_dir} \
-  --input=bosh-dns-release=$DIR/../
+  --input=bosh-dns-release=$DIR/../ \
+  "$@"

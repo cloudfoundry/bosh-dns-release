@@ -6,10 +6,12 @@ main() {
   trap "commit_bbl_state_dir ${bbl_state_env_repo_dir} ${ENV_NAME} ${output_dir} 'Update bbl state dir'" EXIT
 
   mkdir -p envs/${ENV_NAME}
+  local bosh_release_path=$(echo $PWD/bosh-candidate-release/*.tgz)
 
   pushd envs/${ENV_NAME}
     bbl version
     bbl plan > bbl_plan.txt
+    sed -i "/bosh create-env/a -o \${BBL_STATE_DIR}/bosh-deployment/local-bosh-release-tarball.yml -v local_bosh_release=${bosh_release_path} \\\\" create-director.sh
     bbl --debug up
     bbl print-env > .envrc
     source .envrc

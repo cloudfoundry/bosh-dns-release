@@ -3,6 +3,15 @@ name: has-health-executable
 
 templates:
   healthy.erb: bin/dns/healthy
+  address.erb: address
+
+provides:
+- name: health-executable
+  type: dns-acceptance
+
+consumes:
+- name: health-executable
+  type: dns-acceptance
 
 packages: []
 

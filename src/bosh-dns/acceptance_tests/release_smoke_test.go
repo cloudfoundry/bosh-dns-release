@@ -4,6 +4,7 @@ import (
 	"bosh-dns/tlsclient"
 	"crypto/tls"
 	"fmt"
+	"regexp"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -287,27 +288,96 @@ var _ = Describe("Integration", func() {
 				lastInstance := allDeployedInstances[1]
 				lastInstanceSlug := fmt.Sprintf("%s/%s", lastInstance.InstanceGroup, lastInstance.InstanceID)
 
-				Eventually(func() healthResponse {
-					return secureGetRespBody(client, lastInstance.IP, 2345)
-				}, 31*time.Second).Should(Equal(healthResponse{State: "running"}))
+				Eventually(func() string {
+					return secureGetRespBody(client, lastInstance.IP, 2345).State
+				}, 31*time.Second).Should(Equal("running"))
 
 				runErrand("make-health-executable-job-unhealthy"+osSuffix, lastInstanceSlug)
 
-				Eventually(func() healthResponse {
-					return secureGetRespBody(client, lastInstance.IP, 2345)
-				}, 31*time.Second).Should(Equal(healthResponse{State: "failing"}))
+				Eventually(func() string {
+					return secureGetRespBody(client, lastInstance.IP, 2345).State
+				}, 31*time.Second).Should(Equal("failing"))
 
 				runErrand("make-health-executable-job-healthy"+osSuffix, lastInstanceSlug)
 
-				Eventually(func() healthResponse {
-					return secureGetRespBody(client, lastInstance.IP, 2345)
-				}, 31*time.Second).Should(Equal(healthResponse{State: "running"}))
+				Eventually(func() string {
+					return secureGetRespBody(client, lastInstance.IP, 2345).State
+				}, 31*time.Second).Should(Equal("running"))
 			})
+		})
+	})
+
+	Describe("link dns names", func() {
+		var (
+			osSuffix string
+		)
+
+		BeforeEach(func() {
+			osSuffix = ""
+			if testTargetOS == "windows" {
+				osSuffix = "-windows"
+			}
+			ensureHealthEndpointDeployed(
+				"-o", "../test_yml_assets/ops/enable-link-dns-addresses.yml",
+				"-o", "../test_yml_assets/ops/enable-healthy-executable-job"+osSuffix+".yml",
+			)
+			firstInstance = allDeployedInstances[0]
+		})
+
+		It("respects health status according to job providing link", func() {
+			client := setupSecureGet()
+			lastInstance := allDeployedInstances[1]
+			lastInstanceSlug := fmt.Sprintf("%s/%s", lastInstance.InstanceGroup, lastInstance.InstanceID)
+			output := runErrand("get-healthy-executable-linked-address"+osSuffix, lastInstanceSlug)
+			address := strings.TrimSpace(strings.Split(strings.Split(output, "ADDRESS:")[1], "\n")[0])
+			Expect(address).To(MatchRegexp(`^q-n1s0\.q-g\d+\.bosh$`))
+			re := regexp.MustCompile(`^q-n1s0\.q-g(\d+)\.bosh$`)
+			groupID := re.FindStringSubmatch(address)[1]
+
+			Eventually(func() string {
+				return secureGetRespBody(client, lastInstance.IP, 2345).GroupState[groupID]
+			}, 31*time.Second).Should(Equal("running"))
+
+			Eventually(func() []string {
+				return resolve(address, firstInstance.IP)
+			}, 31*time.Second).Should(ConsistOf(firstInstance.IP, lastInstance.IP))
+
+			runErrand("make-health-executable-job-unhealthy"+osSuffix, lastInstanceSlug)
+
+			Eventually(func() string {
+				return secureGetRespBody(client, lastInstance.IP, 2345).GroupState[groupID]
+			}, 31*time.Second).Should(Equal("failing"))
+
+			Eventually(func() []string {
+				return resolve(address, firstInstance.IP)
+			}, 31*time.Second).Should(ConsistOf(firstInstance.IP))
+
+			runErrand("make-health-executable-job-healthy"+osSuffix, lastInstanceSlug)
+
+			Eventually(func() string {
+				return secureGetRespBody(client, lastInstance.IP, 2345).GroupState[groupID]
+			}, 31*time.Second).Should(Equal("running"))
+
+			Eventually(func() []string {
+				return resolve(address, firstInstance.IP)
+			}, 31*time.Second).Should(ConsistOf(firstInstance.IP, lastInstance.IP))
 		})
 	})
 })
 
-func runErrand(errandName string, instanceSlug string) {
+func resolve(address, server string) []string {
+	fmt.Println(strings.Split(fmt.Sprintf("+short %s @%s", address, server), " "))
+	cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+short %s @%s", address, server), " ")...)
+	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+	Expect(err).NotTo(HaveOccurred())
+
+	<-session.Exited
+	Expect(session.ExitCode()).To(BeZero())
+
+	return strings.Split(strings.TrimSpace(string(session.Out.Contents())), "\n")
+}
+
+func runErrand(errandName string, instanceSlug string) string {
 	session, err := gexec.Start(exec.Command(
 		boshBinaryPath, "-n",
 		"-d", boshDeployment,
@@ -316,6 +386,7 @@ func runErrand(errandName string, instanceSlug string) {
 	), GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
 	Eventually(session, time.Minute).Should(gexec.Exit(0))
+	return string(session.Out.Contents())
 }
 
 func ensureHealthEndpointDeployed(extraOps ...string) {
