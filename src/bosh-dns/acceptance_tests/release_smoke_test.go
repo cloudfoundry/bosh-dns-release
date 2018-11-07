@@ -166,9 +166,9 @@ var _ = Describe("Integration", func() {
 		It("returns a healthy response when the instance is running", func() {
 			client := setupSecureGet()
 
-			Eventually(func() healthResponse {
-				return secureGetRespBody(client, firstInstance.IP, 2345)
-			}, 31*time.Second).Should(Equal(healthResponse{State: "running"}))
+			Eventually(func() string {
+				return secureGetRespBody(client, firstInstance.IP, 2345).State
+			}, 31*time.Second).Should(Equal("running"))
 		})
 
 		It("stops returning IP addresses of instances whose status becomes unknown", func() {
