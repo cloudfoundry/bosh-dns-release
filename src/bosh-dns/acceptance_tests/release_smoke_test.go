@@ -330,8 +330,8 @@ var _ = Describe("Integration", func() {
 			lastInstanceSlug := fmt.Sprintf("%s/%s", lastInstance.InstanceGroup, lastInstance.InstanceID)
 			output := runErrand("get-healthy-executable-linked-address"+osSuffix, lastInstanceSlug)
 			address := strings.TrimSpace(strings.Split(strings.Split(output, "ADDRESS:")[1], "\n")[0])
-			Expect(address).To(MatchRegexp(`^q-n1s0\.q-g\d+\.bosh$`))
-			re := regexp.MustCompile(`^q-n1s0\.q-g(\d+)\.bosh$`)
+			Expect(address).To(MatchRegexp(`^q-n\d+s0\.q-g\d+\.bosh$`))
+			re := regexp.MustCompile(`^q-n\d+s0\.q-g(\d+)\.bosh$`)
 			groupID := re.FindStringSubmatch(address)[1]
 
 			Eventually(func() string {
