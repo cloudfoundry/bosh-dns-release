@@ -411,7 +411,7 @@ var _ = Describe("HealthFilter", func() {
 				Context("when it takes too long to check health", func() {
 					BeforeEach(func() {
 						fakeHealthWatcher.RunCheckStub = func(ip string) {
-							clock.Increment(2 * time.Second)
+							clock.WaitForWatcherAndIncrement(2 * time.Second)
 						}
 						fakeHealthWatcher.HealthStateStub = func(ip string) api.HealthResult {
 							return api.HealthResult{State: healthiness.StateUnchecked}
