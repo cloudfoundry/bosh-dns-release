@@ -62,7 +62,7 @@ func Run() {
 	}
 
 	log.SetOutput(os.Stdout)
-	log.SetFlags(log.LstdFlags)
+	log.SetFlags(0) // Set to 0 because we're doing our own time, with timezone
 
 	if version {
 		showVersion()
@@ -257,14 +257,14 @@ var (
 )
 
 // flagsBlacklist removes flags with these names from our flagset.
-var flagsBlacklist = map[string]bool{
-	"logtostderr":      true,
-	"alsologtostderr":  true,
-	"v":                true,
-	"stderrthreshold":  true,
-	"vmodule":          true,
-	"log_backtrace_at": true,
-	"log_dir":          true,
+var flagsBlacklist = map[string]struct{}{
+	"logtostderr":      struct{}{},
+	"alsologtostderr":  struct{}{},
+	"v":                struct{}{},
+	"stderrthreshold":  struct{}{},
+	"vmodule":          struct{}{},
+	"log_backtrace_at": struct{}{},
+	"log_dir":          struct{}{},
 }
 
 var flagsToKeep []*flag.Flag

@@ -5,7 +5,6 @@ import (
 	"context"
 	"net"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -27,7 +26,7 @@ type Metrics struct {
 	srv     *http.Server
 
 	zoneNames []string
-	zoneMap   map[string]bool
+	zoneMap   map[string]struct{}
 	zoneMu    sync.RWMutex
 }
 
@@ -36,11 +35,11 @@ func New(addr string) *Metrics {
 	met := &Metrics{
 		Addr:    addr,
 		Reg:     prometheus.NewRegistry(),
-		zoneMap: make(map[string]bool),
+		zoneMap: make(map[string]struct{}),
 	}
 	// Add the default collectors
 	met.MustRegister(prometheus.NewGoCollector())
-	met.MustRegister(prometheus.NewProcessCollector(os.Getpid(), ""))
+	met.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
 
 	// Add all of our collectors
 	met.MustRegister(buildInfo)
@@ -57,12 +56,20 @@ func New(addr string) *Metrics {
 }
 
 // MustRegister wraps m.Reg.MustRegister.
-func (m *Metrics) MustRegister(c prometheus.Collector) { m.Reg.MustRegister(c) }
+func (m *Metrics) MustRegister(c prometheus.Collector) {
+	err := m.Reg.Register(c)
+	if err != nil {
+		// ignore any duplicate error, but fatal on any other kind of error
+		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
+			log.Fatalf("Cannot register metrics collector: %s", err)
+		}
+	}
+}
 
 // AddZone adds zone z to m.
 func (m *Metrics) AddZone(z string) {
 	m.zoneMu.Lock()
-	m.zoneMap[z] = true
+	m.zoneMap[z] = struct{}{}
 	m.zoneNames = keys(m.zoneMap)
 	m.zoneMu.Unlock()
 }
@@ -133,7 +140,7 @@ func (m *Metrics) OnFinalShutdown() error {
 	return m.stopServer()
 }
 
-func keys(m map[string]bool) []string {
+func keys(m map[string]struct{}) []string {
 	sx := []string{}
 	for k := range m {
 		sx = append(sx, k)
