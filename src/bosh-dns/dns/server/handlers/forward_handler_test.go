@@ -171,17 +171,14 @@ var _ = Describe("ForwardHandler", func() {
 		})
 
 		Context("when request contains questions", func() {
-			DescribeTable("it responds to DNS requests",
-				func(protocol string, remoteAddrReturns net.Addr, truncatedResponse bool) {
+			DescribeTable("responds to DNS requests",
+				func(protocol string, remoteAddrReturns net.Addr) {
 					recursorAnswer := &dns.Msg{
 						Answer: []dns.RR{&dns.A{A: net.ParseIP("99.99.99.99")}},
 					}
 					fakeExchanger := &handlersfakes.FakeExchanger{}
 
 					var err error
-					if truncatedResponse {
-						err = dns.ErrTruncated
-					}
 					fakeExchanger.ExchangeReturns(recursorAnswer, 0, err)
 
 					fakeExchangerFactory := func(net string) handlers.Exchanger {
@@ -214,9 +211,8 @@ var _ = Describe("ForwardHandler", func() {
 					Expect(logTag).To(Equal("ForwardHandler"))
 					Expect(logMessage).To(Equal("handlers.ForwardHandler Request [255] [example.com.] 0 [recursor=127.0.0.1] 0ns"))
 				},
-				Entry("forwards query to recursor via udp for udp clients", "udp", nil, false),
-				Entry("forwards query to recursor via udp for udp clients when the response is truncated", "udp", nil, true),
-				Entry("forwards query to recursor via tcp for tcp clients", "tcp", &net.TCPAddr{}, false),
+				Entry("forwards query to recursor via udp for udp clients", "udp", nil),
+				Entry("forwards query to recursor via tcp for tcp clients", "tcp", &net.TCPAddr{}),
 			)
 
 			Context("compression", func() {

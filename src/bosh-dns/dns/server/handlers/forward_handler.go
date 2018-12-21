@@ -61,7 +61,7 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 			err = fmt.Errorf("Received SERVFAIL from upstream (recursor: %s)", recursor)
 		}
 
-		if err == nil || err == dns.ErrTruncated {
+		if err == nil {
 			response := r.compressIfNeeded(responseWriter, request, exchangeAnswer)
 
 			if writeErr := responseWriter.WriteMsg(response); writeErr != nil {
