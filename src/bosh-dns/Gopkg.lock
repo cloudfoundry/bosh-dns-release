@@ -470,7 +470,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "c446015edc5ef4919a8da23e83ceb4c24a153c2e"
+  revision = "d00ac6d27372a4273825635281f2dc360d4be563"
 
 [[projects]]
   branch = "master"
