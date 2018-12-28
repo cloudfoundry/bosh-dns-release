@@ -52,7 +52,7 @@ var _ = Describe("recursor", func() {
 
 			output := string(session.Out.Contents())
 			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-			Expect(output).To(MatchRegexp("example.com.\\s+0\\s+IN\\s+A\\s+10\\.10\\.10\\.10"))
+			Expect(output).To(MatchRegexp("example.com.\\s+5\\s+IN\\s+A\\s+10\\.10\\.10\\.10"))
 			Expect(output).To(ContainSubstring(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 		})
 	})
@@ -282,7 +282,7 @@ var _ = Describe("recursor", func() {
 
 			output := string(session.Out.Contents())
 			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-			Expect(output).To(MatchRegexp("example.com.\\s+0\\s+IN\\s+A\\s+10\\.10\\.10\\.10"))
+			Expect(output).To(MatchRegexp("example.com.\\s+5\\s+IN\\s+A\\s+10\\.10\\.10\\.10"))
 			Expect(output).To(ContainSubstring(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 		})
 
