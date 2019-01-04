@@ -9,10 +9,11 @@ main() {
     clean_up_director docker
   fi
 
-  cd "bbl-state/${BBL_STATE_DIR}"
-  bbl version
+  pushd "bbl-state/${BBL_STATE_DIR}"
+    bbl version
 
-  bbl --debug destroy --no-confirm
+    bbl --debug destroy --no-confirm
+  popd
 }
 
 main
