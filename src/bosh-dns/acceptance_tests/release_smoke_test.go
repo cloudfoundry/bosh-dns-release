@@ -179,8 +179,7 @@ var _ = Describe("Integration", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
+			Eventually(session).Should(gexec.Exit(0))
 
 			output = string(session.Out.Contents())
 			Expect(output).To(ContainSubstring("Got answer:"))
@@ -202,6 +201,26 @@ var _ = Describe("Integration", func() {
 				)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+
+				Eventually(func() string {
+					cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
+					session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
+
+					Eventually(session).Should(gexec.Exit(0))
+					Expect(session.ExitCode()).To(BeZero())
+
+					output = string(session.Out.Contents())
+
+					return output
+				}, 60*time.Second, 1*time.Second).Should(
+					ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)),
+				)
+
+				Expect(output).To(ContainSubstring("Got answer:"))
+				for _, info := range allDeployedInstances {
+					Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
+				}
 			}()
 
 			Eventually(func() string {
@@ -209,17 +228,18 @@ var _ = Describe("Integration", func() {
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
-				<-session.Exited
+				Eventually(session).Should(gexec.Exit(0))
 				Expect(session.ExitCode()).To(BeZero())
 
 				output = string(session.Out.Contents())
 
 				return output
-			}, 60*time.Second, 1*time.Second).Should(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+			}, 60*time.Second, 1*time.Second).Should(SatisfyAll(
+				ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"),
+				MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP),
+				Not(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP)),
+			))
 			// ^ timeout = agent heartbeat updates health.json every 20s + dns checks healthiness every 20s + a buffer interval
-
-			Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP))
-			Expect(output).ToNot(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP))
 		})
 
 		It("stops returning IP addresses of instances that become unhealthy", func() {
