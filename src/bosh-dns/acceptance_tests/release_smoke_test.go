@@ -1,8 +1,7 @@
-package acceptance_test
+package acceptance
 
 import (
-	"bosh-dns/tlsclient"
-	"crypto/tls"
+	"bosh-dns/acceptance_tests/helpers"
 	"fmt"
 	"regexp"
 	"strings"
@@ -14,22 +13,12 @@ import (
 
 	"time"
 
-	"encoding/json"
-	"io/ioutil"
-
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-
-	"net/http"
-	"path/filepath"
-
-	"github.com/cloudfoundry/bosh-utils/httpclient"
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
 )
 
 var _ = Describe("Integration", func() {
-	var firstInstance instanceInfo
+	var firstInstance helpers.InstanceInfo
 
 	Describe("DNS endpoint", func() {
 		BeforeEach(func() {
@@ -42,8 +31,7 @@ var _ = Describe("Integration", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
+			Eventually(session).Should(gexec.Exit(0))
 
 			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
 			Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
@@ -159,7 +147,7 @@ var _ = Describe("Integration", func() {
 			if testTargetOS == "windows" {
 				osSuffix = "-windows"
 			}
-			ensureHealthEndpointDeployed("-o", "../test_yml_assets/ops/enable-stop-a-job"+osSuffix+".yml")
+			ensureHealthEndpointDeployed("-o", assetPath("ops/enable-stop-a-job"+osSuffix+".yml"))
 			firstInstance = allDeployedInstances[0]
 		})
 
@@ -189,18 +177,11 @@ var _ = Describe("Integration", func() {
 			}
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 
-			stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
-				"stop", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID),
-			)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+			secondInstanceSlug := fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID)
+			helpers.Bosh("stop", secondInstanceSlug)
 
 			defer func() {
-				stdOut, stdErr, exitStatus, err = cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
-					"start", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID),
-				)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+				helpers.Bosh("start", secondInstanceSlug)
 
 				Eventually(func() string {
 					cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
@@ -262,14 +243,10 @@ var _ = Describe("Integration", func() {
 			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
 
 			instanceSlug := fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID)
-			runErrand("stop-a-job"+osSuffix, instanceSlug)
+			helpers.BoshRunErrand("stop-a-job"+osSuffix, instanceSlug)
 
 			defer func() {
-				stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "-d", boshDeployment,
-					"start", fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID),
-				)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
+				helpers.Bosh("start", instanceSlug)
 			}()
 
 			Eventually(func() string {
@@ -300,7 +277,7 @@ var _ = Describe("Integration", func() {
 				if testTargetOS == "windows" {
 					osSuffix = "-windows"
 				}
-				ensureHealthEndpointDeployed("-o", "../test_yml_assets/ops/enable-healthy-executable-job"+osSuffix+".yml")
+				ensureHealthEndpointDeployed("-o", assetPath("ops/enable-healthy-executable-job"+osSuffix+".yml"))
 			})
 
 			It("changes the health endpoint return value based on how the executable exits", func() {
@@ -312,13 +289,13 @@ var _ = Describe("Integration", func() {
 					return secureGetRespBody(client, lastInstance.IP, 2345).State
 				}, 31*time.Second).Should(Equal("running"))
 
-				runErrand("make-health-executable-job-unhealthy"+osSuffix, lastInstanceSlug)
+				helpers.BoshRunErrand("make-health-executable-job-unhealthy"+osSuffix, lastInstanceSlug)
 
 				Eventually(func() string {
 					return secureGetRespBody(client, lastInstance.IP, 2345).State
 				}, 31*time.Second).Should(Equal("failing"))
 
-				runErrand("make-health-executable-job-healthy"+osSuffix, lastInstanceSlug)
+				helpers.BoshRunErrand("make-health-executable-job-healthy"+osSuffix, lastInstanceSlug)
 
 				Eventually(func() string {
 					return secureGetRespBody(client, lastInstance.IP, 2345).State
@@ -338,8 +315,8 @@ var _ = Describe("Integration", func() {
 				osSuffix = "-windows"
 			}
 			ensureHealthEndpointDeployed(
-				"-o", "../test_yml_assets/ops/enable-link-dns-addresses.yml",
-				"-o", "../test_yml_assets/ops/enable-healthy-executable-job"+osSuffix+".yml",
+				"-o", assetPath("ops/enable-link-dns-addresses.yml"),
+				"-o", assetPath("ops/enable-healthy-executable-job"+osSuffix+".yml"),
 			)
 			firstInstance = allDeployedInstances[0]
 		})
@@ -348,7 +325,7 @@ var _ = Describe("Integration", func() {
 			client := setupSecureGet()
 			lastInstance := allDeployedInstances[1]
 			lastInstanceSlug := fmt.Sprintf("%s/%s", lastInstance.InstanceGroup, lastInstance.InstanceID)
-			output := runErrand("get-healthy-executable-linked-address"+osSuffix, lastInstanceSlug)
+			output := helpers.BoshRunErrand("get-healthy-executable-linked-address"+osSuffix, lastInstanceSlug)
 			address := strings.TrimSpace(strings.Split(strings.Split(output, "ADDRESS:")[1], "\n")[0])
 			Expect(address).To(MatchRegexp(`^q-n\d+s0\.q-g\d+\.bosh$`))
 			re := regexp.MustCompile(`^q-n\d+s0\.q-g(\d+)\.bosh$`)
@@ -362,7 +339,7 @@ var _ = Describe("Integration", func() {
 				return resolve(address, firstInstance.IP)
 			}, 31*time.Second).Should(ConsistOf(firstInstance.IP, lastInstance.IP))
 
-			runErrand("make-health-executable-job-unhealthy"+osSuffix, lastInstanceSlug)
+			helpers.BoshRunErrand("make-health-executable-job-unhealthy"+osSuffix, lastInstanceSlug)
 
 			Eventually(func() string {
 				return secureGetRespBody(client, lastInstance.IP, 2345).GroupState[groupID]
@@ -372,7 +349,7 @@ var _ = Describe("Integration", func() {
 				return resolve(address, firstInstance.IP)
 			}, 31*time.Second).Should(ConsistOf(firstInstance.IP))
 
-			runErrand("make-health-executable-job-healthy"+osSuffix, lastInstanceSlug)
+			helpers.BoshRunErrand("make-health-executable-job-healthy"+osSuffix, lastInstanceSlug)
 
 			Eventually(func() string {
 				return secureGetRespBody(client, lastInstance.IP, 2345).GroupState[groupID]
@@ -384,109 +361,3 @@ var _ = Describe("Integration", func() {
 		})
 	})
 })
-
-func resolve(address, server string) []string {
-	fmt.Println(strings.Split(fmt.Sprintf("+short %s @%s", address, server), " "))
-	cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+short %s @%s", address, server), " ")...)
-	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-	Expect(err).NotTo(HaveOccurred())
-
-	<-session.Exited
-	Expect(session.ExitCode()).To(BeZero())
-
-	return strings.Split(strings.TrimSpace(string(session.Out.Contents())), "\n")
-}
-
-func runErrand(errandName string, instanceSlug string) string {
-	session, err := gexec.Start(exec.Command(
-		boshBinaryPath, "-n",
-		"-d", boshDeployment,
-		"run-errand", errandName,
-		"--instance", instanceSlug,
-	), GinkgoWriter, GinkgoWriter)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(session, time.Minute).Should(gexec.Exit(0))
-	return string(session.Out.Contents())
-}
-
-func ensureHealthEndpointDeployed(extraOps ...string) {
-	cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
-
-	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/manifests/%s.yml", testManifestName()))
-	Expect(err).ToNot(HaveOccurred())
-	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
-	Expect(err).ToNot(HaveOccurred())
-
-	updateCloudConfigWithDefaultCloudConfig()
-	args := []string{
-		"-n", "-d", boshDeployment, "deploy",
-		"-v", fmt.Sprintf("name=%s", boshDeployment),
-		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
-		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
-		"-v", "health_server_port=2345",
-		"-o", "../test_yml_assets/ops/enable-health-manifest-ops.yml",
-		"--vars-store", "creds.yml",
-		manifestPath,
-	}
-
-	args = append(args, extraOps...)
-
-	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, args...)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-	allDeployedInstances = getInstanceInfos(boshBinaryPath)
-}
-
-func setupSecureGet() *httpclient.HTTPClient {
-	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
-		"int", "creds.yml",
-		"--path", "/dns_healthcheck_client_tls/certificate",
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-	clientCertificate := stdOut
-
-	stdOut, stdErr, exitStatus, err = cmdRunner.RunCommand(boshBinaryPath,
-		"int", "creds.yml",
-		"--path", "/dns_healthcheck_client_tls/private_key",
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-	clientPrivateKey := stdOut
-
-	stdOut, stdErr, exitStatus, err = cmdRunner.RunCommand(boshBinaryPath,
-		"int", "creds.yml",
-		"--path", "/dns_healthcheck_client_tls/ca",
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-	caCert := stdOut
-
-	cert, err := tls.X509KeyPair([]byte(clientCertificate), []byte(clientPrivateKey))
-	Expect(err).NotTo(HaveOccurred())
-
-	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
-	return tlsclient.New("health.bosh-dns", []byte(caCert), cert, logger)
-}
-
-type healthResponse struct {
-	State      string            `json:"state"`
-	GroupState map[string]string `json:"group_state"`
-}
-
-func secureGetRespBody(client *httpclient.HTTPClient, hostname string, port int) healthResponse {
-	resp, err := client.Get(fmt.Sprintf("https://%s:%d/health", hostname, port))
-	Expect(err).NotTo(HaveOccurred())
-	defer resp.Body.Close()
-
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-
-	data, err := ioutil.ReadAll(resp.Body)
-	Expect(err).NotTo(HaveOccurred())
-
-	var respJson healthResponse
-	err = json.Unmarshal(data, &respJson)
-	Expect(err).ToNot(HaveOccurred())
-
-	return respJson
-}

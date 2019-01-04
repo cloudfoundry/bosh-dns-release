@@ -1,6 +1,7 @@
-package acceptance_test
+package acceptance
 
 import (
+	"bosh-dns/acceptance_tests/helpers"
 	"fmt"
 	"os/exec"
 	"path/filepath"
@@ -16,7 +17,7 @@ import (
 
 var _ = Describe("HTTP JSON Server integration", func() {
 	var (
-		firstInstance  instanceInfo
+		firstInstance  helpers.InstanceInfo
 		httpDNSSession *gexec.Session
 	)
 
@@ -29,17 +30,15 @@ var _ = Describe("HTTP JSON Server integration", func() {
 
 			cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-			manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/manifests/%s.yml", testManifestName()))
-			Expect(err).ToNot(HaveOccurred())
+			manifestPath := assetPath(testManifestName())
 			aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
 			Expect(err).ToNot(HaveOccurred())
-			enableHTTPJSONEndpointsPath, err := filepath.Abs("../test_yml_assets/ops/enable-http-json-endpoints.yml")
-			Expect(err).ToNot(HaveOccurred())
+			enableHTTPJSONEndpointsPath := assetPath("ops/enable-http-json-endpoints.yml")
 
 			updateCloudConfigWithDefaultCloudConfig()
 
-			stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
-				"-n", "-d", boshDeployment, "deploy",
+			helpers.Bosh(
+				"deploy",
 				"-o", enableHTTPJSONEndpointsPath,
 				"-v", fmt.Sprintf("name=%s", boshDeployment),
 				"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
@@ -49,9 +48,7 @@ var _ = Describe("HTTP JSON Server integration", func() {
 				manifestPath,
 			)
 
-			Expect(err).ToNot(HaveOccurred())
-			Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-			allDeployedInstances = getInstanceInfos(boshBinaryPath)
+			allDeployedInstances = helpers.BoshInstances()
 			firstInstance = allDeployedInstances[0]
 		})
 

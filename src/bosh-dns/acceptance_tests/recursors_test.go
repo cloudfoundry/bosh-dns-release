@@ -1,16 +1,14 @@
-package acceptance_test
+package acceptance
 
 import (
+	"bosh-dns/acceptance_tests/helpers"
 	"fmt"
 	"os/exec"
-	"path/filepath"
 
 	"strings"
 
 	"regexp"
 
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -21,7 +19,7 @@ const testRecursorAddress = "@127.0.0.1"
 var _ = Describe("recursor", func() {
 	var (
 		recursorSession *gexec.Session
-		firstInstance   instanceInfo
+		firstInstance   helpers.InstanceInfo
 	)
 
 	Context("when the recursors must be read from the system resolver list", func() {
@@ -383,69 +381,3 @@ var _ = Describe("recursor", func() {
 		})
 	})
 })
-
-func ensureRecursorIsDefinedByBoshAgent() {
-	cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
-
-	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/manifests/%s.yml", testManifestName()))
-	Expect(err).ToNot(HaveOccurred())
-	disableOverridePath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/ops/%s.yml", noRecursorsOpsFile()))
-	Expect(err).ToNot(HaveOccurred())
-	excludedRecursorsPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/ops/%s.yml", excludedRecursorsOpsFile()))
-	Expect(err).ToNot(HaveOccurred())
-	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
-	Expect(err).ToNot(HaveOccurred())
-
-	updateCloudConfigWithOurLocalRecursor()
-
-	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
-		"-n", "-d", boshDeployment, "deploy",
-		"-v", fmt.Sprintf("name=%s", boshDeployment),
-		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
-		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
-		"-o", disableOverridePath,
-		"-o", excludedRecursorsPath,
-		"--vars-store", "creds.yml",
-		manifestPath,
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-	allDeployedInstances = getInstanceInfos(boshBinaryPath)
-}
-
-func ensureRecursorIsDefinedByDnsRelease() {
-	cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
-
-	manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/manifests/%s.yml", testManifestName()))
-	Expect(err).ToNot(HaveOccurred())
-	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
-	Expect(err).ToNot(HaveOccurred())
-
-	updateCloudConfigWithDefaultCloudConfig()
-
-	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
-		"-n", "-d", boshDeployment, "deploy",
-		"-v", fmt.Sprintf("name=%s", boshDeployment),
-		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
-		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
-		"--vars-store", "creds.yml",
-		manifestPath,
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-	allDeployedInstances = getInstanceInfos(boshBinaryPath)
-}
-
-func updateCloudConfigWithOurLocalRecursor() {
-	removeRecursorAddressesOpsFile, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/ops/%s.yml", setupLocalRecursorOpsFile()))
-	Expect(err).ToNot(HaveOccurred())
-	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "update-cloud-config", "-o", removeRecursorAddressesOpsFile, "-v", "network=director_network", cloudConfigTempFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-}
-
-func updateCloudConfigWithDefaultCloudConfig() {
-	stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath, "-n", "update-cloud-config", "-v", "network=director_network", cloudConfigTempFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-}

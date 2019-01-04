@@ -1,6 +1,7 @@
-package acceptance_test
+package acceptance
 
 import (
+	"bosh-dns/acceptance_tests/helpers"
 	"fmt"
 	"os/exec"
 	"path/filepath"
@@ -16,7 +17,7 @@ import (
 
 var _ = Describe("Handler Configuration through Job Configuration File", func() {
 	var (
-		firstInstance       instanceInfo
+		firstInstance       helpers.InstanceInfo
 		testRecursorSession *gexec.Session
 	)
 
@@ -28,15 +29,14 @@ var _ = Describe("Handler Configuration through Job Configuration File", func() 
 
 		cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
 
-		manifestPath, err := filepath.Abs(fmt.Sprintf("../test_yml_assets/manifests/%s.yml", testManifestName()))
-		Expect(err).ToNot(HaveOccurred())
+		manifestPath := assetPath(testManifestName())
 		acceptanceTestReleasePath, err := filepath.Abs("dns-acceptance-release")
 		Expect(err).ToNot(HaveOccurred())
 
 		updateCloudConfigWithDefaultCloudConfig()
 
-		stdOut, stdErr, exitStatus, err := cmdRunner.RunCommand(boshBinaryPath,
-			"-n", "-d", boshDeployment, "deploy",
+		helpers.Bosh(
+			"deploy",
 			"-v", fmt.Sprintf("name=%s", boshDeployment),
 			"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 			"-v", fmt.Sprintf("acceptance_release_path=%s", acceptanceTestReleasePath),
@@ -45,9 +45,7 @@ var _ = Describe("Handler Configuration through Job Configuration File", func() 
 			manifestPath,
 		)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(exitStatus).To(Equal(0), fmt.Sprintf("stdOut: %s \n stdErr: %s", stdOut, stdErr))
-		allDeployedInstances = getInstanceInfos(boshBinaryPath)
+		allDeployedInstances = helpers.BoshInstances()
 		firstInstance = allDeployedInstances[0]
 	})
 
@@ -60,8 +58,7 @@ var _ = Describe("Handler Configuration through Job Configuration File", func() 
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		<-session.Exited
-		Expect(session.ExitCode()).To(BeZero())
+		Eventually(session).Should(gexec.Exit(0))
 
 		output := string(session.Out.Contents())
 		Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
