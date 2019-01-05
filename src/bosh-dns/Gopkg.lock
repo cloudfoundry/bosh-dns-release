@@ -209,12 +209,12 @@
   version = "v0.11.1"
 
 [[projects]]
-  digest = "1:b83995756f9b1a24c518d40052d80f524f0a9024ee0479d8a8e91ec2548074d1"
+  digest = "1:8e33b7092e6c4b5b1115a4094a6ea8d603da0f7c2d4075449ac77c4483089466"
   name = "github.com/miekg/dns"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "7586a3cbe8ccfc63f82de3ab2ceeb08c9939af72"
-  version = "v1.1.1"
+  revision = "44a8c5f8ba7d0b3eac116182736dcfb5885ee405"
+  version = "v1.1.2"
 
 [[projects]]
   branch = "master"
@@ -304,12 +304,12 @@
   revision = "a64ae2051c20c5cde13292a41db01029566134ba"
 
 [[projects]]
-  digest = "1:5cf3f025cbee5951a4ee961de067c8a89fc95a5adabead774f82822efabab121"
+  digest = "1:14715f705ff5dfe0ffd6571d7d201dd8e921030f8070321a79380d8ca4ec1a24"
   name = "github.com/pkg/errors"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
 
 [[projects]]
   digest = "1:7c7cfeecd2b7147bcfec48a4bf622b4879e26aec145a9e373ce51d0c23b16f6b"
@@ -333,7 +333,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:afcf02486e3d57f5fa717ba373a29da80e3e8c7c0041c97da0e9417d7817684d"
+  digest = "1:4340e7fba4a17b3c5c8c874698eae0db8573668bfa541903bd6a654915d6b2bb"
   name = "github.com/prometheus/common"
   packages = [
     "expfmt",
@@ -341,11 +341,11 @@
     "model",
   ]
   pruneopts = "NUT"
-  revision = "67670fe90761d7ff18ec1d640135e53b9198328f"
+  revision = "b1c43a6df3aedba268353d940b5974f05037ed5c"
 
 [[projects]]
   branch = "master"
-  digest = "1:102dea0c03a915acfc634b7c67f2662012b5483b56d9025e33f5188e112759b6"
+  digest = "1:21971c48d2d34cf633e1898e60bb968eb046a42010ebeb73c8733d7b610cbf59"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -354,7 +354,7 @@
     "xfs",
   ]
   pruneopts = "NUT"
-  revision = "1dc9a6cbc91aacc3e8b2d63db4d2e957a5394ac4"
+  revision = "b1a0a9a36d7453ba0f62578b99712f3a6c5f82d1"
 
 [[projects]]
   branch = "master"
@@ -378,7 +378,7 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
+  revision = "ff983b9c42bc9fbf91556e191cc8efb585c16908"
 
 [[projects]]
   branch = "master"
@@ -408,14 +408,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2075537ba5a9b2cc70c521cd4404bb5368b47f87fddc97fdf6fd2327fad21fe1"
+  digest = "1:07aaaa686ca4f19afc6a85c83991253218d1582fb536078ae2fcde1df0d0ec91"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "9a3f9b0469bbc6b8802087ae5c0af9f61502de01"
+  revision = "82a175fd1598e8a172e58ebdf5ed262bb29129e5"
 
 [[projects]]
   digest = "1:8a12cbc891b7130d3f660f8a309e5c0b083f831e6ac38cdaa1f12e63c12d6bea"
@@ -454,7 +454,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b7ef5af07b9421973508acd2a12e1d82d948357b0a584962ed5f5dbf6bd90681"
+  digest = "1:1fab3960663bc2475da495b7e9fbde653e36c8f81815e309b30b38808f2b6649"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -470,7 +470,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "d00ac6d27372a4273825635281f2dc360d4be563"
+  revision = "498d95493402f719ce3de5c8cb60d1b50d0a1239"
 
 [[projects]]
   branch = "master"

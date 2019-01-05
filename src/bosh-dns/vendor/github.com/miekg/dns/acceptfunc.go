@@ -24,7 +24,7 @@ const (
 	MsgIgnore                        // Ignore the error and send nothing back.
 )
 
-var defaultMsgAcceptFunc = func(dh Header) MsgAcceptAction {
+func defaultMsgAcceptFunc(dh Header) MsgAcceptAction {
 	if isResponse := dh.Bits&_QR != 0; isResponse {
 		return MsgIgnore
 	}
@@ -44,7 +44,9 @@ var defaultMsgAcceptFunc = func(dh Header) MsgAcceptAction {
 	if dh.Ancount != 0 {
 		return MsgReject
 	}
-	if dh.Nscount != 0 {
+	// IXFR request could have one SOA RR in the NS section
+	// RFC 1995, section 3
+	if dh.Nscount > 1 {
 		return MsgReject
 	}
 	if dh.Arcount > 2 {
