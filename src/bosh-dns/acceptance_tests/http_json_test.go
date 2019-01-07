@@ -2,14 +2,16 @@ package acceptance
 
 import (
 	"bosh-dns/acceptance_tests/helpers"
+
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
 	"github.com/onsi/gomega/gexec"
+
+	gomegadns "bosh-dns/gomega-dns"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -28,7 +30,7 @@ var _ = Describe("HTTP JSON Server integration", func() {
 			httpDNSSession, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			cmdRunner = system.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelDebug))
+			cmdRunner = system.NewExecCmdRunner(logger.NewLogger(logger.LevelDebug))
 
 			manifestPath := assetPath(testManifestName())
 			aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
@@ -57,17 +59,11 @@ var _ = Describe("HTTP JSON Server integration", func() {
 		})
 
 		It("answers queries with the response from the http server", func() {
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A app-id.internal.local @%s", firstInstance.IP), " ")...)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
-
-			output := string(session.Out.Contents())
-			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-			Expect(output).To(MatchRegexp("app-id.internal.local.\\s+0\\s+IN\\s+A\\s+192\\.168\\.0\\.1"))
-			Expect(output).To(ContainSubstring(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			dnsResponse := helpers.Dig("app-id.internal.local.", firstInstance.IP)
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP, "ttl": 0}),
+			))
 		})
 	})
 })

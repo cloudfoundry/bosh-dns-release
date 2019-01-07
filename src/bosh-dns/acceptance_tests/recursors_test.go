@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"bosh-dns/acceptance_tests/helpers"
+	gomegadns "bosh-dns/gomega-dns"
 	"fmt"
 	"os/exec"
 
@@ -38,20 +39,11 @@ var _ = Describe("recursor", func() {
 		})
 
 		It("fowards queries to the configured recursors on port 53", func() {
-			cmd := exec.Command("dig",
-				"-t", "A",
-				"example.com", fmt.Sprintf("@%s", firstInstance.IP),
-			)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
-
-			output := string(session.Out.Contents())
-			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-			Expect(output).To(MatchRegexp("example.com.\\s+5\\s+IN\\s+A\\s+10\\.10\\.10\\.10"))
-			Expect(output).To(ContainSubstring(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			dnsResponse := helpers.Dig("example.com.", firstInstance.IP)
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": "10.10.10.10", "ttl": 5}),
+			))
 		})
 	})
 

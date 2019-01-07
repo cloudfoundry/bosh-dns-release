@@ -2,10 +2,10 @@ package acceptance
 
 import (
 	"bosh-dns/acceptance_tests/helpers"
+	gomegadns "bosh-dns/gomega-dns"
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
@@ -54,15 +54,10 @@ var _ = Describe("Handler Configuration through Job Configuration File", func() 
 	})
 
 	It("configures Bosh DNS handlers by producing a dns handlers json file", func() {
-		cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A handler.internal.local @%s", firstInstance.IP), " ")...)
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-
-		Eventually(session).Should(gexec.Exit(0))
-
-		output := string(session.Out.Contents())
-		Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-		Expect(output).To(MatchRegexp("handler.internal.local.\\s+0\\s+IN\\s+A\\s+10\\.168\\.0\\.1"))
-		Expect(output).To(ContainSubstring(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+		dnsResponse := helpers.Dig("handler.internal.local.", firstInstance.IP)
+		Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+		Expect(dnsResponse.Answer).To(ConsistOf(
+			gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP, "ttl": 0}),
+		))
 	})
 })

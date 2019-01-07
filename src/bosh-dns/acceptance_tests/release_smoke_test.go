@@ -2,10 +2,12 @@ package acceptance
 
 import (
 	"bosh-dns/acceptance_tests/helpers"
+	gomegadns "bosh-dns/gomega-dns"
 	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -27,28 +29,18 @@ var _ = Describe("Integration", func() {
 		})
 
 		It("returns records for bosh instances", func() {
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A %s.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.InstanceID, firstInstance.IP), " ")...)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			Eventually(session).Should(gexec.Exit(0))
-
-			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-			Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-			Eventually(session.Out).Should(gbytes.Say(
-				"%s\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s",
-				firstInstance.InstanceID,
-				firstInstance.IP))
-			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			dnsResponse := helpers.Dig(fmt.Sprintf("%s.bosh-dns.default.bosh-dns.bosh.", firstInstance.InstanceID), firstInstance.IP)
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ContainElement(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP, "ttl": 0}),
+			))
 		})
 
 		It("returns Rcode failure for arpaing bosh instances", func() {
 			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-x %s @%s", firstInstance.IP, firstInstance.IP), " ")...)
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
+			Eventually(session).Should(gexec.Exit(0))
 
 			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
 			Eventually(session.Out).Should(gbytes.Say(`;; ->>HEADER<<- opcode: QUERY, status: SERVFAIL, id: \d+`))
@@ -56,84 +48,45 @@ var _ = Describe("Integration", func() {
 		})
 
 		It("returns records for bosh instances found with query for all records", func() {
-			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
+			Expect(allDeployedInstances).To(HaveLen(2))
 
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
-
-			output := string(session.Out.Contents())
-			Expect(output).To(ContainSubstring("Got answer:"))
-			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
-			for _, info := range allDeployedInstances {
-				Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
-			}
-			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
+			))
 		})
 
 		It("returns records for bosh instances found with query for index", func() {
-			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
+			Expect(allDeployedInstances).To(HaveLen(2))
 
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-i%s.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.Index, firstInstance.IP), " ")...)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
-
-			output := string(session.Out.Contents())
-			Expect(output).To(ContainSubstring("Got answer:"))
-			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-			Expect(output).To(MatchRegexp("q-i%s\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.Index, firstInstance.IP))
-			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			dnsResponse := helpers.Dig(fmt.Sprintf("q-i%s.bosh-dns.default.bosh-dns.bosh.", firstInstance.Index), firstInstance.IP)
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP, "ttl": 0}),
+			))
 		})
 
 		It("finds and resolves aliases specified in other jobs on the same instance", func() {
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A internal.alias. @%s", firstInstance.IP), " ")...)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
-
-			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-			Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
-
-			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			Expect(allDeployedInstances).To(HaveLen(2))
+			dnsResponse := helpers.Dig("internal.alias.", firstInstance.IP)
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(HaveLen(len(allDeployedInstances)))
 		})
 
 		It("resolves alias globs", func() {
 			for _, alias := range []string{"asterisk.alias.", "another.asterisk.alias.", "yetanother.asterisk.alias."} {
-				cmdArgs := fmt.Sprintf("-t A %s @%s", alias, firstInstance.IP)
-				cmd := exec.Command("dig", strings.Split(cmdArgs, " ")...)
-				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
-
-				<-session.Exited
-				Expect(session.ExitCode()).To(BeZero())
-
-				Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-				Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
-
-				Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+				dnsResponse := helpers.Dig(alias, firstInstance.IP)
+				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+				Expect(dnsResponse.Answer).To(HaveLen(len(allDeployedInstances)))
 			}
 		})
 
 		It("should resolve specified upcheck", func() {
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A upcheck.bosh-dns. @%s", firstInstance.IP), " ")...)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
-
-			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-			Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-
-			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			dnsResponse := helpers.Dig("upcheck.bosh-dns.", firstInstance.IP)
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(HaveLen(1))
 		})
 	})
 
@@ -160,111 +113,61 @@ var _ = Describe("Integration", func() {
 		})
 
 		It("stops returning IP addresses of instances whose status becomes unknown", func() {
-			var output string
-			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
+			Expect(allDeployedInstances).To(HaveLen(2))
 
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			Eventually(session).Should(gexec.Exit(0))
-
-			output = string(session.Out.Contents())
-			Expect(output).To(ContainSubstring("Got answer:"))
-			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
-			for _, info := range allDeployedInstances {
-				Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
-			}
-			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
+			))
 
 			secondInstanceSlug := fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID)
 			helpers.Bosh("stop", secondInstanceSlug)
 
 			defer func() {
+
 				helpers.Bosh("start", secondInstanceSlug)
-
-				Eventually(func() string {
-					cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
-					session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-					Expect(err).NotTo(HaveOccurred())
-
-					Eventually(session).Should(gexec.Exit(0))
-					Expect(session.ExitCode()).To(BeZero())
-
-					output = string(session.Out.Contents())
-
-					return output
-				}, 60*time.Second, 1*time.Second).Should(
-					ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)),
-				)
-
-				Expect(output).To(ContainSubstring("Got answer:"))
-				for _, info := range allDeployedInstances {
-					Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
-				}
+				Eventually(func() []dns.RR {
+					dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
+					return dnsResponse.Answer
+				}, 60*time.Second, 1*time.Second).Should(HaveLen(len(allDeployedInstances)))
 			}()
 
-			Eventually(func() string {
-				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
-				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
-
-				Eventually(session).Should(gexec.Exit(0))
-				Expect(session.ExitCode()).To(BeZero())
-
-				output = string(session.Out.Contents())
-
-				return output
-			}, 60*time.Second, 1*time.Second).Should(SatisfyAll(
-				ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"),
-				MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP),
-				Not(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP)),
+			Eventually(func() []dns.RR {
+				return helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP).Answer
+			}, 60*time.Second, 1*time.Second).Should(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP}),
 			))
-			// ^ timeout = agent heartbeat updates health.json every 20s + dns checks healthiness every 20s + a buffer interval
 		})
 
 		It("stops returning IP addresses of instances that become unhealthy", func() {
-			var output string
-			Expect(len(allDeployedInstances)).To(BeNumerically(">", 1))
+			Expect(allDeployedInstances).To(HaveLen(2))
 
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			<-session.Exited
-			Expect(session.ExitCode()).To(BeZero())
-
-			output = string(session.Out.Contents())
-			Expect(output).To(ContainSubstring("Got answer:"))
-			Expect(output).To(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: %d, AUTHORITY: 0, ADDITIONAL: 0", len(allDeployedInstances)))
-			for _, info := range allDeployedInstances {
-				Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", info.IP))
-			}
-			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
+			))
 
 			instanceSlug := fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID)
 			helpers.BoshRunErrand("stop-a-job"+osSuffix, instanceSlug)
 
 			defer func() {
 				helpers.Bosh("start", instanceSlug)
+
+				Eventually(func() []dns.RR {
+					dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
+					return dnsResponse.Answer
+				}, 60*time.Second, 1*time.Second).Should(HaveLen(len(allDeployedInstances)))
 			}()
 
-			Eventually(func() string {
-				cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-t A q-s0.bosh-dns.default.bosh-dns.bosh @%s", firstInstance.IP), " ")...)
-				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
-
-				<-session.Exited
-				Expect(session.ExitCode()).To(BeZero())
-
-				output = string(session.Out.Contents())
-
-				return output
-			}, 60*time.Second, 1*time.Second).Should(ContainSubstring("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-			// ^ timeout = agent heartbeat updates health.json every 20s + dns checks healthiness every 20s + a buffer interval
-
-			Expect(output).To(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", firstInstance.IP))
-			Expect(output).ToNot(MatchRegexp("q-s0\\.bosh-dns\\.default\\.bosh-dns\\.bosh\\.\\s+0\\s+IN\\s+A\\s+%s", allDeployedInstances[1].IP))
+			Eventually(func() []dns.RR {
+				return helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP).Answer
+			}, 60*time.Second, 1*time.Second).Should(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP}),
+			))
 		})
 
 		Context("when a job defines a healthy executable", func() {
