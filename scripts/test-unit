@@ -23,6 +23,7 @@ main() {
 			--exclude-dir test_yml_assets \
 			--exclude-dir performance_tests \
 			--exclude-dir acceptance_tests \
+			--exclude-dir gomega-dns \
 			-ri panic src/bosh-dns)" \
 		]] && echo "panics detected in the code -- remove them" && exit 1
 
