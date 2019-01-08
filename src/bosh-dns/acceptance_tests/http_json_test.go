@@ -62,7 +62,7 @@ var _ = Describe("HTTP JSON Server integration", func() {
 			dnsResponse := helpers.Dig("app-id.internal.local.", firstInstance.IP)
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 			Expect(dnsResponse.Answer).To(ConsistOf(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP, "ttl": 0}),
+				gomegadns.MatchResponse(gomegadns.Response{"ip": "192.168.0.1", "ttl": 0}),
 			))
 		})
 	})
