@@ -104,6 +104,14 @@ var _ = Describe("Integration", func() {
 			firstInstance = allDeployedInstances[0]
 		})
 
+		AfterEach(func() {
+			helpers.Bosh("start")
+			Eventually(func() []dns.RR {
+				dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
+				return dnsResponse.Answer
+			}, 60*time.Second, 1*time.Second).Should(HaveLen(len(allDeployedInstances)))
+		})
+
 		It("returns a healthy response when the instance is running", func() {
 			client := setupSecureGet()
 
@@ -125,15 +133,6 @@ var _ = Describe("Integration", func() {
 			secondInstanceSlug := fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID)
 			helpers.Bosh("stop", secondInstanceSlug)
 
-			defer func() {
-
-				helpers.Bosh("start", secondInstanceSlug)
-				Eventually(func() []dns.RR {
-					dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
-					return dnsResponse.Answer
-				}, 60*time.Second, 1*time.Second).Should(HaveLen(len(allDeployedInstances)))
-			}()
-
 			Eventually(func() []dns.RR {
 				return helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP).Answer
 			}, 60*time.Second, 1*time.Second).Should(ConsistOf(
@@ -153,15 +152,6 @@ var _ = Describe("Integration", func() {
 
 			instanceSlug := fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID)
 			helpers.BoshRunErrand("stop-a-job"+osSuffix, instanceSlug)
-
-			defer func() {
-				helpers.Bosh("start", instanceSlug)
-
-				Eventually(func() []dns.RR {
-					dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
-					return dnsResponse.Answer
-				}, 60*time.Second, 1*time.Second).Should(HaveLen(len(allDeployedInstances)))
-			}()
 
 			Eventually(func() []dns.RR {
 				return helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP).Answer
