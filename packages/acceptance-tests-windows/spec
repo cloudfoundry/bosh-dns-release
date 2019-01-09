@@ -9,6 +9,7 @@ files:
 - bosh-dns/test_yml_assets/**/*
 - bosh-dns/vendor/**/*
 - bosh-dns/dns/manager/**/*
+- bosh-dns/gomega-dns/*
 - exiter.ps1
 
 excluded_files:

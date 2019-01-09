@@ -8,6 +8,7 @@ files:
 - bosh-dns/tlsclient/**/*
 - bosh-dns/test_yml_assets/**/*
 - bosh-dns/vendor/**/*
+- bosh-dns/gomega-dns/*
 - bosh-cli/bosh-cli-3.0.1-linux-amd64
 
 excluded_files:
