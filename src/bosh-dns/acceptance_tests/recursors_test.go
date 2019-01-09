@@ -75,7 +75,7 @@ var _ = Describe("recursor", func() {
 
 		It("timeouts when recursor takes longer than configured recursor_timeout", func() {
 			By("ensuring the test recursor is working", func() {
-				dnsResponse := helpers.DigWithOptions("slow-recursor.com.", testRecursorAddress, helpers.DigOpts{Port: 9955, Timeout: 10 * time.Second})
+				dnsResponse := helpers.DigWithOptions("slow-recursor.com.", testRecursorAddress, helpers.DigOpts{Port: 9955, Timeout: 20 * time.Second})
 
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(1))
