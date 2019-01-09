@@ -25,7 +25,11 @@ func fetchName(m dns.RR) string {
 }
 
 func fetchIP(m dns.RR) string {
-	return m.(*dns.A).A.String()
+	if address, ok := m.(*dns.A); ok {
+		return address.A.String()
+	}
+
+	return m.(*dns.PTR).String()
 }
 
 func fetchRrtype(m dns.RR) int {

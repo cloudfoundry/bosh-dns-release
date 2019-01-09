@@ -11,12 +11,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"os/exec"
-
 	"time"
-
-	"github.com/onsi/gomega/gbytes"
-	"github.com/onsi/gomega/gexec"
 )
 
 var _ = Describe("Integration", func() {
@@ -37,14 +32,8 @@ var _ = Describe("Integration", func() {
 		})
 
 		It("returns Rcode failure for arpaing bosh instances", func() {
-			cmd := exec.Command("dig", strings.Split(fmt.Sprintf("-x %s @%s", firstInstance.IP, firstInstance.IP), " ")...)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(0))
-
-			Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-			Eventually(session.Out).Should(gbytes.Say(`;; ->>HEADER<<- opcode: QUERY, status: SERVFAIL, id: \d+`))
-			Eventually(session.Out).Should(gbytes.Say(fmt.Sprintf("SERVER: %s#53", firstInstance.IP)))
+			dnsResponse := helpers.ReverseDigWithOptions(firstInstance.IP, firstInstance.IP, helpers.DigOpts{SkipRcodeCheck: true})
+			Expect(dnsResponse.Rcode).To(Equal(dns.RcodeServerFailure))
 		})
 
 		It("returns records for bosh instances found with query for all records", func() {
