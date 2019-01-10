@@ -104,7 +104,7 @@ main() {
         bosh_repo="$OPTARG"
         ;;
       h )
-        echo "Usage: $0 [-h|-a|-w WINDOWS_OS_VERSION|-c BOSH_CANDIDATE_RELEASE_CONTAINING_DIR]"
+        echo "Usage: $0 [-h|-a|-w WINDOWS_OS_VERSION|-c BOSH_REPO]"
         echo "     $0 -h                     Display this help message."
         echo "     $0 -a                     Do not destroy environment after running tests."
         echo "     $0 -d                     Destroy-only mode. Will destroy existing environment left around from previous run."
