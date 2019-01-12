@@ -329,7 +329,7 @@
   name = "github.com/prometheus/client_model"
   packages = ["go"]
   pruneopts = "NUT"
-  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
+  revision = "f287a105a20ec685d797f65cd0ce8fbeaef42da1"
 
 [[projects]]
   branch = "master"
@@ -341,7 +341,7 @@
     "model",
   ]
   pruneopts = "NUT"
-  revision = "b1c43a6df3aedba268353d940b5974f05037ed5c"
+  revision = "2998b132700a7d019ff618c06a234b47c1f3f681"
 
 [[projects]]
   branch = "master"
@@ -382,7 +382,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0a8ea75042b409def4883d5f2c1c87767d0e422c1b932be29d28ee7da42e63ba"
+  digest = "1:b2234ef91655d08a1ebb660ce8c6bfe3c7f1bc2b40992bbdece8cd8a75cd2c82"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -404,18 +404,18 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "927f97764cc334a6575f4b7a1584a147864d5723"
+  revision = "915654e7eabcea33ae277abbecf52f0d8b7a9fdc"
 
 [[projects]]
   branch = "master"
-  digest = "1:07aaaa686ca4f19afc6a85c83991253218d1582fb536078ae2fcde1df0d0ec91"
+  digest = "1:a387cb801e1eacd9a2369522ea11d73077dcb6b7d9525d73c56d12754a0e8afc"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "82a175fd1598e8a172e58ebdf5ed262bb29129e5"
+  revision = "48ac38b7c8cbedd50b1613c0fccacfc7d88dfcdf"
 
 [[projects]]
   digest = "1:8a12cbc891b7130d3f660f8a309e5c0b083f831e6ac38cdaa1f12e63c12d6bea"
@@ -454,7 +454,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1fab3960663bc2475da495b7e9fbde653e36c8f81815e309b30b38808f2b6649"
+  digest = "1:76cbf49798456f93e5a824c79eb97a96aec5bff7cd7371b810d888f7a1c33abc"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -470,7 +470,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "498d95493402f719ce3de5c8cb60d1b50d0a1239"
+  revision = "fc1d57b08d7be19e6befb8d9a9405221faa3d5c9"
 
 [[projects]]
   branch = "master"
@@ -478,7 +478,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "bd9b4fb69e2ffd37621a6caa54dcbead29b546f2"
+  revision = "db91494dd46c1fdcbbde05e5ff5eb56df8f7d79a"
 
 [[projects]]
   digest = "1:638e6e596d67d0a0c8aeb76ebdcf73561b701ea43f21963b1db231d96ed7db68"
@@ -572,6 +572,7 @@
     "github.com/onsi/gomega/gbytes",
     "github.com/onsi/gomega/gexec",
     "github.com/onsi/gomega/ghttp",
+    "github.com/onsi/gomega/types",
     "github.com/pivotal-cf/paraphernalia/secure/tlsconfig",
     "github.com/rcrowley/go-metrics",
     "golang.org/x/net/context",
