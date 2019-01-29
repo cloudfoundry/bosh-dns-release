@@ -22,10 +22,16 @@ func NewCachingDNSHandler(next dns.Handler) CachingDNSHandler {
 	return CachingDNSHandler{
 		ca:     ca,
 		logTag: "CachingDNSHandler",
+		next:   next,
 	}
 }
 
 func (c CachingDNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+	if !r.RecursionDesired {
+		c.next.ServeDNS(w, r)
+		return
+	}
+
 	_, err := c.ca.ServeDNS(context.TODO(), w, r)
 	if err != nil {
 		c.logger.Error(c.logTag, "Error getting dns cache:", err.Error())
