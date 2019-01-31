@@ -51,7 +51,7 @@ func (h *InstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	encoder := json.NewEncoder(w)
 	for _, record := range rs {
-		encoder.Encode(Record{
+		encoder.Encode(InstanceRecord{
 			ID:          record.ID,
 			Group:       record.Group,
 			Network:     record.Network,

@@ -385,16 +385,16 @@ var _ = Describe("main", func() {
 
 					Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-					var parsed []api.Record
+					var parsed []api.InstanceRecord
 					decoder := json.NewDecoder(resp.Body)
-					var nextRecord api.Record
+					var nextRecord api.InstanceRecord
 					for decoder.More() {
 						err = decoder.Decode(&nextRecord)
 						Expect(err).ToNot(HaveOccurred())
 						parsed = append(parsed, nextRecord)
 					}
 
-					Expect(parsed).To(ConsistOf([]api.Record{
+					Expect(parsed).To(ConsistOf([]api.InstanceRecord{
 						{
 							ID:          "my-instance",
 							Group:       "my-group",
@@ -465,23 +465,23 @@ var _ = Describe("main", func() {
 				})
 
 				It("allows for querying specific addresses without affecting health monitoring", func() {
-					Consistently(func() []api.Record {
+					Consistently(func() []api.InstanceRecord {
 						resp, err := secureGet(apiClient, listenAPIPort, "instances?address=q-s0.my-group.my-network.my-deployment-2.bosh.")
 						Expect(err).NotTo(HaveOccurred())
 						defer resp.Body.Close()
 
 						Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-						var parsed []api.Record
+						var parsed []api.InstanceRecord
 						decoder := json.NewDecoder(resp.Body)
-						var nextRecord api.Record
+						var nextRecord api.InstanceRecord
 						for decoder.More() {
 							err = decoder.Decode(&nextRecord)
 							Expect(err).ToNot(HaveOccurred())
 							parsed = append(parsed, nextRecord)
 						}
 						return parsed
-					}, 1*time.Second).Should(ConsistOf([]api.Record{
+					}, 1*time.Second).Should(ConsistOf([]api.InstanceRecord{
 						{
 							ID:          "my-instance-2",
 							Group:       "my-group",

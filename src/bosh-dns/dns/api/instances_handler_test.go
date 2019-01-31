@@ -98,9 +98,9 @@ var _ = Describe("InstancesHandler", func() {
 			response := w.Result()
 			Expect(response.StatusCode).To(Equal(http.StatusOK))
 			decoder := json.NewDecoder(response.Body)
-			records := []api.Record{}
+			records := []api.InstanceRecord{}
 			for decoder.More() {
-				var record api.Record
+				var record api.InstanceRecord
 				err := decoder.Decode(&record)
 				Expect(err).NotTo(HaveOccurred())
 				records = append(records, record)
@@ -110,7 +110,7 @@ var _ = Describe("InstancesHandler", func() {
 			Expect(fakeRecordManager.ExpandAliasesArgsForCall(0)).To(Equal("potatoFilter."))
 			Expect(fakeRecordManager.FilterCallCount()).To(Equal(1))
 			Expect(fakeRecordManager.FilterArgsForCall(0)).To(Equal([]string{"mashed potatoes"}))
-			Expect(records).To(ConsistOf([]api.Record{
+			Expect(records).To(ConsistOf([]api.InstanceRecord{
 				{
 					ID:          "ID1",
 					Group:       "Group1",
@@ -161,9 +161,9 @@ var _ = Describe("InstancesHandler", func() {
 			response := w.Result()
 			Expect(response.StatusCode).To(Equal(http.StatusOK))
 			decoder := json.NewDecoder(response.Body)
-			records := []api.Record{}
+			records := []api.InstanceRecord{}
 			for decoder.More() {
-				var record api.Record
+				var record api.InstanceRecord
 				err := decoder.Decode(&record)
 				Expect(err).NotTo(HaveOccurred())
 				records = append(records, record)
@@ -171,7 +171,7 @@ var _ = Describe("InstancesHandler", func() {
 			Expect(fakeRecordManager.AllRecordsCallCount()).To(Equal(1))
 			Expect(fakeRecordManager.ExpandAliasesCallCount()).To(Equal(0))
 			Expect(fakeRecordManager.FilterCallCount()).To(Equal(0))
-			Expect(records).To(ConsistOf([]api.Record{
+			Expect(records).To(ConsistOf([]api.InstanceRecord{
 				{
 					ID:          "ID1",
 					Group:       "Group1",

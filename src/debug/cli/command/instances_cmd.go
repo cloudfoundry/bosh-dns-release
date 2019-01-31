@@ -73,7 +73,7 @@ func (o *InstancesCmd) Execute(args []string) error {
 	decoder := json.NewDecoder(response.Body)
 
 	for decoder.More() {
-		var jsonRow api.Record
+		var jsonRow api.InstanceRecord
 
 		err := decoder.Decode(&jsonRow)
 		if err != nil {

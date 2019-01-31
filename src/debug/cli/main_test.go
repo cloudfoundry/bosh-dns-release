@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 
 	ginkgoconfig "github.com/onsi/ginkgo/config"
 
@@ -17,10 +18,35 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
+	"github.com/onsi/gomega/types"
 	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
+func HaveTableRow(s ...string) types.GomegaMatcher {
+	return gbytes.Say(`(?m)^\s*` + strings.Join(s, `\s+`) + `\s*$`)
+}
+
 var _ = Describe("Main", func() {
+	var (
+		server *ghttp.Server
+	)
+
+	BeforeEach(func() {
+		server = newFakeAPIServer()
+		os.Setenv("DNS_API_ADDRESS", server.URL())
+		os.Setenv("DNS_API_TLS_CA_CERT_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_ca.pem")
+		os.Setenv("DNS_API_TLS_CERTIFICATE_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_wrong_cn_client.pem")
+		os.Setenv("DNS_API_TLS_PRIVATE_KEY_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_client.key")
+	})
+
+	AfterEach(func() {
+		server.Close()
+		os.Unsetenv("DNS_API_ADDRESS")
+		os.Unsetenv("DNS_API_TLS_CA_CERT_PATH")
+		os.Unsetenv("DNS_API_TLS_CERTIFICATE_PATH")
+		os.Unsetenv("DNS_API_TLS_PRIVATE_KEY_PATH")
+	})
+
 	Describe("flags", func() {
 		It("exits 1 if no argument is provided", func() {
 			cmd := exec.Command(pathToCli)
@@ -30,7 +56,7 @@ var _ = Describe("Main", func() {
 			Eventually(session).Should(gexec.Exit(1))
 		})
 
-		It("exits 1 if the command is not `instances`", func() {
+		It("exits 1 if the command is not a valid command", func() {
 			cmd := exec.Command(pathToCli, "explode")
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -41,26 +67,6 @@ var _ = Describe("Main", func() {
 	})
 
 	Describe("instances", func() {
-		var (
-			server *ghttp.Server
-		)
-
-		BeforeEach(func() {
-			server = newFakeAPIServer()
-			os.Setenv("DNS_API_ADDRESS", server.URL())
-			os.Setenv("DNS_API_TLS_CA_CERT_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_ca.pem")
-			os.Setenv("DNS_API_TLS_CERTIFICATE_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_wrong_cn_client.pem")
-			os.Setenv("DNS_API_TLS_PRIVATE_KEY_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_client.key")
-		})
-
-		AfterEach(func() {
-			server.Close()
-			os.Unsetenv("DNS_API_ADDRESS")
-			os.Unsetenv("DNS_API_TLS_CA_CERT_PATH")
-			os.Unsetenv("DNS_API_TLS_CERTIFICATE_PATH")
-			os.Unsetenv("DNS_API_TLS_PRIVATE_KEY_PATH")
-		})
-
 		BeforeEach(func() {
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
@@ -99,7 +105,53 @@ var _ = Describe("Main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(0), string(session.Err.Contents()))
-			Expect(session.Out).To(gbytes.Say(`3\s+1\s+default\s+dep\s+1\.2\.3\.4\s+bosh\s+z1\s+0\s+healthy`))
+			Expect(session.Out).To(HaveTableRow("3", "1", "default", "dep", `1\.2\.3\.4`, "bosh", "z1", "0", "healthy"))
+		})
+	})
+
+	Describe("groups", func() {
+		BeforeEach(func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/groups"),
+					ghttp.RespondWith(http.StatusOK, `
+							{
+								"job_name": null,
+								"link_name": null,
+								"link_type": null,
+								"group_id": 3,
+								"health_state": "running"
+							}
+							{
+								"job_name": "zookeeper",
+								"link_name": "conn",
+								"link_type": "zookeeper",
+								"group_id": 4,
+								"health_state": "failing"
+							}
+							{
+								"job_name": "zookeeper",
+								"link_name": "peers",
+								"link_type": "zookeeper_peers",
+								"group_id": 5,
+								"health_state": "running"
+							}
+						`),
+				),
+			)
+		})
+
+		It("renders the groups details", func() {
+			cmd := exec.Command(pathToCli, "groups")
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session).Should(gexec.Exit(0), string(session.Err.Contents()))
+
+			Expect(session.Out).To(HaveTableRow("JobName", "LinkName", "LinkType", "GroupID", "HealthState"))
+			Expect(session.Out).To(HaveTableRow("-", "-", "-", "3", "running"))
+			Expect(session.Out).To(HaveTableRow("zookeeper", "conn", "zookeeper", "4", "failing"))
+			Expect(session.Out).To(HaveTableRow("zookeeper", "peers", "zookeeper_peers", "5", "running"))
 		})
 	})
 })
