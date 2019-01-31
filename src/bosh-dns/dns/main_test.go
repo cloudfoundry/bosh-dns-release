@@ -35,6 +35,66 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func setupHttpServer(handlerCachingEnabled bool, recursorPort int) (*ghttp.Server, string) {
+	handlersDir, err := ioutil.TempDir("", "handlers")
+	Expect(err).NotTo(HaveOccurred())
+
+	httpJSONServer := ghttp.NewUnstartedServer()
+	httpJSONServer.AppendHandlers(ghttp.CombineHandlers(
+		ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=255"),
+		ghttp.RespondWith(http.StatusOK, `{
+  "Status": 0,
+  "TC": false,
+  "RD": true,
+  "RA": true,
+  "AD": false,
+  "CD": false,
+  "Question":
+  [
+    {
+      "name": "app-id.internal-domain.",
+      "type": 28
+    }
+  ],
+  "Answer":
+  [
+    {
+      "name": "app-id.internal-domain.",
+      "type": 1,
+      "TTL": 1526,
+      "data": "192.168.0.1"
+    }
+  ],
+  "Additional": [ ],
+  "edns_client_subnet": "12.34.56.78/0"
+}`),
+	),
+	)
+	httpJSONServer.HTTPTestServer.Start()
+	writeHandlersConfig(handlersDir, handlersconfig.HandlerConfigs{
+		{
+			Domain: "internal-domain.",
+			Cache: config.Cache{
+				Enabled: handlerCachingEnabled,
+			},
+			Source: handlersconfig.Source{
+				Type: "http",
+				URL:  httpJSONServer.URL(),
+			},
+		}, {
+			Domain: "recursor.internal.",
+			Cache: config.Cache{
+				Enabled: handlerCachingEnabled,
+			},
+			Source: handlersconfig.Source{
+				Type:      "dns",
+				Recursors: []string{fmt.Sprintf("127.0.0.1:%d", recursorPort)},
+			},
+		},
+	})
+	return httpJSONServer, handlersDir
+}
+
 var _ = Describe("main", func() {
 	var (
 		listenAddress  string
@@ -99,30 +159,23 @@ var _ = Describe("main", func() {
 
 	Context("when the server starts successfully", func() {
 		var (
-			addressesDir          string
-			aliasesDir            string
-			apiClient             *httpclient.HTTPClient
-			checkInterval         time.Duration
-			cmd                   *exec.Cmd
-			handlerCachingEnabled bool
-			handlersDir           string
-			httpJSONServer        *ghttp.Server
-			recordsFilePath       string
-			session               *gexec.Session
+			addressesDir        string
+			aliasesDir          string
+			apiClient           *httpclient.HTTPClient
+			checkInterval       time.Duration
+			cmd                 *exec.Cmd
+			handlersDir         string
+			httpJSONServer      *ghttp.Server
+			recordsFilePath     string
+			session             *gexec.Session
+			recordsJSONContent  string
+			aliases1JSONContent string
+			aliases2JSONContent string
 		)
 
 		BeforeEach(func() {
 			checkInterval = 100 * time.Millisecond
-			handlerCachingEnabled = false
-		})
-
-		JustBeforeEach(func() {
-			var err error
-
-			recordsFile, err := ioutil.TempFile("", "recordsjson")
-			Expect(err).NotTo(HaveOccurred())
-
-			_, err = recordsFile.Write([]byte(fmt.Sprint(`{
+			recordsJSONContent = `{
 				"record_keys": ["id", "instance_group", "group_ids", "az", "az_id","network", "deployment", "ip", "domain"],
 				"record_infos": [
 					["my-instance", "my-group", ["7"], "az1", "1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
@@ -132,7 +185,28 @@ var _ = Describe("main", func() {
 					["my-instance-2", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "foo"],
 					["primer-instance", "primer-group", ["9"], "az1", "1", "primer-network", "primer-deployment", "127.0.0.254", "primer"]
 				]
-			}`)))
+			}`
+			aliases2JSONContent = `{
+				"one.alias.": ["my-instance.my-group.my-network.my-deployment.bosh."],
+				"internal.alias.": ["my-instance-2.my-group.my-network.my-deployment-2.bosh.","my-instance.my-group.my-network.my-deployment.bosh."],
+				"group.internal.alias.": ["*.my-group.my-network.my-deployment.bosh."],
+				"glob.internal.alias.": ["*.*y-group.my-network.my-deployment.bosh."],
+				"anotherglob.internal.alias.": ["*.my-group*.my-network.my-deployment.bosh."],
+				"yetanotherglob.internal.alias.": ["*.*.my-network.my-deployment.bosh."],
+				"ip.alias.": ["10.11.12.13"]
+			}`
+			aliases1JSONContent = `{
+				"uc.alias.": ["upcheck.bosh-dns."]
+			}`
+		})
+
+		JustBeforeEach(func() {
+			var err error
+
+			recordsFile, err := ioutil.TempFile("", "recordsjson")
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = recordsFile.Write([]byte(recordsJSONContent))
 			Expect(err).NotTo(HaveOccurred())
 
 			recordsFilePath = recordsFile.Name()
@@ -158,81 +232,20 @@ var _ = Describe("main", func() {
 			aliasesFile1, err := ioutil.TempFile(aliasesDir, "aliasesjson1")
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile1.Close()
-			_, err = aliasesFile1.Write([]byte(fmt.Sprint(`{
-				"uc.alias.": ["upcheck.bosh-dns."]
-			}`)))
+			_, err = aliasesFile1.Write([]byte(aliases1JSONContent))
 			Expect(err).NotTo(HaveOccurred())
 
 			aliasesFile2, err := ioutil.TempFile(aliasesDir, "aliasesjson2")
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile2.Close()
-			_, err = aliasesFile2.Write([]byte(fmt.Sprint(`{
-				"one.alias.": ["my-instance.my-group.my-network.my-deployment.bosh."],
-				"internal.alias.": ["my-instance-2.my-group.my-network.my-deployment-2.bosh.","my-instance.my-group.my-network.my-deployment.bosh."],
-				"group.internal.alias.": ["*.my-group.my-network.my-deployment.bosh."],
-				"glob.internal.alias.": ["*.*y-group.my-network.my-deployment.bosh."],
-				"anotherglob.internal.alias.": ["*.my-group*.my-network.my-deployment.bosh."],
-				"yetanotherglob.internal.alias.": ["*.*.my-network.my-deployment.bosh."],
-				"ip.alias.": ["10.11.12.13"]
-			}`)))
+			_, err = aliasesFile2.Write([]byte(aliases2JSONContent))
 			Expect(err).NotTo(HaveOccurred())
 
-			handlersDir, err = ioutil.TempDir("", "handlers")
-			Expect(err).NotTo(HaveOccurred())
-
-			httpJSONServer = ghttp.NewUnstartedServer()
-			httpJSONServer.AppendHandlers(ghttp.CombineHandlers(
-				ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=255"),
-				ghttp.RespondWith(http.StatusOK, `{
-  "Status": 0,
-  "TC": false,
-  "RD": true,
-  "RA": true,
-  "AD": false,
-  "CD": false,
-  "Question":
-  [
-    {
-      "name": "app-id.internal-domain.",
-      "type": 28
-    }
-  ],
-  "Answer":
-  [
-    {
-      "name": "app-id.internal-domain.",
-      "type": 1,
-      "TTL": 1526,
-      "data": "192.168.0.1"
-    }
-  ],
-  "Additional": [ ],
-  "edns_client_subnet": "12.34.56.78/0"
-}`),
-			),
-			)
-			httpJSONServer.HTTPTestServer.Start()
-			writeHandlersConfig(handlersDir, handlersconfig.HandlerConfigs{
-				{
-					Domain: "internal-domain.",
-					Cache: config.Cache{
-						Enabled: handlerCachingEnabled,
-					},
-					Source: handlersconfig.Source{
-						Type: "http",
-						URL:  httpJSONServer.URL(),
-					},
-				}, {
-					Domain: "recursor.internal.",
-					Cache: config.Cache{
-						Enabled: handlerCachingEnabled,
-					},
-					Source: handlersconfig.Source{
-						Type:      "dns",
-						Recursors: []string{fmt.Sprintf("127.0.0.1:%d", recursorPort)},
-					},
-				},
-			})
+			// httpJSONServer, handlersDir = setupHttpServer(handlerCachingEnabled, recursorPort)
+			var handlersFilesGlob string
+			if handlersDir != "" {
+				handlersFilesGlob = path.Join(handlersDir, "*")
+			}
 
 			logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
 			apiClient, err = tlsclient.NewFromFiles(
@@ -253,7 +266,7 @@ var _ = Describe("main", func() {
 				RecordsFile:        recordsFilePath,
 				AddressesFilesGlob: path.Join(addressesDir, "*"),
 				AliasFilesGlob:     path.Join(aliasesDir, "*"),
-				HandlersFilesGlob:  path.Join(handlersDir, "*"),
+				HandlersFilesGlob:  handlersFilesGlob,
 				UpcheckDomains:     []string{"health.check.bosh.", "health.check.ca."},
 
 				API: config.APIConfig{
@@ -299,9 +312,11 @@ var _ = Describe("main", func() {
 			}
 
 			Expect(os.RemoveAll(aliasesDir)).To(Succeed())
-			Expect(os.RemoveAll(handlersDir)).To(Succeed())
 
-			httpJSONServer.Close()
+			if httpJSONServer != nil {
+				httpJSONServer.Close()
+				Expect(os.RemoveAll(handlersDir)).To(Succeed())
+			}
 		})
 
 		Describe("it responds to DNS requests", func() {
@@ -851,25 +866,31 @@ var _ = Describe("main", func() {
 			})
 
 			Context("http json domains", func() {
-				It("serves the addresses from the http server", func() {
-					c := &dns.Client{Net: "tcp"}
+				Context("when caching is disabled", func() {
+					BeforeEach(func() {
+						httpJSONServer, handlersDir = setupHttpServer(false, recursorPort)
+					})
 
-					m := &dns.Msg{}
+					It("serves the addresses from the http server", func() {
+						c := &dns.Client{Net: "tcp"}
 
-					m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
-					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						m := &dns.Msg{}
 
-					Expect(err).NotTo(HaveOccurred())
-					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(r.Answer).To(HaveLen(1))
+						m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
-					answer0 := r.Answer[0].(*dns.A)
-					Expect(answer0.A.String()).To(Equal("192.168.0.1"))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(r.Answer).To(HaveLen(1))
+
+						answer0 := r.Answer[0].(*dns.A)
+						Expect(answer0.A.String()).To(Equal("192.168.0.1"))
+					})
 				})
 
 				Context("when caching is enabled", func() {
 					BeforeEach(func() {
-						handlerCachingEnabled = true
+						httpJSONServer, handlersDir = setupHttpServer(true, recursorPort)
 					})
 
 					It("should return cached answers", func() {
@@ -1008,7 +1029,7 @@ var _ = Describe("main", func() {
 
 				Context("when caching is enabled", func() {
 					BeforeEach(func() {
-						handlerCachingEnabled = true
+						httpJSONServer, handlersDir = setupHttpServer(true, recursorPort)
 					})
 
 					It("serves cached responses for local recursor", func() {
