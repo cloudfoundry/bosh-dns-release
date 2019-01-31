@@ -5,6 +5,11 @@ required = ["github.com/onsi/ginkgo/ginkgo", "github.com/maxbrunsfeld/counterfei
   non-go = true
   go-tests = true
 
+# coredns issue in https://github.com/coredns/coredns/issues/2421
+[[override]]
+  name = "github.com/mholt/caddy"
+  version = "=v0.11.1"
+
 # dep ensure issue in https://github.com/golang/dep/issues/1799
 [[override]]
   name = "gopkg.in/fsnotify.v1"
