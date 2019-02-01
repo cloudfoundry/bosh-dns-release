@@ -2,7 +2,7 @@ package healthserver
 
 import (
 	"bosh-dns/healthcheck/api"
-	"bosh-dns/healthcheck/healthconfig"
+	"bosh-dns/healthconfig"
 	"encoding/json"
 	"fmt"
 	"log"

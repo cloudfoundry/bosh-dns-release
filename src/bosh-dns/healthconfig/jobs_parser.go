@@ -9,11 +9,15 @@ import (
 
 type Job struct {
 	HealthExecutablePath string
-	Groups               []string
+	Groups               []LinkMetadata
 }
 
-type linkMetadata struct {
-	Group string `json:group`
+type LinkMetadata struct {
+	Group string `json:"group"`
+	Name  string `json:"name"`
+	Type  string `json:"type"`
+
+	JobName string
 }
 
 func ParseJobs(jobsDir string, executablePath string) ([]Job, error) {
@@ -34,7 +38,7 @@ func ParseJobs(jobsDir string, executablePath string) ([]Job, error) {
 			continue
 		}
 
-		groups, err := parseLinkGroups(filepath.Join(jobsDir, jobDir.Name(), ".bosh", "links.json"))
+		groups, err := parseLinkGroups(jobsDir, jobDir.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -66,30 +70,30 @@ func isDirectory(path string) (bool, error) {
 	return info.IsDir(), nil
 }
 
-func parseLinkGroups(linksPath string) ([]string, error) {
+func parseLinkGroups(jobsDir, jobName string) ([]LinkMetadata, error) {
+	linksPath := filepath.Join(jobsDir, jobName, ".bosh", "links.json")
 	f, err := os.Open(linksPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return []string{}, nil
+			return []LinkMetadata{}, nil
 		}
 
 		return nil, err
 	}
 	defer f.Close()
 
-	var links []linkMetadata
+	var links []LinkMetadata
 	decoder := json.NewDecoder(f)
 	err = decoder.Decode(&links)
 	if err != nil {
 		return nil, err
 	}
 
-	var groups []string
-	for _, link := range links {
-		groups = append(groups, link.Group)
+	for i := range links {
+		links[i].JobName = jobName
 	}
 
-	return groups, nil
+	return links, nil
 }
 
 func fileExists(path string) (bool, error) {

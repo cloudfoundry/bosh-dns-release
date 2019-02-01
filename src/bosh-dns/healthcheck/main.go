@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"bosh-dns/healthcheck/healthconfig"
 	"bosh-dns/healthcheck/healthexecutable"
 	"bosh-dns/healthcheck/healthserver"
+	"bosh-dns/healthconfig"
 
 	"os/signal"
 	"syscall"

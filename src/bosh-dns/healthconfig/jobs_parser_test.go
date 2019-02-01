@@ -1,7 +1,7 @@
 package healthconfig_test
 
 import (
-	"bosh-dns/healthcheck/healthconfig"
+	"bosh-dns/healthconfig"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -25,7 +25,7 @@ var _ = Describe("ParseJobs", func() {
 		f, err := os.Create(filepath.Join(jobADir, ".bosh", "links.json"))
 		Expect(err).NotTo(HaveOccurred())
 
-		_, err = f.Write([]byte(`[{"link":"service","group":"1"}]`))
+		_, err = f.Write([]byte(`[{"name":"service","type":"connection","group":"1"}]`))
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(f.Close()).To(Succeed())
@@ -37,7 +37,7 @@ var _ = Describe("ParseJobs", func() {
 		f, err = os.Create(filepath.Join(jobBDir, ".bosh", "links.json"))
 		Expect(err).NotTo(HaveOccurred())
 
-		_, err = f.Write([]byte(`[{"link":"service","group":"2"}]`))
+		_, err = f.Write([]byte(`[{"name":"strudel","type":"dessert","group":"2"}]`))
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(f.Close()).To(Succeed())
@@ -62,12 +62,22 @@ var _ = Describe("ParseJobs", func() {
 		Expect(jobs).To(HaveLen(2))
 		Expect(jobs).To(ContainElement(healthconfig.Job{
 			HealthExecutablePath: "",
-			Groups:               []string{"1"},
+			Groups: []healthconfig.LinkMetadata{{
+				Group:   "1",
+				Name:    "service",
+				Type:    "connection",
+				JobName: "job-a",
+			}},
 		}))
 
 		Expect(jobs).To(ContainElement(healthconfig.Job{
 			HealthExecutablePath: filepath.Join(jobsDir, "job-b", "bin", "dns", "healthy"),
-			Groups:               []string{"2"},
+			Groups: []healthconfig.LinkMetadata{{
+				Group:   "2",
+				Name:    "strudel",
+				Type:    "dessert",
+				JobName: "job-b",
+			}},
 		}))
 	})
 
@@ -92,7 +102,7 @@ var _ = Describe("ParseJobs", func() {
 			Expect(jobs).To(HaveLen(3))
 			Expect(jobs).To(ContainElement(healthconfig.Job{
 				HealthExecutablePath: filepath.Join(jobsDir, "job-c", "bin", "dns", "healthy"),
-				Groups:               []string{},
+				Groups:               []healthconfig.LinkMetadata{},
 			}))
 		})
 	})
@@ -139,12 +149,22 @@ var _ = Describe("ParseJobs", func() {
 			Expect(jobs).To(HaveLen(2))
 			Expect(jobs).To(ContainElement(healthconfig.Job{
 				HealthExecutablePath: "",
-				Groups:               []string{"1"},
+				Groups: []healthconfig.LinkMetadata{{
+					Group:   "1",
+					Name:    "service",
+					Type:    "connection",
+					JobName: "job-a",
+				}},
 			}))
 
 			Expect(jobs).To(ContainElement(healthconfig.Job{
 				HealthExecutablePath: filepath.Join(jobsDir, "job-b", "bin", "dns", "healthy"),
-				Groups:               []string{"2"},
+				Groups: []healthconfig.LinkMetadata{{
+					Group:   "2",
+					Name:    "strudel",
+					Type:    "dessert",
+					JobName: "job-b",
+				}},
 			}))
 		})
 	})

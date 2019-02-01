@@ -9,8 +9,8 @@ import (
 	. "github.com/onsi/gomega"
 
 	"bosh-dns/healthcheck/api"
-	"bosh-dns/healthcheck/healthconfig"
 	"bosh-dns/healthcheck/healthexecutable"
+	"bosh-dns/healthconfig"
 	"time"
 
 	"errors"
@@ -263,9 +263,9 @@ var _ = Describe("Monitor", func() {
 		Context("and the groups have no executables", func() {
 			BeforeEach(func() {
 				jobs = []healthconfig.Job{
-					{HealthExecutablePath: "", Groups: []string{"1"}},
-					{HealthExecutablePath: "", Groups: []string{"2"}},
-					{HealthExecutablePath: "", Groups: []string{"3"}},
+					{HealthExecutablePath: "", Groups: []healthconfig.LinkMetadata{{Group: "1"}}},
+					{HealthExecutablePath: "", Groups: []healthconfig.LinkMetadata{{Group: "2"}}},
+					{HealthExecutablePath: "", Groups: []healthconfig.LinkMetadata{{Group: "3"}}},
 				}
 			})
 
@@ -317,9 +317,9 @@ var _ = Describe("Monitor", func() {
 		Context("and the groups have executables", func() {
 			BeforeEach(func() {
 				jobs = []healthconfig.Job{
-					{HealthExecutablePath: "e1", Groups: []string{"1"}},
-					{HealthExecutablePath: "e2", Groups: []string{"2"}},
-					{HealthExecutablePath: "", Groups: []string{"3"}},
+					{HealthExecutablePath: "e1", Groups: []healthconfig.LinkMetadata{{Group: "1"}}},
+					{HealthExecutablePath: "e2", Groups: []healthconfig.LinkMetadata{{Group: "2"}}},
+					{HealthExecutablePath: "", Groups: []healthconfig.LinkMetadata{{Group: "3"}}},
 				}
 
 				addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})
@@ -379,8 +379,8 @@ var _ = Describe("Monitor", func() {
 			Context("when there are duplicate executables across groups", func() {
 				BeforeEach(func() {
 					jobs = []healthconfig.Job{
-						{HealthExecutablePath: "duplicate-executable", Groups: []string{"1"}},
-						{HealthExecutablePath: "duplicate-executable", Groups: []string{"2"}},
+						{HealthExecutablePath: "duplicate-executable", Groups: []healthconfig.LinkMetadata{{Group: "1"}}},
+						{HealthExecutablePath: "duplicate-executable", Groups: []healthconfig.LinkMetadata{{Group: "2"}}},
 					}
 
 					addCmdResult(jobs[0].HealthExecutablePath, sysfakes.FakeCmdResult{ExitStatus: 0})

@@ -13,7 +13,7 @@ import (
 	"time"
 
 	dnsconfig "bosh-dns/dns/config"
-	"bosh-dns/healthcheck/healthconfig"
+	"bosh-dns/healthconfig"
 
 	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/gomega/gexec"

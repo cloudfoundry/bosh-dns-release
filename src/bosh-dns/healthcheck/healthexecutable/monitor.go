@@ -2,7 +2,7 @@ package healthexecutable
 
 import (
 	"bosh-dns/healthcheck/api"
-	"bosh-dns/healthcheck/healthconfig"
+	"bosh-dns/healthconfig"
 	"encoding/json"
 	"io/ioutil"
 	"time"
@@ -86,7 +86,7 @@ func (m *Monitor) runChecks() {
 	agentStatus := m.readAgentHealth()
 
 	groupState := make(map[string]api.HealthStatus)
-	groupsWithoutExecutable := []string{}
+	groupsWithoutExecutable := []healthconfig.LinkMetadata{}
 	checkedResults := make(map[string]api.HealthStatus)
 
 	allStatus := agentStatus
@@ -154,9 +154,9 @@ func (m *Monitor) readAgentHealth() api.HealthStatus {
 	return api.StatusRunning
 }
 
-func setStateForGroupIDs(groupState map[string]api.HealthStatus, groupIDs []string, status api.HealthStatus) {
-	for _, groupID := range groupIDs {
-		groupState[groupID] = status
+func setStateForGroupIDs(groupState map[string]api.HealthStatus, linkMetadata []healthconfig.LinkMetadata, status api.HealthStatus) {
+	for _, linkMetadatum := range linkMetadata {
+		groupState[linkMetadatum.Group] = status
 	}
 }
 
