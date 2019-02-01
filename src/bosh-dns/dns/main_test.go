@@ -35,66 +35,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func setupHttpServer(handlerCachingEnabled bool, recursorPort int) (*ghttp.Server, string) {
-	handlersDir, err := ioutil.TempDir("", "handlers")
-	Expect(err).NotTo(HaveOccurred())
-
-	httpJSONServer := ghttp.NewUnstartedServer()
-	httpJSONServer.AppendHandlers(ghttp.CombineHandlers(
-		ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=255"),
-		ghttp.RespondWith(http.StatusOK, `{
-  "Status": 0,
-  "TC": false,
-  "RD": true,
-  "RA": true,
-  "AD": false,
-  "CD": false,
-  "Question":
-  [
-    {
-      "name": "app-id.internal-domain.",
-      "type": 28
-    }
-  ],
-  "Answer":
-  [
-    {
-      "name": "app-id.internal-domain.",
-      "type": 1,
-      "TTL": 1526,
-      "data": "192.168.0.1"
-    }
-  ],
-  "Additional": [ ],
-  "edns_client_subnet": "12.34.56.78/0"
-}`),
-	),
-	)
-	httpJSONServer.HTTPTestServer.Start()
-	writeHandlersConfig(handlersDir, handlersconfig.HandlerConfigs{
-		{
-			Domain: "internal-domain.",
-			Cache: config.Cache{
-				Enabled: handlerCachingEnabled,
-			},
-			Source: handlersconfig.Source{
-				Type: "http",
-				URL:  httpJSONServer.URL(),
-			},
-		}, {
-			Domain: "recursor.internal.",
-			Cache: config.Cache{
-				Enabled: handlerCachingEnabled,
-			},
-			Source: handlersconfig.Source{
-				Type:      "dns",
-				Recursors: []string{fmt.Sprintf("127.0.0.1:%d", recursorPort)},
-			},
-		},
-	})
-	return httpJSONServer, handlersDir
-}
-
 var _ = Describe("main", func() {
 	var (
 		listenAddress  string
@@ -1595,6 +1535,66 @@ func newFakeHealthServer(ip, state string) *ghttp.Server {
 	server.HTTPTestServer.StartTLS()
 
 	return server
+}
+
+func setupHttpServer(handlerCachingEnabled bool, recursorPort int) (*ghttp.Server, string) {
+	handlersDir, err := ioutil.TempDir("", "handlers")
+	Expect(err).NotTo(HaveOccurred())
+
+	httpJSONServer := ghttp.NewUnstartedServer()
+	httpJSONServer.AppendHandlers(ghttp.CombineHandlers(
+		ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=255"),
+		ghttp.RespondWith(http.StatusOK, `{
+  "Status": 0,
+  "TC": false,
+  "RD": true,
+  "RA": true,
+  "AD": false,
+  "CD": false,
+  "Question":
+  [
+    {
+      "name": "app-id.internal-domain.",
+      "type": 28
+    }
+  ],
+  "Answer":
+  [
+    {
+      "name": "app-id.internal-domain.",
+      "type": 1,
+      "TTL": 1526,
+      "data": "192.168.0.1"
+    }
+  ],
+  "Additional": [ ],
+  "edns_client_subnet": "12.34.56.78/0"
+}`),
+	),
+	)
+	httpJSONServer.HTTPTestServer.Start()
+	writeHandlersConfig(handlersDir, handlersconfig.HandlerConfigs{
+		{
+			Domain: "internal-domain.",
+			Cache: config.Cache{
+				Enabled: handlerCachingEnabled,
+			},
+			Source: handlersconfig.Source{
+				Type: "http",
+				URL:  httpJSONServer.URL(),
+			},
+		}, {
+			Domain: "recursor.internal.",
+			Cache: config.Cache{
+				Enabled: handlerCachingEnabled,
+			},
+			Source: handlersconfig.Source{
+				Type:      "dns",
+				Recursors: []string{fmt.Sprintf("127.0.0.1:%d", recursorPort)},
+			},
+		},
+	})
+	return httpJSONServer, handlersDir
 }
 
 func writeHandlersConfig(dir string, handlersConfiguration handlersconfig.HandlerConfigs) {
