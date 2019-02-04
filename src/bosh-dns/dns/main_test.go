@@ -113,6 +113,7 @@ var _ = Describe("main", func() {
 			checkInterval       time.Duration
 			cmd                 *exec.Cmd
 			handlersDir         string
+			healthEnabled       bool
 			httpJSONServer      *ghttp.Server
 			recordsFilePath     string
 			session             *gexec.Session
@@ -146,6 +147,8 @@ var _ = Describe("main", func() {
 			aliases1JSONContent = `{
 				"uc.alias.": ["upcheck.bosh-dns."]
 			}`
+
+			healthEnabled = true
 		})
 
 		JustBeforeEach(func() {
@@ -226,7 +229,7 @@ var _ = Describe("main", func() {
 				},
 
 				Health: config.HealthConfig{
-					Enabled:         true,
+					Enabled:         healthEnabled,
 					Port:            2345 + ginkgoconfig.GinkgoConfig.ParallelNode,
 					CAFile:          "../healthcheck/assets/test_certs/test_ca.pem",
 					CertificateFile: "../healthcheck/assets/test_certs/test_client.pem",
@@ -463,16 +466,7 @@ var _ = Describe("main", func() {
 			})
 
 			Describe("/groups", func() {
-				var healthServers []*ghttp.Server
-
 				BeforeEach(func() {
-					healthServers = []*ghttp.Server{
-						newFakeHealthServer("127.0.0.1", "running", map[string]string{
-							"1": "running",
-							"2": "failing",
-							"3": "running",
-						}),
-					}
 					job1Dir := path.Join(jobsDir, "job1", ".bosh")
 					err := os.MkdirAll(job1Dir, 0755)
 					Expect(err).NotTo(HaveOccurred())
@@ -503,55 +497,120 @@ var _ = Describe("main", func() {
 					]`), 0644)
 				})
 
-				AfterEach(func() {
-					for _, server := range healthServers {
-						server.Close()
-					}
+				Context("with Health enabled", func() {
+					var healthServers []*ghttp.Server
+
+					BeforeEach(func() {
+						healthServers = []*ghttp.Server{
+							newFakeHealthServer("127.0.0.1", "running", map[string]string{
+								"1": "running",
+								"2": "failing",
+								"3": "running",
+							}),
+						}
+					})
+
+					AfterEach(func() {
+						for _, server := range healthServers {
+							server.Close()
+						}
+					})
+
+					It("returns group information as JSON", func() {
+						resp, err := secureGet(apiClient, listenAPIPort, "groups")
+						Expect(err).NotTo(HaveOccurred())
+						defer resp.Body.Close()
+
+						var parsed []api.Group
+						decoder := json.NewDecoder(resp.Body)
+						var nextGroup api.Group
+						for decoder.More() {
+							err = decoder.Decode(&nextGroup)
+							Expect(err).ToNot(HaveOccurred())
+							parsed = append(parsed, nextGroup)
+						}
+						Expect(parsed).To(ConsistOf([]api.Group{
+							{
+								JobName:     "",
+								LinkType:    "",
+								LinkName:    "",
+								GroupID:     "",
+								HealthState: "running",
+							},
+							{
+								JobName:     "job1",
+								LinkType:    "appetizer",
+								LinkName:    "edamame",
+								GroupID:     "1",
+								HealthState: "running",
+							},
+							{
+								JobName:     "job1",
+								LinkType:    "dessert",
+								LinkName:    "yatsuhashi",
+								GroupID:     "2",
+								HealthState: "failing",
+							},
+							{
+								JobName:     "job2",
+								LinkType:    "entree",
+								LinkName:    "yakisoba",
+								GroupID:     "3",
+								HealthState: "running",
+							},
+						}))
+					})
 				})
 
-				It("returns group information as JSON", func() {
-					resp, err := secureGet(apiClient, listenAPIPort, "groups")
-					Expect(err).NotTo(HaveOccurred())
-					defer resp.Body.Close()
+				Context("with Health disabled", func() {
+					BeforeEach(func() {
+						healthEnabled = false
+					})
 
-					var parsed []api.Group
-					decoder := json.NewDecoder(resp.Body)
-					var nextGroup api.Group
-					for decoder.More() {
-						err = decoder.Decode(&nextGroup)
-						Expect(err).ToNot(HaveOccurred())
-						parsed = append(parsed, nextGroup)
-					}
-					Expect(parsed).To(ConsistOf([]api.Group{
-						{
-							JobName:     "",
-							LinkType:    "",
-							LinkName:    "",
-							GroupID:     "",
-							HealthState: "running",
-						},
-						{
-							JobName:     "job1",
-							LinkType:    "appetizer",
-							LinkName:    "edamame",
-							GroupID:     "1",
-							HealthState: "running",
-						},
-						{
-							JobName:     "job1",
-							LinkType:    "dessert",
-							LinkName:    "yatsuhashi",
-							GroupID:     "2",
-							HealthState: "failing",
-						},
-						{
-							JobName:     "job2",
-							LinkType:    "entree",
-							LinkName:    "yakisoba",
-							GroupID:     "3",
-							HealthState: "running",
-						},
-					}))
+					It("returns group information as JSON", func() {
+						resp, err := secureGet(apiClient, listenAPIPort, "groups")
+						Expect(err).NotTo(HaveOccurred())
+						defer resp.Body.Close()
+
+						var parsed []api.Group
+						decoder := json.NewDecoder(resp.Body)
+						var nextGroup api.Group
+						for decoder.More() {
+							err = decoder.Decode(&nextGroup)
+							Expect(err).ToNot(HaveOccurred())
+							parsed = append(parsed, nextGroup)
+						}
+						Expect(parsed).To(ConsistOf([]api.Group{
+							{
+								JobName:     "",
+								LinkType:    "",
+								LinkName:    "",
+								GroupID:     "",
+								HealthState: "",
+							},
+							{
+								JobName:     "job1",
+								LinkType:    "appetizer",
+								LinkName:    "edamame",
+								GroupID:     "1",
+								HealthState: "",
+							},
+							{
+								JobName:     "job1",
+								LinkType:    "dessert",
+								LinkName:    "yatsuhashi",
+								GroupID:     "2",
+								HealthState: "",
+							},
+							{
+								JobName:     "job2",
+								LinkType:    "entree",
+								LinkName:    "yakisoba",
+								GroupID:     "3",
+								HealthState: "",
+							},
+						}))
+					})
 				})
 			})
 		})

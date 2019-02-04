@@ -127,7 +127,7 @@ func mainExitCode() int {
 	}
 
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
-	var healthChecker healthiness.HealthChecker = nil
+	var healthChecker healthiness.HealthChecker = healthiness.NewDisabledHealthChecker()
 	if config.Health.Enabled {
 		quietLogger := boshlog.NewAsyncWriterLogger(boshlog.LevelNone, ioutil.Discard)
 		httpClient, err := tlsclient.NewFromFiles("health.bosh-dns", config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, quietLogger)
