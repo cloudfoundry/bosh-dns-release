@@ -116,25 +116,27 @@ var _ = Describe("Main", func() {
 					ghttp.VerifyRequest("GET", "/groups"),
 					ghttp.RespondWith(http.StatusOK, `
 							{
-								"job_name": null,
-								"link_name": null,
-								"link_type": null,
-								"group_id": 3,
 								"health_state": "running"
 							}
 							{
 								"job_name": "zookeeper",
 								"link_name": "conn",
 								"link_type": "zookeeper",
-								"group_id": 4,
+								"group_id": "4",
 								"health_state": "failing"
 							}
 							{
 								"job_name": "zookeeper",
 								"link_name": "peers",
 								"link_type": "zookeeper_peers",
-								"group_id": 5,
+								"group_id": "5",
 								"health_state": "running"
+							}
+							{
+								"job_name": "consul",
+								"link_name": "agent",
+								"link_type": "conn",
+								"group_id": "6"
 							}
 						`),
 				),
@@ -149,9 +151,10 @@ var _ = Describe("Main", func() {
 			Eventually(session).Should(gexec.Exit(0), string(session.Err.Contents()))
 
 			Expect(session.Out).To(HaveTableRow("JobName", "LinkName", "LinkType", "GroupID", "HealthState"))
-			Expect(session.Out).To(HaveTableRow("-", "-", "-", "3", "running"))
+			Expect(session.Out).To(HaveTableRow("-", "-", "-", "-", "running"))
 			Expect(session.Out).To(HaveTableRow("zookeeper", "conn", "zookeeper", "4", "failing"))
 			Expect(session.Out).To(HaveTableRow("zookeeper", "peers", "zookeeper_peers", "5", "running"))
+			Expect(session.Out).To(HaveTableRow("consul", "agent", "conn", "6", "-"))
 		})
 	})
 })

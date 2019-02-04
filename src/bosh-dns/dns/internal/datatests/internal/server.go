@@ -8,8 +8,9 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/onsi/gomega/gexec"
 	"bosh-dns/dns/internal/testhelpers"
+
+	"github.com/onsi/gomega/gexec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -32,12 +33,16 @@ func StartSampleServer() Server {
 	listenAPIPort, err := testhelpers.GetFreePort()
 	Expect(err).NotTo(HaveOccurred())
 
+	jobsDir, err := ioutil.TempDir("", "jobs")
+	Expect(err).NotTo(HaveOccurred())
+
 	configContents, err := json.Marshal(config.Config{
 		Address:        "127.0.0.1",
 		Port:           listenPort,
 		RecordsFile:    "records.json",
 		AliasFilesGlob: "aliases.json",
 		UpcheckDomains: []string{"health.check.bosh."},
+		JobsDir:        jobsDir,
 
 		API: config.APIConfig{
 			Port:            listenAPIPort,
@@ -62,7 +67,7 @@ func StartSampleServer() Server {
 	Expect(testhelpers.WaitForListeningTCP(listenPort)).To(Succeed())
 
 	return Server{
-		Bind: fmt.Sprintf("127.0.0.1:%d", listenPort),
+		Bind:    fmt.Sprintf("127.0.0.1:%d", listenPort),
 		session: session,
 		cmd:     cmd,
 	}

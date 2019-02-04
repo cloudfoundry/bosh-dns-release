@@ -22,6 +22,7 @@ type Config struct {
 	HandlersFilesGlob  string       `json:"handlers_files_glob,omitempty"`
 	AddressesFilesGlob string       `json:"addresses_files_glob,omitempty"`
 	UpcheckDomains     []string     `json:"upcheck_domains,omitempty"`
+	JobsDir            string       `json:"jobs_dir,omitempty"`
 
 	API APIConfig `json:"api"`
 

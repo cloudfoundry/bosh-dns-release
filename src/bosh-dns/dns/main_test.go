@@ -43,6 +43,7 @@ var _ = Describe("main", func() {
 		listenPort2    int
 		listenAPIPort  int
 		recursorPort   int
+		jobsDir        string
 	)
 
 	BeforeEach(func() {
@@ -55,6 +56,13 @@ var _ = Describe("main", func() {
 
 		recursorPort, err = testhelpers.GetFreePort()
 		Expect(err).NotTo(HaveOccurred())
+
+		jobsDir, err = ioutil.TempDir("", "jobs")
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	AfterEach(func() {
+		Expect(os.RemoveAll(jobsDir)).To(Succeed())
 	})
 
 	Describe("flags", func() {
@@ -118,7 +126,7 @@ var _ = Describe("main", func() {
 			recordsJSONContent = `{
 				"record_keys": ["id", "instance_group", "group_ids", "az", "az_id","network", "deployment", "ip", "domain"],
 				"record_infos": [
-					["my-instance", "my-group", ["7"], "az1", "1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
+					["my-instance", "my-group", ["7","1","2","3"], "az1", "1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
 					["my-instance-1", "my-group", ["7"], "az2", "2", "my-network", "my-deployment", "127.0.0.2", "bosh"],
 					["my-instance-2", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "bosh"],
 					["my-instance-1", "my-group", ["7"], "az1", "1", "my-network", "my-deployment", "127.0.0.2", "foo"],
@@ -206,6 +214,7 @@ var _ = Describe("main", func() {
 				RecordsFile:        recordsFilePath,
 				AddressesFilesGlob: path.Join(addressesDir, "*"),
 				AliasFilesGlob:     path.Join(aliasesDir, "*"),
+				JobsDir:            jobsDir,
 				HandlersFilesGlob:  handlersFilesGlob,
 				UpcheckDomains:     []string{"health.check.bosh.", "health.check.ca."},
 
@@ -252,6 +261,7 @@ var _ = Describe("main", func() {
 			}
 
 			Expect(os.RemoveAll(aliasesDir)).To(Succeed())
+			Expect(os.RemoveAll(addressesDir)).To(Succeed())
 
 			if httpJSONServer != nil {
 				httpJSONServer.Close()
@@ -259,7 +269,7 @@ var _ = Describe("main", func() {
 			}
 		})
 
-		Describe("it responds to DNS requests", func() {
+		Describe("DNS API", func() {
 			itResponds := func(protocol string, addr string) {
 				c := &dns.Client{
 					Net: protocol,
@@ -299,10 +309,10 @@ var _ = Describe("main", func() {
 
 				BeforeEach(func() {
 					healthServers = []*ghttp.Server{
-						newFakeHealthServer("127.0.0.1", "running"),
+						newFakeHealthServer("127.0.0.1", "running", nil),
 						// sudo ifconfig lo0 alias 127.0.0.2, 3 up # on osx
-						newFakeHealthServer("127.0.0.2", "failing"),
-						newFakeHealthServer("127.0.0.3", "failing"),
+						newFakeHealthServer("127.0.0.2", "failing", nil),
+						newFakeHealthServer("127.0.0.3", "failing", nil),
 					}
 				})
 
@@ -447,6 +457,99 @@ var _ = Describe("main", func() {
 							AZ:          "az2",
 							Index:       "",
 							HealthState: "unchecked",
+						},
+					}))
+				})
+			})
+
+			Describe("/groups", func() {
+				var healthServers []*ghttp.Server
+
+				BeforeEach(func() {
+					healthServers = []*ghttp.Server{
+						newFakeHealthServer("127.0.0.1", "running", map[string]string{
+							"1": "running",
+							"2": "failing",
+							"3": "running",
+						}),
+					}
+					job1Dir := path.Join(jobsDir, "job1", ".bosh")
+					err := os.MkdirAll(job1Dir, 0755)
+					Expect(err).NotTo(HaveOccurred())
+
+					job2Dir := path.Join(jobsDir, "job2", ".bosh")
+					err = os.MkdirAll(job2Dir, 0755)
+					Expect(err).NotTo(HaveOccurred())
+
+					ioutil.WriteFile(path.Join(job1Dir, "links.json"), []byte(`[
+						{
+						  "type": "appetizer",
+							"name": "edamame",
+							"group": "1"
+						},
+						{
+						  "type": "dessert",
+							"name": "yatsuhashi",
+							"group": "2"
+						}
+					]`), 0644)
+
+					ioutil.WriteFile(path.Join(job2Dir, "links.json"), []byte(`[
+						{
+						  "type": "entree",
+							"name": "yakisoba",
+							"group": "3"
+						}
+					]`), 0644)
+				})
+
+				AfterEach(func() {
+					for _, server := range healthServers {
+						server.Close()
+					}
+				})
+
+				It("returns group information as JSON", func() {
+					resp, err := secureGet(apiClient, listenAPIPort, "groups")
+					Expect(err).NotTo(HaveOccurred())
+					defer resp.Body.Close()
+
+					var parsed []api.Group
+					decoder := json.NewDecoder(resp.Body)
+					var nextGroup api.Group
+					for decoder.More() {
+						err = decoder.Decode(&nextGroup)
+						Expect(err).ToNot(HaveOccurred())
+						parsed = append(parsed, nextGroup)
+					}
+					Expect(parsed).To(ConsistOf([]api.Group{
+						{
+							JobName:     "",
+							LinkType:    "",
+							LinkName:    "",
+							GroupID:     "",
+							HealthState: "running",
+						},
+						{
+							JobName:     "job1",
+							LinkType:    "appetizer",
+							LinkName:    "edamame",
+							GroupID:     "1",
+							HealthState: "running",
+						},
+						{
+							JobName:     "job1",
+							LinkType:    "dessert",
+							LinkName:    "yatsuhashi",
+							GroupID:     "2",
+							HealthState: "failing",
+						},
+						{
+							JobName:     "job2",
+							LinkType:    "entree",
+							LinkName:    "yakisoba",
+							GroupID:     "3",
+							HealthState: "running",
 						},
 					}))
 				})
@@ -1102,9 +1205,9 @@ var _ = Describe("main", func() {
 			Context("when both servers are running and return responses", func() {
 				BeforeEach(func() {
 					healthServers = []*ghttp.Server{
-						newFakeHealthServer("127.0.0.1", "running"),
+						newFakeHealthServer("127.0.0.1", "running", nil),
 						// sudo ifconfig lo0 alias 127.0.0.2 up # on osx
-						newFakeHealthServer("127.0.0.2", "failing"),
+						newFakeHealthServer("127.0.0.2", "failing", nil),
 					}
 				})
 
@@ -1168,11 +1271,11 @@ var _ = Describe("main", func() {
 
 				BeforeEach(func() {
 					checkInterval = time.Minute
-					brokenServer = newFakeHealthServer("127.0.0.2", "failing")
+					brokenServer = newFakeHealthServer("127.0.0.2", "failing", nil)
 					brokenServer.RouteToHandler("GET", "/health", ghttp.RespondWith(http.StatusGatewayTimeout, ``))
 
 					healthServers = []*ghttp.Server{
-						newFakeHealthServer("127.0.0.1", "running"),
+						newFakeHealthServer("127.0.0.1", "running", nil),
 						// sudo ifconfig lo0 alias 127.0.0.2 up # on osx
 						brokenServer,
 					}
@@ -1228,6 +1331,7 @@ var _ = Describe("main", func() {
 				Port:            listenPort,
 				Recursors:       []string{l.Addr().String()},
 				RecursorTimeout: config.DurationJSON(time.Second),
+				JobsDir:         jobsDir,
 
 				API: config.APIConfig{
 					Port:            listenAPIPort,
@@ -1269,6 +1373,7 @@ var _ = Describe("main", func() {
 				Port:            listenPort,
 				Recursors:       []string{"8.8.8.8"},
 				RecursorTimeout: config.DurationJSON(time.Second),
+				JobsDir:         jobsDir,
 
 				API: config.APIConfig{
 					Port:            listenAPIPort,
@@ -1325,6 +1430,7 @@ var _ = Describe("main", func() {
 				UpcheckDomains:     []string{"upcheck.bosh-dns."},
 				AliasFilesGlob:     path.Join(aliasesDir, "*"),
 				AddressesFilesGlob: path.Join(addressesDir, "*"),
+				JobsDir:            jobsDir,
 			})
 		})
 
@@ -1359,6 +1465,7 @@ var _ = Describe("main", func() {
 				Port:           listenPort,
 				UpcheckDomains: []string{"upcheck.bosh-dns."},
 				Timeout:        config.DurationJSON(-1),
+				JobsDir:        jobsDir,
 
 				API: config.APIConfig{
 					Port:            listenAPIPort,
@@ -1373,6 +1480,29 @@ var _ = Describe("main", func() {
 
 			Eventually(session, "5s").Should(gexec.Exit(1))
 			Eventually(session.Out).Should(gbytes.Say("[main].*ERROR - timed out waiting for server to bind"))
+		})
+
+		It("exits 1 and logs a helpful error message when failing to parse jobs", func() {
+			cmd = newCommandWithConfig(config.Config{
+				Address:        listenAddress,
+				Port:           listenPort,
+				UpcheckDomains: []string{"upcheck.bosh-dns."},
+				Timeout:        config.DurationJSON(-1),
+				JobsDir:        "",
+
+				API: config.APIConfig{
+					Port:            listenAPIPort,
+					CAFile:          "api/assets/test_certs/test_ca.pem",
+					CertificateFile: "api/assets/test_certs/test_server.pem",
+					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+				},
+			})
+
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session, "5s").Should(gexec.Exit(1))
+			Eventually(session.Out).Should(gbytes.Say("[main].*ERROR - failed to parse jobs directory"))
 		})
 
 		Context("mis-configured handlers", func() {
@@ -1496,7 +1626,7 @@ func newCommandWithConfig(c config.Config) *exec.Cmd {
 	return exec.Command(pathToServer, "--config", configFile.Name())
 }
 
-func newFakeHealthServer(ip, state string) *ghttp.Server {
+func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Server {
 	caCert, err := ioutil.ReadFile("../healthcheck/assets/test_certs/test_ca.pem")
 	Expect(err).ToNot(HaveOccurred())
 
@@ -1531,7 +1661,10 @@ func newFakeHealthServer(ip, state string) *ghttp.Server {
 
 	server.HTTPTestServer.TLS = serverConfig
 
-	server.RouteToHandler("GET", "/health", ghttp.RespondWith(http.StatusOK, `{"state": "`+state+`"}`))
+	server.RouteToHandler("GET", "/health", ghttp.RespondWithJSONEncoded(http.StatusOK, map[string]interface{}{
+		"state":       state,
+		"group_state": groups,
+	}))
 	server.HTTPTestServer.StartTLS()
 
 	return server

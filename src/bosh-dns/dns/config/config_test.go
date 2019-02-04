@@ -71,6 +71,7 @@ var _ = Describe("Config", func() {
 			"excluded_recursors":   []string{"169.254.169.254", "169.10.10.10:1234"},
 			"timeout":              timeout,
 			"upcheck_domains":      upcheckDomains,
+			"jobs_dir":             "/var/vcap/jobs",
 			"api": map[string]interface{}{
 				"port":             listenAPIPort,
 				"certificate_file": apiCertificateFile,
@@ -130,6 +131,7 @@ var _ = Describe("Config", func() {
 			AliasFilesGlob:     aliasesFileGlob,
 			HandlersFilesGlob:  handlersFileGlob,
 			AddressesFilesGlob: addressesFileGlob,
+			JobsDir:            "/var/vcap/jobs",
 			Health: config.HealthConfig{
 				Enabled:           true,
 				Port:              healthPort,

@@ -17,8 +17,8 @@ import (
 
 var _ = Describe("InstancesHandler", func() {
 	var (
-		fakeHealthStateGetter *fakes.HealthStateGetter
-		fakeRecordManager     *fakes.RecordManager
+		fakeHealthStateGetter *fakes.FakeHealthStateGetter
+		fakeRecordManager     *fakes.FakeRecordManager
 		handler               *api.InstancesHandler
 		recordSet             *records.RecordSet
 
@@ -27,8 +27,8 @@ var _ = Describe("InstancesHandler", func() {
 	)
 
 	BeforeEach(func() {
-		fakeHealthStateGetter = &fakes.HealthStateGetter{}
-		fakeRecordManager = &fakes.RecordManager{}
+		fakeHealthStateGetter = &fakes.FakeHealthStateGetter{}
+		fakeRecordManager = &fakes.FakeRecordManager{}
 		// URL path doesn't matter here since routing is handled elsewhere
 		r = httptest.NewRequest("GET", "/?address=foo", nil)
 		w = httptest.NewRecorder()

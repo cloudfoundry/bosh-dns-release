@@ -2,15 +2,15 @@
 package fakes
 
 import (
-	"bosh-dns/dns/server/healthiness"
-	"sync"
+	api "bosh-dns/dns/api"
+	sync "sync"
 )
 
-type HealthStateGetter struct {
-	HealthStateStringStub        func(ip string) string
+type FakeHealthStateGetter struct {
+	HealthStateStringStub        func(string) string
 	healthStateStringMutex       sync.RWMutex
 	healthStateStringArgsForCall []struct {
-		ip string
+		arg1 string
 	}
 	healthStateStringReturns struct {
 		result1 string
@@ -18,58 +18,59 @@ type HealthStateGetter struct {
 	healthStateStringReturnsOnCall map[int]struct {
 		result1 string
 	}
-	HealthStateStub        func(ip string) healthiness.HealthState
-	healthStateMutex       sync.RWMutex
-	healthStateArgsForCall []struct {
-		ip string
-	}
-	healthStateReturns struct {
-		result1 healthiness.HealthState
-	}
-	healthStateReturnsOnCall map[int]struct {
-		result1 healthiness.HealthState
-	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *HealthStateGetter) HealthStateString(ip string) string {
+func (fake *FakeHealthStateGetter) HealthStateString(arg1 string) string {
 	fake.healthStateStringMutex.Lock()
 	ret, specificReturn := fake.healthStateStringReturnsOnCall[len(fake.healthStateStringArgsForCall)]
 	fake.healthStateStringArgsForCall = append(fake.healthStateStringArgsForCall, struct {
-		ip string
-	}{ip})
-	fake.recordInvocation("HealthStateString", []interface{}{ip})
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("HealthStateString", []interface{}{arg1})
 	fake.healthStateStringMutex.Unlock()
 	if fake.HealthStateStringStub != nil {
-		return fake.HealthStateStringStub(ip)
+		return fake.HealthStateStringStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.healthStateStringReturns.result1
+	fakeReturns := fake.healthStateStringReturns
+	return fakeReturns.result1
 }
 
-func (fake *HealthStateGetter) HealthStateStringCallCount() int {
+func (fake *FakeHealthStateGetter) HealthStateStringCallCount() int {
 	fake.healthStateStringMutex.RLock()
 	defer fake.healthStateStringMutex.RUnlock()
 	return len(fake.healthStateStringArgsForCall)
 }
 
-func (fake *HealthStateGetter) HealthStateStringArgsForCall(i int) string {
-	fake.healthStateStringMutex.RLock()
-	defer fake.healthStateStringMutex.RUnlock()
-	return fake.healthStateStringArgsForCall[i].ip
+func (fake *FakeHealthStateGetter) HealthStateStringCalls(stub func(string) string) {
+	fake.healthStateStringMutex.Lock()
+	defer fake.healthStateStringMutex.Unlock()
+	fake.HealthStateStringStub = stub
 }
 
-func (fake *HealthStateGetter) HealthStateStringReturns(result1 string) {
+func (fake *FakeHealthStateGetter) HealthStateStringArgsForCall(i int) string {
+	fake.healthStateStringMutex.RLock()
+	defer fake.healthStateStringMutex.RUnlock()
+	argsForCall := fake.healthStateStringArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeHealthStateGetter) HealthStateStringReturns(result1 string) {
+	fake.healthStateStringMutex.Lock()
+	defer fake.healthStateStringMutex.Unlock()
 	fake.HealthStateStringStub = nil
 	fake.healthStateStringReturns = struct {
 		result1 string
 	}{result1}
 }
 
-func (fake *HealthStateGetter) HealthStateStringReturnsOnCall(i int, result1 string) {
+func (fake *FakeHealthStateGetter) HealthStateStringReturnsOnCall(i int, result1 string) {
+	fake.healthStateStringMutex.Lock()
+	defer fake.healthStateStringMutex.Unlock()
 	fake.HealthStateStringStub = nil
 	if fake.healthStateStringReturnsOnCall == nil {
 		fake.healthStateStringReturnsOnCall = make(map[int]struct {
@@ -81,65 +82,19 @@ func (fake *HealthStateGetter) HealthStateStringReturnsOnCall(i int, result1 str
 	}{result1}
 }
 
-func (fake *HealthStateGetter) HealthState(ip string) healthiness.HealthState {
-	fake.healthStateMutex.Lock()
-	ret, specificReturn := fake.healthStateReturnsOnCall[len(fake.healthStateArgsForCall)]
-	fake.healthStateArgsForCall = append(fake.healthStateArgsForCall, struct {
-		ip string
-	}{ip})
-	fake.recordInvocation("HealthState", []interface{}{ip})
-	fake.healthStateMutex.Unlock()
-	if fake.HealthStateStub != nil {
-		return fake.HealthStateStub(ip)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.healthStateReturns.result1
-}
-
-func (fake *HealthStateGetter) HealthStateCallCount() int {
-	fake.healthStateMutex.RLock()
-	defer fake.healthStateMutex.RUnlock()
-	return len(fake.healthStateArgsForCall)
-}
-
-func (fake *HealthStateGetter) HealthStateArgsForCall(i int) string {
-	fake.healthStateMutex.RLock()
-	defer fake.healthStateMutex.RUnlock()
-	return fake.healthStateArgsForCall[i].ip
-}
-
-func (fake *HealthStateGetter) HealthStateReturns(result1 healthiness.HealthState) {
-	fake.HealthStateStub = nil
-	fake.healthStateReturns = struct {
-		result1 healthiness.HealthState
-	}{result1}
-}
-
-func (fake *HealthStateGetter) HealthStateReturnsOnCall(i int, result1 healthiness.HealthState) {
-	fake.HealthStateStub = nil
-	if fake.healthStateReturnsOnCall == nil {
-		fake.healthStateReturnsOnCall = make(map[int]struct {
-			result1 healthiness.HealthState
-		})
-	}
-	fake.healthStateReturnsOnCall[i] = struct {
-		result1 healthiness.HealthState
-	}{result1}
-}
-
-func (fake *HealthStateGetter) Invocations() map[string][][]interface{} {
+func (fake *FakeHealthStateGetter) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.healthStateStringMutex.RLock()
 	defer fake.healthStateStringMutex.RUnlock()
-	fake.healthStateMutex.RLock()
-	defer fake.healthStateMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
-func (fake *HealthStateGetter) recordInvocation(key string, args []interface{}) {
+func (fake *FakeHealthStateGetter) recordInvocation(key string, args []interface{}) {
 	fake.invocationsMutex.Lock()
 	defer fake.invocationsMutex.Unlock()
 	if fake.invocations == nil {
@@ -150,3 +105,5 @@ func (fake *HealthStateGetter) recordInvocation(key string, args []interface{}) 
 	}
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
+
+var _ api.HealthStateGetter = new(FakeHealthStateGetter)

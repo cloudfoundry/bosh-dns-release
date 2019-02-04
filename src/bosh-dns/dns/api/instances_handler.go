@@ -8,24 +8,26 @@ import (
 	"github.com/miekg/dns"
 )
 
-//go:generate counterfeiter -o ./fakes/health_state_getter.go --fake-name HealthStateGetter . healthStateGetter
-type healthStateGetter interface {
+//go:generate counterfeiter -o ./fakes/health_state_getter.go . HealthStateGetter
+
+type HealthStateGetter interface {
 	HealthStateString(ip string) string
 }
 
-//go:generate counterfeiter -o ./fakes/record_manager.go --fake-name RecordManager . recordManager
-type recordManager interface {
+//go:generate counterfeiter -o ./fakes/record_manager.go . RecordManager
+
+type RecordManager interface {
 	Filter(aliasExpansions []string, shouldTrack bool) ([]record.Record, error)
 	AllRecords() *[]record.Record
 	ExpandAliases(fqdn string) []string
 }
 
 type InstancesHandler struct {
-	recordManager     recordManager
-	healthStateGetter healthStateGetter
+	recordManager     RecordManager
+	healthStateGetter HealthStateGetter
 }
 
-func NewInstancesHandler(recordManager recordManager, healthStateGetter healthStateGetter) *InstancesHandler {
+func NewInstancesHandler(recordManager RecordManager, healthStateGetter HealthStateGetter) *InstancesHandler {
 	return &InstancesHandler{
 		recordManager:     recordManager,
 		healthStateGetter: healthStateGetter,

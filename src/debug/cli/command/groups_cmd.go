@@ -76,7 +76,7 @@ func (o *GroupsCmd) Execute(args []string) error {
 			boshtbl.NewValueString(jsonRow.JobName),
 			boshtbl.NewValueString(jsonRow.LinkName),
 			boshtbl.NewValueString(jsonRow.LinkType),
-			boshtbl.NewValueInt(jsonRow.GroupID),
+			boshtbl.NewValueString(jsonRow.GroupID),
 			boshtbl.NewValueString(jsonRow.HealthState),
 		})
 	}

@@ -16,6 +16,6 @@ type Group struct {
 	JobName     string `json:"job_name"`
 	LinkName    string `json:"link_name"`
 	LinkType    string `json:"link_type"`
-	GroupID     int    `json:"group_id"`
+	GroupID     string `json:"group_id"`
 	HealthState string `json:"health_state"`
 }

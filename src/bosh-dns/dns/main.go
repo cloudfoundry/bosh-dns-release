@@ -27,6 +27,7 @@ import (
 	"bosh-dns/dns/server/records"
 	"bosh-dns/dns/server/records/dnsresolver"
 	"bosh-dns/dns/shuffle"
+	"bosh-dns/healthconfig"
 	"bosh-dns/tlsclient"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
@@ -126,6 +127,7 @@ func mainExitCode() int {
 	}
 
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
+	var healthChecker healthiness.HealthChecker = nil
 	if config.Health.Enabled {
 		quietLogger := boshlog.NewAsyncWriterLogger(boshlog.LevelNone, ioutil.Discard)
 		httpClient, err := tlsclient.NewFromFiles("health.bosh-dns", config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, quietLogger)
@@ -133,7 +135,7 @@ func mainExitCode() int {
 			logger.Error(logTag, fmt.Sprintf("Unable to configure health checker %s", err.Error()))
 			return 1
 		}
-		healthChecker := healthiness.NewHealthChecker(httpClient, config.Health.Port)
+		healthChecker = healthiness.NewHealthChecker(httpClient, config.Health.Port)
 		checkInterval := time.Duration(config.Health.CheckInterval)
 		healthWatcher = healthiness.NewHealthWatcher(1000, healthChecker, clock, checkInterval, logger)
 	}
@@ -221,7 +223,14 @@ func mainExitCode() int {
 		close(shutdown)
 	}()
 
+	jobs, err := healthconfig.ParseJobs(config.JobsDir, "")
+	if err != nil {
+		logger.Error(logTag, fmt.Sprintf("failed to parse jobs directory: %s", err.Error()))
+		return 1
+	}
+
 	http.Handle("/instances", api.NewInstancesHandler(recordSet, healthWatcher))
+	http.Handle("/groups", api.NewGroupsHandler(jobs, healthChecker))
 
 	go func(config dnsconfig.APIConfig) {
 		caCert, err := ioutil.ReadFile(config.CAFile)
