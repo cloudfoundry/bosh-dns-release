@@ -12,7 +12,7 @@ import (
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
-type GroupsCmd struct {
+type LocalGroupsCmd struct {
 	Args               GroupsArgs `positional-args:"true"`
 	API                string     `long:"api" env:"DNS_API_ADDRESS" description:"API address to talk to"`
 	TLSCACertPath      string     `long:"ca-cert-path" env:"DNS_API_TLS_CA_CERT_PATH" description:"CA certificate to use for mutual LS"`
@@ -26,7 +26,7 @@ type GroupsArgs struct {
 	Query string `positional-arg-name:"QUERY" description:"BOSH-DNS query formatted instance filter"`
 }
 
-func (o *GroupsCmd) Execute(args []string) error {
+func (o *LocalGroupsCmd) Execute(args []string) error {
 	logger := boshlog.NewLogger(boshlog.LevelNone)
 	if o.UI == nil {
 		confUI := ui.NewConfUI(logger)
@@ -39,7 +39,7 @@ func (o *GroupsCmd) Execute(args []string) error {
 		return err
 	}
 
-	requestURL := o.API + "/groups"
+	requestURL := o.API + "/local-groups"
 
 	response, err := client.Get(requestURL)
 	if err != nil {

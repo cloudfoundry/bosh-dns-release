@@ -465,7 +465,7 @@ var _ = Describe("main", func() {
 				})
 			})
 
-			Describe("/groups", func() {
+			Describe("/local-groups", func() {
 				BeforeEach(func() {
 					job1Dir := path.Join(jobsDir, "job1", ".bosh")
 					err := os.MkdirAll(job1Dir, 0755)
@@ -517,9 +517,11 @@ var _ = Describe("main", func() {
 					})
 
 					It("returns group information as JSON", func() {
-						resp, err := secureGet(apiClient, listenAPIPort, "groups")
+						resp, err := secureGet(apiClient, listenAPIPort, "local-groups")
 						Expect(err).NotTo(HaveOccurred())
 						defer resp.Body.Close()
+
+						Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
 						var parsed []api.Group
 						decoder := json.NewDecoder(resp.Body)
@@ -568,9 +570,11 @@ var _ = Describe("main", func() {
 					})
 
 					It("returns group information as JSON", func() {
-						resp, err := secureGet(apiClient, listenAPIPort, "groups")
+						resp, err := secureGet(apiClient, listenAPIPort, "local-groups")
 						Expect(err).NotTo(HaveOccurred())
 						defer resp.Body.Close()
+
+						Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
 						var parsed []api.Group
 						decoder := json.NewDecoder(resp.Body)

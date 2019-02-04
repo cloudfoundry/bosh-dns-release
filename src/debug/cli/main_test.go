@@ -109,11 +109,11 @@ var _ = Describe("Main", func() {
 		})
 	})
 
-	Describe("groups", func() {
+	Describe("local-groups", func() {
 		BeforeEach(func() {
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/groups"),
+					ghttp.VerifyRequest("GET", "/local-groups"),
 					ghttp.RespondWith(http.StatusOK, `
 							{
 								"health_state": "running"
@@ -143,8 +143,8 @@ var _ = Describe("Main", func() {
 			)
 		})
 
-		It("renders the groups details", func() {
-			cmd := exec.Command(pathToCli, "groups")
+		It("renders the local-groups details", func() {
+			cmd := exec.Command(pathToCli, "local-groups")
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 

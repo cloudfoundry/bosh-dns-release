@@ -230,7 +230,7 @@ func mainExitCode() int {
 	}
 
 	http.Handle("/instances", api.NewInstancesHandler(recordSet, healthWatcher))
-	http.Handle("/groups", api.NewGroupsHandler(jobs, healthChecker))
+	http.Handle("/local-groups", api.NewLocalGroupsHandler(jobs, healthChecker))
 
 	go func(config dnsconfig.APIConfig) {
 		caCert, err := ioutil.ReadFile(config.CAFile)

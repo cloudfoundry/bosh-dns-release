@@ -13,19 +13,19 @@ type HealthChecker interface {
 	GetStatus(ip string) api.HealthResult
 }
 
-type GroupsHandler struct {
+type LocalGroupsHandler struct {
 	jobs          []healthconfig.Job
 	healthChecker HealthChecker
 }
 
-func NewGroupsHandler(jobs []healthconfig.Job, hc HealthChecker) *GroupsHandler {
-	return &GroupsHandler{
+func NewLocalGroupsHandler(jobs []healthconfig.Job, hc HealthChecker) *LocalGroupsHandler {
+	return &LocalGroupsHandler{
 		jobs:          jobs,
 		healthChecker: hc,
 	}
 }
 
-func (h *GroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *LocalGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	healthState := h.healthChecker.GetStatus("localhost")
 

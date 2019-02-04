@@ -13,11 +13,11 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("GroupsHandler", func() {
+var _ = Describe("LocalGroupsHandler", func() {
 	var (
 		fakeHealthChecker *apifakes.FakeHealthChecker
 		jobs              []healthconfig.Job
-		handler           *api.GroupsHandler
+		handler           *api.LocalGroupsHandler
 
 		w *httptest.ResponseRecorder
 		r *http.Request
@@ -30,7 +30,7 @@ var _ = Describe("GroupsHandler", func() {
 	})
 
 	JustBeforeEach(func() {
-		handler = api.NewGroupsHandler(jobs, fakeHealthChecker)
+		handler = api.NewLocalGroupsHandler(jobs, fakeHealthChecker)
 	})
 
 	It("returns status ok", func() {
