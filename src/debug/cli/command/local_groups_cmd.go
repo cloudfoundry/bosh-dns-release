@@ -13,17 +13,12 @@ import (
 )
 
 type LocalGroupsCmd struct {
-	Args               GroupsArgs `positional-args:"true"`
-	API                string     `long:"api" env:"DNS_API_ADDRESS" description:"API address to talk to"`
-	TLSCACertPath      string     `long:"ca-cert-path" env:"DNS_API_TLS_CA_CERT_PATH" description:"CA certificate to use for mutual LS"`
-	TLSCertificatePath string     `long:"certificate-path" env:"DNS_API_TLS_CERTIFICATE_PATH" description:"Client certificate to use for mutual LS"`
-	TLSPrivateKeyPath  string     `long:"private-key-path" env:"DNS_API_TLS_PRIVATE_KEY_PATH" description:"Client key to use for mutual LS"`
+	API                string `long:"api" env:"DNS_API_ADDRESS" description:"API address to talk to"`
+	TLSCACertPath      string `long:"ca-cert-path" env:"DNS_API_TLS_CA_CERT_PATH" description:"CA certificate to use for mutual LS"`
+	TLSCertificatePath string `long:"certificate-path" env:"DNS_API_TLS_CERTIFICATE_PATH" description:"Client certificate to use for mutual LS"`
+	TLSPrivateKeyPath  string `long:"private-key-path" env:"DNS_API_TLS_PRIVATE_KEY_PATH" description:"Client key to use for mutual LS"`
 
 	UI ui.UI
-}
-
-type GroupsArgs struct {
-	Query string `positional-arg-name:"QUERY" description:"BOSH-DNS query formatted instance filter"`
 }
 
 func (o *LocalGroupsCmd) Execute(args []string) error {
