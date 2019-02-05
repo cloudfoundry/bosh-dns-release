@@ -1230,7 +1230,7 @@ var _ = Describe("main", func() {
 							Expect(err).NotTo(HaveOccurred())
 							Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 							Expect(r.Answer).To(HaveLen(1))
-							Expect(r.Answer[0].String()).To(MatchRegexp(`7\.0\.0\.10\.in-addr\.arpa\.\s+\d+\s+IN\s+PTR\s+bosh-dns\.arpa\.com\.`))
+							Expect(r.Answer[0].String()).To(MatchRegexp(`\Q7.0.0.10.in-addr.arpa.\E\s+\d+\s+IN\s+PTR\s+\Qbosh-dns.arpa.com.\E`))
 						})
 
 						It("forwards ipv6 to a recursor", func() {
@@ -1245,7 +1245,7 @@ var _ = Describe("main", func() {
 							Expect(err).NotTo(HaveOccurred())
 							Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 							Expect(r.Answer).To(HaveLen(1))
-							Expect(r.Answer[0].String()).To(MatchRegexp(`3\.6\.8\.4\.c\.e\.d\.1\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.0\.7\.8\.4\.1\.0\.0\.2\.ip6\.arpa\.\s+\d+\s+IN\s+PTR\s+bosh-dns\.arpa6\.com\.`))
+							Expect(r.Answer[0].String()).To(MatchRegexp(`\Q3.6.8.4.c.e.d.1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.7.8.4.1.0.0.2.ip6.arpa.\E\s+\d+\s+IN\s+PTR\s+\Qbosh-dns.arpa6.com.\E`))
 						})
 					})
 				})
