@@ -17,6 +17,7 @@ groups:
   - test-acceptance-windows2016
   - test-stress
   - brats-ubuntu
+  - upload-staging-release
   - finalize-release
   - bump-major
   - delivery
@@ -411,6 +412,16 @@ jobs:
         FOCUS_SPEC: "BoshDns"
         STEMCELL_OS: "ubuntu-trusty"
 
+- name: upload-staging-release
+  serial: true
+  plan:
+    - get: candidate-release
+      passed: [test-acceptance, test-acceptance-ubuntu-xenial, test-acceptance-windows, test-stress]
+      trigger: true
+    - put: staging-release
+      params:
+        file: "candidate-release/bosh-dns-dev-release.tgz"
+
 - name: finalize-release
   serial_groups:
     - version
@@ -499,6 +510,14 @@ resources:
     access_key_id: {{candidate_release_access_key_id}}
     secret_access_key: {{candidate_release_secret_access_key}}
     versioned_file: "bosh-dns-dev-release.tgz"
+
+- name: staging-release
+  type: s3
+  source:
+    bucket: {{candidate_release_bucket}}
+    access_key_id: {{candidate_release_access_key_id}}
+    secret_access_key: {{candidate_release_secret_access_key}}
+    versioned_file: "bosh-dns-staging-release.tgz"
 
 - name: brats-src
   type: git
