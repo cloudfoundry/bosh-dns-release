@@ -6,6 +6,7 @@ dependencies:
 
 files:
 - bosh-dns/dns/**/*
+- bosh-dns/healthconfig/**/*
 - bosh-dns/healthcheck/**/*
 - bosh-dns/tlsclient/**/*
 - bosh-dns/vendor/**/*
