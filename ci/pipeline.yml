@@ -421,6 +421,7 @@ jobs:
     - put: staging-release
       params:
         file: "candidate-release/bosh-dns-dev-release.tgz"
+        acl: public-read
 
 - name: finalize-release
   serial_groups:
