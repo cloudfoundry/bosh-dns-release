@@ -27,6 +27,7 @@ type RecordSet struct {
 	subscribers         []chan bool
 	logger              boshlog.Logger
 	aliasList           aliases.Config
+	mergedAliasList     aliases.Config
 	healthWatcher       healthiness.HealthWatcher
 	healthChan          chan record.Host
 	trackerSubscription chan []record.Record
@@ -49,6 +50,7 @@ func NewRecordSet(
 		recordFileReader:    recordFileReader,
 		logger:              logger,
 		aliasList:           aliasList,
+		mergedAliasList:     aliases.NewConfig().Merge(aliasList),
 		healthWatcher:       healthWatcher,
 		healthChan:          make(chan record.Host, 2),
 		trackerSubscription: make(chan []record.Record),
@@ -124,7 +126,9 @@ func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
 }
 
 func (r *RecordSet) ExpandAliases(fqdn string) []string {
-	resolutions := r.aliasList.Resolutions(fqdn)
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+	resolutions := r.mergedAliasList.Resolutions(fqdn)
 	if len(resolutions) == 0 {
 		resolutions = []string{fqdn}
 	}
@@ -179,7 +183,7 @@ func (r *RecordSet) Domains() []string {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
 
-	return append(r.domains, r.aliasList.AliasHosts()...)
+	return append(r.domains, r.mergedAliasList.AliasHosts()...)
 }
 
 func (r *RecordSet) update() {
@@ -187,7 +191,7 @@ func (r *RecordSet) update() {
 	if err != nil {
 		return
 	}
-	records, err := createFromJSON(contents, r.logger)
+	records, updatedAliases, err := createFromJSON(contents, r.logger)
 	if err != nil {
 		return
 	}
@@ -196,6 +200,8 @@ func (r *RecordSet) update() {
 	defer r.recordsMutex.Unlock()
 
 	r.Records = records
+
+	r.mergedAliasList = aliases.NewConfig().Merge(r.aliasList).Merge(updatedAliases)
 
 	r.trackerSubscription <- records
 
@@ -208,15 +214,16 @@ func (r *RecordSet) update() {
 	}
 }
 
-func createFromJSON(j []byte, logger boshlog.Logger) ([]record.Record, error) {
+func createFromJSON(j []byte, logger boshlog.Logger) ([]record.Record, aliases.Config, error) {
 	swap := struct {
-		Keys  []string        `json:"record_keys"`
-		Infos [][]interface{} `json:"record_infos"`
+		Keys    []string            `json:"record_keys"`
+		Infos   [][]interface{}     `json:"record_infos"`
+		Aliases map[string][]string `json:"aliases"`
 	}{}
 
 	err := json.Unmarshal(j, &swap)
 	if err != nil {
-		return nil, err
+		return nil, aliases.NewConfig(), err
 	}
 
 	records := make([]record.Record, 0, len(swap.Infos))
@@ -310,7 +317,12 @@ func createFromJSON(j []byte, logger boshlog.Logger) ([]record.Record, error) {
 		records = append(records, record)
 	}
 
-	return records, nil
+	var updatedAliases aliases.Config
+	if updatedAliases, err = aliases.NewConfigFromMap(swap.Aliases); err != nil {
+		return nil, aliases.NewConfig(), err
+	}
+
+	return records, updatedAliases, nil
 }
 
 func assertStringIntegerValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {

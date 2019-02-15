@@ -357,6 +357,7 @@ var _ = Describe("RecordSet", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 		})
+
 		Context("when updating to valid json", func() {
 			var (
 				subscribers []<-chan bool
@@ -367,7 +368,10 @@ var _ = Describe("RecordSet", func() {
 				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
 				"record_infos": [
 					["instance0", "0", "my-group", "az1", "1", "my-network", "1", "my-deployment", "234.234.234.234", "bosh."]
-				]
+				],
+				"aliases": {
+				  "foodomain.bar.": ["instance0.my-group.my-network.my-deployment.bosh."]
+				}
 			}`)
 				fileReader.GetReturns(jsonBytes, nil)
 				subscriptionChan <- true
@@ -378,6 +382,18 @@ var _ = Describe("RecordSet", func() {
 			It("updates its set of records", func() {
 				Eventually(func() []string {
 					_, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(fakeFilterer.FilterCallCount()).To(BeNumerically(">", 0))
+					_, recs := fakeFilterer.FilterArgsForCall(fakeFilterer.FilterCallCount() - 1)
+					ips := []string{}
+					for _, r := range recs {
+						ips = append(ips, r.IP)
+					}
+					return ips
+				}).Should(Equal([]string{"234.234.234.234"}))
+
+				Eventually(func() []string {
+					_, err := recordSet.Resolve("foodomain.bar.")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(fakeFilterer.FilterCallCount()).To(BeNumerically(">", 0))
 					_, recs := fakeFilterer.FilterArgsForCall(fakeFilterer.FilterCallCount() - 1)
@@ -826,7 +842,10 @@ var _ = Describe("RecordSet", func() {
 						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "2.2.2.2", "b2_domain1", 2],
 						["instance0", "0", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "3.3.3.3", "a1_domain1", 1],
 						["instance1", "1", "my-group", ["1"], "az2", "2", "my-network", "1", "my-deployment", "4.4.4.4", "a1_domain2", 2]
-					]
+					],
+					"aliases": {
+						"globalalias": ["q-s0.my-group.my-network.my-deployment.a2_domain1."]
+					}
 				}`)
 			fileReader.GetReturns(jsonBytes, nil)
 
@@ -883,6 +902,15 @@ var _ = Describe("RecordSet", func() {
 
 				Expect(err).ToNot(HaveOccurred())
 				Expect(resolutions).To(Equal([]string{"1.1.1.1"}))
+			})
+
+			Context("when the alias is global", func() {
+				It("resolves the alias", func() {
+					resolutions, err := recordSet.Resolve("globalalias.")
+
+					Expect(err).ToNot(HaveOccurred())
+					Expect(resolutions).To(Equal([]string{"1.1.1.1"}))
+				})
 			})
 
 			Context("when alias points to an IP directly", func() {

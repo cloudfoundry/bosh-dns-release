@@ -133,7 +133,10 @@ var _ = Describe("main", func() {
 					["my-instance-1", "my-group", ["7"], "az1", "1", "my-network", "my-deployment", "127.0.0.2", "foo"],
 					["my-instance-2", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "foo"],
 					["primer-instance", "primer-group", ["9"], "az1", "1", "primer-network", "primer-deployment", "127.0.0.254", "primer"]
-				]
+				],
+				"aliases": {
+				  "texas.nebraska": ["my-instance.my-group.my-network.my-deployment.bosh."]
+				}
 			}`
 			aliases2JSONContent = `{
 				"one.alias.": ["my-instance.my-group.my-network.my-deployment.bosh."],
@@ -753,6 +756,27 @@ var _ = Describe("main", func() {
 						})
 					})
 				})
+
+				Context("with global alias configuration", func() {
+					BeforeEach(func() {
+						m.SetQuestion("texas.nebraska.", dns.TypeA)
+					})
+
+					It("resolves the alias", func() {
+						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(response.Answer).To(HaveLen(1))
+						Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(response.Answer[0].Header().Name).To(Equal("texas.nebraska."))
+						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
+						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
+						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
+						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
+
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*INFO \- handlers\.DiscoveryHandler Request \[1\] \[texas\.nebraska\.\] 0 \d+ns`))
+					})
+				})
 			})
 
 			Context("upcheck domains", func() {
@@ -950,13 +974,18 @@ var _ = Describe("main", func() {
 						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
 						"record_infos": [
 							["my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.3", "bosh"]
-						]
+						],
+						"aliases": {
+							"massachusetts.nebraska": ["my-instance.my-group.my-network.my-deployment.bosh."]
+						}
 					}`)), 0644)
 					Expect(err).NotTo(HaveOccurred())
 				})
 
 				It("picks up the changes", func() {
 					Eventually(func() string {
+						c := &dns.Client{}
+						m := &dns.Msg{}
 						m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
@@ -967,6 +996,28 @@ var _ = Describe("main", func() {
 						Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
 
 						return answer.(*dns.A).A.String()
+					}).Should(Equal("127.0.0.3"))
+
+					Eventually(func() []dns.RR {
+						c := &dns.Client{}
+						m := &dns.Msg{}
+						m.SetQuestion("texas.nebraska.", dns.TypeA)
+						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
+						return response.Answer
+					}).Should(HaveLen(0))
+
+					Eventually(func() string {
+						c := &dns.Client{}
+						m := &dns.Msg{}
+						m.SetQuestion("massachusetts.nebraska.", dns.TypeA)
+						response, _, _ := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						if len(response.Answer) == 0 {
+							return ""
+						}
+
+						return response.Answer[0].(*dns.A).A.String()
 					}).Should(Equal("127.0.0.3"))
 				})
 			})
