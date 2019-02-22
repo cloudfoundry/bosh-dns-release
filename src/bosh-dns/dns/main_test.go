@@ -1011,7 +1011,8 @@ var _ = Describe("main", func() {
 						c := &dns.Client{}
 						m := &dns.Msg{}
 						m.SetQuestion("massachusetts.nebraska.", dns.TypeA)
-						response, _, _ := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
 
 						if len(response.Answer) == 0 {
 							return ""
