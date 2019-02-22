@@ -30,7 +30,6 @@ instance_groups:
           tls: ((dns_api_server_tls))
         client:
           tls: ((dns_api_client_tls))
-      recursors: ["10.0.255.5:9955"]
       cache:
         enabled: true
       aliases:
@@ -39,15 +38,12 @@ instance_groups:
         yetanother.asterisk.alias: ["*.*.default.bosh-dns.bosh."]
   - name: windows-firewall-rules
     release: dns-acceptance
-  - name: configures-handler
-    release: dns-acceptance
-    properties:
-      handler_server_address: 10.0.255.5:9956
-      handler_domain: handler.internal.local.
 
 releases:
+
 - name: bosh-dns
   version: latest
+
 - name: dns-acceptance
   version: latest
 

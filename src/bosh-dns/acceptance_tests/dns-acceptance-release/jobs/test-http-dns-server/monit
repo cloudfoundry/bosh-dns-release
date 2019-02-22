@@ -1,0 +1,5 @@
+check process test-http-dns-server
+  with pidfile /var/vcap/sys/run/test-http-dns-server/test-http-dns-server.pid
+  start program "/var/vcap/jobs/test-http-dns-server/bin/http_dns_server_ctl start"
+  stop program "/var/vcap/jobs/test-http-dns-server/bin/http_dns_server_ctl stop"
+  group vcap

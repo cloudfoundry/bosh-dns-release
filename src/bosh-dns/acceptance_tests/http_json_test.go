@@ -4,12 +4,6 @@ import (
 	"bosh-dns/acceptance_tests/helpers"
 
 	"fmt"
-	"os/exec"
-	"path/filepath"
-
-	"github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
-	"github.com/onsi/gomega/gexec"
 
 	gomegadns "bosh-dns/gomega-dns"
 
@@ -19,43 +13,38 @@ import (
 
 var _ = Describe("HTTP JSON Server integration", func() {
 	var (
-		firstInstance  helpers.InstanceInfo
-		httpDNSSession *gexec.Session
+		firstInstance helpers.InstanceInfo
 	)
 
 	Describe("DNS endpoint", func() {
 		BeforeEach(func() {
-			var err error
-			cmd := exec.Command(pathToTestHTTPDNSServer)
-			httpDNSSession, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			cmdRunner = system.NewExecCmdRunner(logger.NewLogger(logger.LevelDebug))
-
 			manifestPath := assetPath(testManifestName())
-			aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
-			Expect(err).ToNot(HaveOccurred())
 			enableHTTPJSONEndpointsPath := assetPath("ops/enable-http-json-endpoints.yml")
+			enableConfiguresHandler := assetPath("ops/enable-configures-handler-job.yml")
+			configureRecursorPath := assetPath(configureRecursorOpsFile())
 
 			updateCloudConfigWithDefaultCloudConfig()
 
+			testRecursorAddress := testRecursorIPAddress()
+			testHTTPDNSServerAddress := fmt.Sprintf(
+				"http://%s:8081",
+				testHTTPDNSServerIPAddress(),
+			)
 			helpers.Bosh(
 				"deploy",
+				"-o", configureRecursorPath,
 				"-o", enableHTTPJSONEndpointsPath,
+				"-o", enableConfiguresHandler,
 				"-v", fmt.Sprintf("name=%s", boshDeployment),
 				"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
-				"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
-				"-v", fmt.Sprintf("http_json_server_address=%s", jsonServerAddress()),
+				"-v", fmt.Sprintf("http_json_server_address=%s", testHTTPDNSServerAddress),
+				"-v", fmt.Sprintf("recursor_ip=%s", testRecursorAddress),
 				"--vars-store", "creds.yml",
 				manifestPath,
 			)
 
-			allDeployedInstances = helpers.BoshInstances()
+			allDeployedInstances = helpers.BoshInstances("bosh-dns")
 			firstInstance = allDeployedInstances[0]
-		})
-
-		AfterEach(func() {
-			httpDNSSession.Kill()
 		})
 
 		It("answers queries with the response from the http server", func() {
@@ -63,6 +52,14 @@ var _ = Describe("HTTP JSON Server integration", func() {
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 			Expect(dnsResponse.Answer).To(ConsistOf(
 				gomegadns.MatchResponse(gomegadns.Response{"ip": "192.168.0.1", "ttl": 0}),
+			))
+		})
+
+		It("configures Bosh DNS handlers by producing a dns handlers json file", func() {
+			dnsResponse := helpers.Dig("handler.internal.local.", firstInstance.IP)
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": "10.168.0.1", "ttl": 0}),
 			))
 		})
 	})

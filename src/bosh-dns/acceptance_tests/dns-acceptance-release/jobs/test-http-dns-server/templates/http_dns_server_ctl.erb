@@ -1,0 +1,81 @@
+#!/bin/bash -exu
+
+set -o pipefail
+
+RUN_DIR=/var/vcap/sys/run/test-http-dns-server
+PIDFILE=$RUN_DIR/test-http-dns-server.pid
+LOG_DIR=/var/vcap/sys/log/test-http-dns-server
+JOB_DIR=/var/vcap/jobs/test-http-dns-server
+HTTP_DNS_SERVER_PACKAGE=/var/vcap/packages/test-http-dns-server
+
+create_directories() {
+  mkdir -p "${LOG_DIR}"
+  mkdir -p "${RUN_DIR}"
+}
+
+pid_exists() {
+  ps -p "$1" &> /dev/null
+}
+
+start() {
+  if [ -e "$PIDFILE" ]; then
+    pid=$(head -1 "${PIDFILE}")
+    if pid_exists "$pid"; then
+      return 0
+    fi
+  fi
+
+  ulimit -n 65536
+
+  pushd ${JOB_DIR}
+    "${HTTP_DNS_SERVER_PACKAGE}/bin/test-http-dns-server" 53 \
+      1>> ${LOG_DIR}/test_http_dns_server.stdout.log \
+      2>> ${LOG_DIR}/test_http_dns_server.stderr.log &
+  popd
+
+  echo $! > $PIDFILE
+}
+
+stop() {
+  local pid
+
+  if [ -e $PIDFILE ]; then
+    pid=$(head -1 $PIDFILE)
+  else
+    exit 0
+  fi
+
+  if [ -n "$pid" ] && pid_exists "$pid"; then
+    set +e
+    kill -15 "$pid"
+    set -e
+  fi
+
+  if [ -e "/proc/$pid" ]; then
+    set +e
+    kill -9 "$pid"
+    set -e
+  fi
+
+  rm -f $PIDFILE
+}
+
+main() {
+  create_directories
+
+  case ${1} in
+    start)
+      start
+      ;;
+
+    stop)
+      stop
+      ;;
+
+    *)
+      echo "Usage: ${0} {start|stop}"
+      ;;
+  esac
+}
+
+main "$@"

@@ -32,6 +32,7 @@ upload_dependencies() {
   fly -t production execute --privileged --include-ignored \
     --config="${task_dir}/setup-deploy.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows \
+    --input=gcp-linux-stemcell="${linux_stemcell_dir}" \
     --input=candidate-release="${tarball_dir}" \
     --input=envs="$PWD/envs"
 }
@@ -132,6 +133,9 @@ main() {
 
   tarball_dir=$(mktemp -d)
   bosh create-release --force --tarball="${tarball_dir}/bosh-windows-dns-release.tgz" --dir "${release_dir}"
+
+  linux_stemcell_dir=$(mktemp -d)
+  curl -Lo "${linux_stemcell_dir}/stemcell.tgz"  https://bosh.io/d/stemcells/bosh-google-kvm-ubuntu-xenial-go_agent
 
   if [[ ! -z "$bosh_repo" ]]; then
     export BOSH_RELEASE_TARBALL_LOCATION=$(mktemp -d)

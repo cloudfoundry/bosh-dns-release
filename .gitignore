@@ -13,9 +13,12 @@ config/private.yml
 dev_releases/
 releases/**/*.tgz
 releases/*.tgz
-src/bosh-dns/acceptance_tests/linux/override_nameserver/disabled/dns-creds.yml
 tags
 envs
+
+dns-creds.yml
+src/bosh-dns/acceptance_tests/creds.yml
+src/bosh-dns/acceptance_tests/linux/override_nameserver/disabled/dns-creds.yml
 
 # Golang
 /bin/

@@ -1,0 +1,9 @@
+set -eu
+
+mkdir -p "${BOSH_INSTALL_TARGET}/bin"
+source /var/vcap/packages/golang-1-linux/bosh/compile.env
+
+mkdir -p "${GOPATH}/src"
+mv test-recursor "${GOPATH}/src"
+
+go build -o "${BOSH_INSTALL_TARGET}/bin/test-recursor" "test-recursor"

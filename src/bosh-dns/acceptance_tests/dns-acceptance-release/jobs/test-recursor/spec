@@ -1,0 +1,10 @@
+---
+name: test-recursor
+
+templates:
+  recursor_ctl.erb: bin/recursor_ctl
+
+packages:
+  - test-recursor
+
+properties: {}

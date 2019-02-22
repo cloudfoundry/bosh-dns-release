@@ -46,8 +46,8 @@ type InstanceInfo struct {
 	Index         string
 }
 
-func BoshInstances() []InstanceInfo {
-	output := Bosh("instances", "--details", "--json")
+func BoshInstances(deploymentName string) []InstanceInfo {
+	output := Bosh("instances", "-d", deploymentName, "--details", "--json")
 
 	var response struct {
 		Tables []struct {

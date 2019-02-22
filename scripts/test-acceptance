@@ -16,7 +16,7 @@ fly -t production workers || fly -t production login
 
 fly -t production execute --privileged \
   --config=./ci/tasks/test-acceptance.yml \
-  --inputs-from=bosh-dns-release/test-acceptance \
+  --inputs-from=bosh-dns-release/test-acceptance-ubuntu-xenial \
   --input=candidate-release=${tarball_dir} \
   --input=bosh-dns-release=$DIR/../ \
   "$@"

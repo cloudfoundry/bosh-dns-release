@@ -1,0 +1,10 @@
+---
+name: test-http-dns-server
+
+templates:
+  http_dns_server_ctl.erb: bin/http_dns_server_ctl
+
+packages:
+  - test-http-dns-server
+
+properties: {}

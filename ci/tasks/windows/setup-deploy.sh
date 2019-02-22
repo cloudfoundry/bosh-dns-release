@@ -12,7 +12,7 @@ main() {
 
   env
 
-  bosh upload-release $ROOT_DIR/candidate-release/*.tgz
+  bosh upload-release --rebase $ROOT_DIR/candidate-release/*.tgz
   bosh -n upload-stemcell $ROOT_DIR/bosh-stemcell-windows/*.tgz
   bosh -n upload-stemcell $ROOT_DIR/gcp-linux-stemcell/*.tgz
 

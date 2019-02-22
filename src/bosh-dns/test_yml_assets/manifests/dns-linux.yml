@@ -28,8 +28,6 @@ instance_groups:
           tls: ((dns_api_server_tls))
         client:
           tls: ((dns_api_client_tls))
-      recursors:
-      - "172.17.0.1:9955"
       recursor_timeout: 1s
       cache:
         enabled: true
@@ -37,18 +35,13 @@ instance_groups:
         asterisk.alias: ["*.*-dns.default.bosh-dns.bosh."]
         another.asterisk.alias: ["*.bosh-dns*.default.bosh-dns.bosh."]
         yetanother.asterisk.alias: ["*.*.default.bosh-dns.bosh."]
-  - name: configures-handler
-    release: dns-acceptance
-    properties:
-      handler_server_address: 172.17.0.1:9956
-      handler_domain: handler.internal.local.
 
 releases:
 - name: bosh-dns
   version: latest
+
 - name: dns-acceptance
-  url: file://((acceptance_release_path))
-  version: create
+  version: latest
 
 stemcells:
 - alias: default

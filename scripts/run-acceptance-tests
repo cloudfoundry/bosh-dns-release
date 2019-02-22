@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+set -exu
+
+BOSH_BINARY_PATH="$(command -v bosh)"
+export BOSH_BINARY_PATH
+
+export BOSH_DEPLOYMENT="bosh-dns"
+export TEST_MANIFEST_NAME="manifest"
+export NO_RECURSORS_OPS_FILE="no-recursors-configured"
+export LOCAL_RECURSOR_OPS_FILE="add-test-dns-nameservers"
+export TEST_TARGET_OS="linux"
+export GOPATH=$PWD
+BASE_STEMCELL=${BASE_STEMCELL:-ubuntu-xenial}
+export BASE_STEMCELL
+export PATH="${GOPATH}/bin":$PATH
+
+go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
+
+pushd ./src/bosh-dns/acceptance_tests/dns-acceptance-release
+   bosh create-release --force && bosh upload-release --rebase
+popd
+
+pushd ./src/bosh-dns/acceptance_tests
+  ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
+popd
+
+# Need to delete the bosh-dns runtime config because bbl uses a hard-coded
+# bosh-deployment which specifies a bosh-dns version that may conflict with the
+# one we are trying to test.
+bosh delete-config --type=runtime --name=dns -n
+
+bosh -n deploy ./src/bosh-dns/test_yml_assets/manifests/dns-linux.yml \
+   -v health_server_port=2345 \
+   -o ./src/bosh-dns/test_yml_assets/ops/use-dns-release-default-bind-and-alias-addresses.yml \
+   -o ./src/bosh-dns/test_yml_assets/ops/enable-health-manifest-ops.yml \
+   -o ./src/bosh-dns/test_yml_assets/ops/enable-require-dns-in-pre-start-ops.yml \
+   -v base_stemcell="${BASE_STEMCELL}" \
+   --vars-store dns-creds.yml
+
+pushd ./src/bosh-dns/acceptance_tests/linux
+  ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race -r .
+popd

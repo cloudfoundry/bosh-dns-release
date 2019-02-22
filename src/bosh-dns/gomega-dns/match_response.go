@@ -24,7 +24,7 @@ func fetchName(m dns.RR) string {
 	return m.Header().Name
 }
 
-func fetchIP(m dns.RR) string {
+func FetchIP(m dns.RR) string {
 	if address, ok := m.(*dns.A); ok {
 		return address.A.String()
 	}
@@ -53,7 +53,7 @@ func (matcher *matchResponseMatcher) Match(actual interface{}) (success bool, er
 	}
 	encodedActual := map[string]interface{}{
 		"name":   fetchName(msg),
-		"ip":     fetchIP(msg),
+		"ip":     FetchIP(msg),
 		"rrtype": fetchRrtype(msg),
 		"class":  fetchClass(msg),
 		"ttl":    fetchTTL(msg),

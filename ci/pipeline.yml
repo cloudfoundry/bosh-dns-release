@@ -206,6 +206,7 @@ jobs:
       - get: envs
       - get: bosh-deployment
       - get: gcp-linux-stemcell
+        resource: gcp-ubuntu-xenial-stemcell
       - get: bosh-stemcell-windows
         resource: windows-2012-stemcell
       - get: bosh-candidate-release
@@ -271,6 +272,7 @@ jobs:
       - get: envs
       - get: bosh-deployment
       - get: gcp-linux-stemcell
+        resource: gcp-ubuntu-xenial-stemcell
       - get: bosh-stemcell-windows
         resource: windows-2016-stemcell
       - get: bosh-candidate-release
@@ -573,10 +575,10 @@ resources:
     bucket: bosh-candidate-release-tarballs
     versioned_file: bosh-dev-release.tgz
 
-- name: gcp-linux-stemcell
+- name: gcp-ubuntu-xenial-stemcell
   type: bosh-io-stemcell
   source:
-    name: bosh-google-kvm-ubuntu-trusty-go_agent
+    name: bosh-google-kvm-ubuntu-xenial-go_agent
 
 - name: envs
   type: git

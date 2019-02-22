@@ -4,8 +4,6 @@ import (
 	"bosh-dns/acceptance_tests/helpers"
 	"fmt"
 
-	"github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -21,14 +19,11 @@ func TestAcceptance(t *testing.T) {
 }
 
 var (
-	pathToTestRecursorServer string
-	pathToTestHTTPDNSServer  string
-	allDeployedInstances     []helpers.InstanceInfo
-	boshDeployment           string
-	cmdRunner                system.CmdRunner
-	cloudConfigTempFileName  string
-	testTargetOS             string
-	baseStemcell             string
+	allDeployedInstances    []helpers.InstanceInfo
+	boshDeployment          string
+	cloudConfigTempFileName string
+	testTargetOS            string
+	baseStemcell            string
 )
 
 var _ = BeforeSuite(func() {
@@ -36,15 +31,6 @@ var _ = BeforeSuite(func() {
 	testTargetOS = assertEnvExists("TEST_TARGET_OS")
 	baseStemcell = assertEnvExists("BASE_STEMCELL")
 	boshDeployment = assertEnvExists("BOSH_DEPLOYMENT")
-
-	var err error
-	pathToTestRecursorServer, err = gexec.Build("bosh-dns/acceptance_tests/test_recursor")
-	Expect(err).NotTo(HaveOccurred())
-
-	pathToTestHTTPDNSServer, err = gexec.Build("bosh-dns/acceptance_tests/test_http_dns_server")
-	Expect(err).NotTo(HaveOccurred())
-
-	cmdRunner = system.NewExecCmdRunner(logger.NewLogger(logger.LevelDebug))
 })
 
 var _ = AfterSuite(func() {
@@ -81,6 +67,14 @@ func excludedRecursorsOpsFile() string {
 	}
 
 	return "ops/add-excluded-recursors.yml"
+}
+
+func configureRecursorOpsFile() string {
+	if testTargetOS == "windows" {
+		return "ops/configure-recursor-windows.yml"
+	}
+
+	return "ops/configure-recursor.yml"
 }
 
 func jsonServerAddress() string {

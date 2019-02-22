@@ -28,6 +28,7 @@ commit_bbl_state_dir() {
       git config user.name "CI Bot"
       git config user.email "cf-release-integration@pivotal.io"
       git add --all .
+      rm -f ../.git/hooks/prepare-commit-msg
       git commit -m "${commit_message}"
     fi
   popd

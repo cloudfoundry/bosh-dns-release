@@ -1,0 +1,5 @@
+check process test-recursor
+  with pidfile /var/vcap/sys/run/test-recursor/test-recursor.pid
+  start program "/var/vcap/jobs/test-recursor/bin/recursor_ctl start"
+  stop program "/var/vcap/jobs/test-recursor/bin/recursor_ctl stop"
+  group vcap

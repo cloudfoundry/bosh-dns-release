@@ -26,55 +26,91 @@ func assetPath(name string) string {
 	return path
 }
 
-func ensureRecursorIsDefinedByBoshAgent() {
+func deployTestRecursor() {
+	helpers.Bosh(
+		"deploy",
+		"-d", "test-recursor",
+		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
+		assetPath("manifests/recursor.yml"),
+	)
+}
+
+func deployTestHTTPDNSServer() {
+	helpers.Bosh(
+		"deploy",
+		"-d", "test-http-dns-server",
+		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
+		assetPath("manifests/http-dns-server.yml"),
+	)
+}
+
+func testRecursorIPAddress() string {
+	deployTestRecursor()
+
+	testRecursorAddresses := helpers.BoshInstances("test-recursor")
+	if len(testRecursorAddresses) == 0 {
+		return ""
+	}
+
+	return helpers.BoshInstances("test-recursor")[0].IP
+}
+
+func testHTTPDNSServerIPAddress() string {
+	deployTestHTTPDNSServer()
+
+	testHTTPDNSServerAddresses := helpers.BoshInstances("test-http-dns-server")
+	if len(testHTTPDNSServerAddresses) == 0 {
+		return ""
+	}
+
+	return helpers.BoshInstances("test-http-dns-server")[0].IP
+}
+
+func ensureRecursorIsDefinedByBoshAgent(recursorAddress string) {
 	manifestPath := assetPath(testManifestName())
 	disableOverridePath := assetPath(noRecursorsOpsFile())
 	excludedRecursorsPath := assetPath(excludedRecursorsOpsFile())
 
-	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
-	Expect(err).ToNot(HaveOccurred())
-
-	updateCloudConfigWithOurLocalRecursor()
+	updateCloudConfigWithOurLocalRecursor(recursorAddress)
 
 	helpers.Bosh(
 		"deploy",
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
-		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 		"-o", disableOverridePath,
 		"-o", excludedRecursorsPath,
 		"--vars-store", "creds.yml",
 		manifestPath,
 	)
-	allDeployedInstances = helpers.BoshInstances()
+	allDeployedInstances = helpers.BoshInstances("bosh-dns")
 }
 
-func ensureRecursorIsDefinedByDnsRelease() {
+func ensureRecursorIsDefinedByDNSRelease(recursorAddress string) {
 	manifestPath := assetPath(testManifestName())
-
-	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
-	Expect(err).ToNot(HaveOccurred())
+	configureRecursorPath := assetPath(configureRecursorOpsFile())
 
 	updateCloudConfigWithDefaultCloudConfig()
 
 	helpers.Bosh(
 		"deploy",
+		"-o", configureRecursorPath,
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
-		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
+		"-v", fmt.Sprintf("recursor_ip=%s", recursorAddress),
 		"--vars-store", "creds.yml",
 		manifestPath,
 	)
-	allDeployedInstances = helpers.BoshInstances()
+	allDeployedInstances = helpers.BoshInstances("bosh-dns")
 }
 
-func updateCloudConfigWithOurLocalRecursor() {
+func updateCloudConfigWithOurLocalRecursor(recursorAddress string) {
 	removeRecursorAddressesOpsFile := assetPath(setupLocalRecursorOpsFile())
 
 	helpers.Bosh(
 		"update-cloud-config",
 		"-o", removeRecursorAddressesOpsFile,
 		"-v", "network=director_network",
+		"-v", fmt.Sprintf("recursor_ip=%s", recursorAddress),
 		cloudConfigTempFileName,
 	)
 }
@@ -98,18 +134,14 @@ func resolve(address, server string) []string {
 	return strings.Split(strings.TrimSpace(string(session.Out.Contents())), "\n")
 }
 
-func ensureHealthEndpointDeployed(extraOps ...string) {
+func ensureHealthEndpointDeployed(recursorAddress string, extraOps ...string) {
 	manifestPath := assetPath(testManifestName())
-
-	aliasProvidingPath, err := filepath.Abs("dns-acceptance-release")
-	Expect(err).ToNot(HaveOccurred())
 
 	updateCloudConfigWithDefaultCloudConfig()
 
 	args := []string{
 		"deploy",
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
-		"-v", fmt.Sprintf("acceptance_release_path=%s", aliasProvidingPath),
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-v", "health_server_port=2345",
 		"-o", assetPath("ops/enable-health-manifest-ops.yml"),
@@ -120,7 +152,7 @@ func ensureHealthEndpointDeployed(extraOps ...string) {
 	args = append(args, extraOps...)
 	helpers.Bosh(args...)
 
-	allDeployedInstances = helpers.BoshInstances()
+	allDeployedInstances = helpers.BoshInstances("bosh-dns")
 }
 
 func setupSecureGet() *httpclient.HTTPClient {
