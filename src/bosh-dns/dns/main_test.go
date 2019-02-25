@@ -42,7 +42,7 @@ var _ = Describe("main", func() {
 		listenAddress2 string
 		listenPort2    int
 		listenAPIPort  int
-		recursorPort   int
+		recursorList   []string
 		jobsDir        string
 	)
 
@@ -52,9 +52,6 @@ var _ = Describe("main", func() {
 		listenPort, err = testhelpers.GetFreePort()
 		Expect(err).NotTo(HaveOccurred())
 		listenAPIPort, err = testhelpers.GetFreePort()
-		Expect(err).NotTo(HaveOccurred())
-
-		recursorPort, err = testhelpers.GetFreePort()
 		Expect(err).NotTo(HaveOccurred())
 
 		jobsDir, err = ioutil.TempDir("", "jobs")
@@ -152,6 +149,7 @@ var _ = Describe("main", func() {
 			}`
 
 			healthEnabled = true
+			recursorList = []string{}
 		})
 
 		JustBeforeEach(func() {
@@ -212,11 +210,9 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			cmd = newCommandWithConfig(config.Config{
-				Address: listenAddress,
-				Port:    listenPort,
-				Recursors: []string{
-					fmt.Sprintf("127.0.0.1:%d", recursorPort),
-				},
+				Address:            listenAddress,
+				Port:               listenPort,
+				Recursors:          recursorList,
 				RecordsFile:        recordsFilePath,
 				AddressesFilesGlob: path.Join(addressesDir, "*"),
 				AliasFilesGlob:     path.Join(aliasesDir, "*"),
@@ -1024,9 +1020,13 @@ var _ = Describe("main", func() {
 			})
 
 			Context("http json domains", func() {
+				BeforeEach(func() {
+					recursorList = []string{"1.1.1.1:1111"}
+				})
+
 				Context("when caching is disabled", func() {
 					BeforeEach(func() {
-						httpJSONServer, handlersDir = setupHttpServer(false, recursorPort)
+						httpJSONServer, handlersDir = setupHttpServer(false, recursorList)
 					})
 
 					It("serves the addresses from the http server", func() {
@@ -1048,7 +1048,7 @@ var _ = Describe("main", func() {
 
 				Context("when caching is enabled", func() {
 					BeforeEach(func() {
-						httpJSONServer, handlersDir = setupHttpServer(true, recursorPort)
+						httpJSONServer, handlersDir = setupHttpServer(true, recursorList)
 					})
 
 					It("should return cached answers", func() {
@@ -1082,9 +1082,20 @@ var _ = Describe("main", func() {
 			})
 
 			Context("recursion", func() {
-				var server *dns.Server
+				var (
+					server       *dns.Server
+					recursorPort int
+				)
 
 				BeforeEach(func() {
+					var err error
+					recursorPort, err = testhelpers.GetFreePort()
+					Expect(err).NotTo(HaveOccurred())
+
+					recursorList = []string{
+						fmt.Sprintf("127.0.0.1:%d", recursorPort),
+					}
+
 					server = &dns.Server{Addr: fmt.Sprintf("0.0.0.0:%d", recursorPort), Net: "tcp", UDPSize: 65535}
 
 					dns.HandleFunc(".", func(resp dns.ResponseWriter, req *dns.Msg) {
@@ -1187,7 +1198,7 @@ var _ = Describe("main", func() {
 
 				Context("when caching is enabled", func() {
 					BeforeEach(func() {
-						httpJSONServer, handlersDir = setupHttpServer(true, recursorPort)
+						httpJSONServer, handlersDir = setupHttpServer(true, recursorList)
 					})
 
 					It("serves cached responses for local recursor", func() {
@@ -1785,7 +1796,7 @@ func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Serv
 	return server
 }
 
-func setupHttpServer(handlerCachingEnabled bool, recursorPort int) (*ghttp.Server, string) {
+func setupHttpServer(handlerCachingEnabled bool, recursorList []string) (*ghttp.Server, string) {
 	handlersDir, err := ioutil.TempDir("", "handlers")
 	Expect(err).NotTo(HaveOccurred())
 
@@ -1838,7 +1849,7 @@ func setupHttpServer(handlerCachingEnabled bool, recursorPort int) (*ghttp.Serve
 			},
 			Source: handlersconfig.Source{
 				Type:      "dns",
-				Recursors: []string{fmt.Sprintf("127.0.0.1:%d", recursorPort)},
+				Recursors: recursorList,
 			},
 		},
 	})

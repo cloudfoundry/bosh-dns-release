@@ -1,0 +1,3 @@
+#!/bin/bash
+
+fly -t production execute -c ci/tasks/windows/test-unit-windows.yml --input bosh-dns-release=.
