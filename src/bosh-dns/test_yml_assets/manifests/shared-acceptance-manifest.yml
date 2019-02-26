@@ -37,5 +37,5 @@ releases:
 
 stemcells:
 - alias: default
-  os: ((base_stemcell))
+  os: ubuntu-xenial
   version: latest
