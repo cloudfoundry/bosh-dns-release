@@ -11,6 +11,7 @@ inputs:
   - name: bosh-dns-release
   - name: candidate-release
   - name: bosh-stemcell
+  - name: xenial-stemcell
   - name: bosh-candidate-release
 
 params:
