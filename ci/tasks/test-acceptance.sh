@@ -25,6 +25,7 @@ bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
     > "${TEST_CLOUD_CONFIG_PATH}"
 bosh -n update-cloud-config "${TEST_CLOUD_CONFIG_PATH}" -v network=director_network
 bosh upload-stemcell bosh-stemcell/*.tgz
+bosh upload-stemcell xenial-stemcell/*.tgz
 
 bosh upload-release "$PWD"/candidate-release/*.tgz
 

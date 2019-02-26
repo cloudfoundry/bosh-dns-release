@@ -165,6 +165,8 @@ jobs:
         passed: [create-release]
       - get: bosh-stemcell
         resource: ubuntu-trusty-stemcell
+      - get: xenial-stemcell
+        resource: ubuntu-xenial-stemcell
       - get: bosh-candidate-release
       - get: candidate-release
         trigger: true
@@ -183,6 +185,8 @@ jobs:
       - get: bosh-dns-release
         passed: [create-release]
       - get: bosh-stemcell
+        resource: ubuntu-xenial-stemcell
+      - get: xenial-stemcell
         resource: ubuntu-xenial-stemcell
       - get: bosh-candidate-release
       - get: candidate-release
