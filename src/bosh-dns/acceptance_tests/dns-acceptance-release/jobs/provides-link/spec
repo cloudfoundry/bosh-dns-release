@@ -1,0 +1,12 @@
+---
+name: provides-link
+
+templates: {}
+
+packages: []
+
+properties: {}
+
+provides:
+- name: link
+  type: link

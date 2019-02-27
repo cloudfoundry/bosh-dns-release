@@ -79,6 +79,13 @@ var _ = Describe("Integration", func() {
 			}
 		})
 
+		It("resolves link provider aliases", func() {
+			dnsResponse := helpers.Dig("dns-acceptance-alias.bosh.", firstInstance.IP)
+
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(HaveLen(len(allDeployedInstances)))
+		})
+
 		It("should resolve specified upcheck", func() {
 			dnsResponse := helpers.Dig("upcheck.bosh-dns.", firstInstance.IP)
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
