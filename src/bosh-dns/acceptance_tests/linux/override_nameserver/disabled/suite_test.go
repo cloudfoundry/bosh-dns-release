@@ -3,6 +3,7 @@
 package override_nameserver
 
 import (
+	"bosh-dns/acceptance_tests/helpers"
 	"fmt"
 
 	. "github.com/onsi/ginkgo"
