@@ -37,7 +37,7 @@ var _ = BeforeSuite(func() {
 	cloudConfigTempFileName, _ := os.LookupEnv("TEST_CLOUD_CONFIG_PATH")
 	helpers.Bosh(
 		"update-cloud-config",
-		"-o", assetPath("ops/remove-dns-nameservers.yml"),
+		"-o", assetPath("ops/reset-dns-nameservers.yml"),
 		"-v", "network=director_network",
 		cloudConfigTempFileName,
 	)

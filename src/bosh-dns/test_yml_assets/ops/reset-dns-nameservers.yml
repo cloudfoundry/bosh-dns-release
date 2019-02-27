@@ -1,2 +1,3 @@
-- type: remove
+- type: replace
   path: /networks/name=default/subnets/0/dns?
+  value: [8.8.8.8]
