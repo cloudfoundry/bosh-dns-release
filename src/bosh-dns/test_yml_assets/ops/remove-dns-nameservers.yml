@@ -1,0 +1,2 @@
+- type: remove
+  path: /networks/name=default/subnets/0/dns?

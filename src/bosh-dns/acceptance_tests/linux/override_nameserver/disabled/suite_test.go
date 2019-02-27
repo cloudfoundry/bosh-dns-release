@@ -26,7 +26,21 @@ var (
 	boshDeployment string
 )
 
+func assetPath(name string) string {
+	path, err := filepath.Abs(fmt.Sprintf("../../../../test_yml_assets/%s", name))
+	Expect(err).ToNot(HaveOccurred())
+	return path
+}
+
 var _ = BeforeSuite(func() {
+	cloudConfigTempFileName, _ := os.LookupEnv("TEST_CLOUD_CONFIG_PATH")
+	helpers.Bosh(
+		"update-cloud-config",
+		"-o", assetPath("ops/remove-dns-nameservers.yml"),
+		"-v", "network=director_network",
+		cloudConfigTempFileName,
+	)
+
 	boshBinaryPath = assertEnvExists("BOSH_BINARY_PATH")
 	assertEnvExists("BOSH_CLIENT")
 	assertEnvExists("BOSH_CLIENT_SECRET")
