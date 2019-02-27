@@ -21,6 +21,12 @@ instance_groups:
   jobs:
   - name: needs-alias
     release: dns-acceptance
+  - name: provides-link
+    release: dns-acceptance
+    provides:
+      link:
+        aliases:
+        - domain: "dns-acceptance-alias.bosh."
   - name: bosh-dns-windows
     release: bosh-dns
     properties:
