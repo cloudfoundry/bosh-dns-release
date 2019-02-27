@@ -21,6 +21,12 @@ pushd ./src/bosh-dns/acceptance_tests/dns-acceptance-release
    bosh create-release --force && bosh upload-release --rebase
 popd
 
+if [ -z "${TEST_CLOUD_CONFIG_PATH-""}" ]; then
+  TEST_CLOUD_CONFIG_PATH="$(mktemp)"
+  export TEST_CLOUD_CONFIG_PATH
+  bosh cloud-config > "$TEST_CLOUD_CONFIG_PATH"
+fi
+
 pushd ./src/bosh-dns/acceptance_tests
   ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
 popd

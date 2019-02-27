@@ -17,7 +17,8 @@ chmod 400 /tmp/jumpbox_ssh_key.pem
 export BOSH_GW_PRIVATE_KEY="/tmp/jumpbox_ssh_key.pem"
 export BOSH_GW_USER="jumpbox"
 export BOSH_DIRECTOR_IP="10.245.0.3"
-export TEST_CLOUD_CONFIG_PATH="/tmp/cloud-config.yml"
+TEST_CLOUD_CONFIG_PATH="$(mktemp)"
+export TEST_CLOUD_CONFIG_PATH
 
 # Configure the director for this test suite
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
