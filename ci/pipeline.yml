@@ -250,7 +250,7 @@ jobs:
           params:
             WINDOWS_OS_VERSION: windows2012R2
             ENV_NAME: windows2012R2
-          timeout: 1h
+          timeout: 2h
       ensure:
         task: bbl-destroy
         file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
@@ -317,7 +317,7 @@ jobs:
           params:
             WINDOWS_OS_VERSION: windows2016
             ENV_NAME: windows2016
-          timeout: 1h
+          timeout: 2h
       ensure:
         task: bbl-destroy
         file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
@@ -352,7 +352,7 @@ jobs:
         params:
           BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
           BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
-          BBL_AWS_REGION: us-west-2
+          BBL_AWS_REGION: us-west-1
           BBL_IAAS: aws
           BBL_STATE_DIR: test-stress/bbl-state
         ensure:

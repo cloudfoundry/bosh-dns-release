@@ -20,6 +20,7 @@ setup_env() {
   fly -t production execute --privileged --include-ignored \
     --config="${task_dir}/bbl-up.yml" \
     --input=bosh-dns-release="${release_dir}" \
+    --inputs-from=bosh-dns-release/test-acceptance-windows \
     --input=envs="$PWD/envs" \
     $bosh_candidate_release_flag \
     --output=envs="$PWD/envs"
