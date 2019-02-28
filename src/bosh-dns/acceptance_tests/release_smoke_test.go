@@ -68,14 +68,20 @@ var _ = Describe("Integration", func() {
 			Expect(allDeployedInstances).To(HaveLen(2))
 			dnsResponse := helpers.Dig("internal.alias.", firstInstance.IP)
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(HaveLen(len(allDeployedInstances)))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
+			))
 		})
 
 		It("resolves alias globs", func() {
 			for _, alias := range []string{"asterisk.alias.", "another.asterisk.alias.", "yetanother.asterisk.alias."} {
 				dnsResponse := helpers.Dig(alias, firstInstance.IP)
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-				Expect(dnsResponse.Answer).To(HaveLen(len(allDeployedInstances)))
+				Expect(dnsResponse.Answer).To(ConsistOf(
+					gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
+					gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
+				))
 			}
 		})
 
@@ -83,13 +89,18 @@ var _ = Describe("Integration", func() {
 			dnsResponse := helpers.Dig("dns-acceptance-alias.bosh.", firstInstance.IP)
 
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(HaveLen(len(allDeployedInstances)))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
+			))
 		})
 
 		It("should resolve specified upcheck", func() {
 			dnsResponse := helpers.Dig("upcheck.bosh-dns.", firstInstance.IP)
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(HaveLen(1))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": "127.0.0.1", "ttl": 0}),
+			))
 		})
 	})
 
