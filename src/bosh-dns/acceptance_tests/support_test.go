@@ -144,7 +144,7 @@ func ensureHealthEndpointDeployed(recursorAddress string, extraOps ...string) {
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-v", "health_server_port=2345",
-		"-o", assetPath("ops/enable-health-manifest-linux.yml"),
+		"-o", assetPath(enableHealthManifestOps()),
 		"--vars-store", "creds.yml",
 		manifestPath,
 	}

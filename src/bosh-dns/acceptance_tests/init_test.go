@@ -53,6 +53,14 @@ func testManifestName() string {
 	return "manifests/dns-linux.yml"
 }
 
+func enableHealthManifestOps() string {
+	if testTargetOS == "windows" {
+		return "ops/enable-health-manifest-windows.yml"
+	}
+
+	return "ops/enable-health-manifest-linux.yml"
+}
+
 func noRecursorsOpsFile() string {
 	if testTargetOS == "windows" {
 		return "ops/no-recursors-configured-windows.yml"
