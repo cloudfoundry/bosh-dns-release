@@ -77,6 +77,14 @@ func configureRecursorOpsFile() string {
 	return "ops/configure-recursor.yml"
 }
 
+func enableHTTPJSONEndpointsOpsFile() string {
+	if testTargetOS == "windows" {
+		return "ops/enable-http-json-endpoints-windows.yml"
+	}
+
+	return "ops/enable-http-json-endpoints-linux.yml"
+}
+
 func jsonServerAddress() string {
 	if testTargetOS == "windows" {
 		return "http://10.0.255.5:8081"

@@ -19,7 +19,7 @@ var _ = Describe("HTTP JSON Server integration", func() {
 	Describe("DNS endpoint", func() {
 		BeforeEach(func() {
 			manifestPath := assetPath(testManifestName())
-			enableHTTPJSONEndpointsPath := assetPath("ops/enable-http-json-endpoints.yml")
+			enableHTTPJSONEndpointsPath := assetPath(enableHTTPJSONEndpointsOpsFile())
 			enableConfiguresHandler := assetPath("ops/enable-configures-handler-job.yml")
 			configureRecursorPath := assetPath(configureRecursorOpsFile())
 
