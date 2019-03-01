@@ -28,7 +28,7 @@ if [ -z "${TEST_CLOUD_CONFIG_PATH-""}" ]; then
 fi
 
 pushd ./src/bosh-dns/acceptance_tests
-  ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
+  ginkgo -randomizeAllSpecs -randomizeSuites -race .
 popd
 
 # Need to delete the bosh-dns runtime config because bbl uses a hard-coded
@@ -45,5 +45,5 @@ bosh -n deploy ./src/bosh-dns/test_yml_assets/manifests/dns-linux.yml \
    --vars-store dns-creds.yml
 
 pushd ./src/bosh-dns/acceptance_tests/linux
-  ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race -r .
+  ginkgo -randomizeAllSpecs -randomizeSuites -race -r .
 popd

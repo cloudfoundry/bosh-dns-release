@@ -34,5 +34,5 @@ cp -R /var/vcap/packages/acceptance-tests/src/bosh-dns $GOPATH/src/
 go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
 pushd $GOPATH/src/bosh-dns/acceptance_tests
-   ginkgo -keepGoing -randomizeAllSpecs -randomizeSuites -race .
+   ginkgo -randomizeAllSpecs -randomizeSuites -race .
 popd
