@@ -31,6 +31,9 @@ var _ = BeforeSuite(func() {
 	testTargetOS = assertEnvExists("TEST_TARGET_OS")
 	baseStemcell = assertEnvExists("BASE_STEMCELL")
 	boshDeployment = assertEnvExists("BOSH_DEPLOYMENT")
+
+	deployTestRecursor()
+	deployTestHTTPDNSServer()
 })
 
 var _ = AfterSuite(func() {

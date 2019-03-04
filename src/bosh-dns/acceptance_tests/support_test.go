@@ -45,8 +45,6 @@ func deployTestHTTPDNSServer() {
 }
 
 func testRecursorIPAddress() string {
-	deployTestRecursor()
-
 	testRecursorAddresses := helpers.BoshInstances("test-recursor")
 	if len(testRecursorAddresses) == 0 {
 		return ""
@@ -56,8 +54,6 @@ func testRecursorIPAddress() string {
 }
 
 func testHTTPDNSServerIPAddress() string {
-	deployTestHTTPDNSServer()
-
 	testHTTPDNSServerAddresses := helpers.BoshInstances("test-http-dns-server")
 	if len(testHTTPDNSServerAddresses) == 0 {
 		return ""
