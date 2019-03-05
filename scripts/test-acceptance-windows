@@ -28,11 +28,19 @@ setup_env() {
 
 upload_dependencies() {
   echo "### uploading release and stemcells"
+
+  # make sure we're uploading the right stemcell that the script-user wants
+  if [ "$windows_stemcell" == "windows2016" ]; then
+    windows_stemcell_job="bosh-dns-release/test-acceptance-windows2016"
+  else
+    windows_stemcell_job="bosh-dns-release/test-acceptance-windows"
+  fi
+
   # windows specfic
   ENV_NAME="${env_name}" \
   fly -t production execute --privileged --include-ignored \
     --config="${task_dir}/setup-deploy.yml" \
-    --inputs-from=bosh-dns-release/test-acceptance-windows \
+    --inputs-from="${windows_stemcell_job}" \
     --input=gcp-linux-stemcell="${linux_stemcell_dir}" \
     --input=candidate-release="${tarball_dir}" \
     --input=envs="$PWD/envs"

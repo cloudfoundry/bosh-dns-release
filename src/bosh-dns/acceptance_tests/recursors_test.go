@@ -19,13 +19,18 @@ var _ = Describe("recursor", func() {
 		testRecursorAddress string
 	)
 
-	BeforeEach(func() {
-		testRecursorAddress = testRecursorIPAddress()
-		ensureRecursorIsDefinedByBoshAgent(testRecursorAddress)
-		firstInstance = allDeployedInstances[0]
-	})
-
 	Context("when the recursors must be read from the system resolver list", func() {
+		BeforeEach(func() {
+			testRecursorAddress = testRecursorIPAddress()
+			ensureRecursorIsDefinedByBoshAgent(testRecursorAddress)
+			firstInstance = allDeployedInstances[0]
+		})
+
+		AfterEach(func() {
+			// put the old cloud config back to avoid other tests using this recursor by accident
+			updateCloudConfigWithDefaultCloudConfig()
+		})
+
 		It("fowards queries to the configured recursors on port 53", func() {
 			dnsResponse := helpers.Dig("example.com.", firstInstance.IP)
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
@@ -36,6 +41,12 @@ var _ = Describe("recursor", func() {
 	})
 
 	Context("when the recursors are configured explicitly on the DNS server", func() {
+		BeforeEach(func() {
+			testRecursorAddress = testRecursorIPAddress()
+			ensureRecursorIsDefinedByDNSRelease(testRecursorAddress)
+			firstInstance = allDeployedInstances[0]
+		})
+
 		It("returns success when receiving a truncated responses from a recursor", func() {
 			By("ensuring the test recursor is returning truncated messages", func() {
 				dnsResponse := helpers.Dig("truncated-recursor.com.", testRecursorAddress)
@@ -149,6 +160,7 @@ var _ = Describe("recursor", func() {
 
 	Context("when using cache", func() {
 		BeforeEach(func() {
+			testRecursorAddress = testRecursorIPAddress()
 			ensureRecursorIsDefinedByDNSRelease(testRecursorAddress)
 			firstInstance = allDeployedInstances[0]
 		})
