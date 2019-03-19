@@ -49,7 +49,9 @@ jobs:
     - get: golang-release
       trigger: true
     - get: bosh-stemcell
-      resource: ubuntu-trusty-stemcell
+      resource: ubuntu-xenial-stemcell
+    - get: xenial-stemcell
+      resource: ubuntu-xenial-stemcell
     - get: bosh-candidate-release
   - task: bump-golang-package
     file: bosh-dns-release/ci/tasks/bump-golang-package.yml
