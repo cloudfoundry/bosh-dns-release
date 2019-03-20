@@ -18,6 +18,14 @@ import (
 	"github.com/miekg/dns"
 )
 
+type AliasDefinition struct {
+	GroupID            string `json:"group_id"`
+	RootDomain         string `json:"root_domain"`
+	PlaceholderType    string `json:"placeholder_type"`
+	HealthFilter       string `json:"health_filter"`
+	InitialHealthCheck string `json:"initial_health_check"`
+}
+
 type recordGroup map[*record.Record]struct{}
 
 type RecordSet struct {
@@ -216,13 +224,14 @@ func (r *RecordSet) update() {
 
 func createFromJSON(j []byte, logger boshlog.Logger) ([]record.Record, aliases.Config, error) {
 	swap := struct {
-		Keys    []string            `json:"record_keys"`
-		Infos   [][]interface{}     `json:"record_infos"`
-		Aliases map[string][]string `json:"aliases"`
+		Keys    []string                     `json:"record_keys"`
+		Infos   [][]interface{}              `json:"record_infos"`
+		Aliases map[string][]AliasDefinition `json:"aliases"`
 	}{}
 
 	err := json.Unmarshal(j, &swap)
 	if err != nil {
+		logger.Warn("RecordSet", "Unable to parse records file. Error: %v", err)
 		return nil, aliases.NewConfig(), err
 	}
 
@@ -318,7 +327,11 @@ func createFromJSON(j []byte, logger boshlog.Logger) ([]record.Record, aliases.C
 	}
 
 	var updatedAliases aliases.Config
-	if updatedAliases, err = aliases.NewConfigFromMap(swap.Aliases); err != nil {
+	aliasEncoder := NewAliasEncoder()
+	aliasesToConfigure := aliasEncoder.encodeAliasesIntoQueries(records, swap.Aliases)
+	if updatedAliases, err = aliases.NewConfigFromMap(aliasesToConfigure); err != nil {
+		logger.Warn("RecordSet", "Unable to configure aliases from records. Error: %v", err)
+		// TODO: return records?
 		return nil, aliases.NewConfig(), err
 	}
 

@@ -122,17 +122,27 @@ var _ = Describe("main", func() {
 		BeforeEach(func() {
 			checkInterval = 100 * time.Millisecond
 			recordsJSONContent = `{
-				"record_keys": ["id", "instance_group", "group_ids", "az", "az_id","network", "deployment", "ip", "domain"],
+				"record_keys": ["id", "num_id", "instance_group", "group_ids", "az", "az_id","network", "deployment", "ip", "domain"],
 				"record_infos": [
-					["my-instance", "my-group", ["7","1","2","3"], "az1", "1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
-					["my-instance-1", "my-group", ["7"], "az2", "2", "my-network", "my-deployment", "127.0.0.2", "bosh"],
-					["my-instance-2", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "bosh"],
-					["my-instance-1", "my-group", ["7"], "az1", "1", "my-network", "my-deployment", "127.0.0.2", "foo"],
-					["my-instance-2", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "foo"],
-					["primer-instance", "primer-group", ["9"], "az1", "1", "primer-network", "primer-deployment", "127.0.0.254", "primer"]
+					["my-instance", "0", "my-group", ["7","1","2","3"], "az1", "1", "my-network", "my-deployment", "127.0.0.1", "bosh"],
+					["my-instance-1", "1", "my-group", ["7"], "az2", "2", "my-network", "my-deployment", "127.0.0.2", "bosh"],
+					["my-instance-2", "2", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "bosh"],
+					["my-instance-3", "3", "my-group", ["7"], "az1", "1", "my-network", "my-deployment", "127.0.0.2", "foo"],
+					["my-instance-4", "4", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "foo"],
+					["primer-instance", "5", "primer-group", ["9"], "az1", "1", "primer-network", "primer-deployment", "127.0.0.254", "primer"]
 				],
 				"aliases": {
-				  "texas.nebraska": ["my-instance.my-group.my-network.my-deployment.bosh."]
+					"texas.nebraska": [{
+						"group_id": "1",
+						"root_domain": "bosh"
+					}],
+				  "_.placeholder.alias": [{
+						"group_id": "7",
+						"placeholder_type": "uuid",
+						"health_filter": "all",
+						"initial_health_check": "synchronous",
+						"root_domain": "bosh"
+					}]
 				}
 			}`
 			aliases2JSONContent = `{
@@ -396,7 +406,7 @@ var _ = Describe("main", func() {
 							HealthState: "unchecked",
 						},
 						{
-							ID:          "my-instance-1",
+							ID:          "my-instance-3",
 							Group:       "my-group",
 							Network:     "my-network",
 							Deployment:  "my-deployment",
@@ -407,7 +417,7 @@ var _ = Describe("main", func() {
 							HealthState: "failing",
 						},
 						{
-							ID:          "my-instance-2",
+							ID:          "my-instance-4",
 							Group:       "my-group",
 							Network:     "my-network",
 							Deployment:  "my-deployment-2",
@@ -773,6 +783,27 @@ var _ = Describe("main", func() {
 						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*INFO \- handlers\.DiscoveryHandler Request \[1\] \[texas\.nebraska\.\] 0 \d+ns`))
 					})
 				})
+
+				Context("with expanded alias interface", func() {
+					BeforeEach(func() {
+						m.SetQuestion("my-instance-1.placeholder.alias.", dns.TypeA)
+					})
+
+					It("resolves the alias", func() {
+						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(response.Answer).To(HaveLen(1))
+						Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(response.Answer[0].Header().Name).To(Equal("my-instance-1.placeholder.alias."))
+						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
+						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
+						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
+						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.2"))
+
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*INFO \- handlers\.DiscoveryHandler Request \[1\] \[my-instance-1\.placeholder\.alias\.\] 0 \d+ns`))
+					})
+				})
 			})
 
 			Context("upcheck domains", func() {
@@ -908,7 +939,7 @@ var _ = Describe("main", func() {
 					})
 
 					By("understanding specific instance hosts", func() {
-						m.SetQuestion("my-instance-1.q-g7.foo.", dns.TypeA)
+						m.SetQuestion("my-instance-3.q-g7.foo.", dns.TypeA)
 
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
@@ -931,7 +962,7 @@ var _ = Describe("main", func() {
 				})
 
 				It("responds to A queries for foo. with content from the record API", func() {
-					m.SetQuestion("my-instance-1.my-group.my-network.my-deployment.foo.", dns.TypeA)
+					m.SetQuestion("my-instance-3.my-group.my-network.my-deployment.foo.", dns.TypeA)
 
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
@@ -954,12 +985,12 @@ var _ = Describe("main", func() {
 				})
 
 				It("logs handler time", func() {
-					m.SetQuestion("my-instance-1.my-group.my-network.my-deployment.foo.", dns.TypeA)
+					m.SetQuestion("my-instance-3.my-group.my-network.my-deployment.foo.", dns.TypeA)
 
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request \[1\] \[my-instance-1\.my-group\.my-network\.my-deployment\.foo\.\] 0 \d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request \[1\] \[my-instance-3\.my-group\.my-network\.my-deployment\.foo\.\] 0 \d+ns`))
 				})
 			})
 
@@ -967,12 +998,15 @@ var _ = Describe("main", func() {
 				JustBeforeEach(func() {
 					var err error
 					err = ioutil.WriteFile(recordsFilePath, []byte(fmt.Sprint(`{
-						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
+						"record_keys": ["id", "num_id", "group_ids", "instance_group", "az", "network", "deployment", "ip", "domain"],
 						"record_infos": [
-							["my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.3", "bosh"]
+							["my-instance", "12", ["19"], "my-group", "az1", "my-network", "my-deployment", "127.0.0.3", "bosh"]
 						],
 						"aliases": {
-							"massachusetts.nebraska": ["my-instance.my-group.my-network.my-deployment.bosh."]
+							"massachusetts.nebraska": [{
+								"group_id": "19",
+								"root_domain": "bosh"
+							}]
 						}
 					}`)), 0644)
 					Expect(err).NotTo(HaveOccurred())
