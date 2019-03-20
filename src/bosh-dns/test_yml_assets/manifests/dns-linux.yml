@@ -25,6 +25,8 @@ instance_groups:
       link:
         aliases:
         - domain: "dns-acceptance-alias.bosh."
+        - domain: "_.placeholder-alias.bosh."
+          placeholder_type: "uuid"
   - name: bosh-dns
     release: bosh-dns
     properties:

@@ -85,13 +85,20 @@ var _ = Describe("Integration", func() {
 			}
 		})
 
-		It("resolves link provider aliases", func() {
+		It("resolves aliases from links", func() {
 			dnsResponse := helpers.Dig("dns-acceptance-alias.bosh.", firstInstance.IP)
 
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 			Expect(dnsResponse.Answer).To(ConsistOf(
 				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
 				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
+			))
+
+			dnsResponse = helpers.Dig(fmt.Sprintf("%s.placeholder-alias.bosh.", allDeployedInstances[0].InstanceID), firstInstance.IP)
+
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
 			))
 		})
 
