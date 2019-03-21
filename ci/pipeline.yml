@@ -13,8 +13,6 @@ groups:
   - test-performance-windows
   - test-acceptance
   - test-acceptance-ubuntu-xenial
-  - test-acceptance-windows
-  - test-acceptance-windows2016
   - test-acceptance-windows2019
   - test-stress
   - brats-ubuntu
@@ -201,138 +199,6 @@ jobs:
       params:
         BASE_STEMCELL: ubuntu-xenial
 
-- name: test-acceptance-windows
-  public: true
-  serial: true
-  plan:
-  - do:
-    - aggregate:
-      - get: bosh-dns-release
-        trigger: true
-        passed: [create-release]
-      - get: envs
-      - get: bosh-deployment
-      - get: gcp-linux-stemcell
-        resource: gcp-ubuntu-xenial-stemcell
-      - get: bosh-stemcell-windows
-        resource: windows-2012-stemcell
-      - get: bosh-candidate-release
-      - get: candidate-release
-        trigger: true
-        passed: [create-release]
-    - do:
-      - task: bbl-up
-        file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
-        params:
-          BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
-          ENV_NAME: windows2012R2
-        ensure:
-          put: envs
-          params:
-            repository: envs
-            rebase: true
-      - task: setup-deploy
-        file: bosh-dns-release/ci/tasks/windows/setup-deploy.yml
-        params:
-          ENV_NAME: windows2012R2
-      - aggregate:
-        - task: windows
-          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
-          params:
-            WINDOWS_OS_VERSION: windows2012R2
-            ENV_NAME: windows2012R2
-          timeout: 1h
-        - task: windows-nameserver-disabled
-          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
-          params:
-            WINDOWS_OS_VERSION: windows2012R2
-            ENV_NAME: windows2012R2
-          timeout: 1h
-        - task: windows-shared
-          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.yml
-          params:
-            WINDOWS_OS_VERSION: windows2012R2
-            ENV_NAME: windows2012R2
-          timeout: 2h
-      ensure:
-        task: bbl-destroy
-        file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
-        params:
-          BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
-          ENV_NAME: windows2012R2
-        ensure:
-          put: envs
-          params:
-            repository: envs
-            rebase: true
-
-- name: test-acceptance-windows2016
-  public: true
-  serial: true
-  plan:
-  - do:
-    - aggregate:
-      - get: bosh-dns-release
-        passed:
-        - create-release
-        trigger: true
-      - get: envs
-      - get: bosh-deployment
-      - get: gcp-linux-stemcell
-        resource: gcp-ubuntu-xenial-stemcell
-      - get: bosh-stemcell-windows
-        resource: windows-2016-stemcell
-      - get: bosh-candidate-release
-      - get: candidate-release
-        passed:
-        - create-release
-        trigger: true
-    - do:
-      - task: bbl-up
-        file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
-        params:
-          BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
-          ENV_NAME: windows2016
-        ensure:
-          put: envs
-          params:
-            repository: envs
-            rebase: true
-      - task: setup-deploy
-        file: bosh-dns-release/ci/tasks/windows/setup-deploy.yml
-        params:
-          ENV_NAME: windows2016
-      - aggregate:
-        - task: windows
-          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
-          params:
-            WINDOWS_OS_VERSION: windows2016
-            ENV_NAME: windows2016
-          timeout: 1h
-        - task: windows-nameserver-disabled
-          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
-          params:
-            WINDOWS_OS_VERSION: windows2016
-            ENV_NAME: windows2016
-          timeout: 1h
-        - task: windows-shared
-          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.yml
-          params:
-            WINDOWS_OS_VERSION: windows2016
-            ENV_NAME: windows2016
-          timeout: 2h
-      ensure:
-        task: bbl-destroy
-        file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
-        params:
-          BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
-          ENV_NAME: windows2016
-        ensure:
-          put: envs
-          params:
-            repository: envs
-            rebase: true
-
 - name: test-acceptance-windows2019
   public: true
   serial: true
@@ -492,7 +358,7 @@ jobs:
   serial: true
   plan:
     - get: candidate-release
-      passed: [test-acceptance, test-acceptance-ubuntu-xenial, test-acceptance-windows, test-stress]
+      passed: [test-acceptance, test-acceptance-ubuntu-xenial, test-stress, test-acceptance-windows2019]
       trigger: true
     - put: staging-release
       params:
@@ -505,9 +371,9 @@ jobs:
   plan:
     - aggregate:
       - get: bosh-dns-release
-        passed: [test-acceptance, test-acceptance-ubuntu-xenial, test-acceptance-windows, test-stress]
+        passed: [test-acceptance, test-acceptance-ubuntu-xenial, test-stress, test-acceptance-windows2019]
       - get: candidate-release
-        passed: [test-acceptance, test-acceptance-ubuntu-xenial, brats-ubuntu, test-acceptance-windows]
+        passed: [test-acceptance, test-acceptance-ubuntu-xenial, brats-ubuntu, test-acceptance-windows2019]
       - get: version
     - task: finalize-release
       file: bosh-dns-release/ci/tasks/finalize-release.yml
@@ -540,8 +406,6 @@ jobs:
         - test-stress
         - test-acceptance
         - test-acceptance-ubuntu-xenial
-        - test-acceptance-windows
-        - test-acceptance-windows2016
         - test-acceptance-windows2019
         - brats-ubuntu
     - put: tracker-output
@@ -633,16 +497,6 @@ resources:
   type: bosh-io-stemcell
   source:
     name: bosh-warden-boshlite-ubuntu-xenial-go_agent
-
-- name: windows-2012-stemcell
-  type: bosh-io-stemcell
-  source:
-    name: bosh-google-kvm-windows2012R2-go_agent
-
-- name: windows-2016-stemcell
-  type: bosh-io-stemcell
-  source:
-    name: bosh-google-kvm-windows2016-go_agent
 
 - name: windows-2019-stemcell
   type: bosh-io-stemcell
