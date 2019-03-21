@@ -282,6 +282,7 @@ jobs:
       - get: warden-stemcell
       - get: bosh-docker-cpi-release
       - get: candidate-release
+        passed: [create-release]
     - do:
       - task: setup-env
         file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
@@ -358,7 +359,7 @@ jobs:
   serial: true
   plan:
     - get: candidate-release
-      passed: [test-acceptance, test-acceptance-ubuntu-xenial, test-stress, test-acceptance-windows2019]
+      passed: [delivery]
       trigger: true
     - put: staging-release
       params:
@@ -371,9 +372,9 @@ jobs:
   plan:
     - aggregate:
       - get: bosh-dns-release
-        passed: [test-acceptance, test-acceptance-ubuntu-xenial, test-stress, test-acceptance-windows2019]
+        passed: [delivery]
       - get: candidate-release
-        passed: [test-acceptance, test-acceptance-ubuntu-xenial, brats-ubuntu, test-acceptance-windows2019]
+        passed: [delivery]
       - get: version
     - task: finalize-release
       file: bosh-dns-release/ci/tasks/finalize-release.yml
@@ -399,6 +400,13 @@ jobs:
 - name: delivery
   plan:
     - aggregate:
+      - get: candidate-release
+        passed:
+        - test-stress
+        - test-acceptance
+        - test-acceptance-ubuntu-xenial
+        - test-acceptance-windows2019
+        - brats-ubuntu
       - get: bosh-dns-release
         version: every
         trigger: true
