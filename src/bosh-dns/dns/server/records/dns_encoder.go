@@ -25,7 +25,7 @@ func NewAliasEncoder() *AliasEncoder {
 	}
 }
 
-func (a AliasEncoder) encodeAliasesIntoQueries(rs []record.Record, as map[string][]AliasDefinition) map[string][]string {
+func (a *AliasEncoder) EncodeAliasesIntoQueries(rs []record.Record, as map[string][]AliasDefinition) map[string][]string {
 	a.aliases = make(map[string][]*QueryEncoder)
 	for domain, definitions := range as {
 		domain := dns.Fqdn(domain)
@@ -38,17 +38,7 @@ func (a AliasEncoder) encodeAliasesIntoQueries(rs []record.Record, as map[string
 		}
 	}
 
-	ret := make(map[string][]string)
-	for domain, queryEncoders := range a.aliases {
-		if _, ok := ret[domain]; !ok {
-			ret[domain] = []string{}
-		}
-
-		for _, queryEncoder := range queryEncoders {
-			ret[domain] = append(ret[domain], dns.Fqdn(queryEncoder.encode()))
-		}
-	}
-	return ret
+	return a.encodeDomains()
 }
 
 func (a *AliasEncoder) AppendUUIDQueries(domain string, definition AliasDefinition, rs []record.Record) {
@@ -120,4 +110,18 @@ func (q *QueryEncoder) encode() string {
 
 	sb.WriteString(fmt.Sprintf(".q-g%s.%s", q.GroupID, q.RootDomain))
 	return sb.String()
+}
+
+func (a *AliasEncoder) encodeDomains() map[string][]string {
+	ret := make(map[string][]string)
+	for domain, queryEncoders := range a.aliases {
+		if _, ok := ret[domain]; !ok {
+			ret[domain] = []string{}
+		}
+
+		for _, queryEncoder := range queryEncoders {
+			ret[domain] = append(ret[domain], dns.Fqdn(queryEncoder.encode()))
+		}
+	}
+	return ret
 }

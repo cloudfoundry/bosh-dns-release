@@ -17,18 +17,20 @@ import (
 
 var _ = Describe("Record Set Performance", func() {
 	var (
-		recordSet         *records.RecordSet
-		fakeLogger        *fakes.FakeLogger
-		fileReader        *recordsfakes.FakeFileReader
-		aliasList         aliases.Config
-		shutdownChan      chan struct{}
-		fakeHealthWatcher *healthinessfakes.FakeHealthWatcher
-		filtererFactory   records.FiltererFactory
+		recordSet             *records.RecordSet
+		fakeLogger            *fakes.FakeLogger
+		fileReader            *recordsfakes.FakeFileReader
+		aliasList             aliases.Config
+		shutdownChan          chan struct{}
+		fakeHealthWatcher     *healthinessfakes.FakeHealthWatcher
+		filtererFactory       records.FiltererFactory
+		fakeAliasQueryEncoder *recordsfakes.FakeAliasQueryEncoder
 	)
 
 	BeforeEach(func() {
 		fakeLogger = &fakes.FakeLogger{}
 		fileReader = &recordsfakes.FakeFileReader{}
+		fakeAliasQueryEncoder = &recordsfakes.FakeAliasQueryEncoder{}
 
 		aliasList = mustNewConfigFromMap(map[string][]string{})
 		fakeHealthWatcher = &healthinessfakes.FakeHealthWatcher{}
@@ -79,7 +81,7 @@ var _ = Describe("Record Set Performance", func() {
 
 		fileReader.GetReturns(jsonBytes, nil)
 
-		recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, filtererFactory)
+		recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, filtererFactory, fakeAliasQueryEncoder)
 
 		Expect(err).ToNot(HaveOccurred())
 	})

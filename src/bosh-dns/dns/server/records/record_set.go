@@ -40,6 +40,7 @@ type RecordSet struct {
 	healthChan          chan record.Host
 	trackerSubscription chan []record.Record
 	filtererFactory     FiltererFactory
+	aliasQueryEncoder   AliasQueryEncoder
 
 	domains []string
 	Records []record.Record
@@ -53,11 +54,13 @@ func NewRecordSet(
 	shutdownChan chan struct{},
 	logger boshlog.Logger,
 	filtererFactory FiltererFactory,
+	AliasQueryEncoder AliasQueryEncoder,
 ) (*RecordSet, error) {
 	r := &RecordSet{
 		recordFileReader:    recordFileReader,
 		logger:              logger,
 		aliasList:           aliasList,
+		aliasQueryEncoder:   AliasQueryEncoder,
 		mergedAliasList:     aliases.NewConfig().Merge(aliasList),
 		healthWatcher:       healthWatcher,
 		healthChan:          make(chan record.Host, 2),
@@ -199,7 +202,7 @@ func (r *RecordSet) update() {
 	if err != nil {
 		return
 	}
-	records, updatedAliases, err := createFromJSON(contents, r.logger)
+	records, updatedAliases, err := createFromJSON(contents, r.logger, r.aliasQueryEncoder)
 	if err != nil {
 		return
 	}
@@ -222,7 +225,12 @@ func (r *RecordSet) update() {
 	}
 }
 
-func createFromJSON(j []byte, logger boshlog.Logger) ([]record.Record, aliases.Config, error) {
+//go:generate counterfeiter . AliasQueryEncoder
+type AliasQueryEncoder interface {
+	EncodeAliasesIntoQueries([]record.Record, map[string][]AliasDefinition) map[string][]string
+}
+
+func createFromJSON(j []byte, logger boshlog.Logger, aliasEncoder AliasQueryEncoder) ([]record.Record, aliases.Config, error) {
 	swap := struct {
 		Keys    []string                     `json:"record_keys"`
 		Infos   [][]interface{}              `json:"record_infos"`
@@ -327,8 +335,7 @@ func createFromJSON(j []byte, logger boshlog.Logger) ([]record.Record, aliases.C
 	}
 
 	var updatedAliases aliases.Config
-	aliasEncoder := NewAliasEncoder()
-	aliasesToConfigure := aliasEncoder.encodeAliasesIntoQueries(records, swap.Aliases)
+	aliasesToConfigure := aliasEncoder.EncodeAliasesIntoQueries(records, swap.Aliases)
 	if updatedAliases, err = aliases.NewConfigFromMap(aliasesToConfigure); err != nil {
 		logger.Warn("RecordSet", "Unable to configure aliases from records. Error: %v", err)
 		// TODO: return records?

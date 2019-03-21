@@ -144,7 +144,7 @@ func mainExitCode() int {
 
 	fileReader := records.NewFileReader(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
 	filtererFactory := records.NewHealthFiltererFactory(healthWatcher)
-	recordSet, err := records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger, filtererFactory)
+	recordSet, err := records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger, filtererFactory, records.NewAliasEncoder())
 
 	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, shuffle.New())
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)

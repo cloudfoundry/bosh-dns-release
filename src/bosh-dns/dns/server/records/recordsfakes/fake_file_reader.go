@@ -9,8 +9,9 @@ import (
 type FakeFileReader struct {
 	GetStub        func() ([]byte, error)
 	getMutex       sync.RWMutex
-	getArgsForCall []struct{}
-	getReturns     struct {
+	getArgsForCall []struct {
+	}
+	getReturns struct {
 		result1 []byte
 		result2 error
 	}
@@ -20,8 +21,9 @@ type FakeFileReader struct {
 	}
 	SubscribeStub        func() <-chan bool
 	subscribeMutex       sync.RWMutex
-	subscribeArgsForCall []struct{}
-	subscribeReturns     struct {
+	subscribeArgsForCall []struct {
+	}
+	subscribeReturns struct {
 		result1 <-chan bool
 	}
 	subscribeReturnsOnCall map[int]struct {
@@ -34,7 +36,8 @@ type FakeFileReader struct {
 func (fake *FakeFileReader) Get() ([]byte, error) {
 	fake.getMutex.Lock()
 	ret, specificReturn := fake.getReturnsOnCall[len(fake.getArgsForCall)]
-	fake.getArgsForCall = append(fake.getArgsForCall, struct{}{})
+	fake.getArgsForCall = append(fake.getArgsForCall, struct {
+	}{})
 	fake.recordInvocation("Get", []interface{}{})
 	fake.getMutex.Unlock()
 	if fake.GetStub != nil {
@@ -43,7 +46,8 @@ func (fake *FakeFileReader) Get() ([]byte, error) {
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.getReturns.result1, fake.getReturns.result2
+	fakeReturns := fake.getReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeFileReader) GetCallCount() int {
@@ -52,7 +56,15 @@ func (fake *FakeFileReader) GetCallCount() int {
 	return len(fake.getArgsForCall)
 }
 
+func (fake *FakeFileReader) GetCalls(stub func() ([]byte, error)) {
+	fake.getMutex.Lock()
+	defer fake.getMutex.Unlock()
+	fake.GetStub = stub
+}
+
 func (fake *FakeFileReader) GetReturns(result1 []byte, result2 error) {
+	fake.getMutex.Lock()
+	defer fake.getMutex.Unlock()
 	fake.GetStub = nil
 	fake.getReturns = struct {
 		result1 []byte
@@ -61,6 +73,8 @@ func (fake *FakeFileReader) GetReturns(result1 []byte, result2 error) {
 }
 
 func (fake *FakeFileReader) GetReturnsOnCall(i int, result1 []byte, result2 error) {
+	fake.getMutex.Lock()
+	defer fake.getMutex.Unlock()
 	fake.GetStub = nil
 	if fake.getReturnsOnCall == nil {
 		fake.getReturnsOnCall = make(map[int]struct {
@@ -77,7 +91,8 @@ func (fake *FakeFileReader) GetReturnsOnCall(i int, result1 []byte, result2 erro
 func (fake *FakeFileReader) Subscribe() <-chan bool {
 	fake.subscribeMutex.Lock()
 	ret, specificReturn := fake.subscribeReturnsOnCall[len(fake.subscribeArgsForCall)]
-	fake.subscribeArgsForCall = append(fake.subscribeArgsForCall, struct{}{})
+	fake.subscribeArgsForCall = append(fake.subscribeArgsForCall, struct {
+	}{})
 	fake.recordInvocation("Subscribe", []interface{}{})
 	fake.subscribeMutex.Unlock()
 	if fake.SubscribeStub != nil {
@@ -86,7 +101,8 @@ func (fake *FakeFileReader) Subscribe() <-chan bool {
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.subscribeReturns.result1
+	fakeReturns := fake.subscribeReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeFileReader) SubscribeCallCount() int {
@@ -95,7 +111,15 @@ func (fake *FakeFileReader) SubscribeCallCount() int {
 	return len(fake.subscribeArgsForCall)
 }
 
+func (fake *FakeFileReader) SubscribeCalls(stub func() <-chan bool) {
+	fake.subscribeMutex.Lock()
+	defer fake.subscribeMutex.Unlock()
+	fake.SubscribeStub = stub
+}
+
 func (fake *FakeFileReader) SubscribeReturns(result1 <-chan bool) {
+	fake.subscribeMutex.Lock()
+	defer fake.subscribeMutex.Unlock()
 	fake.SubscribeStub = nil
 	fake.subscribeReturns = struct {
 		result1 <-chan bool
@@ -103,6 +127,8 @@ func (fake *FakeFileReader) SubscribeReturns(result1 <-chan bool) {
 }
 
 func (fake *FakeFileReader) SubscribeReturnsOnCall(i int, result1 <-chan bool) {
+	fake.subscribeMutex.Lock()
+	defer fake.subscribeMutex.Unlock()
 	fake.SubscribeStub = nil
 	if fake.subscribeReturnsOnCall == nil {
 		fake.subscribeReturnsOnCall = make(map[int]struct {
