@@ -29,12 +29,7 @@ setup_env() {
 upload_dependencies() {
   echo "### uploading release and stemcells"
 
-  # make sure we're uploading the right stemcell that the script-user wants
-  if [ "$windows_stemcell" == "windows2016" ]; then
-    windows_stemcell_job="bosh-dns-release/test-acceptance-windows2016"
-  else
-    windows_stemcell_job="bosh-dns-release/test-acceptance-windows"
-  fi
+  windows_stemcell_job="bosh-dns-release/test-acceptance-windows2019"
 
   # windows specfic
   ENV_NAME="${env_name}" \
@@ -88,7 +83,7 @@ run_tests() {
 main() {
   local destroy=true
   local skip_bbl=false
-  local windows_version=windows2012R2
+  local windows_version=windows2019
   local bosh_repo=
 
   while getopts ":adthw:c:" opt; do
@@ -119,7 +114,7 @@ main() {
         echo "     $0 -a                     Do not destroy environment after running tests."
         echo "     $0 -d                     Destroy-only mode. Will destroy existing environment left around from previous run."
         echo "     $0 -t                     Skip bbl-up. Will only run the tests. WARNING: you need to have setup the environment prior to running this."
-        echo "     $0 -w WINDOWS_OS_VERSION  Windows stemcell version to use (windows2016 or windows2012R2 [default])."
+        echo "     $0 -w WINDOWS_OS_VERSION  Windows stemcell version to use (windows2019 [default])."
         echo "     $0 -c BOSH_REPO           Location of the BOSH repo."
         exit 0
         ;;
