@@ -46,7 +46,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a103bb54783c3c72481df21ba8be37ae068c859fc01abd29fe9d722f3c699162"
+  digest = "1:ff7140465afe45bf1c2e9b55a7a9df3882d73bf12b4cd100f85ebb5809e2d3e3"
   name = "github.com/cloudfoundry/bosh-utils"
   packages = [
     "errors",
@@ -60,7 +60,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "9a0affed2bf1b1cd41515ce2356335ca4c6e6f98"
+  revision = "6725a40fb9cb893bc786727104d4b6994ec1ed32"
 
 [[projects]]
   branch = "master"
@@ -82,12 +82,12 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:d43a203ecd5644f46eeaef9dad5a11a06598ed6feb17cb6e232a2589d8e96347"
+  digest = "1:6422faebc7a4f3c8f58ff0af81002db6bd2f09204d6005611415163091947ad1"
   name = "github.com/cloudfoundry/socks5-proxy"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "7ade90b228c8472a45c189e77f78497b93bbaeaa"
-  version = "v0.1.0"
+  revision = "633b6fe4c3d8d72a4e7397a948027db02a8e2a96"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:32a059b3861f2679735f58621b5ac073309fd4d3e52fad216fbfa7d3d938a1d9"
@@ -208,12 +208,12 @@
   version = "v0.11.1"
 
 [[projects]]
-  digest = "1:e68c51f73a9fa89a6cfbd25f24543b37f96a7ac142dcf4e2adcadad6fec230e3"
+  digest = "1:e624132565a00fcc120432b96f71c71e8a049a4c22905c63220712f1f108acc9"
   name = "github.com/miekg/dns"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "cc8cd02140663157ce797c6650488d6c8563f31f"
-  version = "v1.1.6"
+  revision = "73601d4aed9d844322611759d7f3619110b7c88e"
+  version = "v1.1.8"
 
 [[projects]]
   branch = "master"
@@ -348,7 +348,7 @@
   name = "github.com/prometheus/procfs"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "af7bedc223fba51343f25a6fa7aba84355d0357a"
+  revision = "ea9eea63887261e4d8ed8315f4078e88d540c725"
 
 [[projects]]
   branch = "master"
@@ -372,7 +372,7 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "a5d413f7728c81fb97d96a2b722368945f651e78"
+  revision = "38d8ce5564a5b71b2e3a00553993f1b9a7ae852f"
 
 [[projects]]
   branch = "master"
@@ -398,11 +398,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "74de082e2cca95839e88aa0aeee5aadf6ce7710f"
+  revision = "eb5bcb51f2a31c7d5141d810b70815c05d9c9146"
 
 [[projects]]
   branch = "master"
-  digest = "1:9d3e228e937aed4a979a079e439c84b988c532da439e4f13158c002ca338eb68"
+  digest = "1:a26ebff2301ac8a4c8cedfec085e8190b035a7eec6b5614b7501f4714138a679"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -410,7 +410,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "9eb1bfa1ce65ae8a6ff3114b0aaf9a41a6cf3560"
+  revision = "4b34438f7a67ee5f45cc6132e2bad873a20324e9"
 
 [[projects]]
   digest = "1:8a12cbc891b7130d3f660f8a309e5c0b083f831e6ac38cdaa1f12e63c12d6bea"
@@ -449,7 +449,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:664bc16fa5d9231f2790aa23270750da8e3f1739f538fd162185fbb8a18175ec"
+  digest = "1:59b401940f79c311efa01c10e2fa8e78522a978538127f369fb39690a03c3eb4"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -465,7 +465,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "a96101f168f4ff1e2cd559ba4f61dbd091684e41"
+  revision = "052fc3cfdbc2c9e9082b1d51f850b7974b5efb2a"
 
 [[projects]]
   branch = "master"
@@ -473,7 +473,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "d831d65fe17df2e52bcc4316d4a9f7a418701f43"
+  revision = "64821d5d210748c883cd2b809589555ae4654203"
 
 [[projects]]
   digest = "1:f9fe1989f8278a0976fadf27490720c7708c056a11ab7a7ad3d282ff26f28e9a"
