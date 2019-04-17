@@ -21,12 +21,12 @@
   revision = "99757edba73523adac0d2460f4c3555f938663b5"
 
 [[projects]]
-  branch = "master"
   digest = "1:707ebe952a8b3d00b343c01536c79c73771d100f63ec6babeaed5c79e2b8a8dd"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
   pruneopts = "NUT"
-  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
+  revision = "4b2b341e8d7715fae06375aa633dbb6e91b3fb46"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:7294028ae4f4ebe9f92dccabdc69f63eba37b71fbfcdcb35ed1c32eb823fc6d4"
@@ -60,7 +60,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "6725a40fb9cb893bc786727104d4b6994ec1ed32"
+  revision = "fd7e5273417fa3a9b108037f9d1433b07f4654c4"
 
 [[projects]]
   branch = "master"
@@ -90,7 +90,7 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:32a059b3861f2679735f58621b5ac073309fd4d3e52fad216fbfa7d3d938a1d9"
+  digest = "1:9d4fb83c2e46527706ceb9aaa2079212b3b1491ded3c5de9049264db44d4de45"
   name = "github.com/coredns/coredns"
   packages = [
     "core/dnsserver",
@@ -120,8 +120,8 @@
     "request",
   ]
   pruneopts = "NUT"
-  revision = "8dcc7fccd74454134b33c8bc9f780ed6d7f076cf"
-  version = "v1.4.0"
+  revision = "e3f9a80b1d5a112907a012acee276e9080b32852"
+  version = "v1.5.0"
 
 [[projects]]
   branch = "master"
@@ -339,8 +339,8 @@
     "model",
   ]
   pruneopts = "NUT"
-  revision = "cfeb6f9992ffa54aaa4f2170ade4067ee478b250"
-  version = "v0.2.0"
+  revision = "a82f4c12f983cc2649298185f296632953e50d3e"
+  version = "v0.3.0"
 
 [[projects]]
   branch = "master"
@@ -348,7 +348,7 @@
   name = "github.com/prometheus/procfs"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "ea9eea63887261e4d8ed8315f4078e88d540c725"
+  revision = "8368d24ba045f26503eb745b624d930cbe214c79"
 
 [[projects]]
   branch = "master"
@@ -360,7 +360,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:09d4ba0a111bd85dffabc19b9b6d89e89bef285790103ced8824d823813dcdab"
+  digest = "1:7c800cd5bb7ccfcef2c05c474515b6d6e501023da578b055257da1d5cbee909d"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -372,11 +372,11 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "38d8ce5564a5b71b2e3a00553993f1b9a7ae852f"
+  revision = "f416ebab96af27ca70b6e5c23d6a0747530da626"
 
 [[projects]]
   branch = "master"
-  digest = "1:d412e8fd9550426ca57f31b503ed4904ba27642e689185f2e50b4e78b28a014e"
+  digest = "1:89e0a6f0cfb9a7647ffe43fa6dcde4ca3f5c110d46aa48ad330521679a3eda3d"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -398,11 +398,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "eb5bcb51f2a31c7d5141d810b70815c05d9c9146"
+  revision = "1da14a5a36f220ea3f03470682b737b1dfd5de22"
 
 [[projects]]
   branch = "master"
-  digest = "1:a26ebff2301ac8a4c8cedfec085e8190b035a7eec6b5614b7501f4714138a679"
+  digest = "1:6a2cbd3e1935a252ed62dd368629805e4cfcc4927cac0eaa52156c06d1de2764"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -410,7 +410,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "4b34438f7a67ee5f45cc6132e2bad873a20324e9"
+  revision = "12500544f89f9420afe9529ba8940bf72d294972"
 
 [[projects]]
   digest = "1:8a12cbc891b7130d3f660f8a309e5c0b083f831e6ac38cdaa1f12e63c12d6bea"
@@ -449,7 +449,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:59b401940f79c311efa01c10e2fa8e78522a978538127f369fb39690a03c3eb4"
+  digest = "1:be1ab6d2b333b1d487c01f1328aef9dc76cee4ff4f780775a552d2a1653f0207"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -465,7 +465,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "052fc3cfdbc2c9e9082b1d51f850b7974b5efb2a"
+  revision = "780da32332f6dddca61451903bec2fdc28299b49"
 
 [[projects]]
   branch = "master"
@@ -473,10 +473,10 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "64821d5d210748c883cd2b809589555ae4654203"
+  revision = "d1146b9035b912113a38af3b138eb2af567b2c67"
 
 [[projects]]
-  digest = "1:f9fe1989f8278a0976fadf27490720c7708c056a11ab7a7ad3d282ff26f28e9a"
+  digest = "1:054a590df55ec2c3fb881f1441b01d124913e8f2251947ab44fa81d175262219"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -493,6 +493,7 @@
     "grpclog",
     "internal",
     "internal/backoff",
+    "internal/balancerload",
     "internal/binarylog",
     "internal/channelz",
     "internal/envconfig",
@@ -512,8 +513,8 @@
     "tap",
   ]
   pruneopts = "NUT"
-  revision = "3507fb8e1a5ad030303c106fef3a47c9fdad16ad"
-  version = "v1.19.1"
+  revision = "236199dd5f8031d698fb64091194aecd1c3895b2"
+  version = "v1.20.0"
 
 [[projects]]
   digest = "1:1b91ae0dc69a41d4c2ed23ea5cffb721ea63f5037ca4b81e6d6771fbb8f45129"
