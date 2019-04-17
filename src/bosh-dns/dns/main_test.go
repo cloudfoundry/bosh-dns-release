@@ -1422,7 +1422,7 @@ var _ = Describe("main", func() {
 						time.Sleep(200 * time.Millisecond)
 						finalLength := len(healthServers[1].ReceivedRequests())
 						return startLength == finalLength
-					}).Should(BeTrue())
+					}, 5*time.Second).Should(BeTrue())
 				})
 			})
 
