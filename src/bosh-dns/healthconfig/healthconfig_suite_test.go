@@ -9,5 +9,5 @@ import (
 
 func TestHealthconfig(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Healthconfig Suite")
+	RunSpecs(t, "healthconfig")
 }
