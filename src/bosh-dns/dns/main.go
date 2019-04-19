@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -189,11 +190,18 @@ func mainExitCode() int {
 	}
 
 	servers := []server.DNSServer{}
+	numListeners := runtime.NumCPU()
+	if runtime.GOOS == "windows" {
+		numListeners = 1
+	}
+
 	for _, addr := range listenAddrs {
-		servers = append(servers,
-			&dns.Server{Addr: addr, Net: "tcp", Handler: mux},
-			&dns.Server{Addr: addr, Net: "udp", Handler: mux, UDPSize: 65535},
-		)
+		for i := 0; i < numListeners; i++ {
+			servers = append(servers,
+				&dns.Server{Addr: addr, Net: "tcp", Handler: mux, ReusePort: true},
+				&dns.Server{Addr: addr, Net: "udp", Handler: mux, ReusePort: true, UDPSize: 65535},
+			)
+		}
 	}
 
 	dnsServer := server.New(

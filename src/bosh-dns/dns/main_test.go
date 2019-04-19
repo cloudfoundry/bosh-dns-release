@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"syscall"
 	"time"
 
@@ -32,6 +33,7 @@ import (
 	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -1358,6 +1360,34 @@ var _ = Describe("main", func() {
 
 			Eventually(session).Should(gexec.Exit(0))
 		})
+
+		DescribeTable("local horizoltal scaling (network buffers)",
+			func(protocol string) {
+				wg := &sync.WaitGroup{}
+				concurrentRequests := 200
+				attempts := 5
+				c := &dns.Client{Net: protocol}
+				m := &dns.Msg{}
+				m.SetQuestion("primer-instance.primer-group.primer-network.primer-deployment.primer.", dns.TypeANY)
+
+				for j := 0; j < attempts; j++ {
+					wg.Add(concurrentRequests)
+					for i := 0; i < concurrentRequests; i++ {
+						go func(wg *sync.WaitGroup, m dns.Msg) {
+							defer GinkgoRecover()
+							defer wg.Done()
+							r, _, err := c.Exchange(&m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+							Expect(err).NotTo(HaveOccurred())
+							Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						}(wg, *m)
+					}
+				}
+
+				wg.Wait()
+			},
+			Entry("over udp", "udp"),
+			Entry("over tcp", "tcp"),
+		)
 
 		Context("health checking", func() {
 			var healthServers []*ghttp.Server
