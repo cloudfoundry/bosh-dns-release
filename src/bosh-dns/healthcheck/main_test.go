@@ -64,9 +64,8 @@ var _ = Describe("HealthCheck server", func() {
 		It("reject non-TLS connections", func() {
 			client := &http.Client{}
 			resp, err := client.Get(fmt.Sprintf("http://127.0.0.1:%d/health", configPort))
-
-			Expect(err).To(HaveOccurred())
-			Expect(resp).To(BeNil())
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 		})
 
 		Describe("when the vm is healthy", func() {
