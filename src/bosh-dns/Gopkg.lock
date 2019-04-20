@@ -360,7 +360,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7c800cd5bb7ccfcef2c05c474515b6d6e501023da578b055257da1d5cbee909d"
+  digest = "1:4b4fbe3cfa58f1f95eb0ab4fefc95efda7af333722f7f272c9828ecabb25a0ac"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -372,11 +372,11 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "f416ebab96af27ca70b6e5c23d6a0747530da626"
+  revision = "df01cb2cc480549d72034218dd98bf97671450ac"
 
 [[projects]]
   branch = "master"
-  digest = "1:89e0a6f0cfb9a7647ffe43fa6dcde4ca3f5c110d46aa48ad330521679a3eda3d"
+  digest = "1:eb2333d1d663f97a36be1cf05d2281990646697cc7b5a8073194aa9877cfd4c9"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -398,11 +398,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "1da14a5a36f220ea3f03470682b737b1dfd5de22"
+  revision = "afa5a82059c6356159f699d81beff22a81842231"
 
 [[projects]]
   branch = "master"
-  digest = "1:6a2cbd3e1935a252ed62dd368629805e4cfcc4927cac0eaa52156c06d1de2764"
+  digest = "1:e5706a2ba2e9d885e966e8db6414d293d0af40f4e7593cff6df40cb8095e99fc"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -410,7 +410,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "12500544f89f9420afe9529ba8940bf72d294972"
+  revision = "e8e3143a4f4a00f1fafef0dd82ba78223281b01b"
 
 [[projects]]
   digest = "1:8a12cbc891b7130d3f660f8a309e5c0b083f831e6ac38cdaa1f12e63c12d6bea"
@@ -465,7 +465,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "780da32332f6dddca61451903bec2fdc28299b49"
+  revision = "685fecacd0a02bd01f374ad779b72456e0cd9f8b"
 
 [[projects]]
   branch = "master"
@@ -473,10 +473,10 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "d1146b9035b912113a38af3b138eb2af567b2c67"
+  revision = "e7d98fc518a78c9f8b5ee77be7b0b317475d89e1"
 
 [[projects]]
-  digest = "1:054a590df55ec2c3fb881f1441b01d124913e8f2251947ab44fa81d175262219"
+  digest = "1:ffb498178a6bbe5a877e715cc85a40d5a712883d85f5bf05acf26dbd6c8f71e2"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -513,8 +513,8 @@
     "tap",
   ]
   pruneopts = "NUT"
-  revision = "236199dd5f8031d698fb64091194aecd1c3895b2"
-  version = "v1.20.0"
+  revision = "25c4f928eaa6d96443009bd842389fb4fa48664e"
+  version = "v1.20.1"
 
 [[projects]]
   digest = "1:1b91ae0dc69a41d4c2ed23ea5cffb721ea63f5037ca4b81e6d6771fbb8f45129"
