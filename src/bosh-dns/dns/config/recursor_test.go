@@ -28,13 +28,10 @@ var _ = Describe("Recursor", func() {
 			resolvConfReader.GetReturns([]string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}, nil)
 		})
 
-		It("should generate recursors from the resolv.conf, shuffled", func() {
+		It("should set the recursors from the resolv.conf file", func() {
 			err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}))
-			Expect(stringShuffler.ShuffleCallCount()).To(Equal(1))
-
-			Expect(resolvConfReader.GetCallCount()).To(Equal(1))
 		})
 
 		Context("when unable to Get fails on RecursorReader", func() {
@@ -49,46 +46,61 @@ var _ = Describe("Recursor", func() {
 				Expect(err).To(Equal(errors.New("some-error")))
 			})
 		})
+	})
 
-		Context("when excluding recursors", func() {
+	Context("recursor_selection", func() {
+		Context("serial", func() {
 			BeforeEach(func() {
-				dnsConfig.ExcludedRecursors = []string{"some-recursor-1:53", "recursor-custom:1234"}
+				dnsConfig.Recursors = []string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}
 			})
 
-			It("should exclude the recursor", func() {
+			It("should not shuffle the recursors", func() {
+				err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(stringShuffler.ShuffleCallCount()).To(Equal(0))
+				Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}))
+			})
+		})
+
+		Context("smart", func() {
+			BeforeEach(func() {
+				dnsConfig.Recursors = []string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}
+
+				stringShuffler.ShuffleStub = func(src []string) []string {
+					return []string{"shuffled"}
+				}
+			})
+
+			It("should shuffle the recursors", func() {
 				err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(stringShuffler.ShuffleCallCount()).To(Equal(1))
-				Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-2:53"}))
+				Expect(dnsConfig.Recursors).Should(Equal([]string{"shuffled"}))
+			})
+		})
+
+		Context("invalid value", func() {
+			BeforeEach(func() {
+				dnsConfig.RecursorSelection = "wrong"
+			})
+
+			It("should return an error", func() {
+				err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
+				Expect(err).To(MatchError("invalid value for recursor selection: 'wrong'"))
 			})
 		})
 	})
 
-	Context("when dns config does has recursors configured", func() {
+	Context("excluding recursors", func() {
 		BeforeEach(func() {
-			dnsConfig = config.Config{
-				Recursors: []string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"},
-			}
+			dnsConfig.Recursors = []string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}
+			dnsConfig.ExcludedRecursors = []string{"some-recursor-1:53", "recursor-custom:1234"}
 		})
 
-		It("should shuffle the recursors", func() {
+		It("should exclude the recursor", func() {
 			err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(stringShuffler.ShuffleCallCount()).To(Equal(1))
-			Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}))
-		})
-
-		Context("when excluding recursors", func() {
-			BeforeEach(func() {
-				dnsConfig.ExcludedRecursors = []string{"some-recursor-1:53", "recursor-custom:1234"}
-			})
-
-			It("should exclude the recursor", func() {
-				err := config.ConfigureRecursors(resolvConfReader, stringShuffler, &dnsConfig)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(stringShuffler.ShuffleCallCount()).To(Equal(1))
-				Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-2:53"}))
-			})
+			Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-2:53"}))
 		})
 	})
 

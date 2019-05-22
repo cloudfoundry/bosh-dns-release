@@ -1,5 +1,7 @@
 package config
 
+import "fmt"
+
 //go:generate counterfeiter . RecursorReader
 
 type RecursorReader interface {
@@ -42,7 +44,14 @@ func ConfigureRecursors(reader RecursorReader, shuffler StringShuffler, dnsConfi
 		}
 	}
 
-	dnsConfig.Recursors = shuffler.Shuffle(recursors)
+	switch dnsConfig.RecursorSelection {
+	case "smart":
+		dnsConfig.Recursors = shuffler.Shuffle(recursors)
+	case "serial":
+		dnsConfig.Recursors = recursors
+	default:
+		return fmt.Errorf("invalid value for recursor selection: '%s'", dnsConfig.RecursorSelection)
+	}
 
 	return nil
 }

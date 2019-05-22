@@ -18,6 +18,7 @@ type Config struct {
 	Recursors          []string     `json:"recursors,omitempty"`
 	ExcludedRecursors  []string     `json:"excluded_recursors,omitempty"`
 	RecordsFile        string       `json:"records_file,omitempty"`
+	RecursorSelection  string       `json:"recursor_selection"`
 	AliasFilesGlob     string       `json:"alias_files_glob,omitempty"`
 	HandlersFilesGlob  string       `json:"handlers_files_glob,omitempty"`
 	AddressesFilesGlob string       `json:"addresses_files_glob,omitempty"`
@@ -82,8 +83,9 @@ func LoadFromFile(configFilePath string) (Config, error) {
 	}
 
 	c := Config{
-		Timeout:         DurationJSON(5 * time.Second),
-		RecursorTimeout: DurationJSON(2 * time.Second),
+		Timeout:           DurationJSON(5 * time.Second),
+		RecursorTimeout:   DurationJSON(2 * time.Second),
+		RecursorSelection: "smart",
 		Health: HealthConfig{
 			MaxTrackedQueries: 2000,
 		},
@@ -105,6 +107,13 @@ func LoadFromFile(configFilePath string) (Config, error) {
 	c.ExcludedRecursors, err = AppendDefaultDNSPortIfMissing(c.ExcludedRecursors)
 	if err != nil {
 		return Config{}, err
+	}
+
+	switch c.RecursorSelection {
+	case "smart":
+	case "serial":
+	default:
+		return Config{}, errors.New("invalid value for recursor_selection; expected 'serial' or 'smart'")
 	}
 
 	return c, nil

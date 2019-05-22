@@ -127,6 +127,7 @@ var _ = Describe("Config", func() {
 			RecursorTimeout:    config.DurationJSON(recursorTimeoutDuration),
 			Recursors:          []string{},
 			ExcludedRecursors:  []string{"169.254.169.254:53", "169.10.10.10:1234"},
+			RecursorSelection:  "smart",
 			UpcheckDomains:     []string{"upcheck.domain.", "health2.bosh."},
 			AliasFilesGlob:     aliasesFileGlob,
 			HandlersFilesGlob:  handlersFileGlob,
@@ -185,6 +186,42 @@ var _ = Describe("Config", func() {
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dnsConfig.RecordsFile).To(Equal("/some/path"))
+		})
+	})
+
+	Context("recursor_selection", func() {
+		It("allows configuring recursor selection to be serial", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursor_selection": "serial"}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.RecursorSelection).To(Equal("serial"))
+		})
+
+		It("allows configuring recursor selection to be smart", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursor_selection": "smart"}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.RecursorSelection).To(Equal("smart"))
+		})
+
+		It("defaults recursor selection to be smart", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53 }`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.RecursorSelection).To(Equal("smart"))
+		})
+
+		It("complains if you configure something besides smart or serial", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursor_selection": "wrong" }`)
+
+			_, err := config.LoadFromFile(configFilePath)
+			Expect(err).To(MatchError("invalid value for recursor_selection; expected 'serial' or 'smart'"))
 		})
 	})
 
