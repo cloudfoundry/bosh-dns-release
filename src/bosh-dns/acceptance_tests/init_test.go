@@ -32,7 +32,7 @@ var _ = BeforeSuite(func() {
 	baseStemcell = assertEnvExists("BASE_STEMCELL")
 	boshDeployment = assertEnvExists("BOSH_DEPLOYMENT")
 
-	deployTestRecursor()
+	deployTestRecursors()
 	deployTestHTTPDNSServer()
 })
 
@@ -80,6 +80,14 @@ func excludedRecursorsOpsFile() string {
 	return "ops/manifest/add-excluded-recursors.yml"
 }
 
+func configureSerialRecursorSelectionOpsFile() string {
+	return "ops/manifest/configure-serial-recursor-selection.yml"
+}
+
+func configureSmartRecursorSelectionOpsFile() string {
+	return "ops/manifest/configure-smart-recursor-selection.yml"
+}
+
 func configureRecursorOpsFile() string {
 	if testTargetOS == "windows" {
 		return "ops/manifest/configure-recursor-windows.yml"
@@ -96,13 +104,14 @@ func enableHTTPJSONEndpointsOpsFile() string {
 	return "ops/manifest/enable-http-json-endpoints-linux.yml"
 }
 
-func jsonServerAddress() string {
-	if testTargetOS == "windows" {
-		return "http://10.0.255.5:8081"
-	}
+// TODO
+// func jsonServerAddress() string {
+// 	if testTargetOS == "windows" {
+// 		return "http://10.0.255.5:8081"
+// 	}
 
-	return "http://172.17.0.1:8081"
-}
+// 	return "http://172.17.0.1:8081"
+// }
 
 func setupLocalRecursorOpsFile() string {
 	if testTargetOS == "windows" {
@@ -110,4 +119,10 @@ func setupLocalRecursorOpsFile() string {
 	}
 
 	return "ops/cloud-config/add-test-dns-nameservers.yml"
+}
+
+func excludedUpstreamRecursorOpsFile() string {
+	// TODO(ctz, mdl): do we need a windows one?
+
+	return "ops/cloud-config/add-excluded-upstream.yml"
 }

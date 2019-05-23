@@ -1,5 +1,5 @@
 - type: replace
   path: /networks/name=default/subnets/0/dns?
   value:
-  - ((recursor_ip))
-  - 172.19.19.19 # this is a non-existent recursor that we will exclude
+  - ((recursor_a))
+  - ((recursor_b))

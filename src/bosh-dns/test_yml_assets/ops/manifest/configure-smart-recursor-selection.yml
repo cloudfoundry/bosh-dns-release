@@ -1,0 +1,4 @@
+---
+- type: replace
+  path: /instance_groups/name=bosh-dns/jobs/name=bosh-dns/properties/recursor_selection?
+  value: smart

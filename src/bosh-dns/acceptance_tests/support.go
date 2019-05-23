@@ -26,7 +26,7 @@ func assetPath(name string) string {
 	return path
 }
 
-func deployTestRecursor() {
+func deployTestRecursors() {
 	helpers.Bosh(
 		"deploy",
 		"-d", "test-recursor",
@@ -44,13 +44,18 @@ func deployTestHTTPDNSServer() {
 	)
 }
 
-func testRecursorIPAddress() string {
+func testRecursorIPAddresses() []string {
 	testRecursorAddresses := helpers.BoshInstances("test-recursor")
 	if len(testRecursorAddresses) == 0 {
-		return ""
+		return nil
 	}
 
-	return helpers.BoshInstances("test-recursor")[0].IP
+	recursorAddresses := []string{
+		helpers.BoshInstances("test-recursor")[0].IP,
+		helpers.BoshInstances("test-recursor")[1].IP,
+	}
+
+	return recursorAddresses
 }
 
 func testHTTPDNSServerIPAddress() string {
@@ -62,12 +67,12 @@ func testHTTPDNSServerIPAddress() string {
 	return helpers.BoshInstances("test-http-dns-server")[0].IP
 }
 
-func ensureRecursorIsDefinedByBoshAgent(recursorAddress string) {
+func ensureRecursorIsDefinedByBoshAgent(recursorAddresses []string) {
 	manifestPath := assetPath(testManifestName())
 	disableOverridePath := assetPath(noRecursorsOpsFile())
 	excludedRecursorsPath := assetPath(excludedRecursorsOpsFile())
 
-	updateCloudConfigWithOurLocalRecursor(recursorAddress)
+	updateCloudConfigWithOurLocalRecursor(recursorAddresses)
 
 	helpers.Bosh(
 		"deploy",
@@ -81,7 +86,49 @@ func ensureRecursorIsDefinedByBoshAgent(recursorAddress string) {
 	allDeployedInstances = helpers.BoshInstances("bosh-dns")
 }
 
-func ensureRecursorIsDefinedByDNSRelease(recursorAddress string) {
+func ensureRecursorSelectionIsSerial(recursorAddresses []string) {
+	manifestPath := assetPath(testManifestName())
+	disableOverridePath := assetPath(noRecursorsOpsFile())
+	excludedRecursorsPath := assetPath(excludedRecursorsOpsFile())
+	serialRecursorSelectionPath := assetPath(configureSerialRecursorSelectionOpsFile())
+
+	updateCloudConfigWithOurLocalRecursor(recursorAddresses)
+
+	helpers.Bosh(
+		"deploy",
+		"-v", fmt.Sprintf("name=%s", boshDeployment),
+		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
+		"-o", disableOverridePath,
+		"-o", excludedRecursorsPath,
+		"-o", serialRecursorSelectionPath,
+		"--vars-store", "creds.yml",
+		manifestPath,
+	)
+	allDeployedInstances = helpers.BoshInstances("bosh-dns")
+}
+
+func ensureRecursorSelectionIsSmart(recursorAddresses []string) {
+	manifestPath := assetPath(testManifestName())
+	disableOverridePath := assetPath(noRecursorsOpsFile())
+	excludedRecursorsPath := assetPath(excludedRecursorsOpsFile())
+	smartRecursorSelectionPath := assetPath(configureSmartRecursorSelectionOpsFile())
+
+	updateCloudConfigWithOurLocalRecursor(recursorAddresses)
+
+	helpers.Bosh(
+		"deploy",
+		"-v", fmt.Sprintf("name=%s", boshDeployment),
+		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
+		"-o", disableOverridePath,
+		"-o", excludedRecursorsPath,
+		"-o", smartRecursorSelectionPath,
+		"--vars-store", "creds.yml",
+		manifestPath,
+	)
+	allDeployedInstances = helpers.BoshInstances("bosh-dns")
+}
+
+func ensureRecursorIsDefinedByDNSRelease(recursorAddresses []string) {
 	manifestPath := assetPath(testManifestName())
 	configureRecursorPath := assetPath(configureRecursorOpsFile())
 
@@ -92,21 +139,26 @@ func ensureRecursorIsDefinedByDNSRelease(recursorAddress string) {
 		"-o", configureRecursorPath,
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
-		"-v", fmt.Sprintf("recursor_ip=%s", recursorAddress),
+		// TODO(ctz, ja): do we need these at all?
+		// "-v", fmt.Sprintf("recursor_a=%s", recursorAddresses[0]),
+		// "-v", fmt.Sprintf("recursor_b=%s", recursorAddresses[1]),
 		"--vars-store", "creds.yml",
 		manifestPath,
 	)
 	allDeployedInstances = helpers.BoshInstances("bosh-dns")
 }
 
-func updateCloudConfigWithOurLocalRecursor(recursorAddress string) {
+func updateCloudConfigWithOurLocalRecursor(recursorAddresses []string) {
 	removeRecursorAddressesOpsFile := assetPath(setupLocalRecursorOpsFile())
+	excludedUpstreamRecursorPath := assetPath(excludedUpstreamRecursorOpsFile())
 
 	helpers.Bosh(
 		"update-cloud-config",
 		"-o", removeRecursorAddressesOpsFile,
+		"-o", excludedUpstreamRecursorPath,
 		"-v", "network=director_network",
-		"-v", fmt.Sprintf("recursor_ip=%s", recursorAddress),
+		"-v", fmt.Sprintf("recursor_a=%s", recursorAddresses[0]),
+		"-v", fmt.Sprintf("recursor_b=%s", recursorAddresses[1]),
 		cloudConfigTempFileName,
 	)
 }
@@ -130,7 +182,7 @@ func resolve(address, server string) []string {
 	return strings.Split(strings.TrimSpace(string(session.Out.Contents())), "\n")
 }
 
-func ensureHealthEndpointDeployed(recursorAddress string, extraOps ...string) {
+func ensureHealthEndpointDeployed(extraOps ...string) {
 	manifestPath := assetPath(testManifestName())
 
 	updateCloudConfigWithDefaultCloudConfig()

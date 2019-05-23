@@ -333,7 +333,7 @@ func main() {
 	// This handles the question whose response can be defined in the config. We
 	// will use this when we are testing the order of the upstream recursors
 	// (shuffled or serial).
-	dns.HandleFunc("cfg.configured_question.", func(resp dns.ResponseWriter, req *dns.Msg) {
+	dns.HandleFunc("question_with_configurable_response.", func(resp dns.ResponseWriter, req *dns.Msg) {
 		msg := new(dns.Msg)
 
 		msg.Answer = append(msg.Answer, &dns.A{

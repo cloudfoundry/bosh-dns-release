@@ -22,7 +22,7 @@ export TEST_CLOUD_CONFIG_PATH
 
 # Configure the director for this test suite
 bosh int /usr/local/bosh-deployment/docker/cloud-config.yml \
-    -o "$PWD/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/add-static-ips-to-cloud-config.yml" \
+    -o "$PWD/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/cloud-config/add-static-ips-to-cloud-config.yml" \
     > "${TEST_CLOUD_CONFIG_PATH}"
 bosh -n update-cloud-config "${TEST_CLOUD_CONFIG_PATH}" -v network=director_network
 bosh upload-stemcell bosh-stemcell/*.tgz

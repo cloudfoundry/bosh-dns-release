@@ -19,6 +19,20 @@ instance_groups:
   jobs:
   - name: test-recursor
     release: dns-acceptance
+    properties:
+      configurable_response: 1.1.1.1
+- name: test-recursor2
+  azs: [z1]
+  instances: 1
+  vm_type: default
+  stemcell: default
+  networks:
+  - name: default
+  jobs:
+  - name: test-recursor
+    release: dns-acceptance
+    properties:
+      configurable_response: 2.2.2.2
 
 releases:
 - name: dns-acceptance

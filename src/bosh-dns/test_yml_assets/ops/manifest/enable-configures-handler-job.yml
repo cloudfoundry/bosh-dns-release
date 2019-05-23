@@ -6,5 +6,5 @@
     name: configures-handler
     release: dns-acceptance
     properties:
-      handler_server_address: ((recursor_ip))
+      handler_server_address: ((recursor_a))
       handler_domain: handler.internal.local.

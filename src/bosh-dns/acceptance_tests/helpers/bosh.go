@@ -44,6 +44,7 @@ type InstanceInfo struct {
 	InstanceID    string
 	InstanceGroup string
 	Index         string
+	ProcessState  string
 }
 
 func BoshInstances(deploymentName string) []InstanceInfo {
@@ -67,6 +68,7 @@ func BoshInstances(deploymentName string) []InstanceInfo {
 			InstanceGroup: instanceStrings[0],
 			InstanceID:    instanceStrings[1],
 			Index:         row["index"],
+			ProcessState:  row["process_state"],
 		})
 	}
 
