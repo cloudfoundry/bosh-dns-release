@@ -28,7 +28,7 @@ start() {
   ulimit -n 65536
 
   pushd ${JOB_DIR}
-    "${RECURSOR_PACKAGE}/bin/test-recursor" 53 \
+    "${RECURSOR_PACKAGE}/bin/test-recursor" config/config.yml \
       1>> ${LOG_DIR}/test_recursor.stdout.log \
       2>> ${LOG_DIR}/test_recursor.stderr.log &
   popd

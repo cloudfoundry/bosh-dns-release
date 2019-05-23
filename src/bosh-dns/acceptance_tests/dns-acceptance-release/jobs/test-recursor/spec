@@ -2,9 +2,17 @@
 name: test-recursor
 
 templates:
+  config.yml.erb: config/config.yml
   recursor_ctl.erb: bin/recursor_ctl
 
 packages:
   - test-recursor
 
-properties: {}
+properties:
+  port:
+    description: "The port number for the DNS server to listen on."
+    default: 53
+
+  configurable_response:
+    description: "The response for the DNS query 'configured.request.'"
+    default: 0.0.0.0

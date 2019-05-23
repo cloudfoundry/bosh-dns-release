@@ -5,14 +5,22 @@ import (
 	"os"
 
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/miekg/dns"
+
+	"test-recursor/config"
 )
 
 func main() {
-	server := &dns.Server{Addr: fmt.Sprintf("0.0.0.0:%d", getRecursorPort()), Net: "udp", UDPSize: 65535}
+	if len(os.Args) != 2 {
+		fmt.Fprintf(os.Stderr, "Usage: %s <config file>\n", os.Args[0])
+		os.Exit(1)
+	}
+
+	cfg := loadConfig(os.Args[1])
+
+	server := &dns.Server{Addr: fmt.Sprintf("0.0.0.0:%d", cfg.Port), Net: "udp", UDPSize: 65535}
 	nextAddress := 0
 
 	dns.HandleFunc("truncated-recursor.com.", func(resp dns.ResponseWriter, req *dns.Msg) {
@@ -322,21 +330,45 @@ func main() {
 		}
 	})
 
+	// This handles the question whose response can be defined in the config. We
+	// will use this when we are testing the order of the upstream recursors
+	// (shuffled or serial).
+	dns.HandleFunc("cfg.configured_question.", func(resp dns.ResponseWriter, req *dns.Msg) {
+		msg := new(dns.Msg)
+
+		msg.Answer = append(msg.Answer, &dns.A{
+			Hdr: dns.RR_Header{
+				Name:   req.Question[0].Name,
+				Rrtype: dns.TypeA,
+				Class:  dns.ClassINET,
+				Ttl:    0,
+			},
+			A: net.ParseIP(cfg.ConfigurableResponse),
+		})
+
+		msg.Authoritative = true
+		msg.RecursionAvailable = true
+
+		msg.SetReply(req)
+
+		err := resp.WriteMsg(msg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Printf("Unable to start server: error: +%v", err)
 		os.Exit(1)
 	}
 }
 
-func getRecursorPort() int {
-	port := 9955
-	if len(os.Args) >= 2 {
-		var err error
-		port, err = strconv.Atoi(os.Args[1])
-		if err != nil {
-			fmt.Printf("Could not determine server port: error: +%v", err)
-			os.Exit(1)
-		}
+func loadConfig(filename string) *config.Config {
+	cfg := config.NewConfig()
+	if err := cfg.LoadFromFile(filename); err != nil {
+		fmt.Fprintf(os.Stderr, "could not read config file '%s': %v\n", filename, err)
+		os.Exit(1)
 	}
-	return port
+
+	return cfg
 }
