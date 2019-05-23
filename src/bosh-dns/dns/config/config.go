@@ -76,13 +76,8 @@ func (t DurationJSON) MarshalJSON() (b []byte, err error) {
 	return []byte(fmt.Sprintf(`"%s"`, d.String())), nil
 }
 
-func LoadFromFile(configFilePath string) (Config, error) {
-	configFileContents, err := ioutil.ReadFile(configFilePath)
-	if err != nil {
-		return Config{}, err
-	}
-
-	c := Config{
+func NewDefaultConfig() Config {
+	return Config{
 		Timeout:           DurationJSON(5 * time.Second),
 		RecursorTimeout:   DurationJSON(2 * time.Second),
 		RecursorSelection: "smart",
@@ -90,7 +85,15 @@ func LoadFromFile(configFilePath string) (Config, error) {
 			MaxTrackedQueries: 2000,
 		},
 	}
+}
 
+func LoadFromFile(configFilePath string) (Config, error) {
+	configFileContents, err := ioutil.ReadFile(configFilePath)
+	if err != nil {
+		return Config{}, err
+	}
+
+	c := NewDefaultConfig()
 	if err := json.Unmarshal(configFileContents, &c); err != nil {
 		return Config{}, err
 	}

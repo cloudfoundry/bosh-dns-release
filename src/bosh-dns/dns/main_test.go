@@ -221,33 +221,34 @@ var _ = Describe("main", func() {
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			cmd = newCommandWithConfig(config.Config{
-				Address:            listenAddress,
-				Port:               listenPort,
-				Recursors:          recursorList,
-				RecordsFile:        recordsFilePath,
-				AddressesFilesGlob: path.Join(addressesDir, "*"),
-				AliasFilesGlob:     path.Join(aliasesDir, "*"),
-				JobsDir:            jobsDir,
-				HandlersFilesGlob:  handlersFilesGlob,
-				UpcheckDomains:     []string{"health.check.bosh.", "health.check.ca."},
+			cfg := config.NewDefaultConfig()
+			cfg.Address = listenAddress
+			cfg.Port = listenPort
+			cfg.Recursors = recursorList
+			cfg.RecordsFile = recordsFilePath
+			cfg.AddressesFilesGlob = path.Join(addressesDir, "*")
+			cfg.AliasFilesGlob = path.Join(aliasesDir, "*")
+			cfg.JobsDir = jobsDir
+			cfg.HandlersFilesGlob = handlersFilesGlob
+			cfg.UpcheckDomains = []string{"health.check.bosh.", "health.check.ca."}
 
-				API: config.APIConfig{
-					Port:            listenAPIPort,
-					CAFile:          "api/assets/test_certs/test_ca.pem",
-					CertificateFile: "api/assets/test_certs/test_server.pem",
-					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
-				},
+			cfg.API = config.APIConfig{
+				Port:            listenAPIPort,
+				CAFile:          "api/assets/test_certs/test_ca.pem",
+				CertificateFile: "api/assets/test_certs/test_server.pem",
+				PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+			}
 
-				Health: config.HealthConfig{
-					Enabled:         healthEnabled,
-					Port:            2345 + ginkgoconfig.GinkgoConfig.ParallelNode,
-					CAFile:          "../healthcheck/assets/test_certs/test_ca.pem",
-					CertificateFile: "../healthcheck/assets/test_certs/test_client.pem",
-					PrivateKeyFile:  "../healthcheck/assets/test_certs/test_client.key",
-					CheckInterval:   config.DurationJSON(checkInterval),
-				},
-			})
+			cfg.Health = config.HealthConfig{
+				Enabled:         healthEnabled,
+				Port:            2345 + ginkgoconfig.GinkgoConfig.ParallelNode,
+				CAFile:          "../healthcheck/assets/test_certs/test_ca.pem",
+				CertificateFile: "../healthcheck/assets/test_certs/test_client.pem",
+				PrivateKeyFile:  "../healthcheck/assets/test_certs/test_client.key",
+				CheckInterval:   config.DurationJSON(checkInterval),
+			}
+
+			cmd = newCommandWithConfig(cfg)
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -269,7 +270,7 @@ var _ = Describe("main", func() {
 		})
 
 		AfterEach(func() {
-			if cmd.Process != nil {
+			if session != nil {
 				session.Kill()
 				session.Wait()
 			}
@@ -1516,20 +1517,20 @@ var _ = Describe("main", func() {
 				Expect(acceptErr).NotTo(HaveOccurred())
 			}()
 
-			cmd = newCommandWithConfig(config.Config{
-				Address:         listenAddress,
-				Port:            listenPort,
-				Recursors:       []string{l.Addr().String()},
-				RecursorTimeout: config.DurationJSON(time.Second),
-				JobsDir:         jobsDir,
+			cfg := config.NewDefaultConfig()
+			cfg.Address = listenAddress
+			cfg.Port = listenPort
+			cfg.Recursors = []string{l.Addr().String()}
+			cfg.RecursorTimeout = config.DurationJSON(time.Second)
+			cfg.JobsDir = jobsDir
 
-				API: config.APIConfig{
-					Port:            listenAPIPort,
-					CAFile:          "api/assets/test_certs/test_ca.pem",
-					CertificateFile: "api/assets/test_certs/test_server.pem",
-					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
-				},
-			})
+			cfg.API = config.APIConfig{
+				Port:            listenAPIPort,
+				CAFile:          "api/assets/test_certs/test_ca.pem",
+				CertificateFile: "api/assets/test_certs/test_server.pem",
+				PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+			}
+			cmd = newCommandWithConfig(cfg)
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -1558,20 +1559,19 @@ var _ = Describe("main", func() {
 		It("logs the recursor used to resolve", func() {
 			var err error
 
-			cmd = newCommandWithConfig(config.Config{
-				Address:         listenAddress,
-				Port:            listenPort,
-				Recursors:       []string{"8.8.8.8"},
-				RecursorTimeout: config.DurationJSON(time.Second),
-				JobsDir:         jobsDir,
-
-				API: config.APIConfig{
-					Port:            listenAPIPort,
-					CAFile:          "api/assets/test_certs/test_ca.pem",
-					CertificateFile: "api/assets/test_certs/test_server.pem",
-					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
-				},
-			})
+			cfg := config.NewDefaultConfig()
+			cfg.Address = listenAddress
+			cfg.Port = listenPort
+			cfg.Recursors = []string{"8.8.8.8"}
+			cfg.RecursorTimeout = config.DurationJSON(time.Second)
+			cfg.JobsDir = jobsDir
+			cfg.API = config.APIConfig{
+				Port:            listenAPIPort,
+				CAFile:          "api/assets/test_certs/test_ca.pem",
+				CertificateFile: "api/assets/test_certs/test_server.pem",
+				PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+			}
+			cmd = newCommandWithConfig(cfg)
 
 			session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -1613,15 +1613,15 @@ var _ = Describe("main", func() {
 			addressesDir, err = ioutil.TempDir("", "addresses")
 			Expect(err).NotTo(HaveOccurred())
 
-			cmd = newCommandWithConfig(config.Config{
-				Address:            listenAddress,
-				Port:               listenPort,
-				Recursors:          []string{"8.8.8.8"},
-				UpcheckDomains:     []string{"upcheck.bosh-dns."},
-				AliasFilesGlob:     path.Join(aliasesDir, "*"),
-				AddressesFilesGlob: path.Join(addressesDir, "*"),
-				JobsDir:            jobsDir,
-			})
+			cfg := config.NewDefaultConfig()
+			cfg.Address = listenAddress
+			cfg.Port = listenPort
+			cfg.Recursors = []string{"8.8.8.8"}
+			cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
+			cfg.AliasFilesGlob = path.Join(aliasesDir, "*")
+			cfg.AddressesFilesGlob = path.Join(addressesDir, "*")
+			cfg.JobsDir = jobsDir
+			cmd = newCommandWithConfig(cfg)
 		})
 
 		AfterEach(func() {
@@ -1650,20 +1650,20 @@ var _ = Describe("main", func() {
 		})
 
 		It("exits 1 and logs a helpful error message when the server times out binding to ports", func() {
-			cmd = newCommandWithConfig(config.Config{
-				Address:        listenAddress,
-				Port:           listenPort,
-				UpcheckDomains: []string{"upcheck.bosh-dns."},
-				Timeout:        config.DurationJSON(-1),
-				JobsDir:        jobsDir,
+			cfg := config.NewDefaultConfig()
+			cfg.Address = listenAddress
+			cfg.Port = listenPort
+			cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
+			cfg.Timeout = config.DurationJSON(-1)
+			cfg.JobsDir = jobsDir
 
-				API: config.APIConfig{
-					Port:            listenAPIPort,
-					CAFile:          "api/assets/test_certs/test_ca.pem",
-					CertificateFile: "api/assets/test_certs/test_server.pem",
-					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
-				},
-			})
+			cfg.API = config.APIConfig{
+				Port:            listenAPIPort,
+				CAFile:          "api/assets/test_certs/test_ca.pem",
+				CertificateFile: "api/assets/test_certs/test_server.pem",
+				PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+			}
+			cmd = newCommandWithConfig(cfg)
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -1673,20 +1673,20 @@ var _ = Describe("main", func() {
 		})
 
 		It("exits 1 and logs a helpful error message when failing to parse jobs", func() {
-			cmd = newCommandWithConfig(config.Config{
-				Address:        listenAddress,
-				Port:           listenPort,
-				UpcheckDomains: []string{"upcheck.bosh-dns."},
-				Timeout:        config.DurationJSON(-1),
-				JobsDir:        "",
+			cfg := config.NewDefaultConfig()
+			cfg.Address = listenAddress
+			cfg.Port = listenPort
+			cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
+			cfg.Timeout = config.DurationJSON(-1)
+			cfg.JobsDir = ""
 
-				API: config.APIConfig{
-					Port:            listenAPIPort,
-					CAFile:          "api/assets/test_certs/test_ca.pem",
-					CertificateFile: "api/assets/test_certs/test_server.pem",
-					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
-				},
-			})
+			cfg.API = config.APIConfig{
+				Port:            listenAPIPort,
+				CAFile:          "api/assets/test_certs/test_ca.pem",
+				CertificateFile: "api/assets/test_certs/test_server.pem",
+				PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+			}
+			cmd = newCommandWithConfig(cfg)
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -1717,12 +1717,12 @@ var _ = Describe("main", func() {
 					},
 				})
 
-				cmd = newCommandWithConfig(config.Config{
-					Address:           listenAddress,
-					Port:              listenPort,
-					UpcheckDomains:    []string{"upcheck.bosh-dns."},
-					HandlersFilesGlob: filepath.Join(handlersDir, "*"),
-				})
+				cfg := config.NewDefaultConfig()
+				cfg.Address = listenAddress
+				cfg.Port = listenPort
+				cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
+				cfg.HandlersFilesGlob = filepath.Join(handlersDir, "*")
+				cmd = newCommandWithConfig(cfg)
 
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
@@ -1741,12 +1741,12 @@ var _ = Describe("main", func() {
 					},
 				})
 
-				cmd = newCommandWithConfig(config.Config{
-					Address:           listenAddress,
-					Port:              listenPort,
-					UpcheckDomains:    []string{"upcheck.bosh-dns."},
-					HandlersFilesGlob: filepath.Join(handlersDir, "*"),
-				})
+				cfg := config.NewDefaultConfig()
+				cfg.Address = listenAddress
+				cfg.Port = listenPort
+				cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
+				cfg.HandlersFilesGlob = filepath.Join(handlersDir, "*")
+				cmd = newCommandWithConfig(cfg)
 
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())

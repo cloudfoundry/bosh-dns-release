@@ -36,21 +36,21 @@ func StartSampleServer() Server {
 	jobsDir, err := ioutil.TempDir("", "jobs")
 	Expect(err).NotTo(HaveOccurred())
 
-	configContents, err := json.Marshal(config.Config{
-		Address:        "127.0.0.1",
-		Port:           listenPort,
-		RecordsFile:    "records.json",
-		AliasFilesGlob: "aliases.json",
-		UpcheckDomains: []string{"health.check.bosh."},
-		JobsDir:        jobsDir,
+	cfg := config.NewDefaultConfig()
+	cfg.Address = "127.0.0.1"
+	cfg.Port = listenPort
+	cfg.RecordsFile = "records.json"
+	cfg.AliasFilesGlob = "aliases.json"
+	cfg.UpcheckDomains = []string{"health.check.bosh."}
+	cfg.JobsDir = jobsDir
+	cfg.API = config.APIConfig{
+		Port:            listenAPIPort,
+		CertificateFile: "../../../api/assets/test_certs/test_server.pem",
+		PrivateKeyFile:  "../../../api/assets/test_certs/test_server.key",
+		CAFile:          "../../../api/assets/test_certs/test_ca.pem",
+	}
 
-		API: config.APIConfig{
-			Port:            listenAPIPort,
-			CAFile:          "../../../api/assets/test_certs/test_ca.pem",
-			CertificateFile: "../../../api/assets/test_certs/test_server.pem",
-			PrivateKeyFile:  "../../../api/assets/test_certs/test_server.key",
-		},
-	})
+	configContents, err := json.Marshal(cfg)
 	Expect(err).NotTo(HaveOccurred())
 
 	configFile, err := ioutil.TempFile("", "")

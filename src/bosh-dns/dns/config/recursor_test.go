@@ -15,7 +15,7 @@ var _ = Describe("Recursor", func() {
 	var stringShuffler *configfakes.FakeStringShuffler
 
 	BeforeEach(func() {
-		dnsConfig = config.Config{}
+		dnsConfig = config.NewDefaultConfig()
 		resolvConfReader = &configfakes.FakeRecursorReader{}
 		stringShuffler = &configfakes.FakeStringShuffler{}
 		stringShuffler.ShuffleStub = func(src []string) []string {
@@ -51,6 +51,7 @@ var _ = Describe("Recursor", func() {
 	Context("recursor_selection", func() {
 		Context("serial", func() {
 			BeforeEach(func() {
+				dnsConfig.RecursorSelection = "serial"
 				dnsConfig.Recursors = []string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}
 			})
 
@@ -64,6 +65,7 @@ var _ = Describe("Recursor", func() {
 
 		Context("smart", func() {
 			BeforeEach(func() {
+				dnsConfig.RecursorSelection = "smart"
 				dnsConfig.Recursors = []string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}
 
 				stringShuffler.ShuffleStub = func(src []string) []string {
