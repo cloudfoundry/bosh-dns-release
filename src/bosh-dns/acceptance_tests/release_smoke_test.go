@@ -121,7 +121,7 @@ var _ = Describe("Integration", func() {
 			if testTargetOS == "windows" {
 				osSuffix = "-windows"
 			}
-			ensureHealthEndpointDeployed(testRecursorAddress, "-o", assetPath("ops/enable-stop-a-job"+osSuffix+".yml"))
+			ensureHealthEndpointDeployed(testRecursorAddress, "-o", assetPath("ops/manifest/enable-stop-a-job"+osSuffix+".yml"))
 			firstInstance = allDeployedInstances[0]
 		})
 
@@ -191,7 +191,7 @@ var _ = Describe("Integration", func() {
 				if testTargetOS == "windows" {
 					osSuffix = "-windows"
 				}
-				ensureHealthEndpointDeployed(testRecursorAddress, "-o", assetPath("ops/enable-healthy-executable-job"+osSuffix+".yml"))
+				ensureHealthEndpointDeployed(testRecursorAddress, "-o", assetPath("ops/manifest/enable-healthy-executable-job"+osSuffix+".yml"))
 			})
 
 			It("changes the health endpoint return value based on how the executable exits", func() {
@@ -230,8 +230,8 @@ var _ = Describe("Integration", func() {
 			}
 			ensureHealthEndpointDeployed(
 				testRecursorAddress,
-				"-o", assetPath("ops/enable-link-dns-addresses.yml"),
-				"-o", assetPath("ops/enable-healthy-executable-job"+osSuffix+".yml"),
+				"-o", assetPath("ops/manifest/enable-link-dns-addresses.yml"),
+				"-o", assetPath("ops/manifest/enable-healthy-executable-job"+osSuffix+".yml"),
 			)
 			firstInstance = allDeployedInstances[0]
 		})

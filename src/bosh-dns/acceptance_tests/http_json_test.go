@@ -20,7 +20,7 @@ var _ = Describe("HTTP JSON Server integration", func() {
 		BeforeEach(func() {
 			manifestPath := assetPath(testManifestName())
 			enableHTTPJSONEndpointsPath := assetPath(enableHTTPJSONEndpointsOpsFile())
-			enableConfiguresHandler := assetPath("ops/enable-configures-handler-job.yml")
+			enableConfiguresHandler := assetPath("ops/manifest/enable-configures-handler-job.yml")
 			configureRecursorPath := assetPath(configureRecursorOpsFile())
 
 			updateCloudConfigWithDefaultCloudConfig()

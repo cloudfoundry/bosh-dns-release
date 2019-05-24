@@ -58,42 +58,42 @@ func testManifestName() string {
 
 func enableHealthManifestOps() string {
 	if testTargetOS == "windows" {
-		return "ops/enable-health-manifest-windows.yml"
+		return "ops/manifest/enable-health-manifest-windows.yml"
 	}
 
-	return "ops/enable-health-manifest-linux.yml"
+	return "ops/manifest/enable-health-manifest-linux.yml"
 }
 
 func noRecursorsOpsFile() string {
 	if testTargetOS == "windows" {
-		return "ops/no-recursors-configured-windows.yml"
+		return "ops/manifest/no-recursors-configured-windows.yml"
 	}
 
-	return "ops/no-recursors-configured.yml"
+	return "ops/manifest/no-recursors-configured.yml"
 }
 
 func excludedRecursorsOpsFile() string {
 	if testTargetOS == "windows" {
-		return "ops/add-excluded-recursors-windows.yml"
+		return "ops/manifest/add-excluded-recursors-windows.yml"
 	}
 
-	return "ops/add-excluded-recursors.yml"
+	return "ops/manifest/add-excluded-recursors.yml"
 }
 
 func configureRecursorOpsFile() string {
 	if testTargetOS == "windows" {
-		return "ops/configure-recursor-windows.yml"
+		return "ops/manifest/configure-recursor-windows.yml"
 	}
 
-	return "ops/configure-recursor.yml"
+	return "ops/manifest/configure-recursor.yml"
 }
 
 func enableHTTPJSONEndpointsOpsFile() string {
 	if testTargetOS == "windows" {
-		return "ops/enable-http-json-endpoints-windows.yml"
+		return "ops/manifest/enable-http-json-endpoints-windows.yml"
 	}
 
-	return "ops/enable-http-json-endpoints-linux.yml"
+	return "ops/manifest/enable-http-json-endpoints-linux.yml"
 }
 
 func jsonServerAddress() string {
@@ -106,8 +106,8 @@ func jsonServerAddress() string {
 
 func setupLocalRecursorOpsFile() string {
 	if testTargetOS == "windows" {
-		return "ops/add-test-dns-nameservers-windows.yml"
+		return "ops/cloud-config/add-test-dns-nameservers-windows.yml"
 	}
 
-	return "ops/add-test-dns-nameservers.yml"
+	return "ops/cloud-config/add-test-dns-nameservers.yml"
 }

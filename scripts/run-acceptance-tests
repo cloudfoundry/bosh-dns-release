@@ -45,9 +45,9 @@ bosh delete-config --type=runtime --name=dns -n
 
 bosh -n deploy ./src/bosh-dns/test_yml_assets/manifests/dns-linux.yml \
    -v health_server_port=2345 \
-   -o ./src/bosh-dns/test_yml_assets/ops/use-dns-release-default-bind-and-alias-addresses.yml \
-   -o ./src/bosh-dns/test_yml_assets/ops/enable-health-manifest-linux.yml \
-   -o ./src/bosh-dns/test_yml_assets/ops/enable-require-dns-in-pre-start-ops.yml \
+   -o ./src/bosh-dns/test_yml_assets/ops/manifest/use-dns-release-default-bind-and-alias-addresses.yml \
+   -o ./src/bosh-dns/test_yml_assets/ops/manifest/enable-health-manifest-linux.yml \
+   -o ./src/bosh-dns/test_yml_assets/ops/manifest/enable-require-dns-in-pre-start-ops.yml \
    -v base_stemcell="${BASE_STEMCELL}" \
    --vars-store dns-creds.yml
 
