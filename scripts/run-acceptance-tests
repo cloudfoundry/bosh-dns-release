@@ -28,7 +28,14 @@ if [ -z "${TEST_CLOUD_CONFIG_PATH-""}" ]; then
 fi
 
 pushd ./src/bosh-dns/acceptance_tests
-  ginkgo -randomizeAllSpecs -randomizeSuites -race .
+  set +u
+  if [[ -n "${1}" ]]; then
+    ginkgo -randomizeAllSpecs -randomizeSuites -race -focus="${1}"
+    exit 0
+  else
+    ginkgo -randomizeAllSpecs -randomizeSuites -race
+  fi
+  set -u
 popd
 
 # Need to delete the bosh-dns runtime config because bbl uses a hard-coded
