@@ -92,7 +92,6 @@ func ensureRecursorIsDefinedByBoshAgent() {
 func ensureRecursorSelectionIsSerial() {
 	manifestPath := assetPath(testManifestName())
 	disableOverridePath := assetPath(noRecursorsOpsFile())
-	excludedRecursorsPath := assetPath(excludedRecursorsOpsFile())
 	serialRecursorSelectionPath := assetPath(configureSerialRecursorSelectionOpsFile())
 
 	updateCloudConfigWithOurLocalRecursor()
@@ -102,7 +101,6 @@ func ensureRecursorSelectionIsSerial() {
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-o", disableOverridePath,
-		"-o", excludedRecursorsPath,
 		"-o", serialRecursorSelectionPath,
 		"--vars-store", "creds.yml",
 		manifestPath,
@@ -113,7 +111,6 @@ func ensureRecursorSelectionIsSerial() {
 func ensureRecursorSelectionIsSmart() {
 	manifestPath := assetPath(testManifestName())
 	disableOverridePath := assetPath(noRecursorsOpsFile())
-	excludedRecursorsPath := assetPath(excludedRecursorsOpsFile())
 	smartRecursorSelectionPath := assetPath(configureSmartRecursorSelectionOpsFile())
 
 	updateCloudConfigWithOurLocalRecursor()
@@ -123,7 +120,6 @@ func ensureRecursorSelectionIsSmart() {
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-o", disableOverridePath,
-		"-o", excludedRecursorsPath,
 		"-o", smartRecursorSelectionPath,
 		"--vars-store", "creds.yml",
 		manifestPath,
