@@ -19,13 +19,8 @@ var _ = Describe("Integration", func() {
 		firstInstance helpers.InstanceInfo
 	)
 	Describe("DNS endpoint", func() {
-		var (
-			testRecursorAddresses []string
-		)
-
 		BeforeEach(func() {
-			testRecursorAddresses = testRecursorIPAddresses()
-			ensureRecursorIsDefinedByDNSRelease(testRecursorAddresses)
+			ensureRecursorIsDefinedByDNSRelease()
 			firstInstance = allDeployedInstances[0]
 		})
 

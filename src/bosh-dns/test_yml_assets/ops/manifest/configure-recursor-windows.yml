@@ -1,3 +1,5 @@
 - type: replace
   path: /instance_groups/name=bosh-dns/jobs/name=bosh-dns-windows/properties?/recursors
-  value: [((recursor_a))]
+  value:
+  - ((recursor_a))
+  - ((recursor_b))

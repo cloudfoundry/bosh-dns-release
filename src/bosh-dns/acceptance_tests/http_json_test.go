@@ -25,7 +25,6 @@ var _ = Describe("HTTP JSON Server integration", func() {
 
 			updateCloudConfigWithDefaultCloudConfig()
 
-			testRecursorAddress := testRecursorIPAddresses()[0]
 			testHTTPDNSServerAddress := fmt.Sprintf(
 				"http://%s:8081",
 				testHTTPDNSServerIPAddress(),
@@ -38,7 +37,8 @@ var _ = Describe("HTTP JSON Server integration", func() {
 				"-v", fmt.Sprintf("name=%s", boshDeployment),
 				"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 				"-v", fmt.Sprintf("http_json_server_address=%s", testHTTPDNSServerAddress),
-				"-v", fmt.Sprintf("recursor_a=%s", testRecursorAddress),
+				"-v", fmt.Sprintf("recursor_a=%s", RecursorIPAddresses[0]),
+				"-v", fmt.Sprintf("recursor_b=%s", RecursorIPAddresses[1]),
 				"--vars-store", "creds.yml",
 				manifestPath,
 			)

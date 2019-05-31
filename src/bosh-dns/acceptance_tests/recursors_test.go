@@ -2,7 +2,9 @@ package acceptance
 
 import (
 	"bosh-dns/acceptance_tests/helpers"
+	"bosh-dns/dns/server/handlers"
 	gomegadns "bosh-dns/gomega-dns"
+	"fmt"
 	"net"
 	"time"
 
@@ -13,10 +15,7 @@ import (
 
 var _ = Describe("recursor", func() {
 	var (
-		firstBoshDNS          helpers.InstanceInfo
-		testRecursorAddresses []string
-
-		secondUpstreamRecursorIPAddr string
+		firstBoshDNS helpers.InstanceInfo
 	)
 
 	Context("when the upstream recursor response differs", func() {
@@ -26,15 +25,12 @@ var _ = Describe("recursor", func() {
 
 		BeforeEach(func() {
 			deployTestRecursors()
-
-			testRecursorAddresses = testRecursorIPAddresses()
-			secondUpstreamRecursorIPAddr = testRecursorAddresses[1]
 		})
 
 		Context("recursor selection", func() {
 			Context("serial", func() {
 				BeforeEach(func() {
-					ensureRecursorSelectionIsSerial(testRecursorAddresses)
+					ensureRecursorSelectionIsSerial()
 					firstBoshDNS = allDeployedInstances[0]
 				})
 
@@ -56,7 +52,7 @@ var _ = Describe("recursor", func() {
 
 			Context("smart", func() {
 				BeforeEach(func() {
-					ensureRecursorSelectionIsSmart(testRecursorAddresses)
+					ensureRecursorSelectionIsSmart()
 					firstBoshDNS = allDeployedInstances[0]
 				})
 
@@ -163,17 +159,22 @@ var _ = Describe("recursor", func() {
 				)
 
 				Eventually(func() bool {
-					dnsResponse := helpers.Dig(testQuestion, testRecursorAddresses[0])
+					dnsResponse := helpers.Dig(testQuestion, RecursorIPAddresses[0])
 					return len(dnsResponse.Answer) == 1
 				}, 5*time.Second, 1*time.Second).Should(BeTrue())
+
+				helpers.Bosh(
+					"-d",
+					"bosh-dns",
+					"restart",
+				)
 			})
 		})
 	})
 
 	Context("when the recursors must be read from the system resolver list", func() {
 		BeforeEach(func() {
-			testRecursorAddresses = testRecursorIPAddresses()
-			ensureRecursorIsDefinedByBoshAgent(testRecursorAddresses)
+			ensureRecursorIsDefinedByBoshAgent()
 			firstBoshDNS = allDeployedInstances[0]
 		})
 
@@ -193,14 +194,13 @@ var _ = Describe("recursor", func() {
 
 	Context("when the recursors are configured explicitly on the DNS server", func() {
 		BeforeEach(func() {
-			testRecursorAddresses = testRecursorIPAddresses()
-			ensureRecursorIsDefinedByDNSRelease(testRecursorAddresses)
+			ensureRecursorIsDefinedByDNSRelease()
 			firstBoshDNS = allDeployedInstances[0]
 		})
 
 		It("returns success when receiving a truncated responses from a recursor", func() {
 			By("ensuring the test recursor is returning truncated messages", func() {
-				dnsResponse := helpers.Dig("truncated-recursor.com.", testRecursorAddresses[0])
+				dnsResponse := helpers.Dig("truncated-recursor.com.", RecursorIPAddresses[0])
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "tc", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(1))
 			})
@@ -214,7 +214,7 @@ var _ = Describe("recursor", func() {
 
 		It("timeouts when recursor takes longer than configured recursor_timeout", func() {
 			By("ensuring the test recursor is working", func() {
-				dnsResponse := helpers.DigWithOptions("slow-recursor.com.", testRecursorAddresses[0], helpers.DigOpts{Timeout: 10 * time.Second})
+				dnsResponse := helpers.DigWithOptions("slow-recursor.com.", RecursorIPAddresses[0], helpers.DigOpts{Timeout: 10 * time.Second})
 
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(1))
@@ -228,7 +228,7 @@ var _ = Describe("recursor", func() {
 
 		It("forwards large UDP EDNS messages", func() {
 			By("ensuring the test recursor is returning messages", func() {
-				dnsResponse := helpers.DigWithOptions("udp-9k-message.com.", testRecursorAddresses[0], helpers.DigOpts{BufferSize: 65535})
+				dnsResponse := helpers.DigWithOptions("udp-9k-message.com.", RecursorIPAddresses[0], helpers.DigOpts{BufferSize: 65535})
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(270))
 			})
@@ -242,7 +242,7 @@ var _ = Describe("recursor", func() {
 
 		It("compresses message responses that are larger than requested UDPSize", func() {
 			By("ensuring the test recursor is returning messages", func() {
-				dnsResponse := helpers.DigWithOptions("compressed-ip-truncated-recursor-large.com.", testRecursorAddresses[0], helpers.DigOpts{BufferSize: 16384})
+				dnsResponse := helpers.DigWithOptions("compressed-ip-truncated-recursor-large.com.", RecursorIPAddresses[0], helpers.DigOpts{BufferSize: 16384})
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(512))
 			})
@@ -256,7 +256,7 @@ var _ = Describe("recursor", func() {
 
 		It("forwards large dns answers even if udp response size is larger than 512", func() {
 			By("ensuring the test recursor is returning messages", func() {
-				dnsResponse := helpers.DigWithOptions("ip-truncated-recursor-large.com.", testRecursorAddresses[0], helpers.DigOpts{BufferSize: 65535})
+				dnsResponse := helpers.DigWithOptions("ip-truncated-recursor-large.com.", RecursorIPAddresses[0], helpers.DigOpts{BufferSize: 65535})
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "tc", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(20))
 			})
@@ -270,7 +270,7 @@ var _ = Describe("recursor", func() {
 
 		It("does not bother to compress messages that are smaller than 512", func() {
 			By("ensuring the test recursor is returning messages", func() {
-				dnsResponse := helpers.DigWithOptions("recursor-small.com.", testRecursorAddresses[0], helpers.DigOpts{BufferSize: 1})
+				dnsResponse := helpers.DigWithOptions("recursor-small.com.", RecursorIPAddresses[0], helpers.DigOpts{BufferSize: 1})
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(2))
 			})
@@ -311,8 +311,7 @@ var _ = Describe("recursor", func() {
 
 	Context("when using cache", func() {
 		BeforeEach(func() {
-			testRecursorAddresses = testRecursorIPAddresses()
-			ensureRecursorIsDefinedByDNSRelease(testRecursorAddresses)
+			ensureRecursorIsDefinedByDNSRelease()
 			firstBoshDNS = allDeployedInstances[0]
 		})
 
