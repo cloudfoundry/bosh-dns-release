@@ -170,6 +170,30 @@ var _ = Describe("recursor", func() {
 				)
 			})
 		})
+
+		Context("excluding recursors", func() {
+			BeforeEach(func() {
+				ensureRecursorSelectionIsExcludingFirstRecursor()
+				firstBoshDNS = allDeployedInstances[0]
+			})
+
+			It("excludes the recursor specified", func() {
+				By("verifying the recursors are healthy", func() {
+					for _, ip := range RecursorIPAddresses {
+						dnsResponse := helpers.Dig(testQuestion, ip)
+						Expect(dnsResponse.Answer).To(HaveLen(1))
+					}
+				})
+
+				By("checking that we use the second recursor", func() {
+					dnsResponse := helpers.Dig(testQuestion, firstBoshDNS.IP)
+					Expect(dnsResponse.Answer).To(HaveLen(1))
+					Expect(dnsResponse.Answer).To(ConsistOf(
+						gomegadns.MatchResponse(gomegadns.Response{"ip": "2.2.2.2", "ttl": 5}),
+					))
+				})
+			})
+		})
 	})
 
 	Context("when the recursors must be read from the system resolver list", func() {

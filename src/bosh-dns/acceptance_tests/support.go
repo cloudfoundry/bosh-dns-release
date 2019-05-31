@@ -127,6 +127,28 @@ func ensureRecursorSelectionIsSmart() {
 	allDeployedInstances = helpers.BoshInstances("bosh-dns")
 }
 
+func ensureRecursorSelectionIsExcludingFirstRecursor() {
+	manifestPath := assetPath(testManifestName())
+	disableOverridePath := assetPath(noRecursorsOpsFile())
+	serialRecursorSelectionPath := assetPath(configureSerialRecursorSelectionOpsFile())
+	excludingRecursorPath := assetPath(excludeSpecificRecursor())
+
+	updateCloudConfigWithOurLocalRecursor()
+
+	helpers.Bosh(
+		"deploy",
+		"-v", fmt.Sprintf("name=%s", boshDeployment),
+		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
+		"-o", disableOverridePath,
+		"-o", serialRecursorSelectionPath,
+		"-o", excludingRecursorPath,
+		"-v", fmt.Sprintf("excluded_recursor=%s", RecursorIPAddresses[0]),
+		"--vars-store", "creds.yml",
+		manifestPath,
+	)
+	allDeployedInstances = helpers.BoshInstances("bosh-dns")
+}
+
 func ensureRecursorIsDefinedByDNSRelease() {
 	manifestPath := assetPath(testManifestName())
 	configureRecursorPath := assetPath(configureRecursorOpsFile())
@@ -148,12 +170,10 @@ func ensureRecursorIsDefinedByDNSRelease() {
 
 func updateCloudConfigWithOurLocalRecursor() {
 	removeRecursorAddressesOpsFile := assetPath(setupLocalRecursorOpsFile())
-	excludedUpstreamRecursorPath := assetPath(excludedUpstreamRecursorOpsFile())
 
 	helpers.Bosh(
 		"update-cloud-config",
 		"-o", removeRecursorAddressesOpsFile,
-		"-o", excludedUpstreamRecursorPath,
 		"-v", "network=director_network",
 		"-v", fmt.Sprintf("recursor_a=%s", RecursorIPAddresses[0]),
 		"-v", fmt.Sprintf("recursor_b=%s", RecursorIPAddresses[1]),
