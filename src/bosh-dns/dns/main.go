@@ -126,6 +126,7 @@ func mainExitCode() int {
 		logger.Error(logTag, fmt.Sprintf("Unable to configure recursor addresses from os: %s", err.Error()))
 		return 1
 	}
+	logger.Debug(logTag, fmt.Sprintf("Upstream recursors are configured to %v with excluded recursors %v", config.Recursors, config.ExcludedRecursors))
 
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
 	var healthChecker healthiness.HealthChecker = healthiness.NewDisabledHealthChecker()
