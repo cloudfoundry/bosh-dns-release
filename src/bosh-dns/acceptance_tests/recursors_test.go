@@ -198,6 +198,22 @@ var _ = Describe("recursor", func() {
 			firstBoshDNS = allDeployedInstances[0]
 		})
 
+		It("forwards queries to the configured recursors", func() {
+			dnsResponse := helpers.Dig("example.com.", firstBoshDNS.IP)
+
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": "10.10.10.10", "ttl": 5}),
+			))
+		})
+	})
+
+	Context("handling upstream recursor responses", func() {
+		BeforeEach(func() {
+			ensureRecursorIsDefinedByDNSRelease()
+			firstBoshDNS = allDeployedInstances[0]
+		})
+
 		It("returns success when receiving a truncated responses from a recursor", func() {
 			By("ensuring the test recursor is returning truncated messages", func() {
 				dnsResponse := helpers.Dig("truncated-recursor.com.", RecursorIPAddresses[0])
@@ -280,15 +296,6 @@ var _ = Describe("recursor", func() {
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(2))
 			})
-		})
-
-		It("forwards queries to the configured recursors", func() {
-			dnsResponse := helpers.Dig("example.com.", firstBoshDNS.IP)
-
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(ConsistOf(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": "10.10.10.10", "ttl": 5}),
-			))
 		})
 
 		It("forwards ipv4 ARPA queries to the configured recursors", func() {
