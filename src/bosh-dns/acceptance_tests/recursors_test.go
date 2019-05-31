@@ -183,7 +183,7 @@ var _ = Describe("recursor", func() {
 			updateCloudConfigWithDefaultCloudConfig()
 		})
 
-		It("fowards queries to the configured recursors on port 53", func() {
+		It("forwards queries to the configured recursors on port 53", func() {
 			dnsResponse := helpers.Dig("example.com.", firstBoshDNS.IP)
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 			Expect(dnsResponse.Answer).To(ConsistOf(
@@ -205,7 +205,7 @@ var _ = Describe("recursor", func() {
 				Expect(dnsResponse.Answer).To(HaveLen(1))
 			})
 
-			By("ensuring the dns release returns a successful truncated recursed answer", func() {
+			By("ensuring the dns release returns a successful response when the recursor truncates the answer", func() {
 				dnsResponse := helpers.Dig("truncated-recursor.com.", firstBoshDNS.IP)
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "tc", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(1))
@@ -233,21 +233,21 @@ var _ = Describe("recursor", func() {
 				Expect(dnsResponse.Answer).To(HaveLen(270))
 			})
 
-			By("ensuring the dns release returns a successful trucated recursed answer", func() {
+			By("ensuring the dns release returns a successful response from a truncated recursor answer", func() {
 				dnsResponse := helpers.DigWithOptions("udp-9k-message.com.", firstBoshDNS.IP, helpers.DigOpts{BufferSize: 65535})
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(270))
 			})
 		})
 
-		It("compresses message responses that are larger than requested UDPSize", func() {
+		It("compresses message responses that are larger than requested UDP Size", func() {
 			By("ensuring the test recursor is returning messages", func() {
 				dnsResponse := helpers.DigWithOptions("compressed-ip-truncated-recursor-large.com.", RecursorIPAddresses[0], helpers.DigOpts{BufferSize: 16384})
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(512))
 			})
 
-			By("ensuring the dns release returns a successful compressed recursed answer", func() {
+			By("ensuring the dns release returns a successful response when the recursor answer is compressed", func() {
 				dnsResponse := helpers.DigWithOptions("compressed-ip-truncated-recursor-large.com.", firstBoshDNS.IP, helpers.DigOpts{BufferSize: 16384})
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(512))
@@ -261,7 +261,7 @@ var _ = Describe("recursor", func() {
 				Expect(dnsResponse.Answer).To(HaveLen(20))
 			})
 
-			By("ensuring the dns release returns a successful truncated recursed answer", func() {
+			By("ensuring the dns release returns a successful response when the recursor answer is truncated", func() {
 				dnsResponse := helpers.Dig("ip-truncated-recursor-large.com.", firstBoshDNS.IP)
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "tc", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(20))
@@ -275,14 +275,14 @@ var _ = Describe("recursor", func() {
 				Expect(dnsResponse.Answer).To(HaveLen(2))
 			})
 
-			By("ensuring the dns release returns a successful trucated recursed answer", func() {
+			By("ensuring the dns release returns a successful response", func() {
 				dnsResponse := helpers.Dig("recursor-small.com.", firstBoshDNS.IP)
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(2))
 			})
 		})
 
-		It("fowards queries to the configured recursors", func() {
+		It("forwards queries to the configured recursors", func() {
 			dnsResponse := helpers.Dig("example.com.", firstBoshDNS.IP)
 
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
@@ -299,7 +299,7 @@ var _ = Describe("recursor", func() {
 			))
 		})
 
-		It("fowards ipv6 ARPA queries to the configured recursors", func() {
+		It("forwards ipv6 ARPA queries to the configured recursors", func() {
 			dnsResponse := helpers.IPv6ReverseDig("2001:4860:4860::8888", firstBoshDNS.IP)
 
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
@@ -315,7 +315,7 @@ var _ = Describe("recursor", func() {
 			firstBoshDNS = allDeployedInstances[0]
 		})
 
-		It("caches dns recursed dns entries for the duration of the TTL", func() {
+		It("caches upstream dns entries for the duration of the TTL", func() {
 			dnsResponse := helpers.Dig("always-different-with-timeout-example.com.", firstBoshDNS.IP)
 
 			Expect(dnsResponse.Answer).To(HaveLen(1))
