@@ -60,7 +60,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "9f9df32d41c36d11fc722430c49f403eb0884985"
+  revision = "60e74086313b981fb68f929ee2712d3ec58d06ee"
 
 [[projects]]
   branch = "master"
@@ -208,12 +208,12 @@
   version = "v0.11.1"
 
 [[projects]]
-  digest = "1:acf729cc7eeff8fe111ffce5f7cf9caa34ca71eea99a3650563ea598bed64717"
+  digest = "1:fa31fc40664a542ebad15fffae2515a4c7b5afec32af701f5af4203ed86c628f"
   name = "github.com/miekg/dns"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "a2c73fb86d62c6fc8391d163814396a338cbcedf"
-  version = "v1.1.12"
+  revision = "d16ecb693e3f8d524769fefce2192a4c92207ff9"
+  version = "v1.1.13"
 
 [[projects]]
   branch = "master"
@@ -343,15 +343,15 @@
   version = "v0.4.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:faf5688d03dc097b63b91bcfe02ad54ab2caaefe0b43ee5c4a67cc8653b9719f"
+  digest = "1:88a65c1e94c5afaec74b2d9f8a03d352d8a95e87db6e0904eae9ccaadd6d3176"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
     "internal/fs",
   ]
   pruneopts = "NUT"
-  revision = "a7aeb8df3389edaf53efcc319ad0063cb27c3960"
+  revision = "65bdadfa96aecebf4dcf888da995a29eab4fc964"
+  version = "v0.0.1"
 
 [[projects]]
   branch = "master"
@@ -363,7 +363,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c702843f592f44c2c558f08478b71331119d31907e7945f1cedc9ee3c932e493"
+  digest = "1:ef3ffa0905f706132b35e4995ff4031b02e24be795892620553d57b06883ff68"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -375,7 +375,7 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "22d7a77e9e5f409e934ed268692e56707cd169e5"
+  revision = "20be4c3c3ed52bfccdb2d59a412ee1a936d175a7"
 
 [[projects]]
   branch = "master"
@@ -405,7 +405,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:467824890d73005b2c64b1aa2ba505d45a7255181cb37ae5e2d1b927ea99255a"
+  digest = "1:71b94af448c240171b0976766941d516508a7b8f9d24c6f6d0a4e4757870a25c"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -413,7 +413,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "dbbf3f1254d491605cf4a0034ce25d0dc71b0c58"
+  revision = "4c3a928424d249a1013e789cf5e458d480bcba16"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -454,7 +454,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:37a10ef0ba5126e0459bf3644213c664babe7a04e39fd4c292f8f5d130820990"
+  digest = "1:7c7aa31cc6bc5c85038e46d8c6541a2fb2332b1687229a5a5a04d7b91cea0efe"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -471,7 +471,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "3d17549cdc6bfc8f924b817a94ec54bec5596488"
+  revision = "26e35f15edef9a960ed13c88b445c5674371da18"
 
 [[projects]]
   branch = "master"
@@ -479,7 +479,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "c2c4e71fbf6989c3e46a18d65cb88c288f8a3a55"
+  revision = "fb225487d10142b5bcc35abfc6cb9a0609614976"
 
 [[projects]]
   digest = "1:106ab727c942158eb2f0e3745dd7be15d9f76fc97b9040766cda9260026fe26e"
@@ -579,6 +579,7 @@
     "github.com/rcrowley/go-metrics",
     "golang.org/x/net/context",
     "golang.org/x/sys/windows",
+    "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
