@@ -54,7 +54,7 @@ resources:
     paths:
     - "ci/docker"
 - name: main-bosh-docker-image
-  type: docker-image
+  type: registry-image
   source:
     repository: bosh/main-bosh-docker
 - name: unit-tests-image
