@@ -1,3 +1,5 @@
 - type: replace
   path: /networks/name=default/subnets/0/dns?
-  value: ((recursor_a))
+  value:
+  - ((recursor_a))
+  - ((recursor_b))
