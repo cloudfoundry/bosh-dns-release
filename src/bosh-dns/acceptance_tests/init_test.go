@@ -81,10 +81,18 @@ func excludedRecursorsOpsFile() string {
 }
 
 func configureSerialRecursorSelectionOpsFile() string {
+	if testTargetOS == "windows" {
+		return "ops/manifest/configure-serial-recursor-selection-windows.yml"
+	}
+
 	return "ops/manifest/configure-serial-recursor-selection.yml"
 }
 
 func configureSmartRecursorSelectionOpsFile() string {
+	if testTargetOS == "windows" {
+		return "ops/manifest/configure-smart-recursor-selection-windows.yml"
+	}
+
 	return "ops/manifest/configure-smart-recursor-selection.yml"
 }
 
