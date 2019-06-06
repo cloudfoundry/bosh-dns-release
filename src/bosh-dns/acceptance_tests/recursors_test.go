@@ -23,10 +23,6 @@ var _ = Describe("recursor", func() {
 			testQuestion = "question_with_configurable_response."
 		)
 
-		BeforeEach(func() {
-			deployTestRecursors()
-		})
-
 		Context("recursor selection", func() {
 			Context("serial", func() {
 				BeforeEach(func() {
