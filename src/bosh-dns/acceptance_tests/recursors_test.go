@@ -30,6 +30,11 @@ var _ = Describe("recursor", func() {
 					firstBoshDNS = allDeployedInstances[0]
 				})
 
+				AfterEach(func() {
+					// put the old cloud config back to avoid other tests using this recursor by accident
+					updateCloudConfigWithDefaultCloudConfig()
+				})
+
 				It("chooses recursors serially", func() {
 					Consistently(func() dns.RR {
 						helpers.Bosh(
@@ -50,6 +55,11 @@ var _ = Describe("recursor", func() {
 				BeforeEach(func() {
 					ensureRecursorSelectionIsSmart()
 					firstBoshDNS = allDeployedInstances[0]
+				})
+
+				AfterEach(func() {
+					// put the old cloud config back to avoid other tests using this recursor by accident
+					updateCloudConfigWithDefaultCloudConfig()
 				})
 
 				It("shuffles recursors", func() {
@@ -164,6 +174,8 @@ var _ = Describe("recursor", func() {
 					"bosh-dns",
 					"restart",
 				)
+
+				updateCloudConfigWithDefaultCloudConfig()
 			})
 		})
 
