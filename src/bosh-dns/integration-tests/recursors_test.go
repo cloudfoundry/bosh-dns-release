@@ -353,7 +353,14 @@ var _ = Describe("Integration", func() {
 					By("forcing the preference shift to the second upstream recursor")
 					for i := 0; i < handlers.FailHistoryThreshold; i++ {
 						time.Sleep(6 * time.Second)
-						dnsResponse := helpers.DigWithPort(testQuestion, environment.ServerAddress(), environment.Port())
+
+						// Need to configure timeout to be greater than bosh-dns's upstream timeout
+						// Otherwise, this can lead to racey timesouts, where the client timeout is less
+						// than bosh-dns upstream timeout per failed recursor
+						// To reproduce: change timeout to "100 * time.Millisecond", and run on Windows
+						dnsResponse := helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
+							helpers.DigOpts{Port: environment.Port(), Timeout: 10*time.Second},
+						)
 						Expect(dnsResponse.Answer[0]).ShouldNot(Equal(initialUpstreamResponse))
 						fmt.Printf("Running %d times out of %d total\n", i, handlers.FailHistoryThreshold)
 					}
