@@ -118,19 +118,19 @@ var _ = Describe("Integration", func() {
 
 			environment = NewTestEnvironment(responses, recursors, caching, recursorSelection, excludedRecursors)
 			if err := environment.Start(); err != nil {
-				panic(fmt.Sprintf("could not start test environment: %s", err))
+				Fail(fmt.Sprintf("could not start test environment: %s", err))
 			}
 
 			recursorEnv = NewTestRecursor(6364, "1.1.1.1")
 			err = recursorEnv.start()
 			if err != nil {
-				panic(fmt.Sprintf("could not start test recursor: %s", err))
+				Fail(fmt.Sprintf("could not start test recursor: %s", err))
 			}
 		})
 
 		JustAfterEach(func() {
 			if err := environment.Stop(); err != nil {
-				panic(fmt.Sprintf("Failed to stop bosh-dns test environment: %s", err))
+				Fail(fmt.Sprintf("Failed to stop bosh-dns test environment: %s", err))
 			}
 
 			recursorEnv.stop()
@@ -260,7 +260,7 @@ var _ = Describe("Integration", func() {
 				secondTestRecursor = NewTestRecursor(6365, "2.2.2.2")
 				err := secondTestRecursor.start()
 				if err != nil {
-					panic(fmt.Sprintf("could not start test recursor: %s", err))
+					Fail(fmt.Sprintf("could not start test recursor: %s", err))
 				}
 			})
 

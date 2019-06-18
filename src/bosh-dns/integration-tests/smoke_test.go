@@ -34,13 +34,13 @@ var _ = Describe("Integration", func() {
 		JustBeforeEach(func() {
 			e = NewTestEnvironment(responses, []string{}, false, "serial", []string{})
 			if err := e.Start(); err != nil {
-				panic(fmt.Sprintf("could not start test environment: %s", err))
+				Fail(fmt.Sprintf("could not start test environment: %s", err))
 			}
 		})
 
 		AfterEach(func() {
 			if err := e.Stop(); err != nil {
-				panic(fmt.Sprintf("Failed to stop bosh-dns test environment: %s", err))
+				Fail(fmt.Sprintf("Failed to stop bosh-dns test environment: %s", err))
 			}
 		})
 
