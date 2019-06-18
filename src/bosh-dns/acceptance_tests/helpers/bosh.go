@@ -78,20 +78,10 @@ func BoshInstances(deploymentName string) []InstanceInfo {
 func init() {
 	defer ginkgo.GinkgoRecover()
 
-	boshBinaryPath = assertEnvExists("BOSH_BINARY_PATH")
-	assertEnvExists("BOSH_CLIENT")
-	assertEnvExists("BOSH_CLIENT_SECRET")
-	assertEnvExists("BOSH_CA_CERT")
-	assertEnvExists("BOSH_ENVIRONMENT")
-	assertEnvExists("BOSH_DEPLOYMENT")
-
-	cmdRunner = system.NewExecCmdRunner(logger.NewLogger(logger.LevelDebug))
-}
-
-func assertEnvExists(envName string) string {
-	val, found := os.LookupEnv(envName)
+	var found bool
+	boshBinaryPath, found = os.LookupEnv("BOSH_BINARY_PATH")
 	if !found {
-		ginkgo.Fail(fmt.Sprintf("Expected %s", envName))
+		fmt.Fprintln(ginkgo.GinkgoWriter, "WARNING: No bosh binary path set; This may be ignored if not using helpers.Bosh")
 	}
-	return val
+	cmdRunner = system.NewExecCmdRunner(logger.NewLogger(logger.LevelDebug))
 }

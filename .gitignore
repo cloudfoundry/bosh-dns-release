@@ -25,3 +25,5 @@ src/bosh-dns/acceptance_tests/linux/override_nameserver/disabled/dns-creds.yml
 /pkg/
 src/golang.org
 src/github.com
+
+src/bosh-dns/dns/dns

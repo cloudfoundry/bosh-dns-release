@@ -34,6 +34,13 @@ var _ = BeforeSuite(func() {
 
 	deployTestRecursors()
 	deployTestHTTPDNSServer()
+
+	assertEnvExists("BOSH_BINARY_PATH")
+	assertEnvExists("BOSH_CLIENT")
+	assertEnvExists("BOSH_CLIENT_SECRET")
+	assertEnvExists("BOSH_CA_CERT")
+	assertEnvExists("BOSH_ENVIRONMENT")
+	assertEnvExists("BOSH_DEPLOYMENT")
 })
 
 var _ = AfterSuite(func() {
