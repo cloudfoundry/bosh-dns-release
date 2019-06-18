@@ -14,6 +14,7 @@ type DigOpts struct {
 	BufferSize     uint16
 	Port           int
 	SkipRcodeCheck bool
+	SkipErrCheck   bool
 	Timeout        time.Duration
 }
 
@@ -75,7 +76,9 @@ func DigWithOptions(domain, server string, opts DigOpts) *dns.Msg {
 	}
 
 	r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", server, port))
-	Expect(err).NotTo(HaveOccurred())
+	if !opts.SkipErrCheck {
+		Expect(err).NotTo(HaveOccurred())
+	}
 
 	if !opts.SkipRcodeCheck {
 		Expect(r.Rcode).To(Equal(dns.RcodeSuccess))

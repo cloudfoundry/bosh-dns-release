@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"strconv"
 
 	"time"
 
@@ -73,7 +72,9 @@ func (t *testRecursor) start() error {
 		return err
 	}
 
-	Eventually(t.checkConnection, 5*time.Second, 500*time.Millisecond).Should(BeNil())
+	Eventually(t.checkConnection, 5*time.Second, 500*time.Millisecond).Should(ConsistOf(
+		gomegadns.MatchResponse(gomegadns.Response{"ip": "10.10.10.10", "ttl": 0}),
+	))
 
 	return nil
 }
@@ -82,11 +83,19 @@ func (t *testRecursor) stop() {
 	t.session.Kill().Wait()
 }
 
-func (t *testRecursor) checkConnection() error {
-	port := strconv.Itoa(t.port)
-	cmd := exec.Command("nc", "-uvz", t.address, port)
-	err := cmd.Run()
-	return err
+func (t *testRecursor) checkConnection() []dns.RR {
+	response := helpers.DigWithOptions("example.com.", t.address, helpers.DigOpts{
+		SkipErrCheck:   true,
+		SkipRcodeCheck: true,
+		Port:           t.port,
+		Timeout:        5 * time.Millisecond,
+	})
+
+	if response == nil {
+		return []dns.RR{}
+	}
+
+	return response.Answer
 }
 
 var _ = Describe("Integration", func() {

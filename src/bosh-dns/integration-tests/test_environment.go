@@ -1,9 +1,6 @@
 package integration_tests
 
 import (
-	"bosh-dns/dns/config"
-	"bosh-dns/dns/server/record"
-	"bosh-dns/dns/server/records"
 	"context"
 	"encoding/json"
 	"io/ioutil"
@@ -13,6 +10,14 @@ import (
 	"strconv"
 	"time"
 
+	"bosh-dns/dns/config"
+	"bosh-dns/dns/server/record"
+	"bosh-dns/dns/server/records"
+	gomegadns "bosh-dns/gomega-dns"
+
+	"bosh-dns/acceptance_tests/helpers"
+
+	"github.com/miekg/dns"
 	"github.com/onsi/gomega/gexec"
 
 	. "github.com/onsi/ginkgo"
@@ -186,20 +191,26 @@ func (t *testEnvironment) Start() error {
 		return err
 	}
 
-	Eventually(t.checkConnection,
-		5*time.Second, 500*time.Millisecond).Should(BeNil())
-
-	// Give bosh-dns time to be ready to respond to requests.
-	time.Sleep(2 * time.Second)
+	Eventually(t.checkConnection, 5*time.Second, 500*time.Millisecond).Should(ConsistOf(
+		gomegadns.MatchResponse(gomegadns.Response{"ip": "127.0.0.1", "ttl": 0}),
+	))
 
 	return nil
 }
 
-func (t *testEnvironment) checkConnection() error {
-	port := strconv.Itoa(t.Port())
-	cmd := exec.Command("nc", "-tvz", t.ServerAddress(), port)
-	err := cmd.Run()
-	return err
+func (t *testEnvironment) checkConnection() []dns.RR {
+	response := helpers.DigWithOptions("upcheck.bosh-dns.", t.ServerAddress(), helpers.DigOpts{
+		SkipErrCheck:   true,
+		SkipRcodeCheck: true,
+		Port:           t.Port(),
+		Timeout:        5 * time.Millisecond,
+	})
+
+	if response == nil {
+		return []dns.RR{}
+	}
+
+	return response.Answer
 }
 
 func (t *testEnvironment) Port() int {
