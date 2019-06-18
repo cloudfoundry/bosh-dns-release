@@ -10,7 +10,10 @@ cd $env:GOPATH
 cd $env:GOPATH/src/bosh-dns
 
 go.exe install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
-ginkgo.exe -p -r -race -keepGoing -randomizeAllSpecs -randomizeSuites dns healthcheck integration-tests
+
+ginkgo.exe -p -r -race -keepGoing -randomizeAllSpecs -randomizeSuites dns healthcheck
+ginkgo.exe -r -race -keepGoing -randomizeAllSpecs -randomizeSuites integration-tests
+
 if ($LastExitCode -ne 0)
 {
     Write-Error $_

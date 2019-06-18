@@ -27,7 +27,8 @@ main() {
 			-ri panic src/bosh-dns)" \
 		]] && echo "panics detected in the code -- remove them" && exit 1
 
-		ginkgo -p $recursive_flag -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=acceptance_tests,performance_tests,test_yml_assets,vendor $packages
+		ginkgo -p $recursive_flag -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=acceptance_tests,integration-tests,performance_tests,test_yml_assets,vendor $packages
+		ginkgo $recursive_flag -randomizeAllSpecs -randomizeSuites -keepGoing -race src/bosh-dns/integration-tests
 }
 
 main "$@"
