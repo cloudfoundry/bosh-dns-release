@@ -116,12 +116,21 @@ func (t *testHealthServer) MakeHealthyExit(index, status int) error {
 	if runtime.GOOS == "windows" {
 		healthExecutable = "healthy.ps1"
 	}
-	healthScript, err := os.OpenFile(filepath.Join(t.rootDir, "jobs", strconv.Itoa(index), "bin", "dns", healthExecutable), os.O_WRONLY|os.O_CREATE, 0700)
+	healthScript, err := os.OpenFile(
+		filepath.Join(t.rootDir, "jobs", strconv.Itoa(index), "bin", "dns", healthExecutable),
+		os.O_WRONLY|os.O_CREATE,
+		0700,
+	)
 	if err != nil {
 		return err
 	}
 	defer healthScript.Close()
-	fmt.Fprintf(healthScript, "exit %d", status)
+	if runtime.GOOS == "windows" {
+		fmt.Fprintf(healthScript, "exit %d", status)
+		return nil
+	}
+
+	fmt.Fprintf(healthScript, "#!/bin/bash\n\nexit %d", status)
 	return nil
 }
 
