@@ -116,7 +116,7 @@ func (t *testHealthServer) MakeHealthyExit(index, status int) error {
 		return err
 	}
 	defer healthScript.Close()
-	fmt.Fprintf(healthScript, "#!/bin/bash\n\nexit %d", status)
+	fmt.Fprintf(healthScript, "exit %d", status)
 	return nil
 }
 
