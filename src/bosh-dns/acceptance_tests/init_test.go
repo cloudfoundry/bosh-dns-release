@@ -26,6 +26,8 @@ var (
 	baseStemcell            string
 )
 
+const windows = "windows"
+
 var _ = BeforeSuite(func() {
 	cloudConfigTempFileName = assertEnvExists("TEST_CLOUD_CONFIG_PATH")
 	testTargetOS = assertEnvExists("TEST_TARGET_OS")
@@ -56,7 +58,7 @@ func assertEnvExists(envName string) string {
 }
 
 func testManifestName() string {
-	if testTargetOS == "windows" {
+	if testTargetOS == windows {
 		return "manifests/dns-windows.yml"
 	}
 
@@ -64,7 +66,7 @@ func testManifestName() string {
 }
 
 func enableHealthManifestOps() string {
-	if testTargetOS == "windows" {
+	if testTargetOS == windows {
 		return "ops/manifest/enable-health-manifest-windows.yml"
 	}
 
@@ -72,7 +74,7 @@ func enableHealthManifestOps() string {
 }
 
 func noRecursorsOpsFile() string {
-	if testTargetOS == "windows" {
+	if testTargetOS == windows {
 		return "ops/manifest/no-recursors-configured-windows.yml"
 	}
 
@@ -80,7 +82,7 @@ func noRecursorsOpsFile() string {
 }
 
 func excludedRecursorsOpsFile() string {
-	if testTargetOS == "windows" {
+	if testTargetOS == windows {
 		return "ops/manifest/add-excluded-recursors-windows.yml"
 	}
 
@@ -88,7 +90,7 @@ func excludedRecursorsOpsFile() string {
 }
 
 func configureRecursorOpsFile() string {
-	if testTargetOS == "windows" {
+	if testTargetOS == windows {
 		return "ops/manifest/configure-recursor-windows.yml"
 	}
 
@@ -96,7 +98,7 @@ func configureRecursorOpsFile() string {
 }
 
 func enableHTTPJSONEndpointsOpsFile() string {
-	if testTargetOS == "windows" {
+	if testTargetOS == windows {
 		return "ops/manifest/enable-http-json-endpoints-windows.yml"
 	}
 
@@ -104,7 +106,7 @@ func enableHTTPJSONEndpointsOpsFile() string {
 }
 
 func setupLocalRecursorOpsFile() string {
-	if testTargetOS == "windows" {
+	if testTargetOS == windows {
 		return "ops/cloud-config/add-test-dns-nameservers-windows.yml"
 	}
 
