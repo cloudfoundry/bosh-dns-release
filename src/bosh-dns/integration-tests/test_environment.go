@@ -32,13 +32,14 @@ type TestEnvironment interface {
 	Port() int
 }
 
-func NewTestEnvironment(records []record.Record, recursors []string, caching bool, recursorSelection string, excludedRecursors []string) TestEnvironment {
+func NewTestEnvironment(records []record.Record, recursors []string, caching bool, recursorSelection string, excludedRecursors []string, healthEnabled bool) TestEnvironment {
 	return &testEnvironment{
 		records:           records,
 		recursors:         recursors,
 		caching:           caching,
 		recursorSelection: recursorSelection,
 		excludedRecursors: excludedRecursors,
+		healthEnabled:     healthEnabled,
 	}
 }
 
@@ -56,6 +57,7 @@ type testEnvironment struct {
 	recursorSelection string
 	excludedRecursors []string
 	caching           bool
+	healthEnabled     bool
 }
 
 func (t *testEnvironment) writeConfig() error {
@@ -75,8 +77,7 @@ func (t *testEnvironment) writeConfig() error {
 		return err
 	}
 	certificateDirectory := filepath.Join(wd, "assets/certificates")
-
-	configJSON, err := json.Marshal(config.Config{
+	cnf := config.Config{
 		RecordsFile:       t.recordsFile,
 		Recursors:         t.recursors,
 		Address:           t.serverAddress,
@@ -93,7 +94,18 @@ func (t *testEnvironment) writeConfig() error {
 		Cache: config.Cache{
 			Enabled: t.caching,
 		},
-	})
+	}
+
+	if t.healthEnabled {
+		cnf.Health = config.HealthConfig{
+			Enabled:         true,
+			Port:            2345,
+			CertificateFile: "../healthcheck/assets/test_certs/test_client.pem",
+			PrivateKeyFile:  "../healthcheck/assets/test_certs/test_client.key",
+			CAFile:          "../healthcheck/assets/test_certs/test_ca.pem",
+		}
+	}
+	configJSON, err := json.Marshal(cnf)
 	if err != nil {
 		return err
 	}

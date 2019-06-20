@@ -18,6 +18,7 @@ var _ = Describe("Integration", func() {
 	var (
 		firstInstance helpers.InstanceInfo
 	)
+
 	Describe("DNS endpoint", func() {
 		BeforeEach(func() {
 			ensureRecursorIsDefinedByDNSRelease()
@@ -133,139 +134,6 @@ var _ = Describe("Integration", func() {
 			Eventually(func() string {
 				return secureGetRespBody(client, firstInstance.IP, 2345).State
 			}, 31*time.Second).Should(Equal("running"))
-		})
-
-		It("stops returning IP addresses of instances whose status becomes unknown", func() {
-			Expect(allDeployedInstances).To(HaveLen(2))
-
-			dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(ConsistOf(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
-				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
-			))
-
-			secondInstanceSlug := fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID)
-			helpers.Bosh("stop", secondInstanceSlug)
-
-			Eventually(func() []dns.RR {
-				return helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP).Answer
-			}, 60*time.Second, 1*time.Second).Should(ConsistOf(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP}),
-			))
-		})
-
-		It("stops returning IP addresses of instances that become unhealthy", func() {
-			Expect(allDeployedInstances).To(HaveLen(2))
-
-			dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(ConsistOf(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
-				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
-			))
-
-			instanceSlug := fmt.Sprintf("%s/%s", allDeployedInstances[1].InstanceGroup, allDeployedInstances[1].InstanceID)
-			helpers.BoshRunErrand("stop-a-job"+osSuffix, instanceSlug)
-
-			Eventually(func() []dns.RR {
-				return helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP).Answer
-			}, 60*time.Second, 1*time.Second).Should(ConsistOf(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP}),
-			))
-		})
-
-		Context("when a job defines a healthy executable", func() {
-			var (
-				osSuffix string
-			)
-
-			BeforeEach(func() {
-				osSuffix = ""
-				if testTargetOS == "windows" {
-					osSuffix = "-windows"
-				}
-				ensureHealthEndpointDeployed("-o", assetPath("ops/manifest/enable-healthy-executable-job"+osSuffix+".yml"))
-			})
-
-			It("changes the health endpoint return value based on how the executable exits", func() {
-				client := setupSecureGet()
-				lastInstance := allDeployedInstances[1]
-				lastInstanceSlug := fmt.Sprintf("%s/%s", lastInstance.InstanceGroup, lastInstance.InstanceID)
-
-				Eventually(func() string {
-					return secureGetRespBody(client, lastInstance.IP, 2345).State
-				}, 31*time.Second).Should(Equal("running"))
-
-				helpers.BoshRunErrand("make-health-executable-job-unhealthy"+osSuffix, lastInstanceSlug)
-
-				Eventually(func() string {
-					return secureGetRespBody(client, lastInstance.IP, 2345).State
-				}, 31*time.Second).Should(Equal("failing"))
-
-				helpers.BoshRunErrand("make-health-executable-job-healthy"+osSuffix, lastInstanceSlug)
-
-				Eventually(func() string {
-					return secureGetRespBody(client, lastInstance.IP, 2345).State
-				}, 31*time.Second).Should(Equal("running"))
-			})
-		})
-	})
-
-	Describe("link dns names", func() {
-		var (
-			osSuffix string
-		)
-
-		BeforeEach(func() {
-			osSuffix = ""
-			if testTargetOS == "windows" {
-				osSuffix = "-windows"
-			}
-			ensureHealthEndpointDeployed(
-				"-o", assetPath("ops/manifest/enable-link-dns-addresses.yml"),
-				"-o", assetPath("ops/manifest/enable-healthy-executable-job"+osSuffix+".yml"),
-			)
-			firstInstance = allDeployedInstances[0]
-		})
-
-		It("respects health status according to job providing link", func() {
-			client := setupSecureGet()
-			lastInstance := allDeployedInstances[1]
-			lastInstanceSlug := fmt.Sprintf("%s/%s", lastInstance.InstanceGroup, lastInstance.InstanceID)
-			output := helpers.BoshRunErrand("get-healthy-executable-linked-address"+osSuffix, lastInstanceSlug)
-			address := strings.TrimSpace(strings.Split(strings.Split(output, "ADDRESS:")[1], "\n")[0])
-			Expect(address).To(MatchRegexp(`^q-n\d+s0\.q-g\d+\.bosh$`))
-			re := regexp.MustCompile(`^q-n\d+s0\.q-g(\d+)\.bosh$`)
-			groupID := re.FindStringSubmatch(address)[1]
-
-			Eventually(func() string {
-				return secureGetRespBody(client, lastInstance.IP, 2345).GroupState[groupID]
-			}, 31*time.Second).Should(Equal("running"))
-
-			Eventually(func() []string {
-				return resolve(address, firstInstance.IP)
-			}, 31*time.Second).Should(ConsistOf(firstInstance.IP, lastInstance.IP))
-
-			helpers.BoshRunErrand("make-health-executable-job-unhealthy"+osSuffix, lastInstanceSlug)
-
-			Eventually(func() string {
-				return secureGetRespBody(client, lastInstance.IP, 2345).GroupState[groupID]
-			}, 31*time.Second).Should(Equal("failing"))
-
-			Eventually(func() []string {
-				return resolve(address, firstInstance.IP)
-			}, 31*time.Second).Should(ConsistOf(firstInstance.IP))
-
-			helpers.BoshRunErrand("make-health-executable-job-healthy"+osSuffix, lastInstanceSlug)
-
-			Eventually(func() string {
-				return secureGetRespBody(client, lastInstance.IP, 2345).GroupState[groupID]
-			}, 31*time.Second).Should(Equal("running"))
-
-			Eventually(func() []string {
-				return resolve(address, firstInstance.IP)
-			}, 31*time.Second).Should(ConsistOf(firstInstance.IP, lastInstance.IP))
 		})
 	})
 })
