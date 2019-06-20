@@ -107,6 +107,12 @@ var _ = Describe("Integration", func() {
 				}
 			})
 
+			AfterEach(func() {
+				if err := e.Stop(); err != nil {
+					Fail(fmt.Sprintf("Failed to stop bosh-dns test environment: %s", err))
+				}
+			})
+
 			It("respects health status according to job providing link querying via DNS", func() {
 				Eventually(func() []dns.RR {
 					dnsResponse := helpers.DigWithOptions(

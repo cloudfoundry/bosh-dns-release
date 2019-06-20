@@ -60,7 +60,6 @@ func IPv6ReverseDigWithOptions(domain, server string, opts DigOpts) *dns.Msg {
 	}
 	reversedAddress := strings.Join(reversedOctets, ".")
 	reversedAddress += ".ip6.arpa."
-	fmt.Println(reversedAddress)
 	return DigWithOptions(reversedAddress, server, opts)
 }
 
