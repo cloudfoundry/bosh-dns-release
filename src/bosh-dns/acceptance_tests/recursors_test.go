@@ -13,8 +13,10 @@ var _ = Describe("recursor", func() {
 		firstBoshDNS helpers.InstanceInfo
 	)
 
-	// Cannot move this one as it modifies /etc/resolv.conf
-	// We need to figure out how to make this change safely in integration-tests/*
+	// As we were moving acceptance tests into integration tests, the test below
+	// is cannot be moved as it modifies /etc/resolv.conf. We need to figure out
+	// how to make this change safely in integration-tests/*.
+	// [#165801868]
 	Context("when the recursors must be read from the system resolver list", func() {
 		BeforeEach(func() {
 			ensureRecursorIsDefinedByBoshAgent()
