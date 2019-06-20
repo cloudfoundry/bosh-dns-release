@@ -87,32 +87,12 @@ func excludedRecursorsOpsFile() string {
 	return "ops/manifest/add-excluded-recursors.yml"
 }
 
-func configureSerialRecursorSelectionOpsFile() string {
-	if testTargetOS == "windows" {
-		return "ops/manifest/configure-serial-recursor-selection-windows.yml"
-	}
-
-	return "ops/manifest/configure-serial-recursor-selection.yml"
-}
-
-func configureSmartRecursorSelectionOpsFile() string {
-	if testTargetOS == "windows" {
-		return "ops/manifest/configure-smart-recursor-selection-windows.yml"
-	}
-
-	return "ops/manifest/configure-smart-recursor-selection.yml"
-}
-
 func configureRecursorOpsFile() string {
 	if testTargetOS == "windows" {
 		return "ops/manifest/configure-recursor-windows.yml"
 	}
 
 	return "ops/manifest/configure-recursor.yml"
-}
-
-func excludeSpecificRecursor() string {
-	return "ops/manifest/exclude-specific-recursor.yml"
 }
 
 func enableHTTPJSONEndpointsOpsFile() string {

@@ -1,4 +1,0 @@
-- path: /instance_groups/name=bosh-dns/jobs/name=bosh-dns/properties/excluded_recursors?
-  type: replace
-  value: [((excluded_recursor))]
-

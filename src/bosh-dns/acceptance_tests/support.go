@@ -6,18 +6,14 @@ import (
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 var (
@@ -89,66 +85,6 @@ func ensureRecursorIsDefinedByBoshAgent() {
 	allDeployedInstances = helpers.BoshInstances("bosh-dns")
 }
 
-func ensureRecursorSelectionIsSerial() {
-	manifestPath := assetPath(testManifestName())
-	disableOverridePath := assetPath(noRecursorsOpsFile())
-	serialRecursorSelectionPath := assetPath(configureSerialRecursorSelectionOpsFile())
-
-	updateCloudConfigWithOurLocalRecursor()
-
-	helpers.Bosh(
-		"deploy",
-		"-v", fmt.Sprintf("name=%s", boshDeployment),
-		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
-		"-o", disableOverridePath,
-		"-o", serialRecursorSelectionPath,
-		"--vars-store", "creds.yml",
-		manifestPath,
-	)
-	allDeployedInstances = helpers.BoshInstances("bosh-dns")
-}
-
-func ensureRecursorSelectionIsSmart() {
-	manifestPath := assetPath(testManifestName())
-	disableOverridePath := assetPath(noRecursorsOpsFile())
-	smartRecursorSelectionPath := assetPath(configureSmartRecursorSelectionOpsFile())
-
-	updateCloudConfigWithOurLocalRecursor()
-
-	helpers.Bosh(
-		"deploy",
-		"-v", fmt.Sprintf("name=%s", boshDeployment),
-		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
-		"-o", disableOverridePath,
-		"-o", smartRecursorSelectionPath,
-		"--vars-store", "creds.yml",
-		manifestPath,
-	)
-	allDeployedInstances = helpers.BoshInstances("bosh-dns")
-}
-
-func ensureRecursorSelectionIsExcludingFirstRecursor() {
-	manifestPath := assetPath(testManifestName())
-	disableOverridePath := assetPath(noRecursorsOpsFile())
-	serialRecursorSelectionPath := assetPath(configureSerialRecursorSelectionOpsFile())
-	excludingRecursorPath := assetPath(excludeSpecificRecursor())
-
-	updateCloudConfigWithOurLocalRecursor()
-
-	helpers.Bosh(
-		"deploy",
-		"-v", fmt.Sprintf("name=%s", boshDeployment),
-		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
-		"-o", disableOverridePath,
-		"-o", serialRecursorSelectionPath,
-		"-o", excludingRecursorPath,
-		"-v", fmt.Sprintf("excluded_recursor=%s", RecursorIPAddresses[0]),
-		"--vars-store", "creds.yml",
-		manifestPath,
-	)
-	allDeployedInstances = helpers.BoshInstances("bosh-dns")
-}
-
 func ensureRecursorIsDefinedByDNSRelease() {
 	manifestPath := assetPath(testManifestName())
 	configureRecursorPath := assetPath(configureRecursorOpsFile())
@@ -187,17 +123,6 @@ func updateCloudConfigWithDefaultCloudConfig() {
 		"-v", "network=director_network",
 		cloudConfigTempFileName,
 	)
-}
-
-func resolve(address, server string) []string {
-	fmt.Println(strings.Split(fmt.Sprintf("+short %s @%s", address, server), " "))
-	cmd := exec.Command("dig", strings.Split(fmt.Sprintf("+short %s @%s", address, server), " ")...)
-	session, err := gexec.Start(cmd, ginkgo.GinkgoWriter, ginkgo.GinkgoWriter)
-	Expect(err).NotTo(HaveOccurred())
-
-	Eventually(session).Should(gexec.Exit(0))
-
-	return strings.Split(strings.TrimSpace(string(session.Out.Contents())), "\n")
 }
 
 func ensureHealthEndpointDeployed(extraOps ...string) {
