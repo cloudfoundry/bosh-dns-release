@@ -13,14 +13,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"time"
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
-	"github.com/onsi/gomega/gexec"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/onsi/gomega/gexec"
 )
 
 type testHealthServer struct {
@@ -111,7 +112,11 @@ func (t *testHealthServer) MakeJobLinks(index int) error {
 }
 
 func (t *testHealthServer) MakeHealthyExit(index, status int) error {
-	healthScript, err := os.OpenFile(filepath.Join(t.rootDir, "jobs", strconv.Itoa(index), "bin", "dns", "healthy"), os.O_WRONLY|os.O_CREATE, 0700)
+	healthExecutable := "healthy"
+	if runtime.GOOS == "windows" {
+		healthExecutable = "healthy.ps1"
+	}
+	healthScript, err := os.OpenFile(filepath.Join(t.rootDir, "jobs", strconv.Itoa(index), "bin", "dns", healthExecutable), os.O_WRONLY|os.O_CREATE, 0700)
 	if err != nil {
 		return err
 	}
@@ -131,6 +136,10 @@ func (t *testHealthServer) writeConfig() (string, error) {
 		HealthFileName:           t.agentHealthFileName,
 		HealthExecutablePath:     "bin/dns/healthy",
 		JobsDir:                  filepath.Join(t.rootDir, "jobs"),
+	}
+
+	if runtime.GOOS == "windows" {
+		c.HealthExecutablePath = "bin/dns/healthy.ps1"
 	}
 
 	jsonBytes, err := json.Marshal(c)
