@@ -4,8 +4,6 @@ import (
 	"bosh-dns/acceptance_tests/helpers"
 	gomegadns "bosh-dns/gomega-dns"
 	"fmt"
-	"regexp"
-	"strings"
 
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
