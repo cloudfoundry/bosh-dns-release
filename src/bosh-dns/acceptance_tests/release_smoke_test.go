@@ -23,50 +23,6 @@ var _ = Describe("Integration", func() {
 			firstInstance = allDeployedInstances[0]
 		})
 
-		It("returns records for bosh instances", func() {
-			dnsResponse := helpers.Dig(fmt.Sprintf("%s.bosh-dns.default.bosh-dns.bosh.", firstInstance.InstanceID), firstInstance.IP)
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(ContainElement(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP, "ttl": 0}),
-			))
-		})
-
-		It("returns Rcode failure for arpaing bosh instances", func() {
-			dnsResponse := helpers.ReverseDigWithOptions(firstInstance.IP, firstInstance.IP, helpers.DigOpts{SkipRcodeCheck: true})
-			Expect(dnsResponse.Rcode).To(Equal(dns.RcodeServerFailure))
-		})
-
-		It("returns records for bosh instances found with query for all records", func() {
-			Expect(allDeployedInstances).To(HaveLen(2))
-
-			dnsResponse := helpers.Dig("q-s0.bosh-dns.default.bosh-dns.bosh.", firstInstance.IP)
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(ConsistOf(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
-				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
-			))
-		})
-
-		It("returns records for bosh instances found with query for index", func() {
-			Expect(allDeployedInstances).To(HaveLen(2))
-
-			dnsResponse := helpers.Dig(fmt.Sprintf("q-i%s.bosh-dns.default.bosh-dns.bosh.", firstInstance.Index), firstInstance.IP)
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(ConsistOf(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": firstInstance.IP, "ttl": 0}),
-			))
-		})
-
-		It("finds and resolves aliases specified in other jobs on the same instance", func() {
-			Expect(allDeployedInstances).To(HaveLen(2))
-			dnsResponse := helpers.Dig("internal.alias.", firstInstance.IP)
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(ConsistOf(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
-				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
-			))
-		})
-
 		It("resolves alias globs", func() {
 			for _, alias := range []string{"asterisk.alias.", "another.asterisk.alias.", "yetanother.asterisk.alias."} {
 				dnsResponse := helpers.Dig(alias, firstInstance.IP)
