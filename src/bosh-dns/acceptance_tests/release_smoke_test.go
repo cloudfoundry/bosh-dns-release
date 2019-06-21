@@ -50,14 +50,6 @@ var _ = Describe("Integration", func() {
 				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
 			))
 		})
-
-		It("should resolve specified upcheck", func() {
-			dnsResponse := helpers.Dig("upcheck.bosh-dns.", firstInstance.IP)
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-			Expect(dnsResponse.Answer).To(ConsistOf(
-				gomegadns.MatchResponse(gomegadns.Response{"ip": "127.0.0.1", "ttl": 0}),
-			))
-		})
 	})
 
 	Context("Instance health", func() {

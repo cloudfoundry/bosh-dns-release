@@ -72,6 +72,14 @@ var _ = Describe("Integration", func() {
 				))
 			})
 
+			It("should resolve specified upcheck", func() {
+				dnsResponse := helpers.DigWithPort("internal.alias.", e.ServerAddress(), e.Port())
+				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+				Expect(dnsResponse.Answer).To(ConsistOf(
+					gomegadns.MatchResponse(gomegadns.Response{"ip": responses[0].IP, "ttl": 0}),
+				))
+			})
+
 			Context("when a query has multiple records", func() {
 				var (
 					instanceIP2 string
