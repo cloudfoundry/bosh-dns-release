@@ -13,11 +13,13 @@ jobs:
   - in_parallel:
     - get: repo
       trigger: true
-    - get: main-bosh-image
+    - get: main-bosh-docker-image
       trigger: true
   - put: acceptance-tests-image
     params:
       build: "repo/ci/docker/acceptance-tests"
+    get_params:
+      skip_download: true
 - name: build-acceptance-tests-windows-image
   public: true
   serial: true
@@ -27,6 +29,8 @@ jobs:
   - put: acceptance-tests-windows-image
     params:
       build: "repo/ci/docker/acceptance-tests-windows"
+    get_params:
+      skip_download: true
 - name: build-unit-tests-image
   public: true
   serial: true
@@ -36,6 +40,8 @@ jobs:
   - put: unit-tests-image
     params:
       build: "repo/ci/docker/unit-tests"
+    get_params:
+      skip_download: true
 
 resources:
 - name: repo
@@ -45,28 +51,31 @@ resources:
     branch: master
     paths:
     - "ci/docker"
-- name: main-bosh-image
+- name: main-bosh-docker-image
   type: registry-image
   source:
     repository: bosh/main-bosh-docker
 - name: unit-tests-image
-  type: registry-image
+  type: docker-image
   source:
     repository: bosh/bosh-dns-release
     tag: unit-tests
+    email: {{dockerhub_email}}
     username: {{dockerhub_username}}
     password: {{dockerhub_password}}
 - name: acceptance-tests-image
-  type: registry-image
+  type: docker-image
   source:
     repository: bosh/bosh-dns-release
     tag: acceptance-tests
+    email: {{dockerhub_email}}
     username: {{dockerhub_username}}
     password: {{dockerhub_password}}
 - name: acceptance-tests-windows-image
-  type: registry-image
+  type: docker-image
   source:
     repository: bosh/bosh-dns-release
     tag: acceptance-tests-windows
+    email: {{dockerhub_email}}
     username: {{dockerhub_username}}
     password: {{dockerhub_password}}
