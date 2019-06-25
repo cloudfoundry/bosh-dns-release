@@ -10,7 +10,7 @@ jobs:
   public: true
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: repo
       trigger: true
     - get: main-bosh-image
