@@ -15,8 +15,6 @@ jobs:
       trigger: true
     - get: main-bosh-docker-image
       trigger: true
-      params:
-        skip_download: true
   - put: acceptance-tests-image
     params:
       build: "repo/ci/docker/acceptance-tests"
