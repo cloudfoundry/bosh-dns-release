@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+const (
+	SmartRecursorSelection  = "smart"
+	SerialRecursorSelection = "serial"
+)
+
 type Config struct {
 	Address            string       `json:"address"`
 	Port               int          `json:"port"`

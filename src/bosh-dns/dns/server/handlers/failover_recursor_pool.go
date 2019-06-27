@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	"bosh-dns/dns/config"
+
 	"github.com/cloudfoundry/bosh-utils/logger"
 )
 
@@ -13,13 +15,42 @@ const (
 	FailHistoryThreshold = 5
 )
 
+var ErrNoRecursorResponse = errors.New("no response from recursors")
+
 //go:generate counterfeiter . RecursorPool
 
 type RecursorPool interface {
 	PerformStrategically(func(string) error) error
 }
 
-type failoverRecursorPool struct {
+// NewFailoverRecursorPool creates a failover recursor pool based on `recursorSelection`.
+//
+// When it is "serial", the recursor pool will go in order of the recursors
+// list, always starting from the beginning. It does not track history around
+// which recursors have failed.
+//
+// When it is "smart", the recursor pool will randomize the recursors list upon
+// the server starting.  It does track history around which recursors have
+// failed. This follows the standard DNS specification.
+//
+// The core assumption behind "smart" is that all upstream recursors are equal,
+// and all answers are fair game for bosh-dns to choose from. This is done by
+// randomizing the recursors. This does not mesh well with network topologies
+// that rely on ordering the recursors.
+
+func NewFailoverRecursorPool(recursors []string, recursorSelection string, logger logger.Logger) RecursorPool {
+	if recursorSelection == config.SmartRecursorSelection {
+		return newSmartFailoverRecursorPool(recursors, logger)
+	}
+
+	return &serialFailoverRecursorPool{recursors: recursors}
+}
+
+type serialFailoverRecursorPool struct {
+	recursors []string
+}
+
+type smartFailoverRecursorPool struct {
 	preferredRecursorIndex uint64
 
 	logger    logger.Logger
@@ -33,7 +64,7 @@ type recursorWithHistory struct {
 	failCount  int32
 }
 
-func NewFailoverRecursorPool(recursors []string, logger logger.Logger) RecursorPool {
+func newSmartFailoverRecursorPool(recursors []string, logger logger.Logger) RecursorPool {
 	recursorsWithHistory := []recursorWithHistory{}
 
 	if recursors == nil {
@@ -56,7 +87,7 @@ func NewFailoverRecursorPool(recursors []string, logger logger.Logger) RecursorP
 	if len(recursorsWithHistory) > 0 {
 		logger.Info(logTag, fmt.Sprintf("starting preference: %s\n", recursorsWithHistory[0].name))
 	}
-	return &failoverRecursorPool{
+	return &smartFailoverRecursorPool{
 		recursors:              recursorsWithHistory,
 		preferredRecursorIndex: 0,
 		logger:                 logger,
@@ -64,7 +95,17 @@ func NewFailoverRecursorPool(recursors []string, logger logger.Logger) RecursorP
 	}
 }
 
-func (q *failoverRecursorPool) PerformStrategically(work func(string) error) error {
+func (q *serialFailoverRecursorPool) PerformStrategically(work func(string) error) error {
+	for _, r := range q.recursors {
+		if err := work(r); err == nil {
+			return nil
+		}
+	}
+
+	return ErrNoRecursorResponse
+}
+
+func (q *smartFailoverRecursorPool) PerformStrategically(work func(string) error) error {
 	offset := atomic.LoadUint64(&q.preferredRecursorIndex)
 	uintRecursorCount := uint64(len(q.recursors))
 
@@ -82,16 +123,16 @@ func (q *failoverRecursorPool) PerformStrategically(work func(string) error) err
 		}
 	}
 
-	return errors.New("no response from recursors")
+	return ErrNoRecursorResponse
 }
 
-func (q *failoverRecursorPool) shiftPreference() {
+func (q *smartFailoverRecursorPool) shiftPreference() {
 	pri := atomic.AddUint64(&q.preferredRecursorIndex, 1)
 	index := pri % uint64(len(q.recursors))
 	q.logger.Info(q.logTag, fmt.Sprintf("shifting recursor preference: %s\n", q.recursors[index].name))
 }
 
-func (q *failoverRecursorPool) registerResult(index int, wasError bool) int32 {
+func (q *smartFailoverRecursorPool) registerResult(index int, wasError bool) int32 {
 	failingRecursor := &q.recursors[index]
 
 	oldestResult := <-failingRecursor.failBuffer

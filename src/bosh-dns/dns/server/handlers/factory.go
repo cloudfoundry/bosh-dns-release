@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bosh-dns/dns/config"
 	"bosh-dns/dns/shuffle"
 
 	"code.cloudfoundry.org/clock"
@@ -39,7 +40,13 @@ func (f *Factory) CreateHTTPJSONHandler(url string, cache bool) dns.Handler {
 
 func (f *Factory) CreateForwardHandler(recursors []string, cache bool) dns.Handler {
 	var handler dns.Handler
-	pool := NewFailoverRecursorPool(f.shuffler.Shuffle(recursors), f.logger)
+
+	// Forward handlers are not treated the same as recursors in
+	// /etc/resolv.conf.
+	//
+	// The default behavior defined by DNS spec is to use
+	// "smart" recursor selection.
+	pool := NewFailoverRecursorPool(f.shuffler.Shuffle(recursors), config.SmartRecursorSelection, f.logger)
 	handler = NewForwardHandler(pool, f.exchangerFactory, f.clock, f.logger)
 
 	if cache {

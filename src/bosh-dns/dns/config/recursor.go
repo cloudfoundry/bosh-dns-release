@@ -45,9 +45,9 @@ func ConfigureRecursors(reader RecursorReader, shuffler StringShuffler, dnsConfi
 	}
 
 	switch dnsConfig.RecursorSelection {
-	case "smart":
+	case SmartRecursorSelection:
 		dnsConfig.Recursors = shuffler.Shuffle(recursors)
-	case "serial":
+	case SerialRecursorSelection:
 		dnsConfig.Recursors = recursors
 	default:
 		return fmt.Errorf("invalid value for recursor selection: '%s'", dnsConfig.RecursorSelection)

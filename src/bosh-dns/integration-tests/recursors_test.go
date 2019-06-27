@@ -20,6 +20,7 @@ import (
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 
 	yaml "gopkg.in/yaml.v2"
@@ -259,7 +260,7 @@ var _ = Describe("Integration", func() {
 			})
 		})
 
-		Context("when the upstream recursor response differs", func() {
+		Context("when the upstream recursors have different responses", func() {
 			const (
 				testQuestion = "question_with_configurable_response."
 			)
@@ -273,12 +274,12 @@ var _ = Describe("Integration", func() {
 				}
 			})
 
-			JustAfterEach(func() {
-				secondTestRecursor.stop()
-			})
-
 			BeforeEach(func() {
 				recursors = []string{"127.0.0.1:6364", "127.0.0.1:6365"}
+			})
+
+			JustAfterEach(func() {
+				secondTestRecursor.stop()
 			})
 
 			Context("recursor selection", func() {
@@ -359,7 +360,7 @@ var _ = Describe("Integration", func() {
 						// than bosh-dns upstream timeout per failed recursor
 						// To reproduce: change timeout to "100 * time.Millisecond", and run on Windows
 						dnsResponse := helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
-							helpers.DigOpts{Port: environment.Port(), Timeout: 10*time.Second},
+							helpers.DigOpts{Port: environment.Port(), Timeout: 10 * time.Second},
 						)
 						Expect(dnsResponse.Answer[0]).ShouldNot(Equal(initialUpstreamResponse))
 						fmt.Printf("Running %d times out of %d total\n", i, handlers.FailHistoryThreshold)
@@ -373,6 +374,63 @@ var _ = Describe("Integration", func() {
 					Consistently(func() dns.RR {
 						return helpers.DigWithPort(testQuestion, environment.ServerAddress(), environment.Port()).Answer[0]
 					}, 10*time.Second).ShouldNot(Equal(initialUpstreamResponse))
+				})
+			})
+
+			Context("failover strategy", func() {
+				Context("when serial", func() {
+					BeforeEach(func() {
+						recursorSelection = "serial"
+					})
+
+					It("always attempts to query the first configured recursor", func() {
+						// This constant is a measure of our confidence level in this test not behaving
+						// like "smart".
+						// The lower the number, the less confidence we have...but is faster.
+						// The higher the number, the more confidence we have...but is slower.
+						const iterations = 10
+
+						for i := 0; i < iterations; i++ {
+							fmt.Printf("Running %d times out of %d total\n", i, iterations)
+
+							dnsResponse := helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
+								helpers.DigOpts{Port: environment.Port(), Timeout: 10 * time.Second},
+							)
+							Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
+								gomegadns.Response{"ip": recursorEnv.configurableResponse}))
+
+							By("stopping the first recursor")
+							recursorEnv.stop()
+
+							By("then bosh-dns fails overs to the second recursor")
+							dnsResponse = helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
+								helpers.DigOpts{Port: environment.Port(), Timeout: 10 * time.Second},
+							)
+							Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
+								gomegadns.Response{"ip": secondTestRecursor.configurableResponse}))
+
+							By("bringing the first recursor back")
+							err := recursorEnv.start()
+							Expect(err).NotTo(HaveOccurred())
+
+							By("then bosh-dns resumes with the first recursor's response")
+							dnsResponse = helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
+								helpers.DigOpts{Port: environment.Port(), Timeout: 10 * time.Second},
+							)
+							Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
+								gomegadns.Response{"ip": recursorEnv.configurableResponse}))
+						}
+					})
+
+					It("returns an error if all recursors fail", func() {
+						recursorEnv.stop()
+						secondTestRecursor.stop()
+
+						dnsResponse := helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
+							helpers.DigOpts{Port: environment.Port(), SkipRcodeCheck: true})
+						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeServerFailure))
+						Eventually(environment.Output()).Should(gbytes.Say(`no response from recursors`))
+					})
 				})
 			})
 

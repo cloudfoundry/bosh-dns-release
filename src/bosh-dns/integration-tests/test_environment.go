@@ -18,6 +18,7 @@ import (
 	"bosh-dns/acceptance_tests/helpers"
 
 	"github.com/miekg/dns"
+	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 
 	. "github.com/onsi/ginkgo"
@@ -30,6 +31,7 @@ type TestEnvironment interface {
 	Restart() error
 	ServerAddress() string
 	Port() int
+	Output() *gbytes.Buffer
 }
 
 func NewTestEnvironment(records []record.Record, recursors []string, caching bool, recursorSelection string, excludedRecursors []string, healthEnabled bool) TestEnvironment {
@@ -246,4 +248,8 @@ func (t *testEnvironment) Restart() error {
 	}
 
 	return nil
+}
+
+func (t *testEnvironment) Output() *gbytes.Buffer {
+	return t.session.Out
 }

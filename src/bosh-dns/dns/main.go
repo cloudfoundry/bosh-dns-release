@@ -153,7 +153,7 @@ func mainExitCode() int {
 
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordSet, mux, discoveryHandler)
 
-	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, logger)
+	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, logger)
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
 	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
 
