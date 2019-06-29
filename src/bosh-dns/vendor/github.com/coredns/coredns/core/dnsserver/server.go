@@ -62,7 +62,7 @@ func NewServer(addr string, group []*Config) (*Server, error) {
 	for _, site := range group {
 		if site.Debug {
 			s.debug = true
-			log.D = true
+			log.D.Set()
 		}
 		// set the config per zone
 		s.zones[site.Zone] = site
@@ -346,9 +346,9 @@ type Key struct{}
 
 // EnableChaos is a map with plugin names for which we should open CH class queries as we block these by default.
 var EnableChaos = map[string]struct{}{
-	"chaos":   struct{}{},
-	"forward": struct{}{},
-	"proxy":   struct{}{},
+	"chaos":   {},
+	"forward": {},
+	"proxy":   {},
 }
 
 // Quiet mode will not show any informative output on initialization.
