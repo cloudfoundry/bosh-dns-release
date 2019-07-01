@@ -426,10 +426,9 @@ var _ = Describe("Integration", func() {
 						recursorEnv.stop()
 						secondTestRecursor.stop()
 
-						dnsResponse := helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
+						helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
 						helpers.DigOpts{Port: environment.Port(), SkipErrCheck: true, SkipRcodeCheck: true})
-						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeServerFailure))
-						Eventually(environment.Output()).Should(gbytes.Say(`no response from recursors`))
+						Eventually(environment.Output(), 10*time.Second).Should(gbytes.Say(`no response from recursors`))
 					})
 				})
 			})
