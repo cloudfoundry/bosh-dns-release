@@ -29,12 +29,32 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:7294028ae4f4ebe9f92dccabdc69f63eba37b71fbfcdcb35ed1c32eb823fc6d4"
+  digest = "1:c2c6f380e0a78474e81fae9a8bdd2353f35c0ea2166126271f9944cc4e3b2343"
   name = "github.com/bmatcuk/doublestar"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "85a78806aa1b4707d1dbace9be592cf1ece91ab3"
-  version = "v1.1.1"
+  revision = "6d051236a614a33f1b10a94f70fd1af002283c5b"
+  version = "v1.1.2"
+
+[[projects]]
+  digest = "1:c8fb6cfe5510fd7603d762da6435ba83c241b5b2d57891c4d8d34378f3d84f6c"
+  name = "github.com/caddyserver/caddy"
+  packages = [
+    ".",
+    "caddyfile",
+    "telemetry",
+  ]
+  pruneopts = "NUT"
+  revision = "f6ee100bae9c0de566a2f7ae531113be0a9a0b83"
+  version = "v1.0.1"
+
+[[projects]]
+  digest = "1:cdee563173093e5ae7ab2a19c298e0904129719e1919a3c532b7bb0c3398b818"
+  name = "github.com/cenkalti/backoff"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "4b4cebaf850ec58f1bb1fec5bdebdf8501c2bc3f"
+  version = "v3.0.0"
 
 [[projects]]
   branch = "master"
@@ -60,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "b33eae10a72e8288a634dd84fd9d88fc5b33662e"
+  revision = "7a8ec79c544f6a62e7df97354295650dbcdda7ef"
 
 [[projects]]
   branch = "master"
@@ -90,7 +110,7 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:f9e9966a7f0858f7d1653687d50c761eb68712565246fbe39c59a1c1d043cd38"
+  digest = "1:3a9a522f76496a9897eb8210f3b2f9ca4e102004d51012eef4ad2c7cbaf8c7a9"
   name = "github.com/coredns/coredns"
   packages = [
     "core/dnsserver",
@@ -120,8 +140,8 @@
     "request",
   ]
   pruneopts = "NUT"
-  revision = "6c33397d29f6f856e3a197177e63d1bc5341ab0d"
-  version = "v1.5.1"
+  revision = "d933f635af392fb7b7938857576f460741151e46"
+  version = "v1.5.2"
 
 [[projects]]
   branch = "master"
@@ -130,6 +150,31 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "3f9db97f856818214da2e1057f8ad84803971cff"
+
+[[projects]]
+  digest = "1:15b7550a37ac1eda68d7b00dc02f2afb29b81e82b01be7fa021a39af77ee5ed8"
+  name = "github.com/go-acme/lego"
+  packages = [
+    "acme",
+    "acme/api",
+    "acme/api/internal/nonces",
+    "acme/api/internal/secure",
+    "acme/api/internal/sender",
+    "certcrypto",
+    "certificate",
+    "challenge",
+    "challenge/dns01",
+    "challenge/http01",
+    "challenge/resolver",
+    "challenge/tlsalpn01",
+    "lego",
+    "log",
+    "platform/wait",
+    "registration",
+  ]
+  pruneopts = "NUT"
+  revision = "01903cdfb9869df45cf5274c53226823a2532f2d"
+  version = "v2.6.0"
 
 [[projects]]
   digest = "1:2d0636a8c490d2272dd725db26f74a537111b99b9dbdda0d8b98febe63702aa4"
@@ -176,6 +221,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:7dc14952637aea1ef99bc1d9ad1374ddf0fa10d7b608cf5cb72d3f4fa7e4b579"
+  name = "github.com/klauspost/cpuid"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "05a8198c0f5a27739aec358908d7e12c64ce6eb7"
+  version = "v1.2.1"
+
+[[projects]]
   digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
@@ -196,16 +249,12 @@
   version = "v6.0.1"
 
 [[projects]]
-  digest = "1:967264f98db952c9803906fcc035ded6b18436cc384041d33f1da9f211b6823f"
-  name = "github.com/mholt/caddy"
-  packages = [
-    ".",
-    "caddyfile",
-    "telemetry",
-  ]
+  digest = "1:9ac5618a7dd273e241ac57273d9179577b5d6c36a1c82c8734d08dc97e34b7a6"
+  name = "github.com/mholt/certmagic"
+  packages = ["."]
   pruneopts = "NUT"
-  revision = "6f580c6aa36c54c3e1c65b5c609550a8a2508e3e"
-  version = "v0.11.1"
+  revision = "c7a9fdb178168514647c1fc65bf76e56e788949c"
+  version = "v0.6.1"
 
 [[projects]]
   digest = "1:7894d93b1bbb3ab412c9b4f2573accc5becbcce2516e1fe5a4d2da1825b2e369"
@@ -355,15 +404,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:120b256a4d3cd2946ffa4b87102731c2f004aed6d836dc2fba400ed9398696e7"
+  digest = "1:11c5d367b5f0a6cafa3aafdd4d9ad699789ffef5e1efdf70b78144868f78b726"
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "3113b8401b8a98917cde58f8bbd42a1b1c03b1fd"
+  revision = "9c2d0518ed81e5c50f80d662310c88d8a26c52ea"
 
 [[projects]]
   branch = "master"
-  digest = "1:ffebede762b00a7ffe84ef08efc4f4e87823b5298b4fd477313579f553db0c6a"
+  digest = "1:0b1982a52fbd6d2c0ce455f1e471547b7780fa9d87901f50ec05ff94b6145bcb"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -371,11 +420,13 @@
     "ed25519/internal/edwards25519",
     "internal/chacha20",
     "internal/subtle",
+    "ocsp",
+    "pbkdf2",
     "poly1305",
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "cc06ce4a13d484c0101a9e92913248488a75786d"
+  revision = "4def268fd1a49955bfb3dda92fe3db4f924f2285"
 
 [[projects]]
   branch = "master"
@@ -454,7 +505,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3498d9ffb33636ae6782189176e94742af94490d49c2eaf9e3d3e1ab529132f8"
+  digest = "1:7026eea9c10a8cfaa11a68d8e15259f09a1706dce5b9d736aa032991b5a2749d"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -471,7 +522,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "fb37f6ba82613749b0b522aa509da78361849fc3"
+  revision = "72ffa07ba3db8d09f5215feec0f89464f3028f8e"
 
 [[projects]]
   branch = "master"
@@ -479,10 +530,10 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "eb59cef1c072c61ea4f7623910448d5e9c6a4455"
+  revision = "710ae3a149df3775bfc2e9efb7f4fb97b186b233"
 
 [[projects]]
-  digest = "1:1ec4bc6f7cbf98268fafafea40cdeb5ff5d4914cc9b9ef615fbbfc1ac43c0622"
+  digest = "1:2faab8e13984b728cde9ced456912a0fc5cd43da5b9a4b45b749dc3ae63f27b2"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -514,13 +565,14 @@
     "resolver",
     "resolver/dns",
     "resolver/passthrough",
+    "serviceconfig",
     "stats",
     "status",
     "tap",
   ]
   pruneopts = "NUT"
-  revision = "501c41df7f472c740d0674ff27122f3f48c80ce7"
-  version = "v1.21.1"
+  revision = "1d89a3c832915b2314551c1d2a506874d62e53f7"
+  version = "v1.22.0"
 
 [[projects]]
   digest = "1:1b91ae0dc69a41d4c2ed23ea5cffb721ea63f5037ca4b81e6d6771fbb8f45129"
@@ -530,6 +582,18 @@
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
   source = "https://github.com/fsnotify/fsnotify.git"
   version = "v1.4.7"
+
+[[projects]]
+  digest = "1:a56dc1133e9c449d41d22ffabd6c2343cd25ab31c9cad0e74a144006810d1544"
+  name = "gopkg.in/square/go-jose.v2"
+  packages = [
+    ".",
+    "cipher",
+    "json",
+  ]
+  pruneopts = "NUT"
+  revision = "730df5f748271903322feb182be83b43ebbbe27d"
+  version = "v2.3.1"
 
 [[projects]]
   branch = "v1"
