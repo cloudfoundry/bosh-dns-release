@@ -73,18 +73,18 @@ properties:
     description: "Array of handler configurations"
     default: []
     example:
-      - domain: local.internal.
+      - domain: endpoint.local.
         cache:
           enabled: true
         source:
           type: http
           url: http://some.endpoint.local
-      - domain: local.internal2.
+      - domain: corp.intranet.local.
         cache:
           enabled: true
         source:
           type: dns
-          recursors: [ 127.0.0.1 ]
+          recursors: [ 10.0.0.2 ]
 
   handlers_files_glob:
     description: "Glob for any files to look for DNS handler information"
