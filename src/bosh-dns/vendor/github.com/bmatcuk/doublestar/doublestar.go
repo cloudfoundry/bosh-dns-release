@@ -52,25 +52,6 @@ func splitPathOnSeparator(path string, separator rune) (ret []string) {
 		}
 	}
 
-	// An empty component in the beginning is significant because it indicates an
-	// absolute path, and an empty component at the end is significant because it
-	// indicates that the path ended on a path separator. However, empty
-	// components in the middle are insignificant; they probably indicate a typo
-	// or a path that was built programmatically without removing duplicate
-	// separators. We'll remove the inner empty components here...
-	shift := 0
-	for i := 1; i < idx-1; i++ {
-		if ret[i] == "" {
-			shift++
-		} else if shift > 0 {
-			ret[i-shift] = ret[i]
-		}
-	}
-	if shift > 0 {
-		ret[idx-1-shift] = ret[idx-1]
-		idx -= shift
-	}
-
 	return ret[:idx]
 }
 
@@ -228,14 +209,20 @@ func Glob(pattern string) (matches []string, err error) {
 		return nil, nil
 	}
 
-	// On Windows systems, this will return the drive name ('C:'), on others,
-	// it will return an empty string.
+	// On Windows systems, this will return the drive name ('C:') for filesystem
+	// paths, or \\<server>\<share> for UNC paths. On other systems, it will
+	// return an empty string. Since absolute paths on non-Windows systems start
+	// with a slash, patternComponent[0] == volumeName will return true for both
+	// absolute Windows paths and absolute non-Windows paths, but we need a
+	// separate check for UNC paths.
 	volumeName := filepath.VolumeName(pattern)
-
-	// If the first pattern component is equal to the volume name, then the
-	// pattern is an absolute path.
-	if patternComponents[0] == volumeName {
-		return doGlob(fmt.Sprintf("%s%s", volumeName, string(os.PathSeparator)), patternComponents[1:], matches)
+	isWindowsUNC := strings.HasPrefix(pattern, `\\`)
+	if isWindowsUNC || patternComponents[0] == volumeName {
+		startComponentIndex := 1
+		if isWindowsUNC {
+			startComponentIndex = 4
+		}
+		return doGlob(fmt.Sprintf("%s%s", volumeName, string(os.PathSeparator)), patternComponents[startComponentIndex:], matches)
 	}
 
 	// otherwise, it's a relative pattern
