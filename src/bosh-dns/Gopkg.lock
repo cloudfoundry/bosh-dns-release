@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "0e25561cd45e5bda1c73955e0773b842a55fb2be"
+  revision = "d286f594c8d9281f5542b6da0457564b5f75e4ed"
 
 [[projects]]
   branch = "master"
@@ -249,12 +249,12 @@
   version = "v6.0.1"
 
 [[projects]]
-  digest = "1:9ac5618a7dd273e241ac57273d9179577b5d6c36a1c82c8734d08dc97e34b7a6"
+  digest = "1:fa623fb6e2864d7758384184e3f2163f1341939985ccc9d6a00c0dd4a20e2c66"
   name = "github.com/mholt/certmagic"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "c7a9fdb178168514647c1fc65bf76e56e788949c"
-  version = "v0.6.1"
+  revision = "7b64d461c004b7083c582e8b832f748dea8041c5"
+  version = "v0.6.2"
 
 [[projects]]
   digest = "1:7894d93b1bbb3ab412c9b4f2573accc5becbcce2516e1fe5a4d2da1825b2e369"
@@ -456,7 +456,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:816780136a1ee09b3070cdfed092c244010fa3f2bde27beb1b1f80dfef4338e1"
+  digest = "1:fac91f8c6996469de63f537b598f42d79a915488211fdf18111d9955f4d6d68f"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -464,7 +464,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "cbf593c0f2f39034e9104bbf77e2ec7c48c98fc5"
+  revision = "51ab0e2deafac1f46c46ad59cf0921be2f180c3d"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -505,7 +505,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:aa5bc3c668f07e9663277ab8d8e4f914326c8c893b77e7bee5c53c67e2374c37"
+  digest = "1:396e96dc205fbf29bb19476a102a9ab3be4ed685cae2825149884bf1fd3a4b91"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -522,7 +522,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "1d1727260058c6d58ebfdeb982c4657342282355"
+  revision = "6d4652c779c4add9e1a69db058dabafddba21c37"
 
 [[projects]]
   branch = "master"
