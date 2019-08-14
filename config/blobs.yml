@@ -2,3 +2,7 @@ bosh-cli/bosh-cli-3.0.1-linux-amd64:
   size: 27636423
   object_id: d60ca228-48f6-46a0-7f38-efe41fc65830
   sha: ccc893bab8b219e9e4a628ed044ebca6c6de9ca0
+resolvconf-manager/resolvconf-manager:
+  size: 2838150
+  object_id: 6ab7bbb9-9f1c-4020-4295-b62643abc79f
+  sha: sha256:03978dcf260f57ab11de0aadb9b1ec2133aa325f61a4de3ff64b09a02946a20e

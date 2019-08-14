@@ -15,6 +15,8 @@ files:
 - debug/cli/**/*
 - debug/vendor/**/*
 
+- resolvconf-manager/resolvconf-manager
+
 excluded_files:
 - bosh-dns/vendor/github.com/bmatcuk/doublestar/test/**/*
 - bosh-dns/vendor/github.com/prometheus/procfs/fixtures/**/*

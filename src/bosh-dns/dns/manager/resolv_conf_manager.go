@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"os/exec"
 	"regexp"
 	"strings"
 
@@ -53,7 +54,15 @@ func (r *resolvConfManager) Read() ([]string, error) {
 }
 
 func (r *resolvConfManager) SetPrimary() error {
-	_, _, _, err := r.cmdRunner.RunCommand("resolvconf-manager", "-head", r.address)
+	var binary string
+
+	if err := exec.Command("command", "-v", "resolvconf-manager").Run(); err != nil {
+		binary = "/var/vcap/packages/bosh-dns/bin/resolvconf-manager"
+	} else {
+		binary = "resolvconf-manager"
+	}
+
+	_, _, _, err := r.cmdRunner.RunCommand(binary, "-head", r.address)
 	if err != nil {
 		return bosherr.WrapError(err, "Executing resolvconf-manager")
 	}
