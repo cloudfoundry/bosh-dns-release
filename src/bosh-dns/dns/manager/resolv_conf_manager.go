@@ -1,23 +1,14 @@
 package manager
 
 import (
-	"errors"
-	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"code.cloudfoundry.org/clock"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
-
-const MaxResolvConfRetries = 8
-
-var warningLine = "# This file was automatically updated by bosh-dns"
-
-var nameserverLineRegex = regexp.MustCompile("^nameserver (.+)")
 
 type resolvConfManager struct {
 	address   string
@@ -26,7 +17,13 @@ type resolvConfManager struct {
 	clock     clock.Clock
 }
 
-func NewResolvConfManager(address string, clock clock.Clock, fs boshsys.FileSystem, cmdRunner boshsys.CmdRunner) *resolvConfManager {
+var nameserverRegexp = regexp.MustCompile("^\\s*nameserver\\s+(\\S+)$")
+
+func NewResolvConfManager(
+	address string,
+	clock clock.Clock,
+	fs boshsys.FileSystem,
+	cmdRunner boshsys.CmdRunner) *resolvConfManager {
 	return &resolvConfManager{
 		address:   address,
 		fs:        fs,
@@ -36,11 +33,6 @@ func NewResolvConfManager(address string, clock clock.Clock, fs boshsys.FileSyst
 }
 
 func (r *resolvConfManager) Read() ([]string, error) {
-	nameserverRegexp, err := regexp.Compile("^\\s*nameserver\\s+(\\S+)$")
-	if err != nil {
-		return nil, err
-	}
-
 	nameservers := []string{}
 	contents, err := r.fs.ReadFileWithOpts("/etc/resolv.conf", boshsys.ReadOpts{Quiet: true})
 
@@ -61,79 +53,10 @@ func (r *resolvConfManager) Read() ([]string, error) {
 }
 
 func (r *resolvConfManager) SetPrimary() error {
-	writeString := fmt.Sprintf(`%s
-nameserver %s
-`, warningLine, r.address)
-
-	if correct, _ := r.isCorrect(r.address); correct {
-		return nil
-	}
-
-	if r.fs.FileExists("/etc/resolvconf/resolv.conf.d/head") {
-		append, err := r.fs.ReadFileString("/etc/resolvconf/resolv.conf.d/head")
-		if err != nil {
-			return bosherr.WrapError(err, "Reading existing head")
-		}
-
-		if !r.isStringCorrect(r.address, append) {
-			writeString = fmt.Sprintf("%s\n%s", writeString, append)
-		}
-	}
-
-	err := r.fs.WriteFileString("/etc/resolvconf/resolv.conf.d/head", writeString)
+	_, _, _, err := r.cmdRunner.RunCommand("resolvconf-manager", "-head", r.address)
 	if err != nil {
-		return bosherr.WrapError(err, "Writing head")
+		return bosherr.WrapError(err, "Executing resolvconf-manager")
 	}
 
-	_, _, _, err = r.cmdRunner.RunCommand("resolvconf", "-u")
-	if err != nil {
-		return bosherr.WrapError(err, "Executing resolvconf")
-	}
-
-	for i := 0; i < MaxResolvConfRetries; i++ {
-		if correct, _ := r.isCorrect(r.address); correct {
-			return nil
-		}
-
-		// seems like `resolvconf -u` may not immediately update /etc/resolv.conf, so
-		// block here briefly to try and ensure it was successful before we error
-		r.clock.Sleep(2 * time.Second)
-	}
-
-	return errors.New("Failed to confirm nameserver in /etc/resolv.conf")
-}
-
-func (r *resolvConfManager) isCorrect(address string) (bool, error) {
-	servers, err := r.Read()
-	if err != nil {
-		return false, err
-	}
-
-	for _, server := range servers {
-		if server == address {
-			return true, nil
-		}
-
-		return false, nil
-	}
-
-	return false, nil
-}
-
-func (r resolvConfManager) isStringCorrect(address, contents string) bool {
-	lines := strings.Split(contents, "\n")
-
-	for _, l := range lines {
-		if !nameserverLineRegex.MatchString(l) {
-			continue
-		}
-
-		if l == fmt.Sprintf("nameserver %s", address) {
-			return true
-		}
-
-		return false
-	}
-
-	return false
+	return err
 }
