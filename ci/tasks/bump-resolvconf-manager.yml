@@ -1,0 +1,21 @@
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: bosh/bosh-dns-release
+    tag: acceptance-tests
+
+inputs:
+- name: bosh-dns-release
+- name: resolvconf-manager
+
+outputs:
+- name: bosh-dns-release
+
+run:
+  path: bosh-dns-release/ci/tasks/bump-resolvconf-manager.sh
+
+params:
+  BLOBSTORE_ACCESS_KEY_ID: replace-me
+  BLOBSTORE_SECRET_ACCESS_KEY: replace-me

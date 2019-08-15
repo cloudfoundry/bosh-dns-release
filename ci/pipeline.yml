@@ -4,6 +4,7 @@ groups:
   jobs:
   - bump-deps
   - bump-golang-package
+  - bump-resolvconf-manager
   - test-unit
   - test-coredns-cache
   - test-unit-windows
@@ -54,6 +55,33 @@ jobs:
     - get: bosh-candidate-release
   - task: bump-golang-package
     file: bosh-dns-release/ci/tasks/bump-golang-package.yml
+    params:
+      BLOBSTORE_ACCESS_KEY_ID: {{release_blobs_access_key_id}}
+      BLOBSTORE_SECRET_ACCESS_KEY: {{release_blobs_secret_access_key}}
+  - task: create
+    file: bosh-dns-release/ci/tasks/create-candidate.yml
+    output_mapping:
+      release: bumped-release
+  - task: test-acceptance
+    privileged: true
+    file: bosh-dns-release/ci/tasks/test-acceptance.yml
+    input_mapping:
+      candidate-release: bumped-release
+  - put: bosh-dns-release
+    params:
+      repository: bosh-dns-release
+      rebase: true
+
+- name: bump-resolvconf-manager
+  public: true
+  serial: true
+  plan:
+  - aggregate:
+    - get: bosh-dns-release
+    - get: resolvconf-manager
+      trigger: true
+  - task: bump-resolvconf-manager
+    file: bosh-dns-release/ci/tasks/bump-resolvconf-manager.yml
     params:
       BLOBSTORE_ACCESS_KEY_ID: {{release_blobs_access_key_id}}
       BLOBSTORE_SECRET_ACCESS_KEY: {{release_blobs_secret_access_key}}
@@ -421,6 +449,12 @@ jobs:
         repos:
         - bosh-dns-release
 
+resource_types:
+- name: metalink-repository
+  source:
+    repository: dpb587/metalink-repository-resource
+  type: registry-image
+
 resources:
 - name: bosh-dns-release
   type: git
@@ -444,6 +478,12 @@ resources:
     branch: master
     paths:
     - releases/golang
+
+- name: resolvconf-manager
+  source:
+    uri: git+https://github.com/cloudfoundry-incubator/resolvconf-manager-index.git
+    version: '*'
+  type: metalink-repository
 
 - name: version
   type: semver
