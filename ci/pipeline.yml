@@ -80,6 +80,11 @@ jobs:
     - get: bosh-dns-release
     - get: resolvconf-manager
       trigger: true
+    - get: bosh-stemcell
+      resource: ubuntu-xenial-stemcell
+    - get: xenial-stemcell
+      resource: ubuntu-xenial-stemcell
+    - get: bosh-candidate-release
   - task: bump-resolvconf-manager
     file: bosh-dns-release/ci/tasks/bump-resolvconf-manager.yml
     params:
