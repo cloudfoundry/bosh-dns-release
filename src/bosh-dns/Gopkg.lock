@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "4d0b7c5acdfddc1ca85d0dd058f2054b8e683cd4"
+  revision = "701ecef9262dd61cda41a511781e9b49a426241b"
 
 [[projects]]
   branch = "master"
@@ -257,12 +257,12 @@
   version = "v0.6.2"
 
 [[projects]]
-  digest = "1:7894d93b1bbb3ab412c9b4f2573accc5becbcce2516e1fe5a4d2da1825b2e369"
+  digest = "1:7654988b91299ab6aa71c1c37d61b6f9c2e2794031e7b319220e95dfa4c9dc67"
   name = "github.com/miekg/dns"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "b13675009d59c97f3721247d9efa8914e1866a5b"
-  version = "v1.1.15"
+  revision = "c67445656579a3c3836047c509073f97022da0ed"
+  version = "v1.1.16"
 
 [[projects]]
   branch = "master"
@@ -273,7 +273,7 @@
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
-  digest = "1:dbc24dd0591271d269786adff7458f2c1437305091e41979c5495efe3df09ab8"
+  digest = "1:fb8fbdf245700be616e1631181a04d4e3ea256d64ec39d3e7ddd6183beacf88b"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -304,11 +304,11 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "eea6ad008b96acdaa524f5b409513bf062b500ad"
-  version = "v1.8.0"
+  revision = "7e8b50db0c6d0a15ac0eb015d4ca64e7e7e2c88c"
+  version = "v1.9.0"
 
 [[projects]]
-  digest = "1:96b79a553cec6f0b9d1282d7228422571c93608d34d731565cd2597da50e5b67"
+  digest = "1:709674d2cbee855168d2112a450ac7f089cc484587251d4a1c3d993d93da3c86"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -328,8 +328,8 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "90e289841c1ed79b7a598a7cd9959750cb5e89e2"
-  version = "v1.5.0"
+  revision = "27d50ea6455b212cf516609fa58b2b5dce1abc81"
+  version = "v1.6.0"
 
 [[projects]]
   digest = "1:6846140b3f116579680eefdc17145f2bcf064b68deb9febf86b4419a454049af"
@@ -426,7 +426,7 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "4def268fd1a49955bfb3dda92fe3db4f924f2285"
+  revision = "60c769a6c58655dab1b9adac0d58967dd517cfba"
 
 [[projects]]
   branch = "master"
@@ -505,7 +505,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:faa94b1d1ba8d7d53b8906231deb62d16a5d793429e0ff1a972f516e64571111"
+  digest = "1:6dc625899eddfebb23c8f2d38f8007ac52d473cd01193cac3810cd14e83324c9"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -522,7 +522,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "6889da9d54793ea182dd07be58824cf86bf0746b"
+  revision = "c4a336ef6a2feb97e86b0c7ebdd500717074f42b"
 
 [[projects]]
   branch = "master"
@@ -530,7 +530,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "55e96fffbd486c27fc0d5b4468c497d0de3f2727"
+  revision = "24fa4b261c55da65468f2abfdae2b024eef27dfb"
 
 [[projects]]
   digest = "1:2b6504cfc5fa4bcd1d7df2719fed5ddc24a9f7b69027f2f97f3e784dfdf8aa03"
