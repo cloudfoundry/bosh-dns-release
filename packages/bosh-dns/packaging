@@ -14,5 +14,5 @@ go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns-wait" "bosh-dns/wait"
 mv debug "${GOPATH}/src"
 go build -o "${BOSH_INSTALL_TARGET}/bin/cli" "debug/cli"
 
-cp resolvconf-manager/resolvconf-manager "${BOSH_INSTALL_TARGET}/bin/resolvconf-manager"
+cp resolvconf-manager/resolvconf-manager-* "${BOSH_INSTALL_TARGET}/bin/resolvconf-manager"
 chmod +x "${BOSH_INSTALL_TARGET}/bin/resolvconf-manager"
