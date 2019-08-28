@@ -15,7 +15,10 @@ blobstore:
     secret_access_key: "$BLOBSTORE_SECRET_ACCESS_KEY"
 EOF
 
-  bosh add-blob ../resolvconf-manager/resolvconf-manager resolvconf-manager/resolvconf-manager
+  bosh remove-blob "$(bosh blobs --column=path | grep resolvconf-manager | tr -d '[:space:]')"
+
+  name="$(basename $(ls ../resolvconf-manager/resolvconf-manager-*))"
+  bosh add-blob "../resolvconf-manager/${name}" "resolvconf-manager/${name}"
   bosh upload-blobs
 
   if [ -z "$(git status --porcelain)" ]; then
@@ -23,5 +26,5 @@ EOF
   fi
 
   git add -A
-  git commit -m "Bump resolvconf-manager blob"
+  git commit -m "Bump resolvconf-manager blob to ${name}"
 popd
