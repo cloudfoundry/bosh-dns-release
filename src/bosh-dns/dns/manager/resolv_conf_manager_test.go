@@ -17,7 +17,6 @@ import (
 var _ = Describe("ResolvConfManager", func() {
 	var (
 		dnsManager    manager.DNSManager
-		address       string
 		fs            *boshsysfakes.FakeFileSystem
 		clock         *fakeclock.FakeClock
 		fakeCmdRunner *boshsysfakes.FakeCmdRunner
@@ -25,10 +24,9 @@ var _ = Describe("ResolvConfManager", func() {
 
 	BeforeEach(func() {
 		clock = fakeclock.NewFakeClock(time.Now())
-		address = "192.0.2.100"
 		fakeCmdRunner = boshsysfakes.NewFakeCmdRunner()
 		fs = boshsysfakes.NewFakeFileSystem()
-		dnsManager = manager.NewResolvConfManager(address, clock, fs, fakeCmdRunner)
+		dnsManager = manager.NewResolvConfManager("192.0.2.100", clock, fs, fakeCmdRunner)
 	})
 
 	Describe("Read", func() {
@@ -127,6 +125,122 @@ nameserver ns-2
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("attempting to read dns nameservers"))
 			})
+		})
+	})
+
+	Describe("SetPrimary", func() {
+		Context("filesystem fails", func() {
+			It("errors", func() {
+				fakeCmdRunner.AddCmdResult("resolvconf -u", boshsysfakes.FakeCmdResult{})
+				fs.WriteFileError = errors.New("fake-err1")
+
+				go clock.WaitForWatcherAndIncrement(time.Second * 2)
+				err := dnsManager.SetPrimary()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Writing "))
+				Expect(err.Error()).To(ContainSubstring("fake-err1"))
+			})
+		})
+
+		Context("resolvconf update fails", func() {
+			It("errors", func() {
+				fakeCmdRunner.AddCmdResult("resolvconf -u", boshsysfakes.FakeCmdResult{ExitStatus: 1, Error: errors.New("fake-err1")})
+
+				go clock.WaitForWatcherAndIncrement(time.Second * 2)
+				err := dnsManager.SetPrimary()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Executing "))
+				Expect(err.Error()).To(ContainSubstring("fake-err1"))
+			})
+		})
+
+		Context("resolvconf fails to rewrite /etc/resolv.conf", func() {
+			It("errors if resolvconf update fails", func() {
+				fakeCmdRunner.AddCmdResult("resolvconf -u", boshsysfakes.FakeCmdResult{})
+
+				go func() {
+					for i := 0; i < manager.MaxResolvConfRetries; i++ {
+						clock.WaitForWatcherAndIncrement(time.Second * 2)
+					}
+				}()
+				err := dnsManager.SetPrimary()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Failed to confirm nameserver "))
+			})
+		})
+
+		It("skips if resolvconf already has our server", func() {
+			_ = fs.WriteFileString("/etc/resolv.conf", `nameserver 192.0.2.100`)
+
+			err := dnsManager.SetPrimary()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(fakeCmdRunner.RunCommands).To(HaveLen(0))
+		})
+
+		It("creates /etc/resolvconf/resolv.conf.d/head with our DNS server", func() {
+			fakeCmdRunner.AddCmdResult("resolvconf -u", boshsysfakes.FakeCmdResult{})
+			fakeCmdRunner.SetCmdCallback("resolvconf -u", func() {
+				_ = fs.WriteFileString("/etc/resolv.conf", `nameserver 192.0.2.100`)
+			})
+
+			go clock.WaitForWatcherAndIncrement(time.Second * 2)
+			err := dnsManager.SetPrimary()
+			Expect(err).NotTo(HaveOccurred())
+
+			contents, err := fs.ReadFileString("/etc/resolvconf/resolv.conf.d/head")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(contents).To(Equal(`# This file was automatically updated by bosh-dns
+nameserver 192.0.2.100
+`))
+		})
+
+		It("avoids prepending itself more than once (in case resolvconf is slower than our check interval)", func() {
+			fakeCmdRunner.AddCmdResult("resolvconf -u", boshsysfakes.FakeCmdResult{})
+
+			fakeCmdRunner.SetCmdCallback("resolvconf -u", func() {
+				_ = fs.WriteFileString("/etc/resolv.conf", `nameserver 192.0.2.100`)
+			})
+
+			err := fs.WriteFileString("/etc/resolvconf/resolv.conf.d/head", `
+nameserver 192.0.2.100
+nameserver 8.8.8.8
+`)
+			Expect(err).NotTo(HaveOccurred())
+
+			go clock.WaitForWatcherAndIncrement(time.Second * 2)
+			err = dnsManager.SetPrimary()
+			Expect(err).NotTo(HaveOccurred())
+
+			contents, err := fs.ReadFileString("/etc/resolvconf/resolv.conf.d/head")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(contents).To(Equal(`# This file was automatically updated by bosh-dns
+nameserver 192.0.2.100
+`))
+		})
+
+		It("prepends /etc/resolvconf/resolv.conf.d/head with our DNS server", func() {
+			_ = fs.WriteFileString("/etc/resolvconf/resolv.conf.d/head", `# some comment
+nameserver 192.0.3.1
+nameserver 192.0.3.2
+`)
+
+			fakeCmdRunner.SetCmdCallback("resolvconf -u", func() {
+				_ = fs.WriteFileString("/etc/resolv.conf", `nameserver 192.0.2.100`)
+			})
+
+			go clock.WaitForWatcherAndIncrement(time.Second * 2)
+			err := dnsManager.SetPrimary()
+			Expect(err).NotTo(HaveOccurred())
+
+			contents, err := fs.ReadFileString("/etc/resolvconf/resolv.conf.d/head")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(contents).To(Equal(`# This file was automatically updated by bosh-dns
+nameserver 192.0.2.100
+
+# some comment
+nameserver 192.0.3.1
+nameserver 192.0.3.2
+`))
 		})
 	})
 })
