@@ -43,7 +43,7 @@ jobs:
   public: true
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: bosh-dns-release
     - get: golang-release
       trigger: true
@@ -161,7 +161,7 @@ jobs:
   public: true
   serial: true
   plan:
-    - aggregate:
+    - in_parallel:
       - get: bosh-dns-release
         passed: [create-release]
       - get: bosh-stemcell
@@ -182,7 +182,7 @@ jobs:
   public: true
   serial: true
   plan:
-    - aggregate:
+    - in_parallel:
       - get: bosh-dns-release
         passed: [create-release]
       - get: bosh-stemcell
@@ -204,7 +204,7 @@ jobs:
   serial: true
   plan:
   - do:
-    - aggregate:
+    - in_parallel:
       - get: bosh-dns-release
         passed:
         - create-release
@@ -235,7 +235,7 @@ jobs:
         file: bosh-dns-release/ci/tasks/windows/setup-deploy.yml
         params:
           ENV_NAME: windows2019
-      - aggregate:
+      - in_parallel:
         - task: windows
           file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
           params:
@@ -270,7 +270,7 @@ jobs:
   public: false
   serial: true
   plan:
-    - aggregate:
+    - in_parallel:
       - get: bosh-dns-release
         trigger: true
         passed: [create-release]
@@ -329,7 +329,7 @@ jobs:
   serial: true
   plan:
   - do:
-    - aggregate:
+    - in_parallel:
       - get: bosh-dns-src
         resource: bosh-dns-release
       - get: brats-src
@@ -370,7 +370,7 @@ jobs:
   serial_groups:
     - version
   plan:
-    - aggregate:
+    - in_parallel:
       - get: bosh-dns-release
         passed: [delivery]
       - get: candidate-release
@@ -399,7 +399,7 @@ jobs:
 
 - name: delivery
   plan:
-    - aggregate:
+    - in_parallel:
       - get: candidate-release
         passed:
         - test-stress
