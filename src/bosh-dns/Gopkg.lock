@@ -66,7 +66,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f3f22f0cbd1e6c2e5899fcf728cd6387791caa742b69829a0c48338b8b56abd3"
+  digest = "1:124b334158b33ccb03f2a3b69015b42aa89cdbf127eddc94076f5ef99f38aa0c"
   name = "github.com/cloudfoundry/bosh-utils"
   packages = [
     "errors",
@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "43f89efdad3bc3b406e468ed8681c963f6bcd004"
+  revision = "0db903bb910ffe49a91c1508721142df08b76e87"
 
 [[projects]]
   branch = "master"
@@ -457,7 +457,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9ea464786a52c3d6cd15983fd42ff26a06e451c978eaff954c55118543eafcee"
+  digest = "1:c607decdda47f2b7e02f94a4e9305853d80b032faa8ed813565b47a5da665871"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -465,7 +465,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "1e83adbbebd0f5dc971915fd7e5db032c3d2b731"
+  revision = "749cb33beabd9aa6d3178e3de05bcc914f70b2bf"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -506,7 +506,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b36898a8dd62a54ce3b77ace9fa0e180fa35f1c8b3d56db2cd435f6c0cc815ff"
+  digest = "1:a4820af8a99b0467f43d19a071379bc2a0c54a955e18af7f1661e8407f73d7b2"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -523,7 +523,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "573d9926052aeaeb5fbebcd3cf10d994c9c6d4f5"
+  revision = "2ca718005c187b688247516b87f8da3b9d03e6b6"
 
 [[projects]]
   branch = "master"
@@ -531,7 +531,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "24fa4b261c55da65468f2abfdae2b024eef27dfb"
+  revision = "92dd089d5514cecde7a465f807541f83dfd486d5"
 
 [[projects]]
   digest = "1:2b6504cfc5fa4bcd1d7df2719fed5ddc24a9f7b69027f2f97f3e784dfdf8aa03"
