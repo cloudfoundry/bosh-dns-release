@@ -8,7 +8,6 @@ image_resource:
     tag: v5
 
 inputs:
-inputs:
   - name: bosh-dns-release
   - name: envs
   - name: bosh-candidate-release
