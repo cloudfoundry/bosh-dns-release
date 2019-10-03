@@ -83,7 +83,12 @@ func (c *concreteHealthServer) healthEntryPoint(w http.ResponseWriter, r *http.R
 	if cn != CN {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Add("Content-Type", "text/plain")
-		w.Write([]byte("TLS certificate common name does not match"))
+		_, err := w.Write([]byte("TLS certificate common name does not match"))
+		if err != nil {
+			c.logger.Error(logTag, "failed to write healthcheck status data: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		return
 	}
 
@@ -97,5 +102,10 @@ func (c *concreteHealthServer) healthEntryPoint(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	w.Write(statusData)
+	_, err = w.Write(statusData)
+	if err != nil {
+		c.logger.Error(logTag, "failed to write healthcheck status data: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
