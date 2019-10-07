@@ -13,8 +13,8 @@ var groupRegex = regexp.MustCompile("^q-g([0-9]+)$")
 type Criteria map[string][]string
 
 func NewCriteria(fqdn string, domains []string) (Criteria, error) {
-	seg, err := ParseSegment(fqdn, domains)
-	if err != nil {
+	seg, err := ParseQuery(fqdn, domains)
+	if seg == nil || err != nil {
 		return Criteria{}, err
 	}
 
@@ -142,6 +142,9 @@ func FieldMatcher(field, value string) MatcherFunc {
 	case "domain":
 		return func(r *record.Record) bool { return r.Domain == value }
 
+	case "agentID":
+		return func(r *record.Record) bool { return r.AgentID == value }
+
 	case "m":
 		return func(r *record.Record) bool { return r.NumID == value }
 	case "n":
@@ -164,37 +167,52 @@ func FieldMatcher(field, value string) MatcherFunc {
 	return func(*record.Record) bool { return false }
 }
 
-func parseCriteria(segment Segment) (Criteria, error) {
+func parseCriteria(qt QueryFormType) (Criteria, error) {
 	criteriaMap := make(Criteria)
 
-	if strings.HasPrefix(segment.Query, "q-") {
-		query := strings.TrimPrefix(segment.Query, "q-")
-		err := criteriaMap.parseShortQueries(query)
-		if err != nil {
-			return nil, err
+	switch qt.Type() {
+	case SHORT:
+		// TODO: instanceName is set if a short-form query does not start with "q-".
+		// Try to make this unnecessary in this parseCriteria function.
+		if strings.HasPrefix(qt.Query(), "q-") {
+			if err := criteriaMap.parseShortQueries(strings.TrimPrefix(qt.Query(), "q-")); err != nil {
+				return nil, err
+			}
+		} else {
+			criteriaMap.appendCriteria("instanceName", qt.Query())
 		}
-	} else {
-		criteriaMap.appendCriteria("instanceName", segment.Query)
-	}
 
-	groupMatches := groupRegex.FindAllStringSubmatch(segment.Group, -1)
-	if groupMatches != nil {
-		criteriaMap.appendCriteria("g", groupMatches[0][1])
-	}
+		groupMatches := groupRegex.FindAllStringSubmatch(qt.(ShortForm).Group(), -1)
+		if groupMatches != nil {
+			criteriaMap.appendCriteria("g", groupMatches[0][1])
+		}
 
-	if segment.Instance != "" {
-		criteriaMap.appendCriteria("instanceGroupName", segment.Instance)
-	}
+		criteriaMap.appendCriteria("domain", qt.(ShortForm).Domain())
+	case LONG:
+		// TODO: parseShortQueries fails if the query does not contain the "q-" prefix.
+		// Try to make this unnecessary in this parseCriteria function.
+		if strings.HasPrefix(qt.Query(), "q-") {
+			if err := criteriaMap.parseShortQueries(strings.TrimPrefix(qt.Query(), "q-")); err != nil {
+				return nil, err
+			}
+		}
 
-	if segment.Network != "" {
-		criteriaMap.appendCriteria("network", segment.Network)
-	}
+		criteriaMap.appendCriteria("instanceName", qt.(LongForm).Instance())
+		criteriaMap.appendCriteria("instanceGroupName", qt.(LongForm).Group())
+		criteriaMap.appendCriteria("network", qt.(LongForm).Network())
+		criteriaMap.appendCriteria("deployment", qt.(LongForm).Deployment())
 
-	if segment.Deployment != "" {
-		criteriaMap.appendCriteria("deployment", segment.Deployment)
-	}
+		groupMatches := groupRegex.FindAllStringSubmatch(qt.(LongForm).Group(), -1)
+		if groupMatches != nil {
+			criteriaMap.appendCriteria("g", groupMatches[0][1])
+		}
 
-	criteriaMap.appendCriteria("domain", segment.Domain)
+		criteriaMap.appendCriteria("domain", qt.(LongForm).Domain())
+	case AGENTID:
+		criteriaMap.appendCriteria("agentID", qt.Query())
+	case NONBOSH:
+		criteriaMap.appendCriteria("instanceName", qt.Query())
+	}
 
 	return criteriaMap, nil
 }
@@ -216,5 +234,7 @@ func (c Criteria) appendCriteria(key, value string) {
 		values = []string{}
 	}
 
-	c[key] = append(values, value)
+	if value != "" {
+		c[key] = append(values, value)
+	}
 }

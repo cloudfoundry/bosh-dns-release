@@ -257,6 +257,7 @@ func createFromJSON(j []byte, logger boshlog.Logger, aliasEncoder AliasQueryEnco
 	azIDIndex := -1
 	instanceIndexIndex := -1
 	groupIdsIndex := -1
+	agentIdIndex := -1
 
 	for i, k := range swap.Keys {
 		switch k {
@@ -284,6 +285,8 @@ func createFromJSON(j []byte, logger boshlog.Logger, aliasEncoder AliasQueryEnco
 			azIDIndex = i
 		case "instance_index":
 			instanceIndexIndex = i
+		case "agent_id":
+			agentIdIndex = i
 		default:
 			continue
 		}
@@ -324,6 +327,8 @@ func createFromJSON(j []byte, logger boshlog.Logger, aliasEncoder AliasQueryEnco
 		} else if !optionalStringValue(&record.NetworkID, info, networkIDIndex, "network_id", index, logger) {
 			continue
 		} else if !optionalStringValue(&record.NumID, info, numIDIndex, "num_id", index, logger) {
+			continue
+		} else if !optionalStringValue(&record.AgentID, info, agentIdIndex, "agent_id", index, logger) {
 			continue
 		} else if groupIdsIndex >= 0 && !assertStringArrayOfStringValue(&record.GroupIDs, info, groupIdsIndex, "group_ids", index, logger) {
 			continue

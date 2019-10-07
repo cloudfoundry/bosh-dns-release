@@ -17,5 +17,6 @@ type Record struct {
 	Domain        string
 	AZ            string
 	AZID          string
+	AgentID       string
 	InstanceIndex string
 }

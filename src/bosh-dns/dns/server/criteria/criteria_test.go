@@ -92,6 +92,7 @@ var _ = Describe("Criteria", func() {
 
 		BeforeEach(func() {
 			rec = &record.Record{
+				AgentID:       "abc",
 				ID:            "id",
 				NumID:         "123",
 				Group:         "a-group",
@@ -133,6 +134,7 @@ var _ = Describe("Criteria", func() {
 			Entry("Short-form AZ", "a", "azid"),
 			Entry("Short-form index", "i", "0"),
 			Entry("Group ", "g", "gid"),
+			Entry("AgentID ", "agentID", "abc"),
 		)
 
 		DescribeTable("Matching with known fields but non-matching values", func(field, value string) {
@@ -152,6 +154,7 @@ var _ = Describe("Criteria", func() {
 			Entry("Short-form AZ", "a", "azid2"),
 			Entry("Short-form index", "i", "1"),
 			Entry("Group ", "g", "gid2"),
+			Entry("AgentID ", "agentID", "abcd"),
 		)
 
 		It("returns false when matching on an unknown field", func() {

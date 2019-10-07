@@ -85,7 +85,7 @@ var _ = Describe("RecordSet", func() {
 			})
 
 			It("parses the instance index", func() {
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.domain."}, true)
 				_, recs := fakeFilterer.FilterArgsForCall(0)
 
 				Expect(recs).To(WithTransform(dereferencer, ContainElement(record.Record{
@@ -349,6 +349,7 @@ var _ = Describe("RecordSet", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			_, err = recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
+			Expect(err).NotTo(HaveOccurred())
 
 			_, recs := fakeFilterer.FilterArgsForCall(0)
 			Expect(recs).To(HaveLen(1))
@@ -803,14 +804,17 @@ var _ = Describe("RecordSet", func() {
 			})
 
 			It("it filters via the Filter with criteria", func() {
-				recordSet.Filter([]string{"q-s0m1.my-group.my-network.my-deployment.bosh."}, true)
+				recordSet.Filter([]string{"q-s0m1.my-group.my-network.my-deployment.my-domain."}, true)
 				crit, recs := fakeFilterer.FilterArgsForCall(0)
 
 				Expect(crit).To(Equal(criteria.Criteria{
-					"s":      []string{"0"},
-					"m":      []string{"1"},
-					"domain": []string{""},
-					"fqdn":   []string{"q-s0m1.my-group.my-network.my-deployment.bosh."},
+					"s":                 []string{"0"},
+					"m":                 []string{"1"},
+					"instanceGroupName": []string{"my-group"},
+					"network":           []string{"my-network"},
+					"deployment":        []string{"my-deployment"},
+					"domain":            []string{"my-domain."},
+					"fqdn":              []string{"q-s0m1.my-group.my-network.my-deployment.my-domain."},
 				}))
 				Expect(recs).To(WithTransform(dereferencer, ContainElement(record.Record{
 					ID:            "instance0",
