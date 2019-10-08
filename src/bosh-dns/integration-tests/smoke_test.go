@@ -14,17 +14,19 @@ import (
 var _ = Describe("Integration", func() {
 	Describe("Smoke Tests", func() {
 		var (
-			responses                             []record.Record
-			instanceID, instanceIP, instanceIndex string
-			e                                     TestEnvironment
+			responses                                      []record.Record
+			instanceID, agentID, instanceIP, instanceIndex string
+			e                                              TestEnvironment
 		)
 
 		BeforeEach(func() {
 			// Make up an instanceid for records.json
 			instanceID = "abcdabcd"
+			agentID = "cbdacbda"
 			instanceIP = "234.234.234.234"
 			instanceIndex = "0"
 			responses = []record.Record{record.Record{
+				AgentID:       agentID,
 				ID:            instanceID,
 				IP:            instanceIP,
 				InstanceIndex: instanceIndex,
@@ -48,6 +50,16 @@ var _ = Describe("Integration", func() {
 			It("returns records for bosh instances", func() {
 				dnsResponse := helpers.DigWithPort(
 					fmt.Sprintf("%s.bosh-dns.default.bosh-dns.bosh.", instanceID),
+					e.ServerAddress(), e.Port())
+				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+				Expect(dnsResponse.Answer).To(ContainElement(
+					gomegadns.MatchResponse(gomegadns.Response{"ip": responses[0].IP, "ttl": 0}),
+				))
+			})
+
+			It("returns records for agent queries", func() {
+				dnsResponse := helpers.DigWithPort(
+					fmt.Sprintf("%s.bosh-agent-id.", agentID),
 					e.ServerAddress(), e.Port())
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(ContainElement(

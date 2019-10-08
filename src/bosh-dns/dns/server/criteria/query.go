@@ -13,20 +13,22 @@ const (
 	NONBOSH = iota
 )
 
+const BoshAgentTLD = "bosh-agent-id"
+
 type QueryFormType interface {
 	Type() int
 	Query() string
 }
 
 type ShortForm struct {
-	query  string
-	group  string
-	domain string
+	query    string
+	group    string
+	domain   string
+	instance string
 }
 
 type LongForm struct {
 	ShortForm
-	instance   string
 	network    string
 	deployment string
 }
@@ -46,7 +48,7 @@ func ParseQuery(fqdn string, domains []string) (QueryFormType, error) {
 		return nil, errors.New("domain is malformed")
 	}
 
-	if len(segments) == 2 && segments[1] == "" {
+	if len(segments) == 2 && segments[1] == fmt.Sprintf("%s.", BoshAgentTLD) {
 		return AgentIDForm{
 			query: segments[0],
 		}, nil
@@ -59,30 +61,30 @@ func ParseQuery(fqdn string, domains []string) (QueryFormType, error) {
 
 	groupQuery := strings.TrimSuffix(segments[1], "."+tld)
 	groupSegments := strings.Split(groupQuery, ".")
+	instanceName := ""
+	query := ""
+	if isQuery(segments[0]) {
+		query = segments[0]
+	} else {
+		instanceName = segments[0]
+	}
 
 	switch len(groupSegments) {
 	case 1:
 		return ShortForm{
-			query:  segments[0],
-			group:  groupQuery,
-			domain: tld,
+			query:    query,
+			instance: instanceName,
+			group:    groupQuery,
+			domain:   tld,
 		}, nil
 	case 3:
-		instanceName := ""
-		query := ""
-		if strings.HasPrefix(segments[0], "q-") {
-			query = segments[0]
-		} else {
-			instanceName = segments[0]
-		}
-
 		return LongForm{
 			ShortForm: ShortForm{
-				query:  query,
-				group:  groupSegments[0],
-				domain: tld,
+				query:    query,
+				group:    groupSegments[0],
+				domain:   tld,
+				instance: instanceName,
 			},
-			instance:   instanceName,
 			network:    groupSegments[1],
 			deployment: groupSegments[2],
 		}, nil
@@ -126,6 +128,10 @@ func (s ShortForm) Deployment() string {
 	return ""
 }
 
+func (s ShortForm) Instance() string {
+	return s.instance
+}
+
 func (s LongForm) Type() int {
 	return LONG
 }
@@ -140,10 +146,6 @@ func (s LongForm) Group() string {
 
 func (s LongForm) Domain() string {
 	return s.domain
-}
-
-func (s LongForm) Instance() string {
-	return s.instance
 }
 
 func (s LongForm) Network() string {
@@ -170,18 +172,18 @@ func (s NonBoshDNSForm) Query() string {
 	return s.query
 }
 
-func NewShortFormQuery(query, group, domain string) ShortForm {
+func NewShortFormQuery(query, instance, group, domain string) ShortForm {
 	return ShortForm{
-		query:  query,
-		group:  group,
-		domain: domain,
+		query:    query,
+		instance: instance,
+		group:    group,
+		domain:   domain,
 	}
 }
 
 func NewLongFormQuery(query, group, domain, instance, network, deployment string) LongForm {
 	return LongForm{
-		ShortForm:  NewShortFormQuery(query, group, domain),
-		instance:   instance,
+		ShortForm:  NewShortFormQuery(query, instance, group, domain),
 		network:    network,
 		deployment: deployment,
 	}

@@ -138,7 +138,7 @@ func (t *testEnvironment) writeRecords() error {
 		Aliases map[string][]records.AliasDefinition `json:"aliases"`
 	}{}
 
-	swap.Keys = []string{"ip", "id", "instance_index", "instance_group", "deployment", "network", "domain"}
+	swap.Keys = []string{"ip", "id", "agent_id", "instance_index", "instance_group", "deployment", "network", "domain"}
 
 	for _, val := range t.records {
 		instanceIndex, err := strconv.Atoi(val.InstanceIndex)
@@ -149,6 +149,7 @@ func (t *testEnvironment) writeRecords() error {
 		swap.Infos = append(swap.Infos, []interface{}{
 			val.IP,
 			val.ID,
+			val.AgentID,
 			instanceIndex,
 			"bosh-dns",
 			"bosh-dns",

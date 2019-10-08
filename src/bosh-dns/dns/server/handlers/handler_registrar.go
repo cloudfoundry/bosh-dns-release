@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bosh-dns/dns/server/criteria"
+	"fmt"
 	"time"
 
 	"code.cloudfoundry.org/clock"
@@ -45,6 +47,8 @@ func NewHandlerRegistrar(logger logger.Logger, clock clock.Clock, domainProvider
 
 func (h *HandlerRegistrar) Run(signal chan struct{}) error {
 	ticker := h.clock.NewTicker(RegisterInterval)
+	h.mux.Handle(fmt.Sprintf("%s", criteria.BoshAgentTLD), NewRequestLoggerHandler(h.handler, h.clock, h.logger))
+
 	for {
 		select {
 		case <-signal:

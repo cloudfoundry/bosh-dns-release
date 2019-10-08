@@ -8,16 +8,16 @@ import (
 )
 
 var _ = Describe("ParseQuery", func() {
-	It("creates segment from long-form fqdn", func() {
+	It("parses long-form", func() {
 		s, err := criteria.ParseQuery("q-s0.ig.net.depl.bosh", []string{"bosh"})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(s).To(Equal(criteria.NewLongFormQuery("q-s0", "ig", "bosh", "", "net", "depl")))
 	})
 
-	It("creates segment from short-form fqdn", func() {
+	It("parses short-form", func() {
 		s, err := criteria.ParseQuery("q-short.q-group.bosh", []string{"bosh"})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(s).To(Equal(criteria.NewShortFormQuery("q-short", "q-group", "bosh")))
+		Expect(s).To(Equal(criteria.NewShortFormQuery("q-short", "", "q-group", "bosh")))
 	})
 
 	It("errors when the fqdn cannot be split into a query and group segment", func() {
@@ -26,7 +26,7 @@ var _ = Describe("ParseQuery", func() {
 	})
 
 	It("creates an agent_id form when given an agent_id", func() {
-		s, err := criteria.ParseQuery("agent_id.", []string{"bosh"})
+		s, err := criteria.ParseQuery("agent_id.bosh-agent-id.", []string{"bosh"})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(s).To(Equal(criteria.NewAgentIDFormQuery("agent_id")))
 	})

@@ -175,16 +175,16 @@ func parseCriteria(qt QueryFormType) (Criteria, error) {
 		if err := criteriaMap.parseShortQueries(qt.Query()); err != nil {
 			return nil, err
 		}
-		// TODO: is this correct to set instance name to entire query?
-		criteriaMap.appendCriteria("instanceName", qt.Query())
 
 		groupMatches := groupRegex.FindAllStringSubmatch(qt.(ShortForm).Group(), -1)
 		if groupMatches != nil {
 			criteriaMap.appendCriteria("g", groupMatches[0][1])
 		}
 
+		criteriaMap.appendCriteria("instanceName", qt.(ShortForm).Instance())
 		criteriaMap.appendCriteria("domain", qt.(ShortForm).Domain())
 	case LONG:
+
 		if err := criteriaMap.parseShortQueries(qt.Query()); err != nil {
 			return nil, err
 		}
@@ -209,10 +209,16 @@ func parseCriteria(qt QueryFormType) (Criteria, error) {
 	return criteriaMap, nil
 }
 
+func isQuery(query string) bool {
+	return strings.HasPrefix(query, "q-")
+}
+
 func (c Criteria) parseShortQueries(query string) error {
-	if strings.HasPrefix(query, "q-") {
-		query = strings.TrimPrefix(query, "q-")
+	if !isQuery(query) {
+		return nil
 	}
+
+	query = strings.TrimPrefix(query, "q-")
 	querySections := keyValueRegex.FindAllStringSubmatch(query, -1)
 	if querySections == nil {
 		return errors.New("illegal dns query")
