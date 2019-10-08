@@ -172,15 +172,11 @@ func parseCriteria(qt QueryFormType) (Criteria, error) {
 
 	switch qt.Type() {
 	case SHORT:
-		// TODO: instanceName is set if a short-form query does not start with "q-".
-		// Try to make this unnecessary in this parseCriteria function.
-		if strings.HasPrefix(qt.Query(), "q-") {
-			if err := criteriaMap.parseShortQueries(strings.TrimPrefix(qt.Query(), "q-")); err != nil {
-				return nil, err
-			}
-		} else {
-			criteriaMap.appendCriteria("instanceName", qt.Query())
+		if err := criteriaMap.parseShortQueries(qt.Query()); err != nil {
+			return nil, err
 		}
+		// TODO: is this correct to set instance name to entire query?
+		criteriaMap.appendCriteria("instanceName", qt.Query())
 
 		groupMatches := groupRegex.FindAllStringSubmatch(qt.(ShortForm).Group(), -1)
 		if groupMatches != nil {
@@ -189,12 +185,8 @@ func parseCriteria(qt QueryFormType) (Criteria, error) {
 
 		criteriaMap.appendCriteria("domain", qt.(ShortForm).Domain())
 	case LONG:
-		// TODO: parseShortQueries fails if the query does not contain the "q-" prefix.
-		// Try to make this unnecessary in this parseCriteria function.
-		if strings.HasPrefix(qt.Query(), "q-") {
-			if err := criteriaMap.parseShortQueries(strings.TrimPrefix(qt.Query(), "q-")); err != nil {
-				return nil, err
-			}
+		if err := criteriaMap.parseShortQueries(qt.Query()); err != nil {
+			return nil, err
 		}
 
 		criteriaMap.appendCriteria("instanceName", qt.(LongForm).Instance())
@@ -218,6 +210,9 @@ func parseCriteria(qt QueryFormType) (Criteria, error) {
 }
 
 func (c Criteria) parseShortQueries(query string) error {
+	if strings.HasPrefix(query, "q-") {
+		query = strings.TrimPrefix(query, "q-")
+	}
 	querySections := keyValueRegex.FindAllStringSubmatch(query, -1)
 	if querySections == nil {
 		return errors.New("illegal dns query")
