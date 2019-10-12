@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "4335459ccbb76e68abfc04866659f1879f0aee91"
+  revision = "94a8490a77f099ff495aa5823ed963a21cca7ac5"
 
 [[projects]]
   branch = "master"
@@ -413,7 +413,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:14f92d22d3f7089675df6cdece9071a4629c80896eb064a68ed3668e5f65e31a"
+  digest = "1:d507f7acd1d2fac27cc348b40856f19aca3427a79d2b2f5e182f66d3c2d6f776"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -427,11 +427,11 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "34f69633bfdcf9db92f698f8487115767eebef81"
+  revision = "87dc89f01550277dc22b74ffcf4cd89fa2f40f4c"
 
 [[projects]]
   branch = "master"
-  digest = "1:0eb66af024800ebad0aff840ce17e51af3ca1937e20cf70fe10fc2a6dc10947b"
+  digest = "1:a6cc932a345db9abd8b181ad7e748b898b4daecdb91bd0f87955b3eab25e7d98"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -453,11 +453,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "d98b1b4438230571bd7fbc5aaa89843e92937bd3"
+  revision = "491137f692577e390404f177a0515c9f86f79754"
 
 [[projects]]
   branch = "master"
-  digest = "1:f8fbedee676945041236554a7ec3bcccde714b84f9b4ccb6c93f2c1ac4065c95"
+  digest = "1:4d32838276fa25182ac769cb955976d1176a185f5fe8487bfaff0fb5b8368615"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -465,7 +465,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "c178f38b412c7b426e4e97be2e75d11ff7b8d4d4"
+  revision = "b09406accb4736d857a32bf9444cd7edae2ffa79"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -523,7 +523,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "c9f9432ec4b21a28c4d47f172513698febb68e9c"
+  revision = "4c025a95b26e43a32c527d23a8a7ed074723e03b"
 
 [[projects]]
   branch = "master"
@@ -531,7 +531,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "c459b9ce5143dd819763d9329ff92a8e35e61bd9"
+  revision = "548a555dbc03994223efbaba0090152849259498"
 
 [[projects]]
   digest = "1:3402d0f99f4bdc28b92dfbf22cbab88e1790b83209e812157c68803d4fc089d0"
