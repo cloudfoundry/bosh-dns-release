@@ -60,21 +60,27 @@ func main() {
 }
 
 func mainExitCode() int {
-	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout)
-	logTag := "main"
-	defer logger.FlushTimeout(5 * time.Second)
-
 	configPath, err := parseFlags()
 	if err != nil {
-		logger.Error(logTag, err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		return 1
 	}
 
 	config, err := dnsconfig.LoadFromFile(configPath)
 	if err != nil {
-		logger.Error(logTag, err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		return 1
 	}
+
+	level, err := config.GetLogLevel()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return 1
+	}
+
+	logger := boshlog.NewAsyncWriterLogger(level, os.Stdout)
+	logTag := "main"
+	defer logger.FlushTimeout(5 * time.Second)
 
 	fs := boshsys.NewOsFileSystem(logger)
 

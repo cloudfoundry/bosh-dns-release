@@ -71,7 +71,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(session.Out).To(gbytes.Say("[main].*ERROR - --config is a required flag"))
+			Expect(session.Err).To(gbytes.Say("--config is a required flag"))
 		})
 
 		It("exits 1 if the config file does not exist", func() {
@@ -85,7 +85,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(session.Out).To(gbytes.Say("[main].*ERROR - Unable to find config file at 'some/fake/path'"))
+			Expect(session.Err).To(gbytes.Say("Unable to find config file at 'some/fake/path'"))
 		})
 
 		It("exits 1 if the config file is busted", func() {
@@ -100,7 +100,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(session.Out).To(gbytes.Say("[main].*ERROR - unexpected end of JSON input"))
+			Expect(session.Err).To(gbytes.Say("unexpected end of JSON input"))
 		})
 	})
 

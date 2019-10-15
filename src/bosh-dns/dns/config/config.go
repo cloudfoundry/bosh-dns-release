@@ -8,6 +8,8 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 const (
@@ -30,10 +32,20 @@ type Config struct {
 	UpcheckDomains     []string     `json:"upcheck_domains,omitempty"`
 	JobsDir            string       `json:"jobs_dir,omitempty"`
 
+	LogLevel string `json:"log_level,omitempty"`
+
 	API APIConfig `json:"api"`
 
 	Health HealthConfig `json:"health"`
 	Cache  Cache        `json:"cache"`
+}
+
+func (c Config) GetLogLevel() (boshlog.LogLevel, error) {
+	level, err := boshlog.Levelify(c.LogLevel)
+	if err != nil {
+		return boshlog.LevelNone, err
+	}
+	return level, nil
 }
 
 type APIConfig struct {
@@ -89,6 +101,7 @@ func NewDefaultConfig() Config {
 		Health: HealthConfig{
 			MaxTrackedQueries: 2000,
 		},
+		LogLevel: boshlog.AsString(boshlog.LevelDebug),
 	}
 }
 

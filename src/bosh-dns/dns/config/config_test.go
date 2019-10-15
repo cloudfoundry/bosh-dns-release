@@ -11,6 +11,8 @@ import (
 
 	"bosh-dns/dns/config"
 
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -31,6 +33,7 @@ var _ = Describe("Config", func() {
 		listenAPIPort           int
 		listenAddress           string
 		listenPort              int
+		logLevel                string
 		recursorTimeout         string
 		timeout                 string
 		upcheckDomains          []string
@@ -54,6 +57,7 @@ var _ = Describe("Config", func() {
 		listenAPIPort = rand.Int()
 		listenAddress = fmt.Sprintf("192.168.1.%d", rand.Int31n(256))
 		listenPort = rand.Int()
+		logLevel = boshlog.AsString(boshlog.LevelDebug)
 		recursorTimeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		timeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		upcheckDomains = []string{"upcheck.domain.", "health2.bosh."}
@@ -67,6 +71,7 @@ var _ = Describe("Config", func() {
 			"alias_files_glob":     aliasesFileGlob,
 			"handlers_files_glob":  handlersFileGlob,
 			"port":                 listenPort,
+			"log_level":            logLevel,
 			"recursor_timeout":     recursorTimeout,
 			"excluded_recursors":   []string{"169.254.169.254", "169.10.10.10:1234"},
 			"timeout":              timeout,
@@ -115,8 +120,9 @@ var _ = Describe("Config", func() {
 		dnsConfig, err := config.LoadFromFile(configFilePath)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dnsConfig).To(Equal(config.Config{
-			Address: listenAddress,
-			Port:    listenPort,
+			Address:  listenAddress,
+			Port:     listenPort,
+			LogLevel: logLevel,
 			API: config.APIConfig{
 				Port:            listenAPIPort,
 				CertificateFile: apiCertificateFile,
