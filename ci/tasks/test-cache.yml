@@ -11,7 +11,7 @@ inputs:
   - name: coredns
   - name: bosh-dns-release
 
-params: []
+params: {}
 
 run:
   path: bosh-dns-release/ci/tasks/test-cache.sh
