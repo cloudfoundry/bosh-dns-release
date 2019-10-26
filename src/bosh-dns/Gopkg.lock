@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "edd614a7817f201b7bd70277a68de1c21ddbfe64"
+  revision = "d9506deccf6a821dc81ec55d84873d4a05a1ec9d"
 
 [[projects]]
   branch = "master"
@@ -431,7 +431,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:37abaf44a78cca32e2e9bba8b757a4bf89539d561a3a3f0a2771487e9c2309f0"
+  digest = "1:5998f600f07b64830b99e5f5a8d868984e2849e0bc4df23e2a3e4a895a57a6b2"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -453,11 +453,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "da9a3fd4c5820e74b24a6cb7fb438dc9b0dd377c"
+  revision = "ec77196f6094c3492a8b61f2c11cf937f78992ae"
 
 [[projects]]
   branch = "master"
-  digest = "1:2ea958f4f8e9efa7baf35d2e31616b4acfa2ab5d1a11c905671610ab7e1a01d3"
+  digest = "1:7188c3c1e4abfceddd76af7a476399393cd63b90e995ae714bdfda156b55b783"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -465,7 +465,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "727590c5006e77ca5247972f47e877f4929fc985"
+  revision = "33540a1f603772f9d4b761f416f5c10dade23e96"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -506,7 +506,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:652982a5f8ecd4d5b2628668df8fee776d1fd416b3c24cbdf3a97b786c5bf7e8"
+  digest = "1:e8074db5811031e438301937752755e84de48028d254d69ed9e3bbe74f9d0c0f"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -524,7 +524,7 @@
     "internal/span",
   ]
   pruneopts = "NUT"
-  revision = "ed542cd5b28ad1b474f8ff7ca112cad2c3ac2dc8"
+  revision = "b2104f82a97df5456531b2816ef2022c7f4431c0"
 
 [[projects]]
   branch = "master"
@@ -586,7 +586,7 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:a56dc1133e9c449d41d22ffabd6c2343cd25ab31c9cad0e74a144006810d1544"
+  digest = "1:50ac48ae032923e7fc11dfb0fa289041c90d974c64df3aba86269b2bce8f4610"
   name = "gopkg.in/square/go-jose.v2"
   packages = [
     ".",
@@ -594,8 +594,8 @@
     "json",
   ]
   pruneopts = "NUT"
-  revision = "730df5f748271903322feb182be83b43ebbbe27d"
-  version = "v2.3.1"
+  revision = "8fd82ff1d52a5162ff23c0a48e2c64a1fa4a3f8f"
+  version = "v2.4.0"
 
 [[projects]]
   branch = "v1"
