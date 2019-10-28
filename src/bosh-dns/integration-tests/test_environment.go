@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -67,7 +68,12 @@ func (t *testEnvironment) writeConfig() error {
 		return err
 	}
 
-	t.port = 6363
+	port, err := localPort()
+	if err != nil {
+		return err
+	}
+
+	t.port = int(port)
 	t.serverAddress = "127.0.0.1"
 
 	jobsDir, err := ioutil.TempDir("", "bosh-dns-integration-jobs")
@@ -253,4 +259,25 @@ func (t *testEnvironment) Restart() error {
 
 func (t *testEnvironment) Output() *gbytes.Buffer {
 	return t.session.Out
+}
+
+func localPort() (uint16, error) {
+	l, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		return 0, err
+	}
+	addr := l.Addr().String()
+	l.Close()
+
+	_, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return 0, err
+	}
+
+	portValue, err := strconv.ParseUint(port, 10, 16)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint16(portValue), nil
 }
