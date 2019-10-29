@@ -141,6 +141,29 @@ var _ = Describe("HealthWatcher", func() {
 					}).Should(Equal(api.HealthResult{State: api.StatusFailing}))
 				})
 			})
+
+			Context("and the status takes a long time to change", func() {
+				BeforeEach(func() {
+					fakeChecker.GetStatusReturns(api.HealthResult{State: api.StatusRunning})
+				})
+
+				It("returns the old status until the check returns", func() {
+					fakeChecker.GetStatusStub = func(ip string) api.HealthResult {
+						time.Sleep(5 * time.Second)
+						return api.HealthResult{State: healthiness.StateUnknown}
+					}
+					Expect(healthWatcher.HealthState(ip)).To(Equal(api.HealthResult{State: api.StatusRunning}))
+
+					fakeClock.WaitForWatcherAndIncrement(interval)
+
+					Consistently(func() api.HealthResult {
+						return healthWatcher.HealthState(ip)
+					}, 5*time.Second).Should(Equal(api.HealthResult{State: api.StatusRunning}))
+					Eventually(func() api.HealthResult {
+						return healthWatcher.HealthState(ip)
+					}, 5*time.Second).Should(Equal(api.HealthResult{State: healthiness.StateUnknown}))
+				})
+			})
 		})
 
 		Context("tracking multiple ip addresses", func() {
