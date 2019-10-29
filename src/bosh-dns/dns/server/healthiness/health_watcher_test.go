@@ -73,6 +73,27 @@ var _ = Describe("HealthWatcher", func() {
 					Expect(healthWatcher.HealthState(ip).State).To(Equal(healthiness.StateUnknown))
 				})
 			})
+
+			Context("and it takes a while to run a check", func() {
+				JustBeforeEach(func() {
+					fakeChecker.GetStatusStub = func(ip string) api.HealthResult {
+						time.Sleep(1 * time.Second)
+						return api.HealthResult{State: healthiness.StateUnknown}
+					}
+					for i := 0; i < 5; i++ {
+						go healthWatcher.RunCheck(ip)
+					}
+					Eventually(fakeChecker.GetStatusCallCount, 5*time.Second).Should(Equal(1))
+					Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
+				})
+
+				It("only checks a given IP once", func() {
+					Consistently(fakeChecker.GetStatusCallCount, 5*time.Second).Should(Equal(1))
+					Eventually(func() api.HealthStatus {
+						return healthWatcher.HealthState(ip).State
+					}).Should(Equal(healthiness.StateUnknown))
+				})
+			})
 		})
 
 		Context("when the status is known", func() {

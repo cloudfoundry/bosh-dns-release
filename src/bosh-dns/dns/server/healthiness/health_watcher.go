@@ -36,6 +36,7 @@ type healthWatcher struct {
 
 	checkWorkPool *workpool.WorkPool
 	state         map[string]api.HealthResult
+	currentChecks map[string]bool
 	stateMutex    *sync.RWMutex
 	logger        boshlog.Logger
 }
@@ -51,6 +52,7 @@ func NewHealthWatcher(workpoolSize int, checker HealthChecker, clock clock.Clock
 
 		checkWorkPool: wp,
 		state:         map[string]api.HealthResult{},
+		currentChecks: map[string]bool{},
 		stateMutex:    &sync.RWMutex{},
 		logger:        logger,
 	}
@@ -114,9 +116,16 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 }
 
 func (hw *healthWatcher) RunCheck(ip string) {
-	healthInfo := hw.checker.GetStatus(ip)
-
 	hw.stateMutex.Lock()
+	if hw.currentChecks[ip] {
+		hw.stateMutex.Unlock()
+		return
+	}
+	hw.currentChecks[ip] = true
+	hw.stateMutex.Unlock()
+	healthInfo := hw.checker.GetStatus(ip)
+	hw.stateMutex.Lock()
+	hw.currentChecks[ip] = false
 
 	wasHealthy, found := hw.state[ip]
 	hw.state[ip] = healthInfo
