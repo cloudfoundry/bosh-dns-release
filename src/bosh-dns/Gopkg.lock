@@ -66,7 +66,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:79bd2854dadba81b4c92bcd6a8023adcff0ee7bbb55c5dcfc8cc3bcdb87c280a"
+  digest = "1:0ee333d0b5938709a1ae3878115503418242bd8c1af6bac615fb7a0f2d1f918d"
   name = "github.com/cloudfoundry/bosh-utils"
   packages = [
     "errors",
@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "d9506deccf6a821dc81ec55d84873d4a05a1ec9d"
+  revision = "d0b77418490dee69ca98baf5d6719733dd58511f"
 
 [[projects]]
   branch = "master"
@@ -221,6 +221,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:ebd0081aed1cd0af2f65a362c0ceea985eae9fe72efb28cefb84eca3b98dd3a3"
+  name = "github.com/jpillora/backoff"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "8eab2debe79d12b7bd3d10653910df25fa9552ba"
+  version = "1.0.0"
+
+[[projects]]
   digest = "1:7dc14952637aea1ef99bc1d9ad1374ddf0fa10d7b608cf5cb72d3f4fa7e4b579"
   name = "github.com/klauspost/cpuid"
   packages = ["."]
@@ -273,7 +281,7 @@
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
-  digest = "1:53c18f94a5e63e5fa479a56312c712fd393407bbaa967819a34730b730961763"
+  digest = "1:43ab83f3c9e11f34201a9e380f244a55ade6fc33aa100d989e13b1417785abc7"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -304,11 +312,11 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "72b6ab036f78c4bf1a9748c3941dd7c3de54917a"
-  version = "v1.10.2"
+  revision = "ce5d301e555bb672c693c099ba6ca5087b06c0b4"
+  version = "v1.10.3"
 
 [[projects]]
-  digest = "1:b5ec08263b3a1acfebdd8ffe97dbd938b9d03a23df7c61ba6924ad51c753d824"
+  digest = "1:546a4c2072ad730745abf9898de7442a49dc86d2c1624abb96a6d0db26e0bcfa"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -328,8 +336,8 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "bdebf9e0ece900259084cfa4121b97ce1a540939"
-  version = "v1.7.0"
+  revision = "f9a52764bd5a0fd2d201bcca584351d03b72f8da"
+  version = "v1.7.1"
 
 [[projects]]
   digest = "1:6846140b3f116579680eefdc17145f2bcf064b68deb9febf86b4419a454049af"
@@ -427,11 +435,11 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "87dc89f01550277dc22b74ffcf4cd89fa2f40f4c"
+  revision = "8986dd9e96cf0a6f74da406c005ba3df38527c04"
 
 [[projects]]
   branch = "master"
-  digest = "1:5998f600f07b64830b99e5f5a8d868984e2849e0bc4df23e2a3e4a895a57a6b2"
+  digest = "1:5c1a9f9bbf689cbc094cc492d7882e5bf749f16d5267f20492bd38a225150d73"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -453,11 +461,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "ec77196f6094c3492a8b61f2c11cf937f78992ae"
+  revision = "0deb6923b6d97481cb43bc1043fe5b72a0143032"
 
 [[projects]]
   branch = "master"
-  digest = "1:7188c3c1e4abfceddd76af7a476399393cd63b90e995ae714bdfda156b55b783"
+  digest = "1:370d8b87bcf15404f4c9b6cb38668826b2469fee9f777587fb5231f1dbfd4198"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -465,7 +473,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "33540a1f603772f9d4b761f416f5c10dade23e96"
+  revision = "f43be2a4598cf3a47be9f94f0c28197ed9eae611"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -506,7 +514,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e8074db5811031e438301937752755e84de48028d254d69ed9e3bbe74f9d0c0f"
+  digest = "1:3a0c9d6a605d6a7c90e343ce34bdb8b894d69f6a9cbcda71351b5e48b8d754af"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -524,7 +532,7 @@
     "internal/span",
   ]
   pruneopts = "NUT"
-  revision = "b2104f82a97df5456531b2816ef2022c7f4431c0"
+  revision = "8dbcdeb83d3faec5315146800b375c4962a42fc6"
 
 [[projects]]
   branch = "master"
@@ -532,7 +540,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "548a555dbc03994223efbaba0090152849259498"
+  revision = "919d9bdd9fe6f1a5dd95ce5d5e4cdb8fd3c516d0"
 
 [[projects]]
   digest = "1:3402d0f99f4bdc28b92dfbf22cbab88e1790b83209e812157c68803d4fc089d0"
