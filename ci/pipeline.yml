@@ -9,8 +9,6 @@ groups:
   - test-unit-windows
   - test-unit-release
   - create-release
-  - test-performance
-  - test-performance-windows
   - test-acceptance
   - test-acceptance-ubuntu-xenial
   - test-acceptance-windows2019
@@ -119,43 +117,6 @@ jobs:
     - put: candidate-release
       params:
         file: "release/bosh-dns-dev-release.tgz"
-
-- name: test-performance
-  interruptible: true
-  public: true
-  serial: true
-  plan:
-    - get: every-10m
-      trigger: true
-    - get: bosh-dns-release
-      trigger: true
-      passed: [create-release]
-    - task: test-performance
-      tags: ["dns-performance"]
-      privileged: true
-      file: bosh-dns-release/ci/tasks/test-performance.yml
-      params:
-        ZONES_JSON_HASH: {{zones_json_hash}}
-        DATADOG_API_KEY: {{datadog_api_key}}
-        DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-linux
-
-- name: test-performance-windows
-  interruptible: true
-  public: true
-  serial: true
-  plan:
-    - get: every-10m
-      trigger: true
-    - get: bosh-dns-release
-      trigger: true
-      passed: [create-release]
-    - task: test-performance
-      file: bosh-dns-release/ci/tasks/windows/test-performance-windows.yml
-      timeout: 1h
-      params:
-        ZONES_JSON_HASH: {{zones_json_hash}}
-        DATADOG_API_KEY: {{datadog_api_key}}
-        DATADOG_ENVIRONMENT_TAG: bosh-dns-ci-windows
 
 - name: test-acceptance
   public: true
@@ -528,10 +489,6 @@ resources:
     branch: master
     uri: git@github.com:cloudfoundry/bosh-bbl-ci-envs.git
     private_key: {{envs_private_key}}
-
-- name: every-10m
-  type: time
-  source: { interval: 10m }
 
 - name: weekly
   type: time
