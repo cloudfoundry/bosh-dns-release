@@ -66,7 +66,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0ee333d0b5938709a1ae3878115503418242bd8c1af6bac615fb7a0f2d1f918d"
+  digest = "1:04590423c17e4ea8c9e3e2a5287f2cf739f3a8b8f24614c449590ebb0bd47ce8"
   name = "github.com/cloudfoundry/bosh-utils"
   packages = [
     "errors",
@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "d0b77418490dee69ca98baf5d6719733dd58511f"
+  revision = "7239a019919e5c91b8c82a6900395f4c1c2d73e6"
 
 [[projects]]
   branch = "master"
@@ -110,7 +110,7 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:c77a298ab4cf5b5e6884dd31fc4891a52edce7a088275656b54364d62bea47b7"
+  digest = "1:6205559318c39304ca5011c6fe4613ad66190f7e469216caca9ad4b6cb8f7e94"
   name = "github.com/coredns/coredns"
   packages = [
     "core/dnsserver",
@@ -140,8 +140,8 @@
     "request",
   ]
   pruneopts = "NUT"
-  revision = "b139ba34f370a4937bf76e7cc259a26f1394a91d"
-  version = "v1.6.4"
+  revision = "c2fd1b2467249d8b1bb6bbee72ad83b63dd9087f"
+  version = "v1.6.5"
 
 [[projects]]
   branch = "master"
@@ -421,7 +421,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d507f7acd1d2fac27cc348b40856f19aca3427a79d2b2f5e182f66d3c2d6f776"
+  digest = "1:5548b65ae4e27bb6c72078f774425d9035d0a1338413a91ee9f6a9f0267bbe7b"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -435,11 +435,11 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "8986dd9e96cf0a6f74da406c005ba3df38527c04"
+  revision = "bd318be0434a57050ed475e0f45c3dbb16c09c2e"
 
 [[projects]]
   branch = "master"
-  digest = "1:5c1a9f9bbf689cbc094cc492d7882e5bf749f16d5267f20492bd38a225150d73"
+  digest = "1:d48373e766e24df2e4f077a6094f7bcd0b6f712a6d8762d1a4c53215945e0e8a"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -461,11 +461,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "0deb6923b6d97481cb43bc1043fe5b72a0143032"
+  revision = "daa7c04131f568e31c51927b359a2d197a357058"
 
 [[projects]]
   branch = "master"
-  digest = "1:370d8b87bcf15404f4c9b6cb38668826b2469fee9f777587fb5231f1dbfd4198"
+  digest = "1:23822674b117a75fba302af3ffac3112df117ca28088480a296e2f0bde5dd149"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -473,7 +473,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "f43be2a4598cf3a47be9f94f0c28197ed9eae611"
+  revision = "c1f44814a5cd81a6d1cb589ef1e528bc5d305e07"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -514,7 +514,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3a0c9d6a605d6a7c90e343ce34bdb8b894d69f6a9cbcda71351b5e48b8d754af"
+  digest = "1:6b6d44425c7b62c6561c0c2617cc33db2bc589a0d9f2fe9f8536ce39fe1a6870"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -532,7 +532,7 @@
     "internal/span",
   ]
   pruneopts = "NUT"
-  revision = "8dbcdeb83d3faec5315146800b375c4962a42fc6"
+  revision = "7d206e10da11c2c24ecc75fc000f2924f811b649"
 
 [[projects]]
   branch = "master"
@@ -540,13 +540,14 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "919d9bdd9fe6f1a5dd95ce5d5e4cdb8fd3c516d0"
+  revision = "16a3f7862a1a494c52b23987ef8a993fd3f9a85e"
 
 [[projects]]
-  digest = "1:3402d0f99f4bdc28b92dfbf22cbab88e1790b83209e812157c68803d4fc089d0"
+  digest = "1:35985bdc8a9d6de854d129c7865f231af35af299ef113b3fede52d957edef7d9"
   name = "google.golang.org/grpc"
   packages = [
     ".",
+    "backoff",
     "balancer",
     "balancer/base",
     "balancer/roundrobin",
@@ -562,10 +563,13 @@
     "internal/backoff",
     "internal/balancerload",
     "internal/binarylog",
+    "internal/buffer",
     "internal/channelz",
     "internal/envconfig",
     "internal/grpcrand",
     "internal/grpcsync",
+    "internal/resolver/dns",
+    "internal/resolver/passthrough",
     "internal/syscall",
     "internal/transport",
     "keepalive",
@@ -573,16 +577,14 @@
     "naming",
     "peer",
     "resolver",
-    "resolver/dns",
-    "resolver/passthrough",
     "serviceconfig",
     "stats",
     "status",
     "tap",
   ]
   pruneopts = "NUT"
-  revision = "f6d0f9ee430895e87ef1ceb5ac8f39725bafceef"
-  version = "v1.24.0"
+  revision = "1a3960e4bd028ac0cec0a2afd27d7d8e67c11514"
+  version = "v1.25.1"
 
 [[projects]]
   digest = "1:1b91ae0dc69a41d4c2ed23ea5cffb721ea63f5037ca4b81e6d6771fbb8f45129"
@@ -614,12 +616,12 @@
   revision = "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
 
 [[projects]]
-  digest = "1:accc3bfe4e404aa53ac3621470e7cf9fce1efe48f0fabcfe6d12a72579d9d91f"
+  digest = "1:5ad10df0893403ae9fdbd17c6f14814394a635339dd79595600bae52432befcf"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "f221b8435cfb71e54062f6c6e99e9ade30b124d5"
-  version = "v2.2.4"
+  revision = "f90ceb4f409096b60e2e9076b38b304b8246e5fa"
+  version = "v2.2.5"
 
 [solve-meta]
   analyzer-name = "dep"
