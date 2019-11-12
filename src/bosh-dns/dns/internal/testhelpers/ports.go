@@ -17,10 +17,17 @@ var portIndex int32 = -1
 
 func GetFreePort() (int, error) {
 	maxPorts := 2000 / config.GinkgoConfig.ParallelTotal
-	if portIndex > int32(maxPorts-1) {
-		return 0, fmt.Errorf("Cannot find a free port to use")
+	for {
+		if portIndex > int32(maxPorts-1) {
+			break
+		}
+		unusedport := basePort + int(atomic.AddInt32(&portIndex, 1)) + maxPorts*config.GinkgoConfig.ParallelNode
+		err := TryListening(unusedport)
+		if err == nil {
+			return unusedport, nil
+		}
 	}
-	return basePort + int(atomic.AddInt32(&portIndex, 1)) + maxPorts*config.GinkgoConfig.ParallelNode, nil
+	return 0, fmt.Errorf("Cannot find a free port to use")
 }
 
 func WaitForListeningTCP(port int) error {
@@ -37,4 +44,13 @@ func WaitForListeningTCP(port int) error {
 	}
 
 	return errors.New("dns server failed to start")
+}
+
+func TryListening(port int) error {
+	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	if err != nil {
+		return err
+	}
+	err = ln.Close()
+	return err
 }
