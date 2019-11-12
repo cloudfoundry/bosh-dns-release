@@ -12,6 +12,7 @@ type LocalDomain struct {
 	logTag    string
 	recordSet RecordSet
 	shuffler  AnswerShuffler
+	truncater ResponseTruncater
 }
 
 //go:generate counterfeiter . AnswerShuffler
@@ -26,12 +27,13 @@ type RecordSet interface {
 	Resolve(domain string) ([]string, error)
 }
 
-func NewLocalDomain(logger logger.Logger, recordSet RecordSet, shuffler AnswerShuffler) LocalDomain {
+func NewLocalDomain(logger logger.Logger, recordSet RecordSet, shuffler AnswerShuffler, truncater ResponseTruncater) LocalDomain {
 	return LocalDomain{
 		logger:    logger,
 		logTag:    "LocalDomain",
 		recordSet: recordSet,
 		shuffler:  shuffler,
+		truncater: truncater,
 	}
 }
 
@@ -44,7 +46,7 @@ func (d LocalDomain) Resolve(questionDomains []string, responseWriter dns.Respon
 	responseMsg.Answer = answers
 	responseMsg.SetRcode(requestMsg, rCode)
 
-	TruncateIfNeeded(responseWriter, responseMsg)
+	d.truncater.TruncateIfNeeded(responseWriter, requestMsg, responseMsg)
 
 	return responseMsg
 }

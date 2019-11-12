@@ -225,12 +225,14 @@ var _ = Describe("Integration", func() {
 			})
 
 			It("compresses message responses that are larger than requested UDP Size", func() {
-				dnsResponse := helpers.DigWithOptions("compressed-ip-truncated-recursor-large.com.", environment.ServerAddress(), helpers.DigOpts{BufferSize: 16384, Port: environment.Port()})
+				dnsResponse := helpers.DigWithOptions("compressed-ip-truncated-recursor-large.com.", environment.ServerAddress(), helpers.DigOpts{BufferSize: 512, Port: environment.Port()})
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-				Expect(dnsResponse.Answer).To(HaveLen(512))
+				Expect(dnsResponse.Len()).To(BeNumerically(">", 512)) // uncompressed length
+				dnsResponse.Compress = true
+				Expect(dnsResponse.Len()).To(BeNumerically("<=", 512)) // compressed length
 			})
 
-			It("forwards large dns answers even if udp response size is larger than 512", func() {
+			It("truncates large dns answers if udp response size is larger than 512", func() {
 				dnsResponse := helpers.DigWithPort("ip-truncated-recursor-large.com.", environment.ServerAddress(), environment.Port())
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "tc", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(HaveLen(20))

@@ -66,7 +66,9 @@ func IPv6ReverseDigWithOptions(domain, server string, opts DigOpts) *dns.Msg {
 func DigWithOptions(domain, server string, opts DigOpts) *dns.Msg {
 	c := &dns.Client{Timeout: opts.Timeout, UDPSize: opts.BufferSize}
 	m := &dns.Msg{}
-
+	if opts.BufferSize > dns.MinMsgSize {
+		m.SetEdns0(opts.BufferSize, false)
+	}
 	m.SetQuestion(domain, dns.TypeA)
 
 	port := 53

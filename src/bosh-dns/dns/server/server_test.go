@@ -14,9 +14,9 @@ import (
 
 	"bosh-dns/dns/server/serverfakes"
 
+	"bosh-dns/dns/internal/testhelpers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"bosh-dns/dns/internal/testhelpers"
 )
 
 func tcpServerStub(bindAddress string, stop chan struct{}) func() error {

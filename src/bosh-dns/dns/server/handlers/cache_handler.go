@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bosh-dns/dns/server/handlers/internal"
+	"bosh-dns/dns/server/records/dnsresolver"
 	"github.com/coredns/coredns/plugin/cache"
 	"github.com/miekg/dns"
 	"golang.org/x/net/context"
@@ -9,30 +11,36 @@ import (
 )
 
 type CachingDNSHandler struct {
-	next   dns.Handler
-	ca     *cache.Cache
-	logger boshlog.Logger
-	logTag string
+	next      dns.Handler
+	ca        *cache.Cache
+	logger    boshlog.Logger
+	logTag    string
+	truncater dnsresolver.ResponseTruncater
 }
 
-func NewCachingDNSHandler(next dns.Handler) CachingDNSHandler {
+func NewCachingDNSHandler(next dns.Handler, truncater dnsresolver.ResponseTruncater) CachingDNSHandler {
 	ca := cache.New()
 	ca.Next = corednsHandlerWrapper{Next: next}
 	ca.Zones = []string{"."}
 	return CachingDNSHandler{
-		ca:     ca,
-		logTag: "CachingDNSHandler",
-		next:   next,
+		ca:        ca,
+		logTag:    "CachingDNSHandler",
+		next:      next,
+		truncater: truncater,
 	}
 }
 
 func (c CachingDNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+	truncatingWriter := internal.WrapWriterWithIntercept(w, func(resp *dns.Msg) {
+		c.truncater.TruncateIfNeeded(w, r, resp)
+	})
+
 	if !r.RecursionDesired {
-		c.next.ServeDNS(w, r)
+		c.next.ServeDNS(truncatingWriter, r)
 		return
 	}
 
-	_, err := c.ca.ServeDNS(context.TODO(), w, r)
+	_, err := c.ca.ServeDNS(context.TODO(), truncatingWriter, r)
 	if err != nil {
 		c.logger.Error(c.logTag, "Error getting dns cache:", err.Error())
 	}

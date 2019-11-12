@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 	"errors"
 	"net"
 	"time"
@@ -31,6 +32,7 @@ var _ = Describe("ForwardHandler", func() {
 			fakeClock            *fakeclock.FakeClock
 			fakeLogger           *loggerfakes.FakeLogger
 			fakeRecursorPool     *handlersfakes.FakeRecursorPool
+			fakeTruncater        *dnsresolverfakes.FakeResponseTruncater
 		)
 
 		BeforeEach(func() {
@@ -53,7 +55,8 @@ var _ = Describe("ForwardHandler", func() {
 				}
 				return err
 			}
-			recursionHandler = handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger)
+			fakeTruncater = &dnsresolverfakes.FakeResponseTruncater{}
+			recursionHandler = handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger, fakeTruncater)
 		})
 
 		Context("when there are no recursors configured", func() {
@@ -190,7 +193,7 @@ var _ = Describe("ForwardHandler", func() {
 					}
 
 					fakeWriter.RemoteAddrReturns(remoteAddrReturns)
-					recursionHandler := handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger)
+					recursionHandler := handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger, fakeTruncater)
 
 					m := &dns.Msg{}
 					m.SetQuestion("example.com.", dns.TypeANY)
@@ -215,26 +218,11 @@ var _ = Describe("ForwardHandler", func() {
 				Entry("forwards query to recursor via tcp for tcp clients", "tcp", &net.TCPAddr{}),
 			)
 
-			Context("compression", func() {
+			Context("truncation", func() {
 				var (
 					requestMessage *dns.Msg
 					recursorAnswer *dns.Msg
 				)
-
-				appendAnswersUntilSize := func(requestedResponseLen int) {
-					for i := 0; recursorAnswer.Len() < requestedResponseLen; i++ {
-						aRec := &dns.A{
-							Hdr: dns.RR_Header{
-								Name:   "foo.bar.",
-								Rrtype: dns.TypeA,
-								Class:  dns.ClassINET,
-								Ttl:    0,
-							},
-							A: net.ParseIP(fmt.Sprintf("127.0.0.%d", i+1)).To4(),
-						}
-						recursorAnswer.Answer = append(recursorAnswer.Answer, aRec)
-					}
-				}
 
 				BeforeEach(func() {
 					recursorAnswer = &dns.Msg{
@@ -242,85 +230,21 @@ var _ = Describe("ForwardHandler", func() {
 					}
 					fakeExchanger := &handlersfakes.FakeExchanger{}
 					fakeExchangerFactory := func(net string) handlers.Exchanger { return fakeExchanger }
-					recursionHandler = handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger)
+					recursionHandler = handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger, fakeTruncater)
 					requestMessage = &dns.Msg{}
 					requestMessage.SetQuestion("example.com.", dns.TypeANY)
 					fakeExchanger.ExchangeReturns(recursorAnswer, 0, nil)
 				})
 
-				Context("when the request is tcp and is large", func() {
-					It("does not compress the response", func() {
-						appendAnswersUntilSize(1024)
-						fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
-						Expect(recursorAnswer.Len()).To(BeNumerically(">", 1024))
+				It("passes the response to the truncater", func() {
+					fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
 
-						recursionHandler.ServeDNS(fakeWriter, requestMessage)
-						responseMessage := fakeWriter.WriteMsgArgsForCall(0)
-						Expect(responseMessage.Answer).To(HaveLen(len(recursorAnswer.Answer)))
-						Expect(responseMessage.Compress).To(BeFalse())
-						Expect(responseMessage.Len()).To(Equal(recursorAnswer.Len()))
-					})
-				})
-
-				Context("when the request is udp and the response is less than 512", func() {
-					It("does not compress the response", func() {
-						appendAnswersUntilSize(400)
-						fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
-						Expect(recursorAnswer.Len()).To(BeNumerically("<", 512))
-
-						recursionHandler.ServeDNS(fakeWriter, requestMessage)
-						responseMessage := fakeWriter.WriteMsgArgsForCall(0)
-						Expect(responseMessage.Compress).To(BeFalse())
-						Expect(responseMessage.Answer).To(HaveLen(len(recursorAnswer.Answer)))
-						Expect(responseMessage.Len()).To(Equal(recursorAnswer.Len()))
-					})
-				})
-
-				Context("when the request is udp and the response is greater than 512", func() {
-					It("compresses the response", func() {
-						appendAnswersUntilSize(512)
-						fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
-						Expect(recursorAnswer.Len()).To(BeNumerically(">", 512))
-
-						recursionHandler.ServeDNS(fakeWriter, requestMessage)
-						responseMessage := fakeWriter.WriteMsgArgsForCall(0)
-						Expect(responseMessage.Compress).To(BeTrue())
-						Expect(responseMessage.Answer).To(HaveLen(len(recursorAnswer.Answer)))
-						Expect(responseMessage.Len()).To(BeNumerically("<", recursorAnswer.Len()))
-					})
-
-					Context("when the request contains an Edns0 UDPSize that is greater than the response size", func() {
-						It("does not compress the response", func() {
-							appendAnswersUntilSize(512)
-							requestMessage.SetEdns0(1024, true)
-							fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
-
-							Expect(recursorAnswer.Len()).To(BeNumerically(">", 512))
-							Expect(recursorAnswer.Len()).To(BeNumerically("<", 1024))
-
-							recursionHandler.ServeDNS(fakeWriter, requestMessage)
-							responseMessage := fakeWriter.WriteMsgArgsForCall(0)
-							Expect(responseMessage.Compress).To(BeFalse())
-							Expect(responseMessage.Answer).To(HaveLen(len(recursorAnswer.Answer)))
-							Expect(responseMessage.Len()).To(Equal(recursorAnswer.Len()))
-						})
-					})
-
-					Context("when the request contains an Edns0 UDPSize that is smaller than the response size", func() {
-						It("compresses the response", func() {
-							appendAnswersUntilSize(1024)
-							fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
-							requestMessage.SetEdns0(1024, true)
-
-							Expect(recursorAnswer.Len()).To(BeNumerically(">", 1024))
-
-							recursionHandler.ServeDNS(fakeWriter, requestMessage)
-							responseMessage := fakeWriter.WriteMsgArgsForCall(0)
-							Expect(responseMessage.Compress).To(BeTrue())
-							Expect(responseMessage.Answer).To(HaveLen(len(recursorAnswer.Answer)))
-							Expect(responseMessage.Len()).To(BeNumerically("<", recursorAnswer.Len()))
-						})
-					})
+					recursionHandler.ServeDNS(fakeWriter, requestMessage)
+					Expect(fakeTruncater.TruncateIfNeededCallCount()).To(Equal(1))
+					writer, req, resp := fakeTruncater.TruncateIfNeededArgsForCall(0)
+					Expect(writer).To(Equal(fakeWriter))
+					Expect(req).To(Equal(requestMessage))
+					Expect(resp).To(Equal(recursorAnswer))
 				})
 			})
 

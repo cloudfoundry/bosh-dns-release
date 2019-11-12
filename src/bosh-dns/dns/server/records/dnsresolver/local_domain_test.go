@@ -22,6 +22,7 @@ var _ = Describe("LocalDomain", func() {
 			fakeRecordSet *dnsresolverfakes.FakeRecordSet
 			localDomain   LocalDomain
 			fakeShuffler  *dnsresolverfakes.FakeAnswerShuffler
+			fakeTruncater *dnsresolverfakes.FakeResponseTruncater
 		)
 
 		BeforeEach(func() {
@@ -29,12 +30,13 @@ var _ = Describe("LocalDomain", func() {
 			fakeWriter = &internalfakes.FakeResponseWriter{}
 			fakeRecordSet = &dnsresolverfakes.FakeRecordSet{}
 			fakeShuffler = &dnsresolverfakes.FakeAnswerShuffler{}
+			fakeTruncater = &dnsresolverfakes.FakeResponseTruncater{}
 			fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
 				return input
 			}
 
 			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
-			localDomain = NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler)
+			localDomain = NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler, fakeTruncater)
 		})
 
 		It("returns responses from all the question domains", func() {
@@ -101,7 +103,7 @@ var _ = Describe("LocalDomain", func() {
 			fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
 				return []dns.RR{input[1], input[0]}
 			}
-			localDomain = NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler)
+			localDomain = NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler, fakeTruncater)
 
 			req := &dns.Msg{}
 			req.SetQuestion("ignored", dns.TypeA)
@@ -122,75 +124,31 @@ var _ = Describe("LocalDomain", func() {
 
 		Context("when there are too many records to fit into 512 bytes", func() {
 			var (
-				req *dns.Msg
+				request *dns.Msg
 			)
 
 			BeforeEach(func() {
 				fakeRecordSet.ResolveStub = func(domain string) ([]string, error) {
 					Expect(domain).To(Equal("my-instance.my-group.my-network.my-deployment.bosh."))
 
-					return []string{"123.123.123.123", "127.0.0.1", "127.0.0.2", "127.0.0.3", "127.0.0.4", "127.0.0.5", "127.0.0.6"}, nil
+					return []string{"123.123.123.123"}, nil
 				}
-				req = &dns.Msg{}
-				req.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+				request = &dns.Msg{}
+				request.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 			})
 
-			Context("when the request is udp", func() {
-				It("truncates the response", func() {
-					responseMsg := localDomain.Resolve(
-						[]string{"my-instance.my-group.my-network.my-deployment.bosh."},
-						fakeWriter,
-						req,
-					)
+			It("truncates the response", func() {
+				response := localDomain.Resolve(
+					[]string{"my-instance.my-group.my-network.my-deployment.bosh."},
+					fakeWriter,
+					request,
+				)
 
-					Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(len(responseMsg.Answer)).To(Equal(6))
-					Expect(responseMsg.Truncated).To(Equal(true))
-					Expect(responseMsg.Len()).To(BeNumerically("<", 512))
-				})
-			})
-
-			Context("when the request is tcp", func() {
-				Context("and the message is longer than MaxMsgSize", func() {
-					BeforeEach(func() {
-						hugeSlice := make([]string, 1000)
-						for i := 0; i < 1000; i += 1 {
-							hugeSlice = append(hugeSlice, "123.123.123.123")
-						}
-						fakeRecordSet.ResolveReturns(hugeSlice, nil)
-					})
-
-					It("truncates the answers", func() {
-						fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
-
-						responseMsg := localDomain.Resolve(
-							[]string{"my-instance.my-group.my-network.my-deployment.bosh."},
-							fakeWriter,
-							req,
-						)
-
-						Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
-						// https://tools.ietf.org/html/rfc2181#page-11
-						// should not be marked as truncated because we don't want clients to ignore this response
-						Expect(responseMsg.Truncated).To(Equal(false))
-						Expect(responseMsg.Len()).To(BeNumerically("<", dns.MaxMsgSize))
-					})
-				})
-
-				It("does not truncate", func() {
-					fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
-
-					responseMsg := localDomain.Resolve(
-						[]string{"my-instance.my-group.my-network.my-deployment.bosh."},
-						fakeWriter,
-						req,
-					)
-
-					Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(responseMsg.Truncated).To(Equal(false))
-					Expect(len(responseMsg.Answer)).To(Equal(7))
-					Expect(responseMsg.Len()).To(BeNumerically(">", 512))
-				})
+				Expect(fakeTruncater.TruncateIfNeededCallCount()).To(Equal(1))
+				writer, req, resp := fakeTruncater.TruncateIfNeededArgsForCall(0)
+				Expect(writer).To(Equal(fakeWriter))
+				Expect(req).To(Equal(request))
+				Expect(resp).To(Equal(response))
 			})
 		})
 

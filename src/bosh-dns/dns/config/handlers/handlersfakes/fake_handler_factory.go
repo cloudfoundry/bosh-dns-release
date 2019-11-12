@@ -9,18 +9,6 @@ import (
 )
 
 type FakeHandlerFactory struct {
-	CreateHTTPJSONHandlerStub        func(string, bool) dns.Handler
-	createHTTPJSONHandlerMutex       sync.RWMutex
-	createHTTPJSONHandlerArgsForCall []struct {
-		arg1 string
-		arg2 bool
-	}
-	createHTTPJSONHandlerReturns struct {
-		result1 dns.Handler
-	}
-	createHTTPJSONHandlerReturnsOnCall map[int]struct {
-		result1 dns.Handler
-	}
 	CreateForwardHandlerStub        func([]string, bool) dns.Handler
 	createForwardHandlerMutex       sync.RWMutex
 	createForwardHandlerArgsForCall []struct {
@@ -33,57 +21,20 @@ type FakeHandlerFactory struct {
 	createForwardHandlerReturnsOnCall map[int]struct {
 		result1 dns.Handler
 	}
-	invocations      map[string][][]interface{}
-	invocationsMutex sync.RWMutex
-}
-
-func (fake *FakeHandlerFactory) CreateHTTPJSONHandler(arg1 string, arg2 bool) dns.Handler {
-	fake.createHTTPJSONHandlerMutex.Lock()
-	ret, specificReturn := fake.createHTTPJSONHandlerReturnsOnCall[len(fake.createHTTPJSONHandlerArgsForCall)]
-	fake.createHTTPJSONHandlerArgsForCall = append(fake.createHTTPJSONHandlerArgsForCall, struct {
+	CreateHTTPJSONHandlerStub        func(string, bool) dns.Handler
+	createHTTPJSONHandlerMutex       sync.RWMutex
+	createHTTPJSONHandlerArgsForCall []struct {
 		arg1 string
 		arg2 bool
-	}{arg1, arg2})
-	fake.recordInvocation("CreateHTTPJSONHandler", []interface{}{arg1, arg2})
-	fake.createHTTPJSONHandlerMutex.Unlock()
-	if fake.CreateHTTPJSONHandlerStub != nil {
-		return fake.CreateHTTPJSONHandlerStub(arg1, arg2)
 	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.createHTTPJSONHandlerReturns.result1
-}
-
-func (fake *FakeHandlerFactory) CreateHTTPJSONHandlerCallCount() int {
-	fake.createHTTPJSONHandlerMutex.RLock()
-	defer fake.createHTTPJSONHandlerMutex.RUnlock()
-	return len(fake.createHTTPJSONHandlerArgsForCall)
-}
-
-func (fake *FakeHandlerFactory) CreateHTTPJSONHandlerArgsForCall(i int) (string, bool) {
-	fake.createHTTPJSONHandlerMutex.RLock()
-	defer fake.createHTTPJSONHandlerMutex.RUnlock()
-	return fake.createHTTPJSONHandlerArgsForCall[i].arg1, fake.createHTTPJSONHandlerArgsForCall[i].arg2
-}
-
-func (fake *FakeHandlerFactory) CreateHTTPJSONHandlerReturns(result1 dns.Handler) {
-	fake.CreateHTTPJSONHandlerStub = nil
-	fake.createHTTPJSONHandlerReturns = struct {
+	createHTTPJSONHandlerReturns struct {
 		result1 dns.Handler
-	}{result1}
-}
-
-func (fake *FakeHandlerFactory) CreateHTTPJSONHandlerReturnsOnCall(i int, result1 dns.Handler) {
-	fake.CreateHTTPJSONHandlerStub = nil
-	if fake.createHTTPJSONHandlerReturnsOnCall == nil {
-		fake.createHTTPJSONHandlerReturnsOnCall = make(map[int]struct {
-			result1 dns.Handler
-		})
 	}
-	fake.createHTTPJSONHandlerReturnsOnCall[i] = struct {
+	createHTTPJSONHandlerReturnsOnCall map[int]struct {
 		result1 dns.Handler
-	}{result1}
+	}
+	invocations      map[string][][]interface{}
+	invocationsMutex sync.RWMutex
 }
 
 func (fake *FakeHandlerFactory) CreateForwardHandler(arg1 []string, arg2 bool) dns.Handler {
@@ -106,7 +57,8 @@ func (fake *FakeHandlerFactory) CreateForwardHandler(arg1 []string, arg2 bool) d
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.createForwardHandlerReturns.result1
+	fakeReturns := fake.createForwardHandlerReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeHandlerFactory) CreateForwardHandlerCallCount() int {
@@ -115,13 +67,22 @@ func (fake *FakeHandlerFactory) CreateForwardHandlerCallCount() int {
 	return len(fake.createForwardHandlerArgsForCall)
 }
 
+func (fake *FakeHandlerFactory) CreateForwardHandlerCalls(stub func([]string, bool) dns.Handler) {
+	fake.createForwardHandlerMutex.Lock()
+	defer fake.createForwardHandlerMutex.Unlock()
+	fake.CreateForwardHandlerStub = stub
+}
+
 func (fake *FakeHandlerFactory) CreateForwardHandlerArgsForCall(i int) ([]string, bool) {
 	fake.createForwardHandlerMutex.RLock()
 	defer fake.createForwardHandlerMutex.RUnlock()
-	return fake.createForwardHandlerArgsForCall[i].arg1, fake.createForwardHandlerArgsForCall[i].arg2
+	argsForCall := fake.createForwardHandlerArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeHandlerFactory) CreateForwardHandlerReturns(result1 dns.Handler) {
+	fake.createForwardHandlerMutex.Lock()
+	defer fake.createForwardHandlerMutex.Unlock()
 	fake.CreateForwardHandlerStub = nil
 	fake.createForwardHandlerReturns = struct {
 		result1 dns.Handler
@@ -129,6 +90,8 @@ func (fake *FakeHandlerFactory) CreateForwardHandlerReturns(result1 dns.Handler)
 }
 
 func (fake *FakeHandlerFactory) CreateForwardHandlerReturnsOnCall(i int, result1 dns.Handler) {
+	fake.createForwardHandlerMutex.Lock()
+	defer fake.createForwardHandlerMutex.Unlock()
 	fake.CreateForwardHandlerStub = nil
 	if fake.createForwardHandlerReturnsOnCall == nil {
 		fake.createForwardHandlerReturnsOnCall = make(map[int]struct {
@@ -140,14 +103,79 @@ func (fake *FakeHandlerFactory) CreateForwardHandlerReturnsOnCall(i int, result1
 	}{result1}
 }
 
+func (fake *FakeHandlerFactory) CreateHTTPJSONHandler(arg1 string, arg2 bool) dns.Handler {
+	fake.createHTTPJSONHandlerMutex.Lock()
+	ret, specificReturn := fake.createHTTPJSONHandlerReturnsOnCall[len(fake.createHTTPJSONHandlerArgsForCall)]
+	fake.createHTTPJSONHandlerArgsForCall = append(fake.createHTTPJSONHandlerArgsForCall, struct {
+		arg1 string
+		arg2 bool
+	}{arg1, arg2})
+	fake.recordInvocation("CreateHTTPJSONHandler", []interface{}{arg1, arg2})
+	fake.createHTTPJSONHandlerMutex.Unlock()
+	if fake.CreateHTTPJSONHandlerStub != nil {
+		return fake.CreateHTTPJSONHandlerStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.createHTTPJSONHandlerReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeHandlerFactory) CreateHTTPJSONHandlerCallCount() int {
+	fake.createHTTPJSONHandlerMutex.RLock()
+	defer fake.createHTTPJSONHandlerMutex.RUnlock()
+	return len(fake.createHTTPJSONHandlerArgsForCall)
+}
+
+func (fake *FakeHandlerFactory) CreateHTTPJSONHandlerCalls(stub func(string, bool) dns.Handler) {
+	fake.createHTTPJSONHandlerMutex.Lock()
+	defer fake.createHTTPJSONHandlerMutex.Unlock()
+	fake.CreateHTTPJSONHandlerStub = stub
+}
+
+func (fake *FakeHandlerFactory) CreateHTTPJSONHandlerArgsForCall(i int) (string, bool) {
+	fake.createHTTPJSONHandlerMutex.RLock()
+	defer fake.createHTTPJSONHandlerMutex.RUnlock()
+	argsForCall := fake.createHTTPJSONHandlerArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeHandlerFactory) CreateHTTPJSONHandlerReturns(result1 dns.Handler) {
+	fake.createHTTPJSONHandlerMutex.Lock()
+	defer fake.createHTTPJSONHandlerMutex.Unlock()
+	fake.CreateHTTPJSONHandlerStub = nil
+	fake.createHTTPJSONHandlerReturns = struct {
+		result1 dns.Handler
+	}{result1}
+}
+
+func (fake *FakeHandlerFactory) CreateHTTPJSONHandlerReturnsOnCall(i int, result1 dns.Handler) {
+	fake.createHTTPJSONHandlerMutex.Lock()
+	defer fake.createHTTPJSONHandlerMutex.Unlock()
+	fake.CreateHTTPJSONHandlerStub = nil
+	if fake.createHTTPJSONHandlerReturnsOnCall == nil {
+		fake.createHTTPJSONHandlerReturnsOnCall = make(map[int]struct {
+			result1 dns.Handler
+		})
+	}
+	fake.createHTTPJSONHandlerReturnsOnCall[i] = struct {
+		result1 dns.Handler
+	}{result1}
+}
+
 func (fake *FakeHandlerFactory) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.createHTTPJSONHandlerMutex.RLock()
-	defer fake.createHTTPJSONHandlerMutex.RUnlock()
 	fake.createForwardHandlerMutex.RLock()
 	defer fake.createForwardHandlerMutex.RUnlock()
-	return fake.invocations
+	fake.createHTTPJSONHandlerMutex.RLock()
+	defer fake.createHTTPJSONHandlerMutex.RUnlock()
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeHandlerFactory) recordInvocation(key string, args []interface{}) {

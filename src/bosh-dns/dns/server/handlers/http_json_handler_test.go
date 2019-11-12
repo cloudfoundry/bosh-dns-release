@@ -4,6 +4,7 @@ import (
 	. "bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
+	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 
 	"errors"
 	"fmt"
@@ -32,14 +33,16 @@ func (cb *closingBuffer) Close() (err error) {
 
 var _ = Describe("HttpJsonHandler", func() {
 	var (
-		handler    HTTPJSONHandler
-		fakeLogger *loggerfakes.FakeLogger
-		fakeWriter *internalfakes.FakeResponseWriter
+		handler       HTTPJSONHandler
+		fakeLogger    *loggerfakes.FakeLogger
+		fakeWriter    *internalfakes.FakeResponseWriter
+		fakeTruncater *dnsresolverfakes.FakeResponseTruncater
 	)
 
 	BeforeEach(func() {
 		fakeLogger = &loggerfakes.FakeLogger{}
 		fakeWriter = &internalfakes.FakeResponseWriter{}
+		fakeTruncater = &dnsresolverfakes.FakeResponseTruncater{}
 	})
 
 	Context("response body", func() {
@@ -72,7 +75,7 @@ var _ = Describe("HttpJsonHandler", func() {
 		})
 
 		JustBeforeEach(func() {
-			handler = NewHTTPJSONHandler("http://example.com", client, fakeLogger)
+			handler = NewHTTPJSONHandler("http://example.com", client, fakeLogger, fakeTruncater)
 		})
 
 		Context("when the request to the http server fails", func() {
@@ -117,7 +120,7 @@ var _ = Describe("HttpJsonHandler", func() {
 			server.AppendHandlers(fakeServerResponse)
 			server.HTTPTestServer.Start()
 			httpClient := httpclient.NewHTTPClient(httpclient.DefaultClient, fakeLogger)
-			handler = NewHTTPJSONHandler(server.URL(), httpClient, fakeLogger)
+			handler = NewHTTPJSONHandler(server.URL(), httpClient, fakeLogger, fakeTruncater)
 		})
 
 		AfterEach(func() {
@@ -174,7 +177,6 @@ var _ = Describe("HttpJsonHandler", func() {
 				Expect(resp.Rcode).To(Equal(dns.RcodeSuccess))
 				Expect(resp.Authoritative).To(BeTrue())
 				Expect(resp.RecursionAvailable).To(BeTrue())
-				Expect(resp.Truncated).To(BeFalse())
 				Expect(resp.Answer).To(HaveLen(2))
 				Expect(resp.Answer[0]).To(Equal(&dns.A{
 					Hdr: dns.RR_Header{
@@ -213,7 +215,7 @@ var _ = Describe("HttpJsonHandler", func() {
 		Context("when it cannot reach the http server", func() {
 			JustBeforeEach(func() {
 				httpClient := httpclient.NewHTTPClient(httpclient.DefaultClient, fakeLogger)
-				handler = NewHTTPJSONHandler("bogus-address", httpClient, fakeLogger)
+				handler = NewHTTPJSONHandler("bogus-address", httpClient, fakeLogger, fakeTruncater)
 			})
 
 			It("logs the error ", func() {
@@ -472,17 +474,20 @@ var _ = Describe("HttpJsonHandler", func() {
 			})
 
 			It("truncates the answers to fit", func() {
-				req := &dns.Msg{}
-				req.SetQuestion("app-id.internal-domain.", dns.TypeA)
-				handler.ServeDNS(fakeWriter, req)
+				request := &dns.Msg{}
+				request.SetQuestion("app-id.internal-domain.", dns.TypeA)
+				handler.ServeDNS(fakeWriter, request)
 
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
-				resp := fakeWriter.WriteMsgArgsForCall(0)
-				Expect(resp.Rcode).To(Equal(dns.RcodeSuccess))
-				Expect(resp.RecursionAvailable).To(BeTrue())
-				Expect(resp.Truncated).To(BeTrue())
-				Expect(resp.Question).To(Equal(req.Question))
-				Expect(resp.Answer).To(HaveLen(12))
+				response := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(response.RecursionAvailable).To(BeTrue())
+
+				Expect(fakeTruncater.TruncateIfNeededCallCount()).To(Equal(1))
+				writer, req, resp := fakeTruncater.TruncateIfNeededArgsForCall(0)
+				Expect(writer).To(Equal(fakeWriter))
+				Expect(req).To(Equal(request))
+				Expect(resp).To(Equal(response))
 			})
 		})
 	})

@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	
-	. "github.com/onsi/gomega"
+
 	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
 )
 
 func DescribeMatchingAnyA(serverFactory func() Server, entries ...TableEntry) bool {

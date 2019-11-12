@@ -24,6 +24,7 @@ var _ = Describe("DiscoveryHandler", func() {
 			fakeLogger       *loggerfakes.FakeLogger
 			fakeRecordSet    *dnsresolverfakes.FakeRecordSet
 			fakeShuffler     *dnsresolverfakes.FakeAnswerShuffler
+			fakeTruncater    *dnsresolverfakes.FakeResponseTruncater
 		)
 
 		BeforeEach(func() {
@@ -36,7 +37,8 @@ var _ = Describe("DiscoveryHandler", func() {
 			}
 
 			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
-			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler))
+			fakeTruncater = &dnsresolverfakes.FakeResponseTruncater{}
+			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler, fakeTruncater))
 		})
 
 		Context("when there are no questions", func() {

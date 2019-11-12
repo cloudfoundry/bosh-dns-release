@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bosh-dns/dns/server/records/dnsresolver"
 	"fmt"
 	"net"
 	"strings"
@@ -18,6 +19,7 @@ type ForwardHandler struct {
 	exchangerFactory ExchangerFactory
 	logger           logger.Logger
 	logTag           string
+	truncater        dnsresolver.ResponseTruncater
 }
 
 //go:generate counterfeiter . Exchanger
@@ -32,13 +34,14 @@ type Cache interface {
 	GetExpired(*dns.Msg) *dns.Msg
 }
 
-func NewForwardHandler(recursors RecursorPool, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger) ForwardHandler {
+func NewForwardHandler(recursors RecursorPool, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger, truncater dnsresolver.ResponseTruncater) ForwardHandler {
 	return ForwardHandler{
 		recursors:        recursors,
 		exchangerFactory: exchangerFactory,
 		clock:            clock,
 		logger:           logger,
 		logTag:           "ForwardHandler",
+		truncater:        truncater,
 	}
 }
 
@@ -62,12 +65,12 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 		}
 
 		if err == nil {
-			response := r.compressIfNeeded(responseWriter, request, exchangeAnswer)
+			r.truncater.TruncateIfNeeded(responseWriter, request, exchangeAnswer)
 
-			if writeErr := responseWriter.WriteMsg(response); writeErr != nil {
+			if writeErr := responseWriter.WriteMsg(exchangeAnswer); writeErr != nil {
 				r.logger.Error(r.logTag, "error writing response: %s", writeErr.Error())
 			} else {
-				r.logRecursor(before, request, response.Rcode, "recursor="+recursor)
+				r.logRecursor(before, request, exchangeAnswer.Rcode, "recursor="+recursor)
 			}
 
 			return nil
@@ -100,26 +103,6 @@ func (r ForwardHandler) logRecursor(before time.Time, request *dns.Msg, code int
 		recursor,
 		duration,
 	))
-}
-
-func (r ForwardHandler) compressIfNeeded(responseWriter dns.ResponseWriter, request, response *dns.Msg) *dns.Msg {
-	if _, ok := responseWriter.RemoteAddr().(*net.UDPAddr); ok {
-		maxUDPSize := 512
-		if opt := request.IsEdns0(); opt != nil {
-			maxUDPSize = int(opt.UDPSize())
-		}
-
-		if response.Len() > maxUDPSize {
-			r.logger.Debug(r.logTag, "Setting compress flag on msg id:", request.Id)
-
-			responseCopy := dns.Msg(*response)
-			responseCopy.Compress = true
-
-			return &responseCopy
-		}
-	}
-
-	return response
 }
 
 func (ForwardHandler) network(responseWriter dns.ResponseWriter) string {

@@ -24,10 +24,11 @@ type HTTPClient interface {
 }
 
 type HTTPJSONHandler struct {
-	address string
-	client  HTTPClient
-	logger  logger.Logger
-	logTag  string
+	address   string
+	client    HTTPClient
+	logger    logger.Logger
+	logTag    string
+	truncater dnsresolver.ResponseTruncater
 }
 
 type Answer struct {
@@ -42,19 +43,20 @@ type httpDNSMessage struct {
 	Answer    []Answer `json:"Answer"`
 }
 
-func NewHTTPJSONHandler(address string, httpClient HTTPClient, logger logger.Logger) HTTPJSONHandler {
+func NewHTTPJSONHandler(address string, httpClient HTTPClient, logger logger.Logger, truncater dnsresolver.ResponseTruncater) HTTPJSONHandler {
 	return HTTPJSONHandler{
-		address: address,
-		client:  httpClient,
-		logger:  logger,
-		logTag:  "HTTPJSONHandler",
+		address:   address,
+		client:    httpClient,
+		logger:    logger,
+		logTag:    "HTTPJSONHandler",
+		truncater: truncater,
 	}
 }
 
 func (h HTTPJSONHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns.Msg) {
 	responseMsg := h.buildResponse(request)
 
-	dnsresolver.TruncateIfNeeded(responseWriter, responseMsg)
+	h.truncater.TruncateIfNeeded(responseWriter, request, responseMsg)
 
 	if err := responseWriter.WriteMsg(responseMsg); err != nil {
 		h.logger.Error(h.logTag, err.Error())

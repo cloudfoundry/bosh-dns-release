@@ -181,10 +181,8 @@ func main() {
 		msg.SetRcode(req, dns.RcodeSuccess)
 		msg.Authoritative = true
 		msg.RecursionAvailable = true
-		msg.Compress = true
 
-		m1 := 512
-		for i := 0; i < m1; i++ {
+		for i := 0; msg.Len() < 512; i++ { // uncompressed length just over 512
 			aRec := &dns.A{
 				Hdr: dns.RR_Header{
 					Name:   req.Question[0].Name,
@@ -197,11 +195,7 @@ func main() {
 
 			msg.Answer = append(msg.Answer, aRec)
 		}
-
-		maxUdpSize := 9216
-		for len(msg.Answer) > 0 && msg.Len() > maxUdpSize {
-			msg.Answer = msg.Answer[:len(msg.Answer)-1]
-		}
+		msg.Compress = true // compressed size should be < 512
 
 		err := resp.WriteMsg(msg)
 		if err != nil {

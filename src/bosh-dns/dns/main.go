@@ -154,18 +154,19 @@ func mainExitCode() int {
 	filtererFactory := records.NewHealthFiltererFactory(healthWatcher)
 	recordSet, err := records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger, filtererFactory, records.NewAliasEncoder())
 
-	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, shuffle.New())
+	truncater := dnsresolver.NewResponseTruncater()
+	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, shuffle.New(), truncater)
 	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
 
 	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordSet, mux, discoveryHandler)
 
 	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, logger)
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
-	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger)
+	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger, truncater)
 
 	mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger, recordSet, forwardHandler), clock, logger))
 
-	handlerFactory := handlers.NewFactory(exchangerFactory, clock, stringShuffler, logger)
+	handlerFactory := handlers.NewFactory(exchangerFactory, clock, stringShuffler, logger, truncater)
 
 	delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
 	if err != nil {
@@ -191,7 +192,7 @@ func mainExitCode() int {
 	}
 
 	if config.Cache.Enabled {
-		mux.Handle(".", handlers.NewCachingDNSHandler(forwardHandler))
+		mux.Handle(".", handlers.NewCachingDNSHandler(forwardHandler, truncater))
 	} else {
 		mux.Handle(".", forwardHandler)
 	}
