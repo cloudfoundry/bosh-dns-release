@@ -1362,7 +1362,7 @@ var _ = Describe("main", func() {
 			Eventually(session).Should(gexec.Exit(0))
 		})
 
-		DescribeTable("local horizoltal scaling (network buffers)",
+		DescribeTable("local horizontal scaling (network buffers)",
 			func(protocol string) {
 				wg := &sync.WaitGroup{}
 				concurrentRequests := 200
@@ -1382,9 +1382,9 @@ var _ = Describe("main", func() {
 							Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 						}(wg, *m)
 					}
+					wg.Wait()
 				}
 
-				wg.Wait()
 			},
 			Entry("over udp", "udp"),
 			Entry("over tcp", "tcp"),
