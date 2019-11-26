@@ -14,6 +14,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:3d99f16507e2add9e8dd4cd561c2a2928f4650df8924b1f14788db4809502911"
+  name = "code.cloudfoundry.org/tlsconfig"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "462f72de110612406f0bc2e208bb43810df91b5f"
+
+[[projects]]
+  branch = "master"
   digest = "1:f453609f5ec21107c7e519b6859070ac60ff163ae1c045b8ea82becc5bb63933"
   name = "code.cloudfoundry.org/workpool"
   packages = ["."]
@@ -566,6 +574,7 @@
   input-imports = [
     "code.cloudfoundry.org/clock",
     "code.cloudfoundry.org/clock/fakeclock",
+    "code.cloudfoundry.org/tlsconfig",
     "code.cloudfoundry.org/workpool",
     "github.com/cloudfoundry/bosh-utils/errors",
     "github.com/cloudfoundry/bosh-utils/httpclient",
@@ -588,7 +597,6 @@
     "github.com/onsi/gomega/gexec",
     "github.com/onsi/gomega/ghttp",
     "github.com/onsi/gomega/types",
-    "github.com/pivotal-cf/paraphernalia/secure/tlsconfig",
     "github.com/rcrowley/go-metrics",
     "golang.org/x/net/context",
     "golang.org/x/sys/windows",

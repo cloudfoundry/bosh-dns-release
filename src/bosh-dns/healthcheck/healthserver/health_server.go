@@ -8,12 +8,8 @@ import (
 	"log"
 	"net/http"
 
-	"crypto/tls"
-	"crypto/x509"
-	"io/ioutil"
-
+	"code.cloudfoundry.org/tlsconfig"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 const CN = "health.bosh-dns"
@@ -43,31 +39,21 @@ func NewHealthServer(logger boshlog.Logger, healthFileName string, healthExecuta
 func (c *concreteHealthServer) Serve(config *healthconfig.HealthCheckConfig) {
 	http.HandleFunc("/health", c.healthEntryPoint)
 
-	caCert, err := ioutil.ReadFile(config.CAFile)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-
-	cert, err := tls.LoadX509KeyPair(config.CertificateFile, config.PrivateKeyFile)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	tlsConfig := tlsconfig.Build(
-		tlsconfig.WithIdentity(cert),
+	tlsConfig, err := tlsconfig.Build(
+		tlsconfig.WithIdentityFromFile(config.CertificateFile, config.PrivateKeyFile),
 		tlsconfig.WithInternalServiceDefaults(),
+	).Server(
+		tlsconfig.WithClientAuthenticationFromFile(config.CAFile),
 	)
-
-	serverConfig := tlsConfig.Server(tlsconfig.WithClientAuthentication(caCertPool))
-	serverConfig.BuildNameToCertificate()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	tlsConfig.BuildNameToCertificate()
 
 	server := &http.Server{
 		Addr:      fmt.Sprintf("%s:%d", config.Address, config.Port),
-		TLSConfig: serverConfig,
+		TLSConfig: tlsConfig,
 	}
 	server.SetKeepAlivesEnabled(false)
 

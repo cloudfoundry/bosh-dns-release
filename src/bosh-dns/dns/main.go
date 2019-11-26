@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"flag"
 	"fmt"
@@ -31,12 +29,12 @@ import (
 	"bosh-dns/healthconfig"
 	"bosh-dns/tlsclient"
 
+	"code.cloudfoundry.org/tlsconfig"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"github.com/miekg/dns"
-	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 )
 
 func parseFlags() (string, error) {
@@ -249,31 +247,21 @@ func mainExitCode() int {
 	http.Handle("/local-groups", api.NewLocalGroupsHandler(jobs, healthChecker))
 
 	go func(config dnsconfig.APIConfig) {
-		caCert, err := ioutil.ReadFile(config.CAFile)
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
-
-		cert, err := tls.LoadX509KeyPair(config.CertificateFile, config.PrivateKeyFile)
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-
-		tlsConfig := tlsconfig.Build(
-			tlsconfig.WithIdentity(cert),
+		tlsConfig, err := tlsconfig.Build(
+			tlsconfig.WithIdentityFromFile(config.CertificateFile, config.PrivateKeyFile),
 			tlsconfig.WithInternalServiceDefaults(),
+		).Server(
+			tlsconfig.WithClientAuthenticationFromFile(config.CAFile),
 		)
-
-		serverConfig := tlsConfig.Server(tlsconfig.WithClientAuthentication(caCertPool))
-		serverConfig.BuildNameToCertificate()
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		tlsConfig.BuildNameToCertificate()
 
 		server := &http.Server{
 			Addr:      fmt.Sprintf("127.0.0.1:%d", config.Port),
-			TLSConfig: serverConfig,
+			TLSConfig: tlsConfig,
 		}
 		server.SetKeepAlivesEnabled(false)
 

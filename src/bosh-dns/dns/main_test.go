@@ -1,8 +1,6 @@
 package main_test
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -23,6 +21,7 @@ import (
 	"bosh-dns/dns/internal/testhelpers"
 	"bosh-dns/tlsclient"
 
+	"code.cloudfoundry.org/tlsconfig"
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
@@ -30,7 +29,6 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
-	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -1817,22 +1815,14 @@ func newCommandWithConfig(c config.Config) *exec.Cmd {
 }
 
 func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Server {
-	caCert, err := ioutil.ReadFile("../healthcheck/assets/test_certs/test_ca.pem")
-	Expect(err).ToNot(HaveOccurred())
-
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-
-	cert, err := tls.LoadX509KeyPair("../healthcheck/assets/test_certs/test_server.pem", "../healthcheck/assets/test_certs/test_server.key")
-	Expect(err).ToNot(HaveOccurred())
-
-	tlsConfig := tlsconfig.Build(
-		tlsconfig.WithIdentity(cert),
+	tlsConfig, err := tlsconfig.Build(
+		tlsconfig.WithIdentityFromFile("../healthcheck/assets/test_certs/test_server.pem", "../healthcheck/assets/test_certs/test_server.key"),
 		tlsconfig.WithInternalServiceDefaults(),
+	).Server(
+		tlsconfig.WithClientAuthenticationFromFile("../healthcheck/assets/test_certs/test_ca.pem"),
 	)
-
-	serverConfig := tlsConfig.Server(tlsconfig.WithClientAuthentication(caCertPool))
-	serverConfig.BuildNameToCertificate()
+	Expect(err).ToNot(HaveOccurred())
+	tlsConfig.BuildNameToCertificate()
 
 	server := ghttp.NewUnstartedServer()
 	err = server.HTTPTestServer.Listener.Close()
@@ -1849,7 +1839,7 @@ func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Serv
 `, ip),
 	)
 
-	server.HTTPTestServer.TLS = serverConfig
+	server.HTTPTestServer.TLS = tlsConfig
 
 	server.RouteToHandler("GET", "/health", ghttp.RespondWithJSONEncoded(http.StatusOK, map[string]interface{}{
 		"state":       state,
