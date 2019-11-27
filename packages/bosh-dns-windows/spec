@@ -16,5 +16,6 @@ files:
 
 excluded_files:
 - bosh-dns/vendor/github.com/bmatcuk/doublestar/test/**/*
+- debug/vendor/github.com/bmatcuk/doublestar/test/**/*
 - bosh-dns/vendor/github.com/prometheus/procfs/fixtures/**/*
 - bosh-dns/vendor/github.com/coredns/coredns/.github/**/*
