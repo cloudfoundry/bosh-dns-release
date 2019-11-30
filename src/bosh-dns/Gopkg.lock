@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "1cef897cc40ea0353357faa3536fae2430da99ec"
+  revision = "1519f14bace7df9e173420d281ff08b3da57d73c"
 
 [[projects]]
   branch = "master"
@@ -359,7 +359,7 @@
   version = "v0.7.0"
 
 [[projects]]
-  digest = "1:facc45396fcd6cd74db25bd33ed58824cf9d21c27adac22896a88007cdd1cc2c"
+  digest = "1:a4b063a766f50cdadc1fce12053e3bde8599f1f8b7621d7e293cd2fc86543a44"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -367,8 +367,8 @@
     "internal/util",
   ]
   pruneopts = "NUT"
-  revision = "3a8122e6a950185a58d8d6a909450a575602becd"
-  version = "v0.0.7"
+  revision = "6d489fc7f1d9cd890a250f3ea3431b1744b9623f"
+  version = "v0.0.8"
 
 [[projects]]
   branch = "master"
@@ -392,11 +392,11 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "ac88ee75c92c889b97e05591e9a39b6480c538b3"
+  revision = "b544559bb6d1b5c62fba4af5e843ff542174f079"
 
 [[projects]]
   branch = "master"
-  digest = "1:80ea7508b27f5c89ca27f3671cabb63936225a91f25d46fb9f15f81eae1341a6"
+  digest = "1:5e2476a3ca7727cbf9968ec37a08b38096b53585a5cf9edaf57aea2e18458578"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -418,11 +418,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "fc4aabc6c91483155dade6fbb627cc953a723260"
+  revision = "ef20fe5d793301b553005db740f730d87993f778"
 
 [[projects]]
   branch = "master"
-  digest = "1:e3cdbcd9acdbe29fca998d69d85ef8fa66923bcf4ddbf9b68c7d9c547b07c8ca"
+  digest = "1:d3d236fe7bb8ff809c8b1022dc1eecd42d9107b27906dee2e992d32f8bbeb65c"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -430,7 +430,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "bd437916bb0eb726b873ee8e9b2dcf212d32e2fd"
+  revision = "6d18c012aee9febd81bbf9806760c8c4480e870d"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -471,7 +471,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:346b02a900d9480bf34c69a9b9b12f86a3eb768d10a6facfa77a4ff41fa11326"
+  digest = "1:10c612b4f89a6d75ac2a0e7cd33cb9474034e8914844231d76a40fe7cd799945"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -489,7 +489,7 @@
     "internal/span",
   ]
   pruneopts = "NUT"
-  revision = "2a6ccf25d769ccc6c0b364ff440915b10af1e3cf"
+  revision = "6e064ea0cf2dcfaca8da2da9f42da458bab38756"
 
 [[projects]]
   branch = "master"
