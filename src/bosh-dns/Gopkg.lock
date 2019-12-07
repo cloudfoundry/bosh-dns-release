@@ -37,12 +37,12 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:2352f40df77dec05ec853c63c0226a31343490412528e0345a86e46cece28b15"
+  digest = "1:b7a18d6bf5e663d2bfa578e7375c88763ef5705d0e999e780c7625b9b5cbd2a6"
   name = "github.com/bmatcuk/doublestar"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "2437321e1473408f122a95f65df3d8841fec4fba"
-  version = "v1.1.5"
+  revision = "8fcc08761109c1a6699c22f50a73448182507b32"
+  version = "v1.2.1"
 
 [[projects]]
   digest = "1:b548765f683c542586dbcc076c52a5abceb9ea6a40525e951751886efd496d67"
@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "1519f14bace7df9e173420d281ff08b3da57d73c"
+  revision = "869d1913b850a1fea21e72dc2c4d05a6fb2509b8"
 
 [[projects]]
   branch = "master"
@@ -224,12 +224,12 @@
   version = "v6.0.1"
 
 [[projects]]
-  digest = "1:2d1d71d6ddf1a462ca69e02178b804e1771001397f0dc0aea05a876027549d58"
+  digest = "1:548ec60c4307968d6897ee56215c55a27272df8a99e80b4ba55b83800c62b271"
   name = "github.com/miekg/dns"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "1e224ff5dead8366ed6fcdcb832794be42e73f0e"
-  version = "v1.1.22"
+  revision = "0788ed5f4e622ea7b25da827aba9f45719cf09aa"
+  version = "v1.1.24"
 
 [[projects]]
   branch = "master"
@@ -340,11 +340,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2d5cd61daa5565187e1d96bae64dbbc6080dacf741448e9629c64fd93203b0d4"
+  digest = "1:982be0b5396e16a663697899ce69cc7b1e71ddcae4153af157578d4dc9bc3f88"
   name = "github.com/prometheus/client_model"
   packages = ["go"]
   pruneopts = "NUT"
-  revision = "14fe0d1b01d4d5fc031dd4bec1823bd3ebbe8016"
+  revision = "d1d2010b5beead3fa1c5f271a5cf626e40b3ad6e"
 
 [[projects]]
   digest = "1:98278956c7c550efc75a027e528aa51743f06fd0e33613d7ed224432a11e5ecf"
@@ -380,7 +380,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c9e0b137902d857921fb87c28039a4af7e587970bd10c4fcec818d1559347d43"
+  digest = "1:1055f180c19b95e216950a40b6d123d1448e7e63df85a29502192fb028f4f057"
   name = "golang.org/x/crypto"
   packages = [
     "chacha20",
@@ -392,11 +392,11 @@
     "ssh",
   ]
   pruneopts = "NUT"
-  revision = "b544559bb6d1b5c62fba4af5e843ff542174f079"
+  revision = "e9b2fee46413994441b28dfca259d911d963dfed"
 
 [[projects]]
   branch = "master"
-  digest = "1:5e2476a3ca7727cbf9968ec37a08b38096b53585a5cf9edaf57aea2e18458578"
+  digest = "1:7c86805d1da560b791253ba5b18189ee9f8e2869697ad01cf0a96e4c5001555d"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -418,11 +418,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "ef20fe5d793301b553005db740f730d87993f778"
+  revision = "e7e4b65ae66375ec1e85afc8e6b9b4933ae4da81"
 
 [[projects]]
   branch = "master"
-  digest = "1:d3d236fe7bb8ff809c8b1022dc1eecd42d9107b27906dee2e992d32f8bbeb65c"
+  digest = "1:6234608760e2490a0c950c0dfb018bf6d29544be1304ab965ddce3ffa9c941b9"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -430,7 +430,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "6d18c012aee9febd81bbf9806760c8c4480e870d"
+  revision = "eeba5f6aabab6d6594a9191d6bfeaca5fa6a8248"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -471,7 +471,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:10c612b4f89a6d75ac2a0e7cd33cb9474034e8914844231d76a40fe7cd799945"
+  digest = "1:34f7d6df156a2db4148618ef03de445c6fdad2f42de23e530fd3d194095098a9"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -486,10 +486,9 @@
     "internal/imports",
     "internal/module",
     "internal/semver",
-    "internal/span",
   ]
   pruneopts = "NUT"
-  revision = "6e064ea0cf2dcfaca8da2da9f42da458bab38756"
+  revision = "259af5ff87bdcd4abf2ecda8edc3f13f04f26a42"
 
 [[projects]]
   branch = "master"
@@ -497,7 +496,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "83cc0476cb11ea0da33dacd4c6354ab192de6fe6"
+  revision = "0243a4be9c8f1264d238fdc2895620b4d9baf9e1"
 
 [[projects]]
   digest = "1:35985bdc8a9d6de854d129c7865f231af35af299ef113b3fede52d957edef7d9"
