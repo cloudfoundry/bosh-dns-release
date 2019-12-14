@@ -66,7 +66,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:04590423c17e4ea8c9e3e2a5287f2cf739f3a8b8f24614c449590ebb0bd47ce8"
+  digest = "1:2344017f1a79deda347443e325c951170f72c3c3862f7fd80390ca54f81d5aea"
   name = "github.com/cloudfoundry/bosh-utils"
   packages = [
     "errors",
@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "869d1913b850a1fea21e72dc2c4d05a6fb2509b8"
+  revision = "d83937f3446e26ed6c5ffdab04c10b8d70807185"
 
 [[projects]]
   branch = "master"
@@ -110,7 +110,7 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:6205559318c39304ca5011c6fe4613ad66190f7e469216caca9ad4b6cb8f7e94"
+  digest = "1:e0032ecb5b51f6131d624c85f08687663e03e38140b3a3e05748a5f6c9ecd09f"
   name = "github.com/coredns/coredns"
   packages = [
     "core/dnsserver",
@@ -133,6 +133,7 @@
     "plugin/pkg/parse",
     "plugin/pkg/rcode",
     "plugin/pkg/response",
+    "plugin/pkg/reuseport",
     "plugin/pkg/trace",
     "plugin/pkg/transport",
     "plugin/pkg/uniq",
@@ -140,8 +141,8 @@
     "request",
   ]
   pruneopts = "NUT"
-  revision = "c2fd1b2467249d8b1bb6bbee72ad83b63dd9087f"
-  version = "v1.6.5"
+  revision = "6a7a75e0cc14159177e604d0157836cc32add343"
+  version = "v1.6.6"
 
 [[projects]]
   branch = "master"
@@ -224,12 +225,12 @@
   version = "v6.0.1"
 
 [[projects]]
-  digest = "1:548ec60c4307968d6897ee56215c55a27272df8a99e80b4ba55b83800c62b271"
+  digest = "1:aa44000e19b346a0fde6906d51a48e0947a8528a0a64a3d6eb73ac2801e8ebc1"
   name = "github.com/miekg/dns"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "0788ed5f4e622ea7b25da827aba9f45719cf09aa"
-  version = "v1.1.24"
+  revision = "aae7df65e6178e7937664e9c3036f62fc2098d7c"
+  version = "v1.1.25"
 
 [[projects]]
   branch = "master"
@@ -418,11 +419,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "e7e4b65ae66375ec1e85afc8e6b9b4933ae4da81"
+  revision = "c0dbc17a35534bf2e581d7a942408dc936316da4"
 
 [[projects]]
   branch = "master"
-  digest = "1:6234608760e2490a0c950c0dfb018bf6d29544be1304ab965ddce3ffa9c941b9"
+  digest = "1:c5b1f2a8e46e1d9d2a3dc42c42fd278b0845094b4fae69845a6f399429601b5e"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -430,7 +431,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "eeba5f6aabab6d6594a9191d6bfeaca5fa6a8248"
+  revision = "ac6580df4449443a05718fd7858c1f91ad5f8d20"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -471,7 +472,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:34f7d6df156a2db4148618ef03de445c6fdad2f42de23e530fd3d194095098a9"
+  digest = "1:bbdf08fe776b96380d959a5e6cdfb2cc54122b48085ffac19a7586597cee84a4"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -488,7 +489,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "259af5ff87bdcd4abf2ecda8edc3f13f04f26a42"
+  revision = "04c2e8eff935f58e9a5568b6b73542f91e0491e6"
 
 [[projects]]
   branch = "master"
