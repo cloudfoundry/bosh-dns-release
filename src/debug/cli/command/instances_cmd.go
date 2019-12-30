@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cloudfoundry/bosh-cli/ui"
 	boshtbl "github.com/cloudfoundry/bosh-cli/ui/table"
@@ -34,7 +35,7 @@ func (o *InstancesCmd) Execute(args []string) error {
 		o.UI = confUI
 	}
 
-	client, err := tlsclient.NewFromFiles("api.bosh-dns", o.TLSCACertPath, o.TLSCertificatePath, o.TLSPrivateKeyPath, logger)
+	client, err := tlsclient.NewFromFiles("api.bosh-dns", o.TLSCACertPath, o.TLSCertificatePath, o.TLSPrivateKeyPath, 5 * time.Second, logger)
 	if err != nil {
 		return err
 	}

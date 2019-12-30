@@ -28,15 +28,17 @@ type concreteHealthServer struct {
 	logger           boshlog.Logger
 	healthExecutable HealthExecutable
 	shutdown chan struct{}
+	timeout time.Duration
 }
 
 const logTag = "healthServer"
 
-func NewHealthServer(logger boshlog.Logger, healthFileName string, healthExecutable HealthExecutable, shutdown chan struct{}) HealthServer {
+func NewHealthServer(logger boshlog.Logger, healthFileName string, healthExecutable HealthExecutable, shutdown chan struct{}, timeout time.Duration) HealthServer {
 	return &concreteHealthServer{
 		logger:           logger,
 		healthExecutable: healthExecutable,
 		shutdown: shutdown,
+		timeout: timeout,
 	}
 }
 
@@ -58,6 +60,8 @@ func (c *concreteHealthServer) Serve(config *healthconfig.HealthCheckConfig) {
 	server := &http.Server{
 		Addr:      fmt.Sprintf("%s:%d", config.Address, config.Port),
 		TLSConfig: tlsConfig,
+		ReadTimeout: c.timeout,
+		WriteTimeout: c.timeout,
 	}
 
 	go func() {

@@ -215,6 +215,7 @@ var _ = Describe("main", func() {
 				"api/assets/test_certs/test_ca.pem",
 				"api/assets/test_certs/test_wrong_cn_client.pem",
 				"api/assets/test_certs/test_client.key",
+				5 * time.Second,
 				logger,
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -1454,47 +1455,6 @@ var _ = Describe("main", func() {
 					}, 5*time.Second).Should(BeTrue())
 				})
 			})
-
-			Context("when a server is not returning responses", func() {
-				var brokenServer *ghttp.Server
-
-				BeforeEach(func() {
-					checkInterval = time.Minute
-					brokenServer = newFakeHealthServer("127.0.0.2", "failing", nil)
-					brokenServer.RouteToHandler("GET", "/health", ghttp.RespondWith(http.StatusGatewayTimeout, ``))
-
-					healthServers = []*ghttp.Server{
-						newFakeHealthServer("127.0.0.1", "running", nil),
-						// sudo ifconfig lo0 alias 127.0.0.2 up # on osx
-						brokenServer,
-					}
-				})
-
-				AfterEach(func() {
-					for _, server := range healthServers {
-						server.Close()
-					}
-				})
-
-				It("retries errors", func() {
-					c := &dns.Client{Net: "udp"}
-
-					m := &dns.Msg{}
-					m.SetQuestion("q-s0.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
-
-					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-
-					Expect(err).NotTo(HaveOccurred())
-
-					serverRequestLen := func(server *ghttp.Server) func() int {
-						return func() int {
-							return len(server.ReceivedRequests())
-						}
-					}
-					Eventually(serverRequestLen(healthServers[0]), 4*time.Second).Should(BeNumerically("==", 1))
-					Eventually(serverRequestLen(healthServers[1]), 4*time.Second).Should(BeNumerically("==", 4))
-				})
-			})
 		})
 	})
 
@@ -1652,7 +1612,7 @@ var _ = Describe("main", func() {
 			cfg.Address = listenAddress
 			cfg.Port = listenPort
 			cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
-			cfg.Timeout = config.DurationJSON(-1)
+			cfg.BindTimeout = config.DurationJSON(-1)
 			cfg.JobsDir = jobsDir
 
 			cfg.API = config.APIConfig{
@@ -1675,7 +1635,7 @@ var _ = Describe("main", func() {
 			cfg.Address = listenAddress
 			cfg.Port = listenPort
 			cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
-			cfg.Timeout = config.DurationJSON(-1)
+			cfg.BindTimeout = config.DurationJSON(-1)
 			cfg.JobsDir = ""
 
 			cfg.API = config.APIConfig{

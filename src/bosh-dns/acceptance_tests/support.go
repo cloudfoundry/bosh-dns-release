@@ -3,6 +3,7 @@ package acceptance
 import (
 	"bosh-dns/acceptance_tests/helpers"
 	"bosh-dns/tlsclient"
+	"time"
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"github.com/cloudfoundry/bosh-utils/logger"
@@ -166,7 +167,9 @@ func setupSecureGet() *httpclient.HTTPClient {
 	Expect(err).NotTo(HaveOccurred())
 
 	logger := logger.NewAsyncWriterLogger(logger.LevelDebug, ioutil.Discard)
-	return tlsclient.New("health.bosh-dns", []byte(caCert), cert, logger)
+	client, err := tlsclient.New("health.bosh-dns", []byte(caCert), cert, 5 * time.Second, logger)
+	Expect(err).NotTo(HaveOccurred())
+	return client
 }
 
 type healthResponse struct {

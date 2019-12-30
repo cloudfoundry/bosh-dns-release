@@ -2,19 +2,19 @@ package tlsclient
 
 import (
 	"crypto/tls"
-	"errors"
 	"io/ioutil"
 	"time"
 
 	"net/http"
 
+	"code.cloudfoundry.org/tlsconfig"
 	"crypto/x509"
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
-func NewFromFiles(dnsName string, caFile, clientCertFile, clientKeyFile string, logger boshlog.Logger) (*httpclient.HTTPClient, error) {
+func NewFromFiles(dnsName string, caFile, clientCertFile, clientKeyFile string, timeout time.Duration, logger boshlog.Logger) (*httpclient.HTTPClient, error) {
 	// Load client cert
 	cert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
 	if err != nil {
@@ -27,49 +27,34 @@ func NewFromFiles(dnsName string, caFile, clientCertFile, clientKeyFile string, 
 		return nil, err
 	}
 
-	return New(dnsName, caCert, cert, logger), nil
+	return New(dnsName, caCert, cert, timeout, logger)
 }
 
-func New(dnsName string, caCert []byte, cert tls.Certificate, logger boshlog.Logger) *httpclient.HTTPClient {
+func New(dnsName string, caCert []byte, cert tls.Certificate, timeout time.Duration, logger boshlog.Logger) (*httpclient.HTTPClient, error) {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	client := httpclient.NewMutualTLSClient(cert, caCertPool, "")
-	client.Timeout = 5 * time.Second
-
-	if tr, ok := client.Transport.(*http.Transport); ok {
-		tr.TLSClientConfig.ClientSessionCache = tls.NewLRUClientSessionCache(10000)
-		tr.TLSClientConfig.InsecureSkipVerify = true
-		tr.TLSClientConfig.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-			certs := make([]*x509.Certificate, len(rawCerts))
-			for i, asn1Data := range rawCerts {
-				cert, err := x509.ParseCertificate(asn1Data)
-				if err != nil {
-					return errors.New("tls: failed to parse certificate from server: " + err.Error())
-				}
-				certs[i] = cert
-			}
-
-			opts := x509.VerifyOptions{
-				Roots:         tr.TLSClientConfig.RootCAs,
-				CurrentTime:   time.Now(),
-				DNSName:       dnsName,
-				Intermediates: x509.NewCertPool(),
-			}
-
-			for i, cert := range certs {
-				if i == 0 {
-					continue
-				}
-				opts.Intermediates.AddCert(cert)
-			}
-			_, err := certs[0].Verify(opts)
-			return err
-		}
+	tlsConfig, err := tlsconfig.Build(
+		tlsconfig.WithIdentity(cert),
+		tlsconfig.WithInternalServiceDefaults(),
+	).Client(
+		tlsconfig.WithAuthority(caCertPool),
+		tlsconfig.WithServerName(dnsName),
+	)
+	if err != nil {
+		return nil, err
 	}
+	tlsConfig.BuildNameToCertificate()
+	tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(10000)
+
+	transport := &http.Transport{
+		TLSClientConfig: tlsConfig,
+	}
+	client := &http.Client{Transport: transport}
+	client.Timeout = timeout
 
 	return httpclient.NewHTTPClient(
-		httpclient.NewNetworkSafeRetryClient(client, 4, 500*time.Millisecond, logger),
+		client,
 		logger,
-	)
+	), nil
 }

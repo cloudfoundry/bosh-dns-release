@@ -8,5 +8,6 @@
   jobs_dir: "/var/vcap/jobs",
   port: p('health.server.port'),
   private_key_file: 'config/certs/health/server.key',
+  request_timeout: p('request_timeout'),
 }.to_json
 %>

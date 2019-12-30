@@ -69,7 +69,7 @@ func mainExitCode() int {
 		logger,
 	)
 
-	healthServer = healthserver.NewHealthServer(logger, config.HealthFileName, healthExecutableMonitor, shutdown)
+	healthServer = healthserver.NewHealthServer(logger, config.HealthFileName, healthExecutableMonitor, shutdown, time.Duration(config.RequestTimeout))
 	healthServer.Serve(config)
 
 	return 0

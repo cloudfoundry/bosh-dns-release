@@ -90,6 +90,10 @@ properties:
     description: "A list of recursor addresses which should not be used by the DNS server"
     default: []
 
+  request_timeout:
+    description: "A timeout value for when dialing, writing and reading from the bosh-dns or healthcheck servers"
+    default: 5s
+
   cache.enabled:
     description: "When enabled bosh-dns will cache up to a max of 1000 recursed entries"
     default: false

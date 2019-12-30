@@ -18,16 +18,17 @@ const (
 )
 
 type Config struct {
-	Address            string       `json:"address"`
-	Port               int          `json:"port"`
-	Timeout            DurationJSON `json:"timeout,omitempty"`
-	RecursorTimeout    DurationJSON `json:"recursor_timeout,omitempty"`
-	Recursors          []string     `json:"recursors,omitempty"`
-	ExcludedRecursors  []string     `json:"excluded_recursors,omitempty"`
-	RecordsFile        string       `json:"records_file,omitempty"`
-	RecursorSelection  string       `json:"recursor_selection"`
-	AliasFilesGlob     string       `json:"alias_files_glob,omitempty"`
-	HandlersFilesGlob  string       `json:"handlers_files_glob,omitempty"`
+	Address           string       `json:"address"`
+	Port              int          `json:"port"`
+	BindTimeout       DurationJSON `json:"timeout,omitempty"`
+	RequestTimeout    DurationJSON `json:"request_timeout,omitempty"`
+	RecursorTimeout   DurationJSON `json:"recursor_timeout,omitempty"`
+	Recursors         []string     `json:"recursors,omitempty"`
+	ExcludedRecursors []string     `json:"excluded_recursors,omitempty"`
+	RecordsFile       string       `json:"records_file,omitempty"`
+	RecursorSelection string       `json:"recursor_selection"`
+	AliasFilesGlob    string       `json:"alias_files_glob,omitempty"`
+	HandlersFilesGlob string       `json:"handlers_files_glob,omitempty"`
 	AddressesFilesGlob string       `json:"addresses_files_glob,omitempty"`
 	UpcheckDomains     []string     `json:"upcheck_domains,omitempty"`
 	JobsDir            string       `json:"jobs_dir,omitempty"`
@@ -96,7 +97,8 @@ func (t DurationJSON) MarshalJSON() (b []byte, err error) {
 
 func NewDefaultConfig() Config {
 	return Config{
-		Timeout:           DurationJSON(5 * time.Second),
+		BindTimeout:       DurationJSON(5 * time.Second),
+		RequestTimeout:    DurationJSON(5 * time.Second),
 		RecursorTimeout:   DurationJSON(2 * time.Second),
 		RecursorSelection: "smart",
 		Health: HealthConfig{

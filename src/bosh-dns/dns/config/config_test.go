@@ -35,6 +35,7 @@ var _ = Describe("Config", func() {
 		listenPort              int
 		logLevel                string
 		recursorTimeout         string
+		requestTimeout          string
 		timeout                 string
 		upcheckDomains          []string
 		upcheckInterval         string
@@ -60,6 +61,7 @@ var _ = Describe("Config", func() {
 		listenPort = rand.Int()
 		logLevel = boshlog.AsString(boshlog.LevelDebug)
 		recursorTimeout = fmt.Sprintf("%vs", rand.Int31n(16))
+		requestTimeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		timeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		upcheckDomains = []string{"upcheck.domain.", "health2.bosh."}
 		upcheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
@@ -75,6 +77,7 @@ var _ = Describe("Config", func() {
 			"port":                 listenPort,
 			"log_level":            logLevel,
 			"recursor_timeout":     recursorTimeout,
+			"request_timeout":      requestTimeout,
 			"excluded_recursors":   []string{"169.254.169.254", "169.10.10.10:1234"},
 			"timeout":              timeout,
 			"upcheck_domains":      upcheckDomains,
@@ -114,6 +117,9 @@ var _ = Describe("Config", func() {
 		timeoutDuration, err := time.ParseDuration(timeout)
 		Expect(err).ToNot(HaveOccurred())
 
+		requestTimeoutDuration, err := time.ParseDuration(requestTimeout)
+		Expect(err).ToNot(HaveOccurred())
+
 		recursorTimeoutDuration, err := time.ParseDuration(recursorTimeout)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -135,7 +141,8 @@ var _ = Describe("Config", func() {
 				PrivateKeyFile:  apiPrivateKeyFile,
 				CAFile:          apiCAFile,
 			},
-			Timeout:            config.DurationJSON(timeoutDuration),
+			BindTimeout:        config.DurationJSON(timeoutDuration),
+			RequestTimeout:     config.DurationJSON(requestTimeoutDuration),
 			RecursorTimeout:    config.DurationJSON(recursorTimeoutDuration),
 			Recursors:          []string{},
 			ExcludedRecursors:  []string{"169.254.169.254:53", "169.10.10.10:1234"},
@@ -256,7 +263,7 @@ var _ = Describe("Config", func() {
 			dnsConfig, err := config.LoadFromFile(configFilePath)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(dnsConfig.Timeout).To(Equal(config.DurationJSON(5 * time.Second)))
+			Expect(dnsConfig.BindTimeout).To(Equal(config.DurationJSON(5 * time.Second)))
 		})
 	})
 

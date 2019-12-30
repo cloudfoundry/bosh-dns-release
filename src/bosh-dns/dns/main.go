@@ -134,7 +134,7 @@ func mainExitCode() int {
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
 	var healthChecker healthiness.HealthChecker = healthiness.NewDisabledHealthChecker()
 	if config.Health.Enabled {
-		httpClient, err := tlsclient.NewFromFiles("health.bosh-dns", config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, logger)
+		httpClient, err := tlsclient.NewFromFiles("health.bosh-dns", config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, time.Duration(config.RequestTimeout), logger)
 		if err != nil {
 			logger.Error(logTag, fmt.Sprintf("Unable to configure health checker %s", err.Error()))
 			return 1
@@ -202,8 +202,8 @@ func mainExitCode() int {
 	for _, addr := range listenAddrs {
 		for i := 0; i < numListeners; i++ {
 			servers = append(servers,
-				&dns.Server{Addr: addr, Net: "tcp", Handler: mux, ReusePort: true},
-				&dns.Server{Addr: addr, Net: "udp", Handler: mux, ReusePort: true, UDPSize: 65535},
+				&dns.Server{Addr: addr, Net: "tcp", Handler: mux, ReadTimeout: time.Duration(config.RequestTimeout), WriteTimeout: time.Duration(config.RequestTimeout), ReusePort: true},
+				&dns.Server{Addr: addr, Net: "udp", Handler: mux, ReadTimeout: time.Duration(config.RequestTimeout), WriteTimeout: time.Duration(config.RequestTimeout), ReusePort: true, UDPSize: 65535},
 			)
 		}
 	}
@@ -211,7 +211,7 @@ func mainExitCode() int {
 	dnsServer := server.New(
 		servers,
 		upchecks,
-		time.Duration(config.Timeout),
+		time.Duration(config.BindTimeout),
 		time.Duration(config.Health.CheckInterval),
 		shutdown,
 		logger,

@@ -15,4 +15,6 @@ type HealthCheckConfig struct {
 	HealthFileName           string              `json:"health_file_name"`
 
 	JobsDir string `json:"jobs_dir"`
+
+	RequestTimeout config.DurationJSON `json:"request_timeout"`
 }
