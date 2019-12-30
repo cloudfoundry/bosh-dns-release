@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -135,13 +134,12 @@ func mainExitCode() int {
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
 	var healthChecker healthiness.HealthChecker = healthiness.NewDisabledHealthChecker()
 	if config.Health.Enabled {
-		quietLogger := boshlog.NewAsyncWriterLogger(boshlog.LevelNone, ioutil.Discard)
-		httpClient, err := tlsclient.NewFromFiles("health.bosh-dns", config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, quietLogger)
+		httpClient, err := tlsclient.NewFromFiles("health.bosh-dns", config.Health.CAFile, config.Health.CertificateFile, config.Health.PrivateKeyFile, logger)
 		if err != nil {
 			logger.Error(logTag, fmt.Sprintf("Unable to configure health checker %s", err.Error()))
 			return 1
 		}
-		healthChecker = healthiness.NewHealthChecker(httpClient, config.Health.Port)
+		healthChecker = healthiness.NewHealthChecker(httpClient, config.Health.Port, logger)
 		checkInterval := time.Duration(config.Health.CheckInterval)
 		healthWatcher = healthiness.NewHealthWatcher(1000, healthChecker, clock, checkInterval, logger)
 	}

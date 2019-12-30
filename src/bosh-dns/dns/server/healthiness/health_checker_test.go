@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"io/ioutil"
 
 	"bosh-dns/dns/server/healthiness"
@@ -20,6 +21,7 @@ var _ = Describe("HealthChecker", func() {
 	var (
 		ip            string
 		fakeClient    *healthinessfakes.FakeHTTPClientGetter
+		fakeLogger    *loggerfakes.FakeLogger
 		healthChecker healthiness.HealthChecker
 
 		responseBody string
@@ -29,7 +31,8 @@ var _ = Describe("HealthChecker", func() {
 
 	BeforeEach(func() {
 		fakeClient = &healthinessfakes.FakeHTTPClientGetter{}
-		healthChecker = healthiness.NewHealthChecker(fakeClient, 8081)
+		fakeLogger = &loggerfakes.FakeLogger{}
+		healthChecker = healthiness.NewHealthChecker(fakeClient, 8081, fakeLogger)
 
 		responseCode = 200
 		responseBody = `{"state":"running"}`
