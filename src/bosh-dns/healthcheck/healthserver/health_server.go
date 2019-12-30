@@ -3,10 +3,12 @@ package healthserver
 import (
 	"bosh-dns/healthcheck/api"
 	"bosh-dns/healthconfig"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"code.cloudfoundry.org/tlsconfig"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
@@ -25,14 +27,16 @@ type HealthExecutable interface {
 type concreteHealthServer struct {
 	logger           boshlog.Logger
 	healthExecutable HealthExecutable
+	shutdown chan struct{}
 }
 
 const logTag = "healthServer"
 
-func NewHealthServer(logger boshlog.Logger, healthFileName string, healthExecutable HealthExecutable) HealthServer {
+func NewHealthServer(logger boshlog.Logger, healthFileName string, healthExecutable HealthExecutable, shutdown chan struct{}) HealthServer {
 	return &concreteHealthServer{
 		logger:           logger,
 		healthExecutable: healthExecutable,
+		shutdown: shutdown,
 	}
 }
 
@@ -55,10 +59,23 @@ func (c *concreteHealthServer) Serve(config *healthconfig.HealthCheckConfig) {
 		Addr:      fmt.Sprintf("%s:%d", config.Address, config.Port),
 		TLSConfig: tlsConfig,
 	}
-	server.SetKeepAlivesEnabled(false)
+
+	go func() {
+		<- c.shutdown
+		server.SetKeepAlivesEnabled(false)
+		ctx, _ := context.WithTimeout(context.Background(), 5 * time.Second)
+		err = server.Shutdown(ctx)
+		if err != nil {
+			c.logger.Error(logTag, "http healthcheck error during shutdown %s", err)
+		}
+	}()
 
 	serveErr := server.ListenAndServeTLS("", "")
-	c.logger.Error(logTag, "http healthcheck ending with %s", serveErr)
+	if serveErr != nil && serveErr != http.ErrServerClosed {
+		c.logger.Error(logTag, "http healthcheck ending with %s", serveErr)
+	} else {
+		c.logger.Info(logTag, "http healthcheck shutdown")
+	}
 }
 
 func (c *concreteHealthServer) healthEntryPoint(w http.ResponseWriter, r *http.Request) {

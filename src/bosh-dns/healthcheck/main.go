@@ -5,14 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"bosh-dns/healthcheck/healthexecutable"
 	"bosh-dns/healthcheck/healthserver"
 	"bosh-dns/healthconfig"
-
-	"os/signal"
-	"syscall"
 
 	"code.cloudfoundry.org/clock"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
@@ -52,6 +51,14 @@ func mainExitCode() int {
 		return 1
 	}
 
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGTERM)
+
+	go func() {
+		<-sigterm
+		close(shutdown)
+	}()
+
 	healthExecutableMonitor := healthexecutable.NewMonitor(
 		config.HealthFileName,
 		jobs,
@@ -62,16 +69,8 @@ func mainExitCode() int {
 		logger,
 	)
 
-	healthServer = healthserver.NewHealthServer(logger, config.HealthFileName, healthExecutableMonitor)
+	healthServer = healthserver.NewHealthServer(logger, config.HealthFileName, healthExecutableMonitor, shutdown)
 	healthServer.Serve(config)
-
-	sigterm := make(chan os.Signal, 1)
-	signal.Notify(sigterm, syscall.SIGTERM)
-
-	go func() {
-		<-sigterm
-		close(shutdown)
-	}()
 
 	return 0
 }
