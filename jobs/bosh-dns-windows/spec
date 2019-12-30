@@ -116,3 +116,15 @@ properties:
   health.max_tracked_queries:
     description: "Maximum number of DNS resolved FQDNs to maintain live health info for"
     default: 2000
+
+  health.local_health_interval:
+    description: "Frequency for the local health server to query monit and job healthiness scripts"
+    default: 5s
+
+  health.remote_health_interval:
+    description: "Frequency for the local bosh-dns to query remote health servers"
+    default: 20s
+
+  health.synchronous_check_timeout:
+    description: "Network timeout for synchronous health checks"
+    default: 1s

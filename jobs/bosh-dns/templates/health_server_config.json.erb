@@ -2,7 +2,7 @@
 {
   ca_file: 'config/certs/health/server_ca.crt',
   certificate_file: 'config/certs/health/server.crt',
-  health_executable_interval: "5s",
+  health_executable_interval: p('health.local_health_interval'),
   health_executable_path: "bin/dns/healthy",
   health_file_name: '/var/vcap/instance/health.json',
   jobs_dir: "/var/vcap/jobs",

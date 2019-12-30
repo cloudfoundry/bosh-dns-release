@@ -5,6 +5,7 @@ import (
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/record"
 	"sync"
+	"time"
 
 	"code.cloudfoundry.org/clock"
 )
@@ -21,13 +22,17 @@ type FiltererFactory interface {
 
 type healthFiltererFactory struct {
 	healthWatcher healthiness.HealthWatcher
+	synchronousCheckTimeout time.Duration
 }
 
 func (hff *healthFiltererFactory) NewFilterer(healthChan chan record.Host, shouldTrack bool) Filterer {
-	hf := NewHealthFilter(&QueryFilter{}, healthChan, hff.healthWatcher, shouldTrack, clock.NewClock(), &sync.WaitGroup{})
+	hf := NewHealthFilter(&QueryFilter{}, healthChan, hff.healthWatcher, shouldTrack, clock.NewClock(), hff.synchronousCheckTimeout, &sync.WaitGroup{})
 	return &hf
 }
 
-func NewHealthFiltererFactory(healthWatcher healthiness.HealthWatcher) FiltererFactory {
-	return &healthFiltererFactory{healthWatcher: healthWatcher}
+func NewHealthFiltererFactory(healthWatcher healthiness.HealthWatcher, synchronousCheckTimeout time.Duration) FiltererFactory {
+	return &healthFiltererFactory{
+		healthWatcher: healthWatcher,
+		synchronousCheckTimeout: synchronousCheckTimeout,
+	}
 }

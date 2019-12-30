@@ -72,7 +72,7 @@ var _ = Describe("HealthFilter", func() {
 	})
 
 	JustBeforeEach(func() {
-		hf := records.NewHealthFilter(fakeFilter, healthChan, fakeHealthWatcher, shouldTrack, clock, waitGroup)
+		hf := records.NewHealthFilter(fakeFilter, healthChan, fakeHealthWatcher, shouldTrack, clock, time.Second, waitGroup)
 		healthFilter = &hf
 		crit = criteria.Criteria{
 			"s":    []string{healthStrategy},

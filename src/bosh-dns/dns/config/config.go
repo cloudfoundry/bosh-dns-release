@@ -63,6 +63,7 @@ type HealthConfig struct {
 	CAFile            string       `json:"ca_file"`
 	CheckInterval     DurationJSON `json:"check_interval,omitempty"`
 	MaxTrackedQueries int          `json:"max_tracked_queries,omitempty"`
+	SynchronousCheckTimeout DurationJSON `json:"synchronous_check_timeout,omitempty"`
 }
 
 type Cache struct {
@@ -100,6 +101,8 @@ func NewDefaultConfig() Config {
 		RecursorSelection: "smart",
 		Health: HealthConfig{
 			MaxTrackedQueries: 2000,
+			CheckInterval: DurationJSON(20 * time.Second),
+			SynchronousCheckTimeout: DurationJSON(time.Second),
 		},
 		LogLevel: boshlog.AsString(boshlog.LevelDebug),
 	}

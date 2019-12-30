@@ -24,8 +24,9 @@
     certificate_file: 'config/certs/health/client.crt',
     private_key_file: 'config/certs/health/client.key',
     ca_file: 'config/certs/health/client_ca.crt',
-    check_interval: "20s",
-    max_tracked_queries: p('health.max_tracked_queries')
+    check_interval: p('health.remote_health_interval'),
+    max_tracked_queries: p('health.max_tracked_queries'),
+    synchronous_check_timeout: p('health.synchronous_check_timeout')
   },
   cache: {
     enabled: p('cache.enabled')

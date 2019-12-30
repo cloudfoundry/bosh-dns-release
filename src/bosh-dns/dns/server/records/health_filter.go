@@ -23,6 +23,7 @@ type healthFilter struct {
 	domain         string
 	filterWorkPool *workpool.WorkPool
 	clock          clock.Clock
+	synchronousCheckTimeout time.Duration
 }
 
 type healthTracker interface {
@@ -35,7 +36,7 @@ type healthWatcher interface {
 	RunCheck(ip string)
 }
 
-func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool, clock clock.Clock, wg *sync.WaitGroup) healthFilter {
+func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool, clock clock.Clock, synchronousCheckTimeout time.Duration, wg *sync.WaitGroup) healthFilter {
 	wp, _ := workpool.NewWorkPool(1000)
 	return healthFilter{
 		nextFilter:     nextFilter,
@@ -45,6 +46,7 @@ func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatc
 		shouldTrack:    shouldTrack,
 		filterWorkPool: wp,
 		clock:          clock,
+		synchronousCheckTimeout: synchronousCheckTimeout,
 	}
 }
 
@@ -103,7 +105,7 @@ func (q *healthFilter) processRecords(criteria criteria.Criteria, records []reco
 }
 
 func (q *healthFilter) waitForWaitGroupOrTimeout() {
-	timeout := q.clock.After(1 * time.Second)
+	timeout := q.clock.After(q.synchronousCheckTimeout)
 	success := make(chan struct{})
 
 	go func() {

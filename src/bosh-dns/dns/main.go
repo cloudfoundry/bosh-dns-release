@@ -147,7 +147,7 @@ func mainExitCode() int {
 	shutdown := make(chan struct{})
 
 	fileReader := records.NewFileReader(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
-	filtererFactory := records.NewHealthFiltererFactory(healthWatcher)
+	filtererFactory := records.NewHealthFiltererFactory(healthWatcher, time.Duration(config.Health.SynchronousCheckTimeout))
 	recordSet, err := records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger, filtererFactory, records.NewAliasEncoder())
 
 	truncater := dnsresolver.NewResponseTruncater()
@@ -212,7 +212,7 @@ func mainExitCode() int {
 		servers,
 		upchecks,
 		time.Duration(config.Timeout),
-		time.Duration(5*time.Second),
+		time.Duration(config.Health.CheckInterval),
 		shutdown,
 		logger,
 	)

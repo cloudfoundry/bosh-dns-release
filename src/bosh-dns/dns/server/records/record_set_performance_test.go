@@ -34,7 +34,7 @@ var _ = Describe("Record Set Performance", func() {
 
 		aliasList = mustNewConfigFromMap(map[string][]string{})
 		fakeHealthWatcher = &healthinessfakes.FakeHealthWatcher{}
-		filtererFactory = records.NewHealthFiltererFactory(fakeHealthWatcher)
+		filtererFactory = records.NewHealthFiltererFactory(fakeHealthWatcher, time.Second)
 		shutdownChan = make(chan struct{})
 		fakeHealthWatcher.HealthStateReturns(api.HealthResult{State: api.StatusRunning})
 	})

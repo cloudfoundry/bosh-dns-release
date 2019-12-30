@@ -38,6 +38,7 @@ var _ = Describe("Config", func() {
 		timeout                 string
 		upcheckDomains          []string
 		upcheckInterval         string
+		synchronousCheckTimeout string
 	)
 
 	BeforeEach(func() {
@@ -62,6 +63,7 @@ var _ = Describe("Config", func() {
 		timeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		upcheckDomains = []string{"upcheck.domain.", "health2.bosh."}
 		upcheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
+		synchronousCheckTimeout = "1s"
 	})
 
 	It("returns config from a config file", func() {
@@ -91,6 +93,7 @@ var _ = Describe("Config", func() {
 				"ca_file":             healthCAFile,
 				"check_interval":      upcheckInterval,
 				"max_tracked_queries": healthMaxTrackedQueries,
+				"synchronous_check_timeout": synchronousCheckTimeout,
 			},
 			"cache": map[string]interface{}{
 				"enabled": true,
@@ -115,6 +118,9 @@ var _ = Describe("Config", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		upcheckIntervalDuration, err := time.ParseDuration(upcheckInterval)
+		Expect(err).ToNot(HaveOccurred())
+
+		synchronousCheckTimeoutDuration, err := time.ParseDuration(synchronousCheckTimeout)
 		Expect(err).ToNot(HaveOccurred())
 
 		dnsConfig, err := config.LoadFromFile(configFilePath)
@@ -147,6 +153,7 @@ var _ = Describe("Config", func() {
 				CAFile:            healthCAFile,
 				CheckInterval:     config.DurationJSON(upcheckIntervalDuration),
 				MaxTrackedQueries: healthMaxTrackedQueries,
+				SynchronousCheckTimeout: config.DurationJSON(synchronousCheckTimeoutDuration),
 			},
 			Cache: config.Cache{
 				Enabled: true,
