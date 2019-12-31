@@ -438,7 +438,7 @@ var _ = Describe("main", func() {
 							Domain:      "primer.",
 							AZ:          "az1",
 							Index:       "",
-							HealthState: "unchecked",
+							HealthState: "unknown",
 						},
 					}))
 				})
