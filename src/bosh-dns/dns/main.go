@@ -212,7 +212,7 @@ func mainExitCode() int {
 		servers,
 		upchecks,
 		time.Duration(config.BindTimeout),
-		time.Duration(config.Health.CheckInterval),
+		5*time.Second,
 		shutdown,
 		logger,
 	)
