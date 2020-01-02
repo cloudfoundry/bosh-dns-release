@@ -78,12 +78,12 @@ func (t *Tracker) monitor(ip, fqdn string) {
 	t.h.Track(ip)
 }
 
-func (t *Tracker) refresh(recs []record.Record) {
+func (t *Tracker) refresh(newRecords []record.Record) {
 	newTrackedIPs := map[string]map[string]struct{}{}
 	t.trackedIPsMutex.Lock()
 	defer t.trackedIPsMutex.Unlock()
 	recordDomains := []string{}
-	for _, rec := range recs {
+	for _, rec := range newRecords {
 		recordDomains = append(recordDomains, rec.Domain)
 	}
 
@@ -94,13 +94,10 @@ func (t *Tracker) refresh(recs []record.Record) {
 			continue
 		}
 
-		records := t.qf.Filter(crit, recs)
-		ips := make([]string, len(records))
-		for i, rec := range records {
-			ips[i] = rec.IP
-		}
+		filteredRecords := t.qf.Filter(crit, newRecords)
 
-		for _, ip := range ips {
+		for _, rec := range filteredRecords {
+			ip := rec.IP
 			firstOccurrence := false
 			if _, ok := newTrackedIPs[ip]; !ok {
 				firstOccurrence = true
