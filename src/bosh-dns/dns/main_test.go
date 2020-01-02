@@ -358,22 +358,25 @@ var _ = Describe("main", func() {
 				})
 
 				It("returns json records", func() {
-					resp, err := secureGet(apiClient, listenAPIPort, "instances")
-					Expect(err).NotTo(HaveOccurred())
-					defer resp.Body.Close()
+					status := func() []api.InstanceRecord {
+						resp, err := secureGet(apiClient, listenAPIPort, "instances")
+						Expect(err).NotTo(HaveOccurred())
+						defer resp.Body.Close()
 
-					Expect(resp.StatusCode).To(Equal(http.StatusOK))
+						Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-					var parsed []api.InstanceRecord
-					decoder := json.NewDecoder(resp.Body)
-					var nextRecord api.InstanceRecord
-					for decoder.More() {
-						err = decoder.Decode(&nextRecord)
-						Expect(err).ToNot(HaveOccurred())
-						parsed = append(parsed, nextRecord)
+						var parsed []api.InstanceRecord
+						decoder := json.NewDecoder(resp.Body)
+						var nextRecord api.InstanceRecord
+						for decoder.More() {
+							err = decoder.Decode(&nextRecord)
+							Expect(err).ToNot(HaveOccurred())
+							parsed = append(parsed, nextRecord)
+						}
+						return parsed
 					}
 
-					Expect(parsed).To(ConsistOf([]api.InstanceRecord{
+					Eventually(status, 10*time.Second).Should(ConsistOf([]api.InstanceRecord{
 						{
 							ID:          "my-instance",
 							Group:       "my-group",
