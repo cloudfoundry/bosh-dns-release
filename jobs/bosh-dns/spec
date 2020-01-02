@@ -44,7 +44,7 @@ properties:
     default: 53
   log_level:
     description: Logging level (DEBUG, INFO, WARN, ERROR, NONE)
-    default: DEBUG
+    default: INFO
 
   api.port:
     description: "Port that the DNS servers debug API will listen on"

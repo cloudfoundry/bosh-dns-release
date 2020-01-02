@@ -47,7 +47,7 @@ func (h RequestLoggerHandler) ServeDNS(responseWriter dns.ResponseWriter, req *d
 		types[i] = fmt.Sprintf("%d", q.Qtype)
 		domains[i] = q.Name
 	}
-	h.logger.Info(h.logTag, fmt.Sprintf("%T Request [%s] [%s] %d %dns",
+	h.logger.Debug(h.logTag, fmt.Sprintf("%T Request [%s] [%s] %d %dns",
 		h.Handler,
 		strings.Join(types, ","),
 		strings.Join(domains, ","),
