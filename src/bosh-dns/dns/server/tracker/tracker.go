@@ -91,6 +91,7 @@ func (t *Tracker) refresh(newRecords []record.Record) {
 	for _, domain := range monitoredDomains {
 		crit, err := criteria.NewCriteria(domain, recordDomains)
 		if err != nil {
+			t.logger.Warn("Tracker", "Error creating filter criteria for %s", domain)
 			continue
 		}
 
