@@ -6,6 +6,8 @@ import (
 	"bosh-dns/dns/server/tracker"
 	"bosh-dns/dns/server/tracker/fakes"
 
+	logfake "github.com/cloudfoundry/bosh-utils/logger/fakes"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -18,6 +20,7 @@ var _ = Describe("Tracker", func() {
 		shutdown       chan struct{}
 		hw             *fakes.Healther
 		qf             *fakes.Query
+		fakeLogger            *logfake.FakeLogger
 	)
 
 	BeforeEach(func() {
@@ -25,6 +28,7 @@ var _ = Describe("Tracker", func() {
 		healthMonitor = make(chan record.Host, 5)
 		shutdown = make(chan struct{})
 		trackedDomains = &fakes.LimitedTranscript{}
+		fakeLogger = &logfake.FakeLogger{}
 		hw = &fakes.Healther{}
 		qf = &fakes.Query{}
 	})
@@ -34,23 +38,23 @@ var _ = Describe("Tracker", func() {
 	})
 
 	Describe("Start", func() {
-		var nameIP map[string][]record.Record
 		BeforeEach(func() {
 			trackedDomains.RegistryReturns([]string{"qs-foo.now.remove.me", "qs-foo.dont.remove.me", "qs-foo.now.update.me"})
 
-			nameIP = map[string][]record.Record{
-				"qs-foo.now.remove.me":  []record.Record{{IP: "1.1.1.1", Domain: "qs-foo.now.remove.me"}},
-				"qs-foo.dont.remove.me": []record.Record{{IP: "2.2.2.2", Domain: "qs-foo.dont.remove.me"}},
-				"qs-foo.now.update.me":  []record.Record{{IP: "4.4.4.4", Domain: "qs-foo.dont.remove.me"}},
-			}
-
 			qf.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
 				crit := mm.(criteria.Criteria)
+				fqdn := crit["fqdn"][0]
 
-				return nameIP[crit["fqdn"][0]]
+				result := []record.Record{}
+				for _, r := range recs {
+					if r.Domain == fqdn {
+						result = append(result, r)
+					}
+				}
+				return result
 			}
 
-			tracker.Start(shutdown, subscription, healthMonitor, trackedDomains, hw, qf)
+			tracker.Start(shutdown, subscription, healthMonitor, trackedDomains, hw, qf, fakeLogger)
 		})
 
 		Context("when notified to monitor records", func() {
@@ -86,7 +90,6 @@ var _ = Describe("Tracker", func() {
 				Expect(trackedDomains.TouchArgsForCall(0)).To(Equal("qs-foo.doesnt.matter.anyway"))
 
 				trackedDomains.RegistryReturns([]string{"qs-foo.doesnt.matter.anyway"})
-				nameIP["qs-foo.doesnt.matter.anyway"] = []record.Record{{IP: "1.1.1.1", Domain: "qs-foo.doesnt.matter.anyway"}}
 				subscription <- []record.Record{
 					{IP: "1.1.1.1", Domain: "qs-foo.doesnt.matter.anyway"},
 				}
@@ -100,35 +103,71 @@ var _ = Describe("Tracker", func() {
 		})
 
 		Context("when notified of a subscription", func() {
-			It("syncs the tracking behavior", func() {
-				initialRecords := []record.Record{
+			var (
+				initialRecords []record.Record
+			)
+			BeforeEach(func() {
+				initialRecords = []record.Record{
 					{IP: "1.1.1.1", Domain: "qs-foo.now.remove.me"},
 					{IP: "2.2.2.2", Domain: "qs-foo.dont.remove.me"},
 					{IP: "3.3.3.3", Domain: "qs-foo.now.donttrack.me"},
 					{IP: "4.4.4.4", Domain: "qs-foo.now.update.me"},
 				}
 				subscription <- initialRecords
+
 				Eventually(qf.FilterCallCount).Should(Equal(3))
-				_, filterCallRecs := qf.FilterArgsForCall(0)
-				Expect(filterCallRecs).To(Equal(initialRecords))
+			})
 
-				Eventually(hw.TrackCallCount).Should(Equal(3))
-				Expect(hw.TrackArgsForCall(0)).To(Equal("1.1.1.1"))
-				Expect(hw.TrackArgsForCall(1)).To(Equal("2.2.2.2"))
-				Expect(hw.TrackArgsForCall(2)).To(Equal("4.4.4.4"))
-				nameIP["qs-foo.now.update.me"] = []record.Record{{IP: "5.5.5.5", Domain: "qs-foo.now.update"}}
+			Context("initial subscription", func() {
+				It("tracks IPs for all monitored domains", func() {
+					Eventually(hw.TrackCallCount).Should(Equal(3))
+					Expect(hw.TrackArgsForCall(0)).To(Equal("1.1.1.1"))
+					Expect(hw.TrackArgsForCall(1)).To(Equal("2.2.2.2"))
+					Expect(hw.TrackArgsForCall(2)).To(Equal("4.4.4.4"))
+					Expect(hw.UntrackCallCount()).To(Equal(0))
+				})
+			})
 
-				subscription <- []record.Record{
-					{IP: "2.2.2.2", Domain: "qs-foo.dont.remove.me"},
-					{IP: "3.3.3.3", Domain: "qs-foo.now.donttrack.me"},
-					{IP: "5.5.5.5", Domain: "qs-foo.now.update.me"},
-				}
+			Context("updated subscription", func() {
+				var (
+					updatedRecords []record.Record
+				)
+				BeforeEach(func() {
+					trackedDomains.RegistryReturns([]string{"qs-foo.now.remove.me", "qs-foo.dont.remove.me", "qs-foo.now.update.me", "alias1.tld", "alias2.tld"})
+					updatedRecords = []record.Record{
+						// 1.1.1.1 removed
+						{IP: "2.2.2.2", Domain: "qs-foo.dont.remove.me"},
+						{IP: "3.3.3.3", Domain: "qs-foo.now.donttrack.me"},
+						{IP: "5.5.5.5", Domain: "qs-foo.now.update.me"}, // 4.4.4.4 -> 5.5.5.5
+						{IP: "6.6.6.6", Domain: "alias1.tld"},
+						{IP: "6.6.6.6", Domain: "alias2.tld"}, // ip with multiple domains
+					}
+					subscription <- updatedRecords
+				})
 
-				Eventually(hw.UntrackCallCount).Should(Equal(1))
-				Expect(hw.UntrackArgsForCall(0)).To(Equal("4.4.4.4"))
+				Context("tracked domains have new IPs", func() {
+					It("Gets tracked", func() {
+						Eventually(hw.TrackCallCount).Should(Equal(5))
+						Expect(hw.TrackArgsForCall(3)).To(Equal("5.5.5.5"))
+						Expect(hw.TrackArgsForCall(4)).To(Equal("6.6.6.6"))
+					})
+				})
+				Context("a tracked IP is no longer referenced by any tracked domain", func() {
+					It("Gets untracked", func() {
+						Eventually(hw.UntrackCallCount).Should(Equal(2))
+						untrackedIps := []string{hw.UntrackArgsForCall(0), hw.UntrackArgsForCall(1)}
 
-				Eventually(hw.TrackCallCount).Should(Equal(4))
-				Expect(hw.TrackArgsForCall(3)).To(Equal("5.5.5.5"))
+						Expect(untrackedIps).To(ConsistOf("1.1.1.1", "4.4.4.4")) // order not guaranteed
+					})
+				})
+				Context("on subsequent subscriptions", func() {
+					It("all previous state remembered", func() {
+						Eventually(hw.TrackCallCount).Should(Equal(5))
+						subscription <- updatedRecords
+						Consistently(hw.TrackCallCount).Should(Equal(5))
+						Consistently(hw.UntrackCallCount).Should(Equal(2))
+					})
+				})
 			})
 		})
 	})

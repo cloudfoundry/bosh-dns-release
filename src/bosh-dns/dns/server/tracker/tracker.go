@@ -3,6 +3,7 @@ package tracker
 import (
 	"bosh-dns/dns/server/criteria"
 	"bosh-dns/dns/server/record"
+	"github.com/cloudfoundry/bosh-utils/logger"
 	"sync"
 )
 
@@ -12,6 +13,7 @@ type Tracker struct {
 	trackedIPs      map[string]map[string]struct{}
 	trackedIPsMutex *sync.Mutex
 	qf              query
+	logger logger.Logger
 }
 
 //go:generate counterfeiter -o ./fakes/limited_transcript.go --fake-name LimitedTranscript . limitedTranscript
@@ -31,13 +33,14 @@ type query interface {
 	Filter(criteria.MatchMaker, []record.Record) []record.Record
 }
 
-func Start(shutdown chan struct{}, subscription <-chan []record.Record, healthMonitor <-chan record.Host, trackedDomains limitedTranscript, healther healther, qf query) {
+func Start(shutdown chan struct{}, subscription <-chan []record.Record, healthMonitor <-chan record.Host, trackedDomains limitedTranscript, healther healther, qf query, logger logger.Logger) {
 	t := &Tracker{
 		trackedDomains:  trackedDomains,
 		h:               healther,
 		qf:              qf,
 		trackedIPs:      map[string]map[string]struct{}{},
 		trackedIPsMutex: &sync.Mutex{},
+		logger: logger,
 	}
 	go func() {
 		for {
@@ -57,10 +60,12 @@ func (t *Tracker) monitor(ip, fqdn string) {
 	t.trackedIPsMutex.Lock()
 
 	if remove := t.trackedDomains.Touch(fqdn); remove != "" {
+		t.logger.Debug("Tracker", "remove %s from recent domains", fqdn)
 		for ip, domains := range t.trackedIPs {
 			if _, ok := domains[remove]; ok {
 				delete(domains, remove)
 				if len(domains) == 0 {
+					t.logger.Debug("Tracker", "remove %s from tracked IPs - %s was last domain", ip, fqdn)
 					t.h.Untrack(ip)
 				}
 			}
@@ -77,13 +82,14 @@ func (t *Tracker) refresh(recs []record.Record) {
 	newTrackedIPs := map[string]map[string]struct{}{}
 	t.trackedIPsMutex.Lock()
 	defer t.trackedIPsMutex.Unlock()
-	domains := []string{}
+	recordDomains := []string{}
 	for _, rec := range recs {
-		domains = append(domains, rec.Domain)
+		recordDomains = append(recordDomains, rec.Domain)
 	}
 
-	for _, domain := range t.trackedDomains.Registry() {
-		crit, err := criteria.NewCriteria(domain, domains)
+	monitoredDomains := t.trackedDomains.Registry()
+	for _, domain := range monitoredDomains {
+		crit, err := criteria.NewCriteria(domain, recordDomains)
 		if err != nil {
 			continue
 		}
@@ -95,23 +101,30 @@ func (t *Tracker) refresh(recs []record.Record) {
 		}
 
 		for _, ip := range ips {
+			firstOccurrence := false
 			if _, ok := newTrackedIPs[ip]; !ok {
+				firstOccurrence = true
 				newTrackedIPs[ip] = map[string]struct{}{}
 			}
 			newTrackedIPs[ip][domain] = struct{}{}
 
+			previouslyTracked := false
 			if _, found := t.trackedIPs[ip]; found {
 				delete(t.trackedIPs, ip)
-			} else {
-				newTrackedIPs[ip] = map[string]struct{}{}
-				newTrackedIPs[ip][domain] = struct{}{}
+				previouslyTracked = true
+			}
 
+			if firstOccurrence && !previouslyTracked {
+				t.logger.Debug("Tracker", "Found new IP %s for %s in refreshed records", ip, domain)
 				t.h.Track(ip)
+			} else {
+				t.logger.Debug("Tracker", "Found tracked IP %s for %s in refreshed records", ip, domain)
 			}
 		}
 	}
 
 	for oldIP := range t.trackedIPs {
+		t.logger.Debug("Tracker", "IP %s not referenced by refreshed domains", oldIP)
 		t.h.Untrack(oldIP)
 	}
 

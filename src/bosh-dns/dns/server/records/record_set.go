@@ -69,7 +69,7 @@ func NewRecordSet(
 	}
 
 	trackedDomains := tracker.NewPriorityLimitedTranscript(maximumTrackedDomains)
-	tracker.Start(shutdownChan, r.trackerSubscription, r.healthChan, trackedDomains, healthWatcher, &QueryFilter{})
+	tracker.Start(shutdownChan, r.trackerSubscription, r.healthChan, trackedDomains, healthWatcher, &QueryFilter{}, logger)
 
 	r.update()
 
