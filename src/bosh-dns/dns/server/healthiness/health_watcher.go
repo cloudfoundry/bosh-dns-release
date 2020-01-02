@@ -60,7 +60,16 @@ func NewHealthWatcher(workpoolSize int, checker HealthChecker, clock clock.Clock
 
 func (hw *healthWatcher) Track(ip string) {
 	hw.checkWorkPool.Submit(func() {
-		hw.RunCheck(ip)
+
+		hw.stateMutex.RLock()
+		_, found := hw.state[ip]
+		hw.stateMutex.RUnlock()
+		if found {
+			hw.logger.Debug("healthWatcher", "Track found state for IP %s - wait for interval", ip)
+		} else {
+			hw.logger.Debug("healthWatcher", "Track check for IP %s", ip)
+			hw.RunCheck(ip)
+		}
 	})
 }
 
@@ -80,6 +89,7 @@ func (hw *healthWatcher) HealthState(ip string) api.HealthResult {
 }
 
 func (hw *healthWatcher) Untrack(ip string) {
+	hw.logger.Debug("healthWatcher", "Untrack IP %s", ip)
 	hw.stateMutex.Lock()
 	delete(hw.state, ip)
 	hw.stateMutex.Unlock()
@@ -118,6 +128,7 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 func (hw *healthWatcher) RunCheck(ip string) {
 	hw.stateMutex.Lock()
 	if hw.currentChecks[ip] {
+		hw.logger.Debug("healthWatcher", "Aborting check for IP %s - request already in flight", ip)
 		hw.stateMutex.Unlock()
 		return
 	}

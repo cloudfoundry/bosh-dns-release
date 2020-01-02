@@ -141,6 +141,16 @@ var _ = Describe("HealthWatcher", func() {
 					}).Should(Equal(api.HealthResult{State: api.StatusFailing}))
 				})
 			})
+
+			Context("Redundant track request", func() {
+
+				It("Does not send a redundant check", func() {
+					healthWatcher.Track(ip)
+					healthWatcher.Track(ip)
+
+					Expect(fakeChecker.GetStatusCallCount()).To(Equal(1))
+				})
+			})
 		})
 
 		Context("tracking multiple ip addresses", func() {
