@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"bosh-dns/dns/server/handlers/internal"
 	"bosh-dns/dns/server/records/dnsresolver"
 	"fmt"
 	"net"
-	"strings"
 	"time"
 
 	"code.cloudfoundry.org/clock"
@@ -82,27 +82,13 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 
 	if err != nil {
 		r.writeNoResponseMessage(responseWriter, request)
-		r.logRecursor(before, request, dns.RcodeServerFailure, err.Error())
+		r.logRecursor(before, request, dns.RcodeServerFailure, "error=["+err.Error() + "]")
 	}
 }
 
 func (r ForwardHandler) logRecursor(before time.Time, request *dns.Msg, code int, recursor string) {
 	duration := r.clock.Now().Sub(before).Nanoseconds()
-	types := make([]string, len(request.Question))
-	domains := make([]string, len(request.Question))
-
-	for i, q := range request.Question {
-		types[i] = fmt.Sprintf("%d", q.Qtype)
-		domains[i] = q.Name
-	}
-	r.logger.Info(r.logTag, fmt.Sprintf("%T Request [%s] [%s] %d [%s] %dns",
-		r,
-		strings.Join(types, ","),
-		strings.Join(domains, ","),
-		code,
-		recursor,
-		duration,
-	))
+	internal.LogRequest(r.logger, r, r.logTag, duration, request, code, recursor)
 }
 
 func (ForwardHandler) network(responseWriter dns.ResponseWriter) string {
@@ -124,7 +110,7 @@ func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter
 
 func (r ForwardHandler) writeEmptyMessage(responseWriter dns.ResponseWriter, req *dns.Msg) {
 	emptyMessage := &dns.Msg{}
-	r.logger.Info(r.logTag, "received a request with no questions")
+	r.logger.Debug(r.logTag, "received a request with no questions")
 	emptyMessage.Authoritative = true
 	emptyMessage.SetRcode(req, dns.RcodeSuccess)
 	if err := responseWriter.WriteMsg(emptyMessage); err != nil {

@@ -30,6 +30,8 @@ func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, requestMsg
 			responseMsg = d.localDomain.Resolve([]string{requestMsg.Question[0].Name}, responseWriter, requestMsg)
 		case dns.TypeMX:
 			responseMsg.SetRcode(requestMsg, dns.RcodeSuccess)
+		case dns.TypeSRV:
+			responseMsg.SetRcode(requestMsg, dns.RcodeNotImplemented)
 		default:
 			responseMsg.SetRcode(requestMsg, dns.RcodeServerFailure)
 		}

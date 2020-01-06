@@ -71,10 +71,10 @@ var _ = Describe("ForwardHandler", func() {
 				recursionHandler.ServeDNS(fakeWriter, msg)
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 
-				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
-				tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
+				Expect(fakeLogger.WarnCallCount()).To(Equal(1))
+				tag, logMsg, _ := fakeLogger.WarnArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
-				Expect(logMsg).To(Equal("handlers.ForwardHandler Request [255] [example.com.] 2 [no recursors configured] 0ns"))
+				Expect(logMsg).To(Equal("handlers.ForwardHandler Request qtype=[ANY] qname=[example.com.] rcode=SERVFAIL error=[no recursors configured] time=0ns"))
 
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Question).To(Equal(msg.Question))
@@ -119,10 +119,10 @@ var _ = Describe("ForwardHandler", func() {
 				recursionHandler.ServeDNS(fakeWriter, msg)
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 
-				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
-				tag, logMsg, _ := fakeLogger.InfoArgsForCall(0)
+				Expect(fakeLogger.WarnCallCount()).To(Equal(1))
+				tag, logMsg, _ := fakeLogger.WarnArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
-				Expect(logMsg).To(Equal("handlers.ForwardHandler Request [255] [example.com.] 2 [first recursor failed to reply] 0ns"))
+				Expect(logMsg).To(Equal("handlers.ForwardHandler Request qtype=[ANY] qname=[example.com.] rcode=SERVFAIL error=[first recursor failed to reply] time=0ns"))
 
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Question).To(Equal(msg.Question))
@@ -153,8 +153,8 @@ var _ = Describe("ForwardHandler", func() {
 				Expect(message.Authoritative).To(Equal(true))
 				Expect(message.RecursionAvailable).To(Equal(false))
 
-				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
-				tag, msg, _ := fakeLogger.InfoArgsForCall(0)
+				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
+				tag, msg, _ := fakeLogger.DebugArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
 				Expect(msg).To(Equal("received a request with no questions"))
 			})
@@ -208,11 +208,11 @@ var _ = Describe("ForwardHandler", func() {
 					Expect(recursor).To(Equal("127.0.0.1"))
 					Expect(msg).To(Equal(m))
 
-					Expect(fakeLogger.InfoCallCount()).To(Equal(1))
+					Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 
-					logTag, logMessage, _ := fakeLogger.InfoArgsForCall(0)
+					logTag, logMessage, _ := fakeLogger.DebugArgsForCall(0)
 					Expect(logTag).To(Equal("ForwardHandler"))
-					Expect(logMessage).To(Equal("handlers.ForwardHandler Request [255] [example.com.] 0 [recursor=127.0.0.1] 0ns"))
+					Expect(logMessage).To(Equal("handlers.ForwardHandler Request qtype=[ANY] qname=[example.com.] rcode=NOERROR recursor=127.0.0.1 time=0ns"))
 				},
 				Entry("forwards query to recursor via udp for udp clients", "udp", nil),
 				Entry("forwards query to recursor via tcp for tcp clients", "tcp", &net.TCPAddr{}),

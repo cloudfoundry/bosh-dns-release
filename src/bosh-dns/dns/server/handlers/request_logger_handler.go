@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"fmt"
-	"strings"
-
 	"code.cloudfoundry.org/clock"
+	"fmt"
 
 	"bosh-dns/dns/server/handlers/internal"
 
@@ -29,9 +27,9 @@ func NewRequestLoggerHandler(child dns.Handler, clock clock.Clock, logger logger
 }
 
 func (h RequestLoggerHandler) ServeDNS(responseWriter dns.ResponseWriter, req *dns.Msg) {
-	var respRcode int
+	var dnsMsg *dns.Msg
 	respWriter := internal.WrapWriterWithIntercept(responseWriter, func(msg *dns.Msg) {
-		respRcode = msg.Rcode
+		dnsMsg=msg
 	})
 
 	before := h.clock.Now()
@@ -47,11 +45,6 @@ func (h RequestLoggerHandler) ServeDNS(responseWriter dns.ResponseWriter, req *d
 		types[i] = fmt.Sprintf("%d", q.Qtype)
 		domains[i] = q.Name
 	}
-	h.logger.Debug(h.logTag, fmt.Sprintf("%T Request [%s] [%s] %d %dns",
-		h.Handler,
-		strings.Join(types, ","),
-		strings.Join(domains, ","),
-		respRcode,
-		duration,
-	))
+
+	internal.LogRequest(h.logger, h.Handler, h.logTag, duration, req, dnsMsg.Rcode, "")
 }

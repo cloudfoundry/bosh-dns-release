@@ -85,6 +85,17 @@ var _ = Describe("DiscoveryHandler", func() {
 				Expect(message.RecursionAvailable).To(BeTrue())
 			})
 
+			It("returns rcode not implements for srv questions", func() {
+				m := &dns.Msg{}
+				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeSRV)
+
+				discoveryHandler.ServeDNS(fakeWriter, m)
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Rcode).To(Equal(dns.RcodeNotImplemented))
+				Expect(message.Authoritative).To(BeTrue())
+				Expect(message.RecursionAvailable).To(BeTrue())
+			})
+
 			It("returns rcode server failure for all other questions", func() {
 				m := &dns.Msg{}
 				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypePTR)

@@ -72,58 +72,10 @@ var _ = Describe("RequestLoggerHandler", func() {
 
 			handler.ServeDNS(fakeWriter, m)
 
-			Expect(fakeLogger.InfoCallCount()).To(Equal(1))
-			tag, message, _ := fakeLogger.InfoArgsForCall(0)
+			Expect(fakeLogger.DebugCallCount()).To(Equal(1))
+			tag, message, _ := fakeLogger.DebugArgsForCall(0)
 			Expect(tag).To(Equal("RequestLoggerHandler"))
-			Expect(message).To(Equal("dns.HandlerFunc Request [255] [upcheck.bosh-dns.] 0 3ns"))
-		})
-
-		Context("when there are no questions", func() {
-			It("indicates empty question types array", func() {
-				m := &dns.Msg{}
-
-				handler.ServeDNS(fakeWriter, m)
-
-				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
-				_, message, _ := fakeLogger.InfoArgsForCall(0)
-				Expect(message).To(Equal("dns.HandlerFunc Request [] [] 0 3ns"))
-			})
-		})
-
-		Context("when there are multiple questions", func() {
-			It("includes all question types in the log", func() {
-				m := &dns.Msg{
-					Question: []dns.Question{
-						{Name: "upcheck.bosh-dns.", Qtype: dns.TypeANY},
-						{Name: "q-what.bosh.", Qtype: dns.TypeA},
-					},
-				}
-
-				handler.ServeDNS(fakeWriter, m)
-
-				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
-				_, message, _ := fakeLogger.InfoArgsForCall(0)
-				Expect(message).To(Equal("dns.HandlerFunc Request [255,1] [upcheck.bosh-dns.,q-what.bosh.] 0 3ns"))
-			})
-		})
-
-		Context("when the child handler serves RcodeFailure", func() {
-			It("logs the rcode correctly", func() {
-				child = makeHandler(dns.RcodeServerFailure)
-				handler = handlers.NewRequestLoggerHandler(child, fakeClock, fakeLogger)
-
-				m := &dns.Msg{
-					Question: []dns.Question{
-						{Name: "q-what.bosh.", Qtype: dns.TypeA},
-					},
-				}
-
-				handler.ServeDNS(fakeWriter, m)
-
-				Expect(fakeLogger.InfoCallCount()).To(Equal(1))
-				_, message, _ := fakeLogger.InfoArgsForCall(0)
-				Expect(message).To(Equal("dns.HandlerFunc Request [1] [q-what.bosh.] 2 3ns"))
-			})
+			Expect(message).To(Equal("dns.HandlerFunc Request qtype=[ANY] qname=[upcheck.bosh-dns.] rcode=NOERROR time=3ns"))
 		})
 	})
 })
