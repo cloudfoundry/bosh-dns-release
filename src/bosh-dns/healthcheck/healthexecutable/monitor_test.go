@@ -229,8 +229,8 @@ var _ = Describe("Monitor", func() {
 					State:      api.StatusFailing,
 					GroupState: make(map[string]api.HealthStatus),
 				}))
-				Expect(logger.ErrorCallCount()).To(Equal(1))
-				logTag, template, interpols := logger.ErrorArgsForCall(0)
+				Expect(logger.WarnCallCount()).To(Equal(1))
+				logTag, template, interpols := logger.WarnArgsForCall(0)
 				Expect(logTag).To(Equal("Monitor"))
 				Expect(fmt.Sprintf(template, interpols...)).To(Equal("Error occurred executing 'e2': can't do that"))
 			})

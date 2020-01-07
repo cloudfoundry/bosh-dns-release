@@ -147,8 +147,8 @@ func (hw *healthWatcher) RunCheck(ip string) {
 	newState := healthInfo
 
 	if !found {
-		hw.logger.Debug("healthWatcher", "Initial state for IP <%s> is %s", ip, newState.State)
+		hw.logger.Info("healthWatcher", "Initial state for IP <%s> is %s", ip, newState.State)
 	} else if oldState.State != newState.State {
-		hw.logger.Debug("healthWatcher", "State for IP <%s> changed from %s to %s", ip, oldState.State, newState.State)
+		hw.logger.Info("healthWatcher", "State for IP <%s> changed from %s to %s", ip, oldState.State, newState.State)
 	}
 }

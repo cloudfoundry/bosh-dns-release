@@ -31,15 +31,24 @@ func main() {
 func mainExitCode() int {
 	const logTag = "healthcheck"
 
-	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout)
+	config, err := getConfig()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return 1
+	}
+	logLevel := boshlog.LevelInfo
+	if config.LogLevel != "" {
+		logLevel, err = boshlog.Levelify(config.LogLevel)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			return 1
+		}
+	}
+
+	logger := boshlog.NewAsyncWriterLogger(logLevel, os.Stdout)
 	defer logger.FlushTimeout(5 * time.Second)
 	logger.Info(logTag, "Initializing")
 
-	config, err := getConfig()
-	if err != nil {
-		logger.Error(logTag, fmt.Sprintf("failed parsing config: %v", err.Error()))
-		return 1
-	}
 	shutdown := make(chan struct{})
 
 	cmdRunner := boshsys.NewExecCmdRunner(logger)
@@ -50,6 +59,7 @@ func mainExitCode() int {
 		logger.Error(logTag, fmt.Sprintf("failed parsing jobs: %v", err.Error()))
 		return 1
 	}
+	logger.Info(logTag, fmt.Sprintf("Monitored jobs: %+v", jobs))
 
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)
