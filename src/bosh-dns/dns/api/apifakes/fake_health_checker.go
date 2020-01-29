@@ -2,9 +2,9 @@
 package apifakes
 
 import (
-	api "bosh-dns/dns/api"
+	"bosh-dns/dns/api"
 	apia "bosh-dns/healthcheck/api"
-	sync "sync"
+	"sync"
 )
 
 type FakeHealthChecker struct {

@@ -2,8 +2,8 @@
 package fakes
 
 import (
-	api "bosh-dns/dns/api"
-	sync "sync"
+	"bosh-dns/dns/api"
+	"sync"
 )
 
 type FakeHealthStateGetter struct {
