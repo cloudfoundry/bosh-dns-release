@@ -17,7 +17,8 @@ type Filterer interface {
 
 //go:generate counterfeiter . FiltererFactory
 type FiltererFactory interface {
-	NewFilterer(healthChan chan record.Host, shouldTrack bool) Filterer
+	NewHealthFilterer(healthChan chan record.Host, shouldTrack bool) Filterer
+	NewQueryFilterer() Filterer
 }
 
 type healthFiltererFactory struct {
@@ -25,9 +26,13 @@ type healthFiltererFactory struct {
 	synchronousCheckTimeout time.Duration
 }
 
-func (hff *healthFiltererFactory) NewFilterer(healthChan chan record.Host, shouldTrack bool) Filterer {
-	hf := NewHealthFilter(&QueryFilter{}, healthChan, hff.healthWatcher, shouldTrack, clock.NewClock(), hff.synchronousCheckTimeout, &sync.WaitGroup{})
+func (hff *healthFiltererFactory) NewHealthFilterer(healthChan chan record.Host, shouldTrack bool) Filterer {
+	hf := NewHealthFilter(hff.NewQueryFilterer(), healthChan, hff.healthWatcher, shouldTrack, clock.NewClock(), hff.synchronousCheckTimeout, &sync.WaitGroup{})
 	return &hf
+}
+
+func (hff *healthFiltererFactory) NewQueryFilterer() Filterer {
+	return &QueryFilter{}
 }
 
 func NewHealthFiltererFactory(healthWatcher healthiness.HealthWatcher, synchronousCheckTimeout time.Duration) FiltererFactory {

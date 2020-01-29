@@ -3,10 +3,10 @@ package internal_test
 import (
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/internal"
-	"fmt"
-
 	"code.cloudfoundry.org/clock/fakeclock"
+	"fmt"
 	"github.com/miekg/dns"
+	"net"
 
 	"time"
 
@@ -21,7 +21,8 @@ var _ = Describe("RequestLoggerHandler", func() {
 		handler    handlers.RequestLoggerHandler
 		child      dns.Handler
 		fakeClock  *fakeclock.FakeClock
-		dnsMsg     *dns.Msg
+		dnsRequest *dns.Msg
+		dnsResponse *dns.Msg
 
 		makeHandler func() dns.Handler
 	)
@@ -41,10 +42,16 @@ var _ = Describe("RequestLoggerHandler", func() {
 				Expect(resp.WriteMsg(m)).To(Succeed())
 			})
 		}
-		dnsMsg = &dns.Msg{
+		dnsRequest = &dns.Msg{
 			Question: []dns.Question{
 				{Name: "q-what.bosh.", Qtype: dns.TypeA},
 			},
+		}
+		dnsResponse = &dns.Msg{
+			Question: []dns.Question{
+				{Name: "q-what.bosh.", Qtype: dns.TypeA},
+			},
+			Answer: []dns.RR{},
 		}
 		child = makeHandler()
 		handler = handlers.NewRequestLoggerHandler(child, fakeClock, fakeLogger)
@@ -54,49 +61,62 @@ var _ = Describe("RequestLoggerHandler", func() {
 	Describe("log request", func() {
 		Context("when passed a successful rcode", func() {
 			It("logs a debug message", func() {
-				internal.LogRequest(fakeLogger, handler, "mytag", 1, dnsMsg, 0, "")
+				dnsResponse.Rcode = dns.RcodeSuccess
+				dnsResponse.Answer = append(dnsResponse.Answer, &dns.A{
+					Hdr: dns.RR_Header{
+						Name:   dnsRequest.Question[0].Name,
+						Rrtype: dns.TypeA,
+						Class:  dns.ClassINET,
+						Ttl:    0,
+					},
+					A: net.ParseIP("127.0.0.1"),
+				})
+				internal.LogRequest(fakeLogger, handler, "mytag", 1, dnsRequest, dnsResponse, "")
 
 				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
 				fmt.Println(message)
-				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=NOERROR time=1ns"))
+				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=NOERROR ancount=1 time=1ns"))
 			})
 		})
 
-		Context("when passed a failing rcode", func() {
-			It("logs a warn message", func() {
-				internal.LogRequest(fakeLogger, handler, "mytag", 1, dnsMsg, dns.RcodeServerFailure, "")
-
-				Expect(fakeLogger.WarnCallCount()).To(Equal(1))
-				_, message, _ := fakeLogger.WarnArgsForCall(0)
-
-				fmt.Println(message)
-				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=SERVFAIL time=1ns"))
-			})
-		})
-
-		Context("when passed a not implemented rcode", func() {
+		Context("when passed a name error rcode", func() {
 			It("logs a debug message", func() {
-				internal.LogRequest(fakeLogger, handler, "mytag", 1, dnsMsg, dns.RcodeNotImplemented, "")
+				dnsResponse.Rcode = dns.RcodeNameError
+				internal.LogRequest(fakeLogger, handler, "mytag", 1, dnsRequest, dnsResponse, "")
 
 				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
 				fmt.Println(message)
-				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=NOTIMP time=1ns"))
+				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=NXDOMAIN ancount=0 time=1ns"))
 			})
 		})
 
 		Context("when passed a custom message", func() {
 			It("adds it to the log message", func() {
-				internal.LogRequest(fakeLogger, handler, "mytag", 1, dnsMsg, 0, "custom-message")
+				dnsResponse.Rcode = dns.RcodeSuccess
+				internal.LogRequest(fakeLogger, handler, "mytag", 1, dnsRequest, dnsResponse, "custom-message")
 
 				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
 				fmt.Println(message)
-				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=NOERROR custom-message time=1ns"))
+				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=NOERROR ancount=0 custom-message time=1ns"))
+			})
+		})
+
+		Context("when passed a nil response", func() {
+			It("logs SRVFAIL", func() {
+				dnsResponse.Rcode = dns.RcodeNameError
+				internal.LogRequest(fakeLogger, handler, "mytag", 1, dnsRequest, nil, "")
+
+				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
+				_, message, _ := fakeLogger.DebugArgsForCall(0)
+
+				fmt.Println(message)
+				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=SERVFAIL ancount=0 time=1ns"))
 			})
 		})
 	})

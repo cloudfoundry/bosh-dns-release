@@ -2,9 +2,9 @@
 package fakes
 
 import (
-	api "bosh-dns/dns/api"
-	record "bosh-dns/dns/server/record"
-	sync "sync"
+	"bosh-dns/dns/api"
+	"bosh-dns/dns/server/record"
+	"sync"
 )
 
 type FakeRecordManager struct {
@@ -29,17 +29,17 @@ type FakeRecordManager struct {
 	expandAliasesReturnsOnCall map[int]struct {
 		result1 []string
 	}
-	FilterStub        func([]string, bool) ([]record.Record, error)
-	filterMutex       sync.RWMutex
-	filterArgsForCall []struct {
+	ResolveRecordsStub        func([]string, bool) ([]record.Record, error)
+	resolveRecordsMutex       sync.RWMutex
+	resolveRecordsArgsForCall []struct {
 		arg1 []string
 		arg2 bool
 	}
-	filterReturns struct {
+	resolveRecordsReturns struct {
 		result1 []record.Record
 		result2 error
 	}
-	filterReturnsOnCall map[int]struct {
+	resolveRecordsReturnsOnCall map[int]struct {
 		result1 []record.Record
 		result2 error
 	}
@@ -159,70 +159,70 @@ func (fake *FakeRecordManager) ExpandAliasesReturnsOnCall(i int, result1 []strin
 	}{result1}
 }
 
-func (fake *FakeRecordManager) Filter(arg1 []string, arg2 bool) ([]record.Record, error) {
+func (fake *FakeRecordManager) ResolveRecords(arg1 []string, arg2 bool) ([]record.Record, error) {
 	var arg1Copy []string
 	if arg1 != nil {
 		arg1Copy = make([]string, len(arg1))
 		copy(arg1Copy, arg1)
 	}
-	fake.filterMutex.Lock()
-	ret, specificReturn := fake.filterReturnsOnCall[len(fake.filterArgsForCall)]
-	fake.filterArgsForCall = append(fake.filterArgsForCall, struct {
+	fake.resolveRecordsMutex.Lock()
+	ret, specificReturn := fake.resolveRecordsReturnsOnCall[len(fake.resolveRecordsArgsForCall)]
+	fake.resolveRecordsArgsForCall = append(fake.resolveRecordsArgsForCall, struct {
 		arg1 []string
 		arg2 bool
 	}{arg1Copy, arg2})
-	fake.recordInvocation("Filter", []interface{}{arg1Copy, arg2})
-	fake.filterMutex.Unlock()
-	if fake.FilterStub != nil {
-		return fake.FilterStub(arg1, arg2)
+	fake.recordInvocation("ResolveRecords", []interface{}{arg1Copy, arg2})
+	fake.resolveRecordsMutex.Unlock()
+	if fake.ResolveRecordsStub != nil {
+		return fake.ResolveRecordsStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.filterReturns
+	fakeReturns := fake.resolveRecordsReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeRecordManager) FilterCallCount() int {
-	fake.filterMutex.RLock()
-	defer fake.filterMutex.RUnlock()
-	return len(fake.filterArgsForCall)
+func (fake *FakeRecordManager) ResolveRecordsCallCount() int {
+	fake.resolveRecordsMutex.RLock()
+	defer fake.resolveRecordsMutex.RUnlock()
+	return len(fake.resolveRecordsArgsForCall)
 }
 
-func (fake *FakeRecordManager) FilterCalls(stub func([]string, bool) ([]record.Record, error)) {
-	fake.filterMutex.Lock()
-	defer fake.filterMutex.Unlock()
-	fake.FilterStub = stub
+func (fake *FakeRecordManager) ResolveRecordsCalls(stub func([]string, bool) ([]record.Record, error)) {
+	fake.resolveRecordsMutex.Lock()
+	defer fake.resolveRecordsMutex.Unlock()
+	fake.ResolveRecordsStub = stub
 }
 
-func (fake *FakeRecordManager) FilterArgsForCall(i int) ([]string, bool) {
-	fake.filterMutex.RLock()
-	defer fake.filterMutex.RUnlock()
-	argsForCall := fake.filterArgsForCall[i]
+func (fake *FakeRecordManager) ResolveRecordsArgsForCall(i int) ([]string, bool) {
+	fake.resolveRecordsMutex.RLock()
+	defer fake.resolveRecordsMutex.RUnlock()
+	argsForCall := fake.resolveRecordsArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeRecordManager) FilterReturns(result1 []record.Record, result2 error) {
-	fake.filterMutex.Lock()
-	defer fake.filterMutex.Unlock()
-	fake.FilterStub = nil
-	fake.filterReturns = struct {
+func (fake *FakeRecordManager) ResolveRecordsReturns(result1 []record.Record, result2 error) {
+	fake.resolveRecordsMutex.Lock()
+	defer fake.resolveRecordsMutex.Unlock()
+	fake.ResolveRecordsStub = nil
+	fake.resolveRecordsReturns = struct {
 		result1 []record.Record
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeRecordManager) FilterReturnsOnCall(i int, result1 []record.Record, result2 error) {
-	fake.filterMutex.Lock()
-	defer fake.filterMutex.Unlock()
-	fake.FilterStub = nil
-	if fake.filterReturnsOnCall == nil {
-		fake.filterReturnsOnCall = make(map[int]struct {
+func (fake *FakeRecordManager) ResolveRecordsReturnsOnCall(i int, result1 []record.Record, result2 error) {
+	fake.resolveRecordsMutex.Lock()
+	defer fake.resolveRecordsMutex.Unlock()
+	fake.ResolveRecordsStub = nil
+	if fake.resolveRecordsReturnsOnCall == nil {
+		fake.resolveRecordsReturnsOnCall = make(map[int]struct {
 			result1 []record.Record
 			result2 error
 		})
 	}
-	fake.filterReturnsOnCall[i] = struct {
+	fake.resolveRecordsReturnsOnCall[i] = struct {
 		result1 []record.Record
 		result2 error
 	}{result1, result2}
@@ -235,8 +235,8 @@ func (fake *FakeRecordManager) Invocations() map[string][][]interface{} {
 	defer fake.allRecordsMutex.RUnlock()
 	fake.expandAliasesMutex.RLock()
 	defer fake.expandAliasesMutex.RUnlock()
-	fake.filterMutex.RLock()
-	defer fake.filterMutex.RUnlock()
+	fake.resolveRecordsMutex.RLock()
+	defer fake.resolveRecordsMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

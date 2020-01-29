@@ -1,6 +1,7 @@
 package dnsresolver_test
 
 import (
+	"bosh-dns/dns/server/records"
 	"errors"
 	"net"
 
@@ -39,11 +40,11 @@ var _ = Describe("LocalDomain", func() {
 			localDomain = NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler, fakeTruncater)
 		})
 
-		It("returns responses from all the question domains", func() {
+		It("returns responses from the question domain", func() {
 			fakeRecordSet.ResolveStub = func(domain string) ([]string, error) {
 				switch domain {
-				case "instance-1.group-1.network-name.deployment-name.bosh.":
-					return []string{"123.123.123.123"}, nil
+				case "*.group-1.network-name.deployment-name.bosh.":
+					return []string{"123.123.123.123", "123.123.123.124"}, nil
 				case "instance-2.group-2.network-name.deployment-name.bosh.":
 					return []string{"123.123.123.246"}, nil
 				}
@@ -52,12 +53,8 @@ var _ = Describe("LocalDomain", func() {
 			}
 
 			req := &dns.Msg{}
-			req.SetQuestion("answer.bosh.", dns.TypeA)
+			req.SetQuestion("*.group-1.network-name.deployment-name.bosh.", dns.TypeA)
 			responseMsg := localDomain.Resolve(
-				[]string{
-					"instance-1.group-1.network-name.deployment-name.bosh.",
-					"instance-2.group-2.network-name.deployment-name.bosh.",
-				},
 				fakeWriter,
 				req,
 			)
@@ -67,7 +64,7 @@ var _ = Describe("LocalDomain", func() {
 
 			answer := answers[0]
 			header := answer.Header()
-			Expect(header.Name).To(Equal("answer.bosh."))
+			Expect(header.Name).To(Equal("*.group-1.network-name.deployment-name.bosh."))
 			Expect(header.Rrtype).To(Equal(dns.TypeA))
 			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
 			Expect(header.Ttl).To(Equal(uint32(0)))
@@ -76,12 +73,12 @@ var _ = Describe("LocalDomain", func() {
 
 			answer = answers[1]
 			header = answer.Header()
-			Expect(header.Name).To(Equal("answer.bosh."))
+			Expect(header.Name).To(Equal("*.group-1.network-name.deployment-name.bosh."))
 			Expect(header.Rrtype).To(Equal(dns.TypeA))
 			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
 			Expect(header.Ttl).To(Equal(uint32(0)))
 			Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
-			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.246"))
+			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.124"))
 
 			Expect(responseMsg.RecursionAvailable).To(BeTrue())
 			Expect(responseMsg.Authoritative).To(BeTrue())
@@ -91,10 +88,10 @@ var _ = Describe("LocalDomain", func() {
 		It("shuffles the answers", func() {
 			fakeRecordSet.ResolveStub = func(domain string) ([]string, error) {
 				switch domain {
-				case "instance-1.group-1.network-name.deployment-name.bosh.":
-					return []string{"123.123.123.123"}, nil
-				case "instance-2.group-1.network-name.deployment-name.bosh.":
-					return []string{"123.123.123.124"}, nil
+				case "*.group-1.network-name.deployment-name.bosh.":
+					return []string{"123.123.123.123", "123.123.123.124"}, nil
+				case "instance-2.group-2.network-name.deployment-name.bosh.":
+					return []string{"123.123.123.246"}, nil
 				}
 
 				return nil, errors.New("nope")
@@ -106,12 +103,8 @@ var _ = Describe("LocalDomain", func() {
 			localDomain = NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler, fakeTruncater)
 
 			req := &dns.Msg{}
-			req.SetQuestion("ignored", dns.TypeA)
+			req.SetQuestion("*.group-1.network-name.deployment-name.bosh.", dns.TypeA)
 			responseMsg := localDomain.Resolve(
-				[]string{
-					"instance-1.group-1.network-name.deployment-name.bosh.",
-					"instance-2.group-1.network-name.deployment-name.bosh.",
-				},
 				fakeWriter,
 				req,
 			)
@@ -139,7 +132,6 @@ var _ = Describe("LocalDomain", func() {
 
 			It("truncates the response", func() {
 				response := localDomain.Resolve(
-					[]string{"my-instance.my-group.my-network.my-deployment.bosh."},
 					fakeWriter,
 					request,
 				)
@@ -159,7 +151,6 @@ var _ = Describe("LocalDomain", func() {
 			req := &dns.Msg{}
 			req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeA)
 			responseMsg := localDomain.Resolve(
-				[]string{"instance-id.group-1.network-name.deployment-name.bosh."},
 				fakeWriter,
 				req,
 			)
@@ -195,7 +186,6 @@ var _ = Describe("LocalDomain", func() {
 			req := &dns.Msg{}
 			req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeAAAA)
 			responseMsg := localDomain.Resolve(
-				[]string{"instance-id.group-1.network-name.deployment-name.bosh."},
 				fakeWriter,
 				req,
 			)
@@ -231,7 +221,6 @@ var _ = Describe("LocalDomain", func() {
 			req := &dns.Msg{}
 			req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeANY)
 			responseMsg := localDomain.Resolve(
-				[]string{"instance-id.group-1.network-name.deployment-name.bosh."},
 				fakeWriter,
 				req,
 			)
@@ -269,7 +258,63 @@ var _ = Describe("LocalDomain", func() {
 			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
 		})
 
-		Context("when loading the records returns an error", func() {
+		Context("when loading the records returns criteria error", func() {
+			var dnsReturnCode int
+
+			BeforeEach(func() {
+				fakeRecordSet.ResolveReturns(nil, records.CriteriaError)
+
+				req := &dns.Msg{}
+				req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeA)
+				responseMsg := localDomain.Resolve(
+					fakeWriter,
+					req,
+				)
+				dnsReturnCode = responseMsg.Rcode
+			})
+
+			It("returns rcode format error", func() {
+				Expect(dnsReturnCode).To(Equal(dns.RcodeFormatError))
+			})
+
+			It("logs the error", func() {
+				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
+				tag, msg, args := fakeLogger.DebugArgsForCall(0)
+				Expect(tag).To(Equal("LocalDomain"))
+				Expect(msg).To(Equal("failed to get ip addresses: %v"))
+				Expect(args[0]).To(MatchError(records.CriteriaError))
+			})
+		})
+
+		Context("when loading the records returns domain error", func() {
+			var dnsReturnCode int
+
+			BeforeEach(func() {
+				fakeRecordSet.ResolveReturns(nil, records.DomainError)
+
+				req := &dns.Msg{}
+				req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeA)
+				responseMsg := localDomain.Resolve(
+					fakeWriter,
+					req,
+				)
+				dnsReturnCode = responseMsg.Rcode
+			})
+
+			It("returns rcode name error", func() {
+				Expect(dnsReturnCode).To(Equal(dns.RcodeNameError))
+			})
+
+			It("logs the error", func() {
+				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
+				tag, msg, args := fakeLogger.DebugArgsForCall(0)
+				Expect(tag).To(Equal("LocalDomain"))
+				Expect(msg).To(Equal("failed to get ip addresses: %v"))
+				Expect(args[0]).To(MatchError(records.DomainError))
+			})
+		})
+
+		Context("when loading the records returns unexpected error", func() {
 			var dnsReturnCode int
 
 			BeforeEach(func() {
@@ -278,7 +323,6 @@ var _ = Describe("LocalDomain", func() {
 				req := &dns.Msg{}
 				req.SetQuestion("instance-id-answer.group-1.network-name.deployment-name.bosh.", dns.TypeA)
 				responseMsg := localDomain.Resolve(
-					[]string{"instance-id.group-1.network-name.deployment-name.bosh."},
 					fakeWriter,
 					req,
 				)
@@ -286,12 +330,12 @@ var _ = Describe("LocalDomain", func() {
 			})
 
 			It("returns rcode server failure", func() {
-				Expect(dnsReturnCode).To(Equal(dns.RcodeFormatError))
+				Expect(dnsReturnCode).To(Equal(dns.RcodeServerFailure))
 			})
 
 			It("logs the error", func() {
-				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
-				tag, msg, args := fakeLogger.ErrorArgsForCall(0)
+				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
+				tag, msg, args := fakeLogger.DebugArgsForCall(0)
 				Expect(tag).To(Equal("LocalDomain"))
 				Expect(msg).To(Equal("failed to get ip addresses: %v"))
 				Expect(args[0]).To(MatchError("i screwed up"))

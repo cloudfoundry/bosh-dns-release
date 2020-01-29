@@ -77,7 +77,7 @@ var _ = Describe("InstancesHandler", func() {
 
 		It("filters records", func() {
 			fakeRecordManager.ExpandAliasesReturns([]string{"mashed potatoes"})
-			fakeRecordManager.FilterReturns([]record.Record{
+			fakeRecordManager.ResolveRecordsReturns([]record.Record{
 				{
 					ID:            "ID1",
 					NumID:         "NumId1",
@@ -108,8 +108,8 @@ var _ = Describe("InstancesHandler", func() {
 
 			Expect(fakeRecordManager.ExpandAliasesCallCount()).To(Equal(1))
 			Expect(fakeRecordManager.ExpandAliasesArgsForCall(0)).To(Equal("potatoFilter."))
-			Expect(fakeRecordManager.FilterCallCount()).To(Equal(1))
-			Expect(fakeRecordManager.FilterArgsForCall(0)).To(Equal([]string{"mashed potatoes"}))
+			Expect(fakeRecordManager.ResolveRecordsCallCount()).To(Equal(1))
+			Expect(fakeRecordManager.ResolveRecordsArgsForCall(0)).To(Equal([]string{"mashed potatoes"}))
 			Expect(records).To(ConsistOf([]api.InstanceRecord{
 				{
 					ID:          "ID1",
@@ -170,7 +170,7 @@ var _ = Describe("InstancesHandler", func() {
 			}
 			Expect(fakeRecordManager.AllRecordsCallCount()).To(Equal(1))
 			Expect(fakeRecordManager.ExpandAliasesCallCount()).To(Equal(0))
-			Expect(fakeRecordManager.FilterCallCount()).To(Equal(0))
+			Expect(fakeRecordManager.ResolveRecordsCallCount()).To(Equal(0))
 			Expect(records).To(ConsistOf([]api.InstanceRecord{
 				{
 					ID:          "ID1",
@@ -198,7 +198,7 @@ var _ = Describe("InstancesHandler", func() {
 		})
 
 		It("handles unprocessable requests correctly", func() {
-			fakeRecordManager.FilterReturns([]record.Record{}, fmt.Errorf("yo!"))
+			fakeRecordManager.ResolveRecordsReturns([]record.Record{}, fmt.Errorf("yo!"))
 			handler.ServeHTTP(w, r)
 			resp := w.Result()
 			defer resp.Body.Close()

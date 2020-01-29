@@ -1,6 +1,8 @@
 package dnsresolver
 
 import (
+	"bosh-dns/dns/server/records"
+	"errors"
 	"net"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
@@ -37,8 +39,8 @@ func NewLocalDomain(logger logger.Logger, recordSet RecordSet, shuffler AnswerSh
 	}
 }
 
-func (d LocalDomain) Resolve(questionDomains []string, responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
-	answers, rCode := d.resolve(requestMsg.Question[0], questionDomains)
+func (d LocalDomain) Resolve(responseWriter dns.ResponseWriter, requestMsg *dns.Msg) *dns.Msg {
+	answers, rCode := d.resolve(requestMsg.Question[0])
 
 	responseMsg := &dns.Msg{}
 	responseMsg.RecursionAvailable = true
@@ -51,50 +53,54 @@ func (d LocalDomain) Resolve(questionDomains []string, responseWriter dns.Respon
 	return responseMsg
 }
 
-func (d LocalDomain) resolve(question dns.Question, questionDomains []string) ([]dns.RR, int) {
+func (d LocalDomain) resolve(question dns.Question) ([]dns.RR, int) {
 	answers := []dns.RR{}
 
-	for _, questionDomain := range questionDomains {
-		ipStrs, err := d.recordSet.Resolve(questionDomain)
-		if err != nil {
-			d.logger.Error(d.logTag, "failed to get ip addresses: %v", err)
+	ipStrs, err := d.recordSet.Resolve(question.Name)
+	if err != nil {
+		d.logger.Debug(d.logTag, "failed to get ip addresses: %v", err)
+		if errors.Is(err, records.CriteriaError) {
 			return nil, dns.RcodeFormatError
+		} else if errors.Is(err, records.DomainError) {
+			return nil, dns.RcodeNameError
+		} else {
+			return nil, dns.RcodeServerFailure
+		}
+	}
+
+	for _, ipStr := range ipStrs {
+		var answer dns.RR
+
+		ip := net.ParseIP(ipStr)
+
+		if ip.To4() != nil {
+			if question.Qtype == dns.TypeA || question.Qtype == dns.TypeANY {
+				answer = &dns.A{
+					Hdr: dns.RR_Header{
+						Name:   question.Name,
+						Rrtype: dns.TypeA,
+						Class:  dns.ClassINET,
+						Ttl:    0,
+					},
+					A: ip,
+				}
+			}
+		} else {
+			if question.Qtype == dns.TypeAAAA || question.Qtype == dns.TypeANY {
+				answer = &dns.AAAA{
+					Hdr: dns.RR_Header{
+						Name:   question.Name,
+						Rrtype: dns.TypeAAAA,
+						Class:  dns.ClassINET,
+						Ttl:    0,
+					},
+					AAAA: ip,
+				}
+			}
 		}
 
-		for _, ipStr := range ipStrs {
-			var answer dns.RR
-
-			ip := net.ParseIP(ipStr)
-
-			if ip.To4() != nil {
-				if question.Qtype == dns.TypeA || question.Qtype == dns.TypeANY {
-					answer = &dns.A{
-						Hdr: dns.RR_Header{
-							Name:   question.Name,
-							Rrtype: dns.TypeA,
-							Class:  dns.ClassINET,
-							Ttl:    0,
-						},
-						A: ip,
-					}
-				}
-			} else {
-				if question.Qtype == dns.TypeAAAA || question.Qtype == dns.TypeANY {
-					answer = &dns.AAAA{
-						Hdr: dns.RR_Header{
-							Name:   question.Name,
-							Rrtype: dns.TypeAAAA,
-							Class:  dns.ClassINET,
-							Ttl:    0,
-						},
-						AAAA: ip,
-					}
-				}
-			}
-
-			if answer != nil {
-				answers = append(answers, answer)
-			}
+		if answer != nil {
+			answers = append(answers, answer)
 		}
 	}
 

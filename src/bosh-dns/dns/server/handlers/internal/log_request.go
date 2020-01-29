@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func LogRequest(logger logger.Logger, handler dns.Handler, logTag string, duration int64, request *dns.Msg, code int, customMessage string) {
+func LogRequest(logger logger.Logger, handler dns.Handler, logTag string, duration int64, request *dns.Msg, response *dns.Msg, customMessage string) {
 	types := make([]string, len(request.Question))
 	domains := make([]string, len(request.Question))
 
@@ -20,18 +20,22 @@ func LogRequest(logger logger.Logger, handler dns.Handler, logTag string, durati
 		customMessage = customMessage + " "
 	}
 
-	logLine := fmt.Sprintf("%T Request qtype=[%s] qname=[%s] rcode=%s %stime=%dns",
+	rcode := dns.RcodeServerFailure
+	numAnswers := 0
+	if response != nil {
+		rcode = response.Rcode
+		numAnswers = len(response.Answer)
+	}
+
+	logLine := fmt.Sprintf("%T Request qtype=[%s] qname=[%s] rcode=%s ancount=%d %stime=%dns",
 		handler,
 		strings.Join(types, ","),
 		strings.Join(domains, ","),
-		dns.RcodeToString[code],
+		dns.RcodeToString[rcode],
+		numAnswers,
 		customMessage,
 		duration,
 	)
 
-	if code == dns.RcodeSuccess || code == dns.RcodeNotImplemented {
-		logger.Debug(logTag, logLine)
-	} else {
-		logger.Warn(logTag, logLine)
-	}
+	logger.Debug(logTag, logLine)
 }

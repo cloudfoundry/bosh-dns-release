@@ -8,79 +8,141 @@ import (
 )
 
 type FakeFiltererFactory struct {
-	NewFiltererStub        func(chan record.Host, bool) records.Filterer
-	newFiltererMutex       sync.RWMutex
-	newFiltererArgsForCall []struct {
+	NewHealthFiltererStub        func(chan record.Host, bool) records.Filterer
+	newHealthFiltererMutex       sync.RWMutex
+	newHealthFiltererArgsForCall []struct {
 		arg1 chan record.Host
 		arg2 bool
 	}
-	newFiltererReturns struct {
+	newHealthFiltererReturns struct {
 		result1 records.Filterer
 	}
-	newFiltererReturnsOnCall map[int]struct {
+	newHealthFiltererReturnsOnCall map[int]struct {
+		result1 records.Filterer
+	}
+	NewQueryFiltererStub        func() records.Filterer
+	newQueryFiltererMutex       sync.RWMutex
+	newQueryFiltererArgsForCall []struct {
+	}
+	newQueryFiltererReturns struct {
+		result1 records.Filterer
+	}
+	newQueryFiltererReturnsOnCall map[int]struct {
 		result1 records.Filterer
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeFiltererFactory) NewFilterer(arg1 chan record.Host, arg2 bool) records.Filterer {
-	fake.newFiltererMutex.Lock()
-	ret, specificReturn := fake.newFiltererReturnsOnCall[len(fake.newFiltererArgsForCall)]
-	fake.newFiltererArgsForCall = append(fake.newFiltererArgsForCall, struct {
+func (fake *FakeFiltererFactory) NewHealthFilterer(arg1 chan record.Host, arg2 bool) records.Filterer {
+	fake.newHealthFiltererMutex.Lock()
+	ret, specificReturn := fake.newHealthFiltererReturnsOnCall[len(fake.newHealthFiltererArgsForCall)]
+	fake.newHealthFiltererArgsForCall = append(fake.newHealthFiltererArgsForCall, struct {
 		arg1 chan record.Host
 		arg2 bool
 	}{arg1, arg2})
-	fake.recordInvocation("NewFilterer", []interface{}{arg1, arg2})
-	fake.newFiltererMutex.Unlock()
-	if fake.NewFiltererStub != nil {
-		return fake.NewFiltererStub(arg1, arg2)
+	fake.recordInvocation("NewHealthFilterer", []interface{}{arg1, arg2})
+	fake.newHealthFiltererMutex.Unlock()
+	if fake.NewHealthFiltererStub != nil {
+		return fake.NewHealthFiltererStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.newFiltererReturns
+	fakeReturns := fake.newHealthFiltererReturns
 	return fakeReturns.result1
 }
 
-func (fake *FakeFiltererFactory) NewFiltererCallCount() int {
-	fake.newFiltererMutex.RLock()
-	defer fake.newFiltererMutex.RUnlock()
-	return len(fake.newFiltererArgsForCall)
+func (fake *FakeFiltererFactory) NewHealthFiltererCallCount() int {
+	fake.newHealthFiltererMutex.RLock()
+	defer fake.newHealthFiltererMutex.RUnlock()
+	return len(fake.newHealthFiltererArgsForCall)
 }
 
-func (fake *FakeFiltererFactory) NewFiltererCalls(stub func(chan record.Host, bool) records.Filterer) {
-	fake.newFiltererMutex.Lock()
-	defer fake.newFiltererMutex.Unlock()
-	fake.NewFiltererStub = stub
+func (fake *FakeFiltererFactory) NewHealthFiltererCalls(stub func(chan record.Host, bool) records.Filterer) {
+	fake.newHealthFiltererMutex.Lock()
+	defer fake.newHealthFiltererMutex.Unlock()
+	fake.NewHealthFiltererStub = stub
 }
 
-func (fake *FakeFiltererFactory) NewFiltererArgsForCall(i int) (chan record.Host, bool) {
-	fake.newFiltererMutex.RLock()
-	defer fake.newFiltererMutex.RUnlock()
-	argsForCall := fake.newFiltererArgsForCall[i]
+func (fake *FakeFiltererFactory) NewHealthFiltererArgsForCall(i int) (chan record.Host, bool) {
+	fake.newHealthFiltererMutex.RLock()
+	defer fake.newHealthFiltererMutex.RUnlock()
+	argsForCall := fake.newHealthFiltererArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeFiltererFactory) NewFiltererReturns(result1 records.Filterer) {
-	fake.newFiltererMutex.Lock()
-	defer fake.newFiltererMutex.Unlock()
-	fake.NewFiltererStub = nil
-	fake.newFiltererReturns = struct {
+func (fake *FakeFiltererFactory) NewHealthFiltererReturns(result1 records.Filterer) {
+	fake.newHealthFiltererMutex.Lock()
+	defer fake.newHealthFiltererMutex.Unlock()
+	fake.NewHealthFiltererStub = nil
+	fake.newHealthFiltererReturns = struct {
 		result1 records.Filterer
 	}{result1}
 }
 
-func (fake *FakeFiltererFactory) NewFiltererReturnsOnCall(i int, result1 records.Filterer) {
-	fake.newFiltererMutex.Lock()
-	defer fake.newFiltererMutex.Unlock()
-	fake.NewFiltererStub = nil
-	if fake.newFiltererReturnsOnCall == nil {
-		fake.newFiltererReturnsOnCall = make(map[int]struct {
+func (fake *FakeFiltererFactory) NewHealthFiltererReturnsOnCall(i int, result1 records.Filterer) {
+	fake.newHealthFiltererMutex.Lock()
+	defer fake.newHealthFiltererMutex.Unlock()
+	fake.NewHealthFiltererStub = nil
+	if fake.newHealthFiltererReturnsOnCall == nil {
+		fake.newHealthFiltererReturnsOnCall = make(map[int]struct {
 			result1 records.Filterer
 		})
 	}
-	fake.newFiltererReturnsOnCall[i] = struct {
+	fake.newHealthFiltererReturnsOnCall[i] = struct {
+		result1 records.Filterer
+	}{result1}
+}
+
+func (fake *FakeFiltererFactory) NewQueryFilterer() records.Filterer {
+	fake.newQueryFiltererMutex.Lock()
+	ret, specificReturn := fake.newQueryFiltererReturnsOnCall[len(fake.newQueryFiltererArgsForCall)]
+	fake.newQueryFiltererArgsForCall = append(fake.newQueryFiltererArgsForCall, struct {
+	}{})
+	fake.recordInvocation("NewQueryFilterer", []interface{}{})
+	fake.newQueryFiltererMutex.Unlock()
+	if fake.NewQueryFiltererStub != nil {
+		return fake.NewQueryFiltererStub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.newQueryFiltererReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeFiltererFactory) NewQueryFiltererCallCount() int {
+	fake.newQueryFiltererMutex.RLock()
+	defer fake.newQueryFiltererMutex.RUnlock()
+	return len(fake.newQueryFiltererArgsForCall)
+}
+
+func (fake *FakeFiltererFactory) NewQueryFiltererCalls(stub func() records.Filterer) {
+	fake.newQueryFiltererMutex.Lock()
+	defer fake.newQueryFiltererMutex.Unlock()
+	fake.NewQueryFiltererStub = stub
+}
+
+func (fake *FakeFiltererFactory) NewQueryFiltererReturns(result1 records.Filterer) {
+	fake.newQueryFiltererMutex.Lock()
+	defer fake.newQueryFiltererMutex.Unlock()
+	fake.NewQueryFiltererStub = nil
+	fake.newQueryFiltererReturns = struct {
+		result1 records.Filterer
+	}{result1}
+}
+
+func (fake *FakeFiltererFactory) NewQueryFiltererReturnsOnCall(i int, result1 records.Filterer) {
+	fake.newQueryFiltererMutex.Lock()
+	defer fake.newQueryFiltererMutex.Unlock()
+	fake.NewQueryFiltererStub = nil
+	if fake.newQueryFiltererReturnsOnCall == nil {
+		fake.newQueryFiltererReturnsOnCall = make(map[int]struct {
+			result1 records.Filterer
+		})
+	}
+	fake.newQueryFiltererReturnsOnCall[i] = struct {
 		result1 records.Filterer
 	}{result1}
 }
@@ -88,8 +150,10 @@ func (fake *FakeFiltererFactory) NewFiltererReturnsOnCall(i int, result1 records
 func (fake *FakeFiltererFactory) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.newFiltererMutex.RLock()
-	defer fake.newFiltererMutex.RUnlock()
+	fake.newHealthFiltererMutex.RLock()
+	defer fake.newHealthFiltererMutex.RUnlock()
+	fake.newQueryFiltererMutex.RLock()
+	defer fake.newQueryFiltererMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

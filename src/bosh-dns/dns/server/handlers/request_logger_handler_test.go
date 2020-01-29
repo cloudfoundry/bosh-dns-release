@@ -75,7 +75,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 			Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 			tag, message, _ := fakeLogger.DebugArgsForCall(0)
 			Expect(tag).To(Equal("RequestLoggerHandler"))
-			Expect(message).To(Equal("dns.HandlerFunc Request qtype=[ANY] qname=[upcheck.bosh-dns.] rcode=NOERROR time=3ns"))
+			Expect(message).To(Equal("dns.HandlerFunc Request qtype=[ANY] qname=[upcheck.bosh-dns.] rcode=NOERROR ancount=0 time=3ns"))
 		})
 	})
 })

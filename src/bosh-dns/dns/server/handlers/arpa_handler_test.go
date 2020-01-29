@@ -62,7 +62,7 @@ var _ = Describe("ArpaHandler", func() {
 						fakeIPProvider.HasIPReturns(true)
 					})
 
-					It("responds with an rcode server failure", func() {
+					It("responds with an empty response", func() {
 						m := &dns.Msg{}
 						m.SetQuestion("4.3.2.1.in-addr.arpa.", dns.TypePTR)
 
@@ -71,7 +71,8 @@ var _ = Describe("ArpaHandler", func() {
 						Expect(fakeIPProvider.HasIPArgsForCall(0)).To(Equal("1.2.3.4"))
 						Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 						message := fakeWriter.WriteMsgArgsForCall(0)
-						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(len(message.Answer)).To(Equal(0))
 						Expect(message.Authoritative).To(Equal(true))
 						Expect(message.RecursionAvailable).To(Equal(false))
 					})
@@ -102,7 +103,7 @@ var _ = Describe("ArpaHandler", func() {
 						fakeIPProvider.HasIPReturns(true)
 					})
 
-					It("responds with an rcode server failure", func() {
+					It("responds with an empty response", func() {
 						m := &dns.Msg{}
 						m.SetQuestion("0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.d.a.e.d.f.e.e.b.4.3.2.1.ip6.arpa.", dns.TypePTR)
 
@@ -111,7 +112,8 @@ var _ = Describe("ArpaHandler", func() {
 						Expect(fakeIPProvider.HasIPArgsForCall(0)).To(Equal("1234:beef:dead:0000:0000:0000:0000:0000"))
 						Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 						message := fakeWriter.WriteMsgArgsForCall(0)
-						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(len(message.Answer)).To(Equal(0))
 						Expect(message.Authoritative).To(Equal(true))
 						Expect(message.RecursionAvailable).To(Equal(false))
 					})
@@ -123,7 +125,8 @@ var _ = Describe("ArpaHandler", func() {
 						arpaHandler.ServeDNS(fakeWriter, m)
 						Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 						message := fakeWriter.WriteMsgArgsForCall(0)
-						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(len(message.Answer)).To(Equal(0))
 						Expect(message.Authoritative).To(Equal(true))
 						Expect(message.RecursionAvailable).To(Equal(false))
 					})
@@ -138,7 +141,7 @@ var _ = Describe("ArpaHandler", func() {
 					arpaHandler.ServeDNS(fakeWriter, m)
 					Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 					message := fakeWriter.WriteMsgArgsForCall(0)
-					Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+					Expect(message.Rcode).To(Equal(dns.RcodeFormatError))
 					Expect(message.Authoritative).To(Equal(true))
 					Expect(message.RecursionAvailable).To(Equal(false))
 				})

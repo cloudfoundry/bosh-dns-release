@@ -17,7 +17,7 @@ type HealthStateGetter interface {
 //go:generate counterfeiter -o ./fakes/record_manager.go . RecordManager
 
 type RecordManager interface {
-	Filter(aliasExpansions []string, shouldTrack bool) ([]record.Record, error)
+	ResolveRecords(domains []string, shouldTrack bool) ([]record.Record, error)
 	AllRecords() *[]record.Record
 	ExpandAliases(fqdn string) []string
 }
@@ -43,7 +43,7 @@ func (h *InstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var err error
 		address = dns.Fqdn(address)
 		expandedAliases := h.recordManager.ExpandAliases(address)
-		rs, err = h.recordManager.Filter(expandedAliases, false)
+		rs, err = h.recordManager.ResolveRecords(expandedAliases, false)
 		if err != nil {
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			w.Write([]byte(err.Error()))

@@ -77,10 +77,14 @@ func (a ArpaHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	}
 
 	ip, err := a.convertToRecordIP(req.Question[0].Name)
-	a.logErrors(w, err)
-
-	if err != nil || a.ipProvider.HasIP(ip) {
-		m.SetRcode(req, dns.RcodeServerFailure)
+	if err != nil {
+		a.logger.Debug(a.logTag, err.Error())
+		m.SetRcode(req, dns.RcodeFormatError)
+		a.logErrors(w, w.WriteMsg(m))
+		return
+	}
+	if a.ipProvider.HasIP(ip) {
+		m.SetRcode(req, dns.RcodeSuccess)
 		a.logErrors(w, w.WriteMsg(m))
 		return
 	}

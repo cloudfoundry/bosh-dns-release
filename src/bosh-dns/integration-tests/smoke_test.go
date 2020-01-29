@@ -73,7 +73,7 @@ var _ = Describe("Integration", func() {
 					e.ServerAddress(),
 					helpers.DigOpts{SkipRcodeCheck: true, Port: e.Port()},
 				)
-				Expect(dnsResponse.Rcode).To(Equal(dns.RcodeServerFailure))
+				Expect(dnsResponse.Rcode).To(Equal(dns.RcodeSuccess))
 			})
 
 			It("finds and resolves aliases specified in other jobs on the same instance", func() {

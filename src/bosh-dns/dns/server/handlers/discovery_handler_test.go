@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"bosh-dns/dns/server/records"
 	"errors"
 	"net"
 
@@ -52,16 +53,6 @@ var _ = Describe("DiscoveryHandler", func() {
 		})
 
 		Context("when there are questions", func() {
-			It("returns rcode success for MX questions", func() {
-				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeMX)
-
-				discoveryHandler.ServeDNS(fakeWriter, m)
-				message := fakeWriter.WriteMsgArgsForCall(0)
-				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-				Expect(message.Authoritative).To(BeTrue())
-				Expect(message.RecursionAvailable).To(BeTrue())
-			})
 
 			It("returns rcode success for A questions when there are no matching records", func() {
 				m := &dns.Msg{}
@@ -85,26 +76,43 @@ var _ = Describe("DiscoveryHandler", func() {
 				Expect(message.RecursionAvailable).To(BeTrue())
 			})
 
-			It("returns rcode not implements for srv questions", func() {
-				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeSRV)
-
-				discoveryHandler.ServeDNS(fakeWriter, m)
-				message := fakeWriter.WriteMsgArgsForCall(0)
-				Expect(message.Rcode).To(Equal(dns.RcodeNotImplemented))
-				Expect(message.Authoritative).To(BeTrue())
-				Expect(message.RecursionAvailable).To(BeTrue())
-			})
-
-			It("returns rcode server failure for all other questions", func() {
+			It("returns success with no data for all other types if host lookup succeeds", func() {
+				fakeRecordSet.ResolveReturns([]string{"2601:0646:0102:0095:0000:0000:0000:0025", "123.123.123.123"}, nil)
 				m := &dns.Msg{}
 				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypePTR)
 
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
-				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
 				Expect(message.Authoritative).To(BeTrue())
 				Expect(message.RecursionAvailable).To(BeTrue())
+				Expect(message.Answer).To(BeEmpty())
+			})
+
+			It("returns name error for all other types if host lookup returns name error", func() {
+				fakeRecordSet.ResolveReturns(nil, records.DomainError)
+				m := &dns.Msg{}
+				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypePTR)
+
+				discoveryHandler.ServeDNS(fakeWriter, m)
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Rcode).To(Equal(dns.RcodeNameError))
+				Expect(message.Authoritative).To(BeTrue())
+				Expect(message.RecursionAvailable).To(BeTrue())
+				Expect(message.Answer).To(BeEmpty())
+			})
+
+			It("returns success with no data for all other types if host lookup returns criteria error", func() {
+				fakeRecordSet.ResolveReturns(nil, records.CriteriaError)
+				m := &dns.Msg{}
+				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypePTR)
+
+				discoveryHandler.ServeDNS(fakeWriter, m)
+				message := fakeWriter.WriteMsgArgsForCall(0)
+				Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(message.Authoritative).To(BeTrue())
+				Expect(message.RecursionAvailable).To(BeTrue())
+				Expect(message.Answer).To(BeEmpty())
 			})
 
 			// q: A -> only A even if AAAA

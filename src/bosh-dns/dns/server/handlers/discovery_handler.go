@@ -25,15 +25,16 @@ func (d DiscoveryHandler) ServeDNS(responseWriter dns.ResponseWriter, requestMsg
 	responseMsg := &dns.Msg{}
 
 	if len(requestMsg.Question) > 0 {
+		hostResponse := d.localDomain.Resolve(responseWriter, requestMsg)
 		switch requestMsg.Question[0].Qtype {
 		case dns.TypeA, dns.TypeANY, dns.TypeAAAA:
-			responseMsg = d.localDomain.Resolve([]string{requestMsg.Question[0].Name}, responseWriter, requestMsg)
-		case dns.TypeMX:
-			responseMsg.SetRcode(requestMsg, dns.RcodeSuccess)
-		case dns.TypeSRV:
-			responseMsg.SetRcode(requestMsg, dns.RcodeNotImplemented)
+			responseMsg = hostResponse
 		default:
-			responseMsg.SetRcode(requestMsg, dns.RcodeServerFailure)
+			if hostResponse.Rcode == dns.RcodeNameError {
+				responseMsg.SetRcode(requestMsg, dns.RcodeNameError)
+			} else {
+				responseMsg.SetRcode(requestMsg, dns.RcodeSuccess)
+			}
 		}
 	}
 

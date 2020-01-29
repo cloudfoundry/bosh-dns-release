@@ -67,10 +67,9 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 		if err == nil {
 			r.truncater.TruncateIfNeeded(responseWriter, request, exchangeAnswer)
 
+			r.logRecursor(before, request, exchangeAnswer, "recursor="+recursor)
 			if writeErr := responseWriter.WriteMsg(exchangeAnswer); writeErr != nil {
 				r.logger.Error(r.logTag, "error writing response: %s", writeErr.Error())
-			} else {
-				r.logRecursor(before, request, exchangeAnswer.Rcode, "recursor="+recursor)
 			}
 
 			return nil
@@ -81,14 +80,13 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 	})
 
 	if err != nil {
-		r.writeNoResponseMessage(responseWriter, request)
-		r.logRecursor(before, request, dns.RcodeServerFailure, "error=["+err.Error() + "]")
+		r.writeNoResponseMessage(responseWriter, request, before, "error=["+err.Error() + "]")
 	}
 }
 
-func (r ForwardHandler) logRecursor(before time.Time, request *dns.Msg, code int, recursor string) {
+func (r ForwardHandler) logRecursor(before time.Time, request *dns.Msg, response *dns.Msg, recursor string) {
 	duration := r.clock.Now().Sub(before).Nanoseconds()
-	internal.LogRequest(r.logger, r, r.logTag, duration, request, code, recursor)
+	internal.LogRequest(r.logger, r, r.logTag, duration, request, response, recursor)
 }
 
 func (ForwardHandler) network(responseWriter dns.ResponseWriter) string {
@@ -99,10 +97,11 @@ func (ForwardHandler) network(responseWriter dns.ResponseWriter) string {
 	return network
 }
 
-func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter, req *dns.Msg) {
+func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter, req *dns.Msg, before time.Time, recursor string) {
 	responseMessage := &dns.Msg{}
 	responseMessage.SetReply(req)
 	responseMessage.SetRcode(req, dns.RcodeServerFailure)
+	r.logRecursor(before, req, responseMessage, recursor)
 	if err := responseWriter.WriteMsg(responseMessage); err != nil {
 		r.logger.Error(r.logTag, "error writing response: %s", err.Error())
 	}

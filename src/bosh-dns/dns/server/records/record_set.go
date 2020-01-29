@@ -2,7 +2,7 @@ package records
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net"
 	"sync"
 
@@ -27,6 +27,11 @@ type AliasDefinition struct {
 }
 
 type recordGroup map[*record.Record]struct{}
+
+var (
+	CriteriaError = errors.New("error parsing query criteria")
+	DomainError = errors.New("no records match requested domain")
+)
 
 type RecordSet struct {
 	recordFileReader    FileReader
@@ -69,7 +74,7 @@ func NewRecordSet(
 	}
 
 	trackedDomains := tracker.NewPriorityLimitedTranscript(maximumTrackedDomains)
-	tracker.Start(shutdownChan, r.trackerSubscription, r.healthChan, trackedDomains, healthWatcher, &QueryFilter{}, logger)
+	tracker.Start(shutdownChan, r.trackerSubscription, r.healthChan, trackedDomains, healthWatcher, filtererFactory.NewQueryFilterer(), logger)
 
 	r.update()
 
@@ -116,24 +121,59 @@ func (r *RecordSet) Subscribe() <-chan bool {
 }
 
 func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+
 	aliasExpansions := r.ExpandAliases(fqdn)
-	finalRecords, err := r.Filter(aliasExpansions, true)
+	r.logger.Debug("RecordSet", "Expand %s to %v", fqdn, aliasExpansions)
+
+	aliasIPs := []string{}
+	for _, expansion := range aliasExpansions {
+		if net.ParseIP(expansion) != nil {
+			aliasIPs = append(aliasIPs, expansion)
+		}
+	}
+
+	finalRecords, err := r.ResolveRecords(aliasExpansions, true)
 	if err != nil {
-		return []string{}, err
+		if !errors.Is(err, DomainError) || len(aliasIPs) == 0 {
+			return nil, err
+		}
 	}
 
 	finalIPs := make([]string, len(finalRecords))
 	for i, rec := range finalRecords {
 		finalIPs[i] = rec.IP
 	}
-
-	for _, expansion := range aliasExpansions {
-		if net.ParseIP(expansion) != nil {
-			finalIPs = append(finalIPs, expansion)
-		}
-	}
+	finalIPs = append(finalIPs, aliasIPs...)
 
 	return finalIPs, nil
+}
+
+func (r *RecordSet) ResolveRecords(domains []string, shouldTrack bool) ([]record.Record, error) {
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+
+	domainFilter := r.filtererFactory.NewQueryFilterer()
+	healthFilter := r.filtererFactory.NewHealthFilterer(r.healthChan, shouldTrack)
+
+	allCriteria, err := r.parseCriteria(domains)
+	if err != nil {
+		r.logger.Debug("RecordSet", "Error parsing domains %v: %v", domains, err)
+		return nil, CriteriaError
+	}
+	domainRecords := r.filterRecords(domainFilter, allCriteria, r.Records)
+	if len(domainRecords) == 0 {
+		r.logger.Debug("RecordSet", "No records match domains %v", domains)
+		return nil, DomainError
+	}
+
+	finalRecords := r.filterRecords(healthFilter, allCriteria, domainRecords)
+	if len(finalRecords) == 0 {
+		r.logger.Debug("RecordSet", "No records match filter for domains %v", domains)
+	}
+
+	return finalRecords, nil
 }
 
 func (r *RecordSet) ExpandAliases(fqdn string) []string {
@@ -144,6 +184,33 @@ func (r *RecordSet) ExpandAliases(fqdn string) []string {
 		resolutions = []string{fqdn}
 	}
 	return resolutions
+}
+
+func (r *RecordSet) parseCriteria(resolutions []string) ([]criteria.Criteria, error) {
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+	crits := []criteria.Criteria{}
+
+	for _, resolution := range resolutions {
+		crit, err := criteria.NewCriteria(resolution, r.domains)
+		if err != nil {
+			return nil, err
+		} else {
+			crits = append(crits, crit)
+		}
+	}
+	return crits, nil
+}
+
+func (r *RecordSet) filterRecords(filterer Filterer, filterCriteria []criteria.Criteria, records []record.Record) []record.Record {
+	finalRecords := []record.Record{}
+
+	for _, crit := range filterCriteria {
+		results := filterer.Filter(crit, records)
+		finalRecords = append(finalRecords, results...)
+	}
+
+	return finalRecords
 }
 
 func (r *RecordSet) AllRecords() *[]record.Record {
@@ -160,34 +227,6 @@ func (r *RecordSet) HasIP(ip string) bool {
 		}
 	}
 	return false
-}
-
-func (r *RecordSet) Filter(resolutions []string, shouldTrack bool) ([]record.Record, error) {
-	r.recordsMutex.RLock()
-	defer r.recordsMutex.RUnlock()
-
-	var (
-		finalRecords []record.Record
-		errs         []error
-	)
-
-	qf := r.filtererFactory.NewFilterer(r.healthChan, shouldTrack)
-	for _, resolution := range resolutions {
-		crit, err := criteria.NewCriteria(resolution, r.domains)
-		if err != nil {
-			errs = append(errs, err)
-		} else {
-			results := qf.Filter(crit, r.Records)
-
-			finalRecords = append(finalRecords, results...)
-		}
-	}
-
-	if len(finalRecords) == 0 && len(errs) > 0 {
-		return nil, fmt.Errorf("failures occurred when resolving alias domains: %s", errs)
-	}
-
-	return finalRecords, nil
 }
 
 func (r *RecordSet) Domains() []string {

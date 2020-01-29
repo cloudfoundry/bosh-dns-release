@@ -46,5 +46,5 @@ func (h RequestLoggerHandler) ServeDNS(responseWriter dns.ResponseWriter, req *d
 		domains[i] = q.Name
 	}
 
-	internal.LogRequest(h.logger, h.Handler, h.logTag, duration, req, dnsMsg.Rcode, "")
+	internal.LogRequest(h.logger, h.Handler, h.logTag, duration, req, dnsMsg, "")
 }

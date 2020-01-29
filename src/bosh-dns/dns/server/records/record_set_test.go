@@ -44,7 +44,8 @@ var _ = Describe("RecordSet", func() {
 		aliasList             aliases.Config
 		shutdownChan          chan struct{}
 		fakeHealthWatcher     *healthinessfakes.FakeHealthWatcher
-		fakeFilterer          *recordsfakes.FakeFilterer
+		fakeQueryFilterer    *recordsfakes.FakeFilterer
+		fakeHealthFilterer    *recordsfakes.FakeFilterer
 		fakeFiltererFactory   *recordsfakes.FakeFiltererFactory
 		fakeAliasQueryEncoder *recordsfakes.FakeAliasQueryEncoder
 	)
@@ -52,15 +53,21 @@ var _ = Describe("RecordSet", func() {
 	BeforeEach(func() {
 		fakeLogger = &fakes.FakeLogger{}
 		fileReader = &recordsfakes.FakeFileReader{}
-		fakeFilterer = &recordsfakes.FakeFilterer{}
+		fakeQueryFilterer = &recordsfakes.FakeFilterer{}
+		fakeHealthFilterer = &recordsfakes.FakeFilterer{}
 		fakeFiltererFactory = &recordsfakes.FakeFiltererFactory{}
-		fakeFiltererFactory.NewFiltererReturns(fakeFilterer)
+		fakeFiltererFactory.NewQueryFiltererReturns(fakeQueryFilterer)
+		fakeFiltererFactory.NewHealthFiltererReturns(fakeHealthFilterer)
 		fakeAliasQueryEncoder = &recordsfakes.FakeAliasQueryEncoder{}
 
 		aliasList = mustNewConfigFromMap(map[string][]string{})
 		fakeHealthWatcher = &healthinessfakes.FakeHealthWatcher{}
 		shutdownChan = make(chan struct{})
 		fakeHealthWatcher.HealthStateReturns(api.HealthResult{State: api.StatusRunning})
+
+		fakeQueryFilterer.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
+			return recs
+		}
 	})
 
 	AfterEach(func() {
@@ -85,8 +92,8 @@ var _ = Describe("RecordSet", func() {
 			})
 
 			It("parses the instance index", func() {
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.domain."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.domain."}, true)
+				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recs).To(WithTransform(dereferencer, ContainElement(record.Record{
 					ID:            "instance0",
@@ -136,8 +143,8 @@ var _ = Describe("RecordSet", func() {
 			})
 
 			It("normalizes domain names", func() {
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recordSet.Domains()).To(ConsistOf("withadot.", "nodot.", "domain."))
 				Expect(recs).To(WithTransform(dereferencer, ContainElement(record.Record{
@@ -167,8 +174,8 @@ var _ = Describe("RecordSet", func() {
 			})
 
 			It("includes records with null azs", func() {
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recs).To(WithTransform(dereferencer, ContainElement(record.Record{
 					ID:         "instance2",
@@ -197,8 +204,8 @@ var _ = Describe("RecordSet", func() {
 			})
 
 			It("includes records with null instance indexes", func() {
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recs).To(WithTransform(dereferencer, ContainElement(record.Record{
 					ID:            "instance3",
@@ -215,8 +222,8 @@ var _ = Describe("RecordSet", func() {
 			})
 
 			It("includes records with no value for network_id", func() {
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recs).To(WithTransform(dereferencer, ContainElement(record.Record{
 					ID:            "instance5",
@@ -233,8 +240,8 @@ var _ = Describe("RecordSet", func() {
 			})
 
 			It("includes records with no value for num_id", func() {
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recs).To(WithTransform(dereferencer, ContainElement(record.Record{
 					ID:            "instance6",
@@ -351,11 +358,11 @@ var _ = Describe("RecordSet", func() {
 			_, err = recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
 			Expect(err).NotTo(HaveOccurred())
 
-			_, recs := fakeFilterer.FilterArgsForCall(0)
+			_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 			Expect(recs).To(HaveLen(1))
 			Expect(recs[0].IP).To(Equal("123.123.123.123"))
 
-			_, shouldTrack := fakeFiltererFactory.NewFiltererArgsForCall(0)
+			_, shouldTrack := fakeFiltererFactory.NewHealthFiltererArgsForCall(0)
 			Expect(shouldTrack).To(BeTrue())
 
 			Expect(err).NotTo(HaveOccurred())
@@ -391,8 +398,8 @@ var _ = Describe("RecordSet", func() {
 				Eventually(func() []string {
 					_, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
 					Expect(err).NotTo(HaveOccurred())
-					Expect(fakeFilterer.FilterCallCount()).To(BeNumerically(">", 0))
-					_, recs := fakeFilterer.FilterArgsForCall(fakeFilterer.FilterCallCount() - 1)
+					Expect(fakeHealthFilterer.FilterCallCount()).To(BeNumerically(">", 0))
+					_, recs := fakeHealthFilterer.FilterArgsForCall(fakeHealthFilterer.FilterCallCount() - 1)
 					ips := []string{}
 					for _, r := range recs {
 						ips = append(ips, r.IP)
@@ -403,8 +410,8 @@ var _ = Describe("RecordSet", func() {
 				Eventually(func() []string {
 					_, err := recordSet.Resolve("foodomain.bar.")
 					Expect(err).NotTo(HaveOccurred())
-					Expect(fakeFilterer.FilterCallCount()).To(BeNumerically(">", 0))
-					_, recs := fakeFilterer.FilterArgsForCall(fakeFilterer.FilterCallCount() - 1)
+					Expect(fakeHealthFilterer.FilterCallCount()).To(BeNumerically(">", 0))
+					_, recs := fakeHealthFilterer.FilterArgsForCall(fakeHealthFilterer.FilterCallCount() - 1)
 					ips := []string{}
 					for _, r := range recs {
 						ips = append(ips, r.IP)
@@ -450,8 +457,8 @@ var _ = Describe("RecordSet", func() {
 					_, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(fakeFilterer.FilterCallCount()).To(BeNumerically(">", 0))
-					_, recs := fakeFilterer.FilterArgsForCall(fakeFilterer.FilterCallCount() - 1)
+					Expect(fakeHealthFilterer.FilterCallCount()).To(BeNumerically(">", 0))
+					_, recs := fakeHealthFilterer.FilterArgsForCall(fakeHealthFilterer.FilterCallCount() - 1)
 
 					ips := []string{}
 					for _, r := range recs {
@@ -473,8 +480,8 @@ var _ = Describe("RecordSet", func() {
 					_, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(fakeFilterer.FilterCallCount()).To(BeNumerically(">", 0))
-					_, recs := fakeFilterer.FilterArgsForCall(fakeFilterer.FilterCallCount() - 1)
+					Expect(fakeHealthFilterer.FilterCallCount()).To(BeNumerically(">", 0))
+					_, recs := fakeHealthFilterer.FilterArgsForCall(fakeHealthFilterer.FilterCallCount() - 1)
 
 					ips := []string{}
 					for _, r := range recs {
@@ -509,9 +516,9 @@ var _ = Describe("RecordSet", func() {
 
 					_, err = recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
 					Expect(err).ToNot(HaveOccurred())
-					_, shouldTrack := fakeFiltererFactory.NewFiltererArgsForCall(0)
+					_, shouldTrack := fakeFiltererFactory.NewHealthFiltererArgsForCall(0)
 					Expect(shouldTrack).To(BeTrue())
-					_, recs := fakeFilterer.FilterArgsForCall(0)
+					_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 					Expect(recs).To(HaveLen(1))
 					Expect(recs[0].IP).To(Equal("123.123.123.123"))
 
@@ -560,9 +567,9 @@ var _ = Describe("RecordSet", func() {
 					_, err := recordSet.Resolve("q-s0.my-group.my-network.my-deployment.my-domain.")
 					Expect(err).ToNot(HaveOccurred())
 
-					_, shouldTrack := fakeFiltererFactory.NewFiltererArgsForCall(0)
+					_, shouldTrack := fakeFiltererFactory.NewHealthFiltererArgsForCall(0)
 					Expect(shouldTrack).To(BeTrue())
-					_, recs := fakeFilterer.FilterArgsForCall(0)
+					_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 					Expect(recs).To(HaveLen(2))
 					Expect(recs[0].IP).To(Equal("123.123.123.123"))
@@ -604,9 +611,10 @@ var _ = Describe("RecordSet", func() {
 				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
 				Expect(err).ToNot(HaveOccurred())
 
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				_, err = recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				Expect(err).To(MatchError(records.DomainError))
 
+				_, recs := fakeQueryFilterer.FilterArgsForCall(0)
 				Expect(recs).To(BeEmpty())
 			},
 				Entry("missing id", "id"),
@@ -630,8 +638,8 @@ var _ = Describe("RecordSet", func() {
 				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
 				Expect(err).NotTo(HaveOccurred())
 
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recs).ToNot(BeEmpty())
 			})
@@ -670,8 +678,8 @@ var _ = Describe("RecordSet", func() {
 				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
 				Expect(err).ToNot(HaveOccurred())
 
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recs).NotTo(BeEmpty())
 
@@ -712,8 +720,8 @@ var _ = Describe("RecordSet", func() {
 				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
 				Expect(err).ToNot(HaveOccurred())
 
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recs).NotTo(BeEmpty())
 				Expect(recs[0].InstanceIndex).To(Equal(""))
@@ -752,8 +760,8 @@ var _ = Describe("RecordSet", func() {
 				var err error
 				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
 				Expect(err).ToNot(HaveOccurred())
-				recordSet.Filter([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
-				_, recs := fakeFilterer.FilterArgsForCall(0)
+				recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recs).NotTo(BeEmpty())
 				Expect(recs[0].GroupIDs).To(BeEmpty())
@@ -762,21 +770,21 @@ var _ = Describe("RecordSet", func() {
 	})
 
 	Describe("Resolve", func() {
-		Context("when fqdn is already an IP address", func() {
-			BeforeEach(func() {
-				jsonBytes := []byte(`{
+		JustBeforeEach(func() {
+			jsonBytes := []byte(`{
 									"record_keys": ["id", "instance_group", "az", "az_id", "network", "deployment", "ip", "domain", "instance_index"],
 									"record_infos": [
 										["instance1", "my-group", "az2", "1", "my-network", "my-deployment", "123.123.123.124", "domain.", 1]
 									]
 								}`)
-				fileReader.GetReturns(jsonBytes, nil)
+			fileReader.GetReturns(jsonBytes, nil)
 
-				var err error
-				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
-				Expect(err).ToNot(HaveOccurred())
-			})
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
+			Expect(err).ToNot(HaveOccurred())
+		})
 
+		Context("when fqdn is already an IP address", func() {
 			It("return the IP back", func() {
 				records, err := recordSet.Resolve("123.123.123.123")
 				Expect(err).NotTo(HaveOccurred())
@@ -784,9 +792,38 @@ var _ = Describe("RecordSet", func() {
 				Expect(records).To(ContainElement("123.123.123.123"))
 			})
 		})
+
+		Context("when no records match and no aliases are IP addresses", func() {
+			BeforeEach(func() {
+				fakeQueryFilterer.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
+					return []record.Record{}
+				}
+			})
+			It("returns DomainError", func() {
+				_, err := recordSet.Resolve("q-s0m1.my-group2.my-network2.my-deployment2.domain.")
+				Expect(err).To(MatchError(records.DomainError))
+			})
+		})
+
+		Context("when no records match but fqdn aliased to an IP address", func() {
+			BeforeEach(func() {
+				aliasList = mustNewConfigFromMap(map[string][]string{
+					"alias.my.": []string{"1.2.3.4"},
+				})
+				fakeQueryFilterer.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
+					return []record.Record{}
+				}
+			})
+			It("returns the IP", func() {
+				records, err := recordSet.Resolve("alias.my.")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(records).To(ContainElement("1.2.3.4"))
+			})
+		})
 	})
 
-	Describe("Filter", func() {
+	Describe("ResolveRecords", func() {
 		Context("when there are records matching the query based fqdn", func() {
 			BeforeEach(func() {
 				jsonBytes := []byte(`{
@@ -803,9 +840,9 @@ var _ = Describe("RecordSet", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("it filters via the Filter with criteria", func() {
-				recordSet.Filter([]string{"q-s0m1.my-group.my-network.my-deployment.my-domain."}, true)
-				crit, recs := fakeFilterer.FilterArgsForCall(0)
+			It("it filters via the Filterer with criteria", func() {
+				recordSet.ResolveRecords([]string{"q-s0m1.my-group.my-network.my-deployment.my-domain."}, true)
+				crit, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(crit).To(Equal(criteria.Criteria{
 					"s":                 []string{"0"},
@@ -830,6 +867,71 @@ var _ = Describe("RecordSet", func() {
 					AZID:          "1",
 					InstanceIndex: "1",
 				})))
+			})
+		})
+
+		Context("when there are no records matching the domain", func() {
+			BeforeEach(func() {
+				jsonBytes := []byte(`{
+					"record_keys":
+						["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
+					"record_infos": []
+				}`)
+				fileReader.GetReturns(jsonBytes, nil)
+
+				var err error
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("it returns DomainError", func() {
+				_, err := recordSet.ResolveRecords([]string{"q-s0m1.my-group.my-network.my-deployment.my-domain."}, true)
+				Expect(err).To(MatchError(records.DomainError))
+			})
+		})
+
+		Context("when there are records matching the domain but not the query filter", func() {
+			BeforeEach(func() {
+				jsonBytes := []byte(`{
+					"record_keys":
+						["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
+					"record_infos": [
+						["instance0", "0", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "my-domain", 1]
+					]
+				}`)
+				fileReader.GetReturns(jsonBytes, nil)
+
+				var err error
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("it returns empty records", func() {
+				recs, err := recordSet.ResolveRecords([]string{"q-s1m1.my-group.my-network.my-deployment.my-domain."}, true)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(recs).To(BeEmpty())
+			})
+		})
+
+		Context("when query can't be parsed", func() {
+			BeforeEach(func() {
+				jsonBytes := []byte(`{
+					"record_keys":
+						["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "instance_index"],
+					"record_infos": [
+						["instance0", "0", "my-group", ["1"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "my-domain", 1]
+					]
+				}`)
+				fileReader.GetReturns(jsonBytes, nil)
+
+				var err error
+				recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("it returns CriteriaError", func() {
+				_, err := recordSet.ResolveRecords([]string{"notaquery"}, true)
+				Expect(err).To(MatchError(records.CriteriaError))
 			})
 		})
 	})
@@ -858,7 +960,7 @@ var _ = Describe("RecordSet", func() {
 				}`)
 				fileReader.GetReturns(jsonBytes, nil)
 
-				fakeFilterer.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
+				fakeHealthFilterer.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
 					crit := mm.(criteria.Criteria)
 
 					switch crit["fqdn"][0] {
@@ -901,7 +1003,7 @@ var _ = Describe("RecordSet", func() {
 					_, err := recordSet.Resolve("nonexistentalias.")
 
 					Expect(err).To(HaveOccurred())
-					Expect(err).To(MatchError(ContainSubstring("failures occurred when resolving alias domains:")))
+					Expect(err).To(MatchError(records.CriteriaError))
 				})
 			})
 
@@ -975,7 +1077,7 @@ var _ = Describe("RecordSet", func() {
 							},
 						)
 
-						fakeFilterer.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
+						fakeHealthFilterer.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
 							crit := mm.(criteria.Criteria)
 
 							switch crit["fqdn"][0] {
@@ -1020,7 +1122,7 @@ var _ = Describe("RecordSet", func() {
 							_, err := recordSet.Resolve("nonexistentalias.")
 
 							Expect(err).To(HaveOccurred())
-							Expect(err).To(MatchError(ContainSubstring("failures occurred when resolving alias domains:")))
+							Expect(err).To(MatchError(records.CriteriaError))
 						})
 					})
 
@@ -1043,7 +1145,7 @@ var _ = Describe("RecordSet", func() {
 
 						Context("when resolving aliases", func() {
 							JustBeforeEach(func() {
-								fakeFilterer.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
+								fakeHealthFilterer.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
 									crit := mm.(criteria.Criteria)
 
 									switch crit["fqdn"][0] {
