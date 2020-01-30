@@ -415,23 +415,23 @@ var _ = Describe("Server", func() {
 					Eventually(dnsServerFinished).Should(Receive(nil))
 
 					// context.WithTimeout wraps context.WithDeadline
-					Expect(fakeTCPServer.ShutdownCallCount()).To(Equal(1))
-					tcpContext := fakeTCPServer.ShutdownArgsForCall(0)
+					Expect(fakeTCPServer.ShutdownContextCallCount()).To(Equal(1))
+					tcpContext := fakeTCPServer.ShutdownContextArgsForCall(0)
 					_, hasDeadline := tcpContext.Deadline()
 					Expect(hasDeadline).To(BeTrue())
 
-					Expect(fakeUDPServer.ShutdownCallCount()).To(Equal(1))
-					udpContext := fakeUDPServer.ShutdownArgsForCall(0)
+					Expect(fakeUDPServer.ShutdownContextCallCount()).To(Equal(1))
+					udpContext := fakeUDPServer.ShutdownContextArgsForCall(0)
 					_, hasDeadline = udpContext.Deadline()
 					Expect(hasDeadline).To(BeTrue())
 
-					Expect(fakeTCPServer.ShutdownCallCount()).To(Equal(1))
-					Expect(fakeUDPServer.ShutdownCallCount()).To(Equal(1))
+					Expect(fakeTCPServer.ShutdownContextCallCount()).To(Equal(1))
+					Expect(fakeUDPServer.ShutdownContextCallCount()).To(Equal(1))
 				})
 
 				It("returns an error if the servers were unable to shutdown cleanly", func() {
 					err := errors.New("failed to shutdown tcp server")
-					fakeTCPServer.ShutdownReturns(err)
+					fakeTCPServer.ShutdownContextReturns(err)
 					dnsServerFinished := make(chan error)
 					go func() {
 						dnsServerFinished <- dnsServer.Run()
@@ -441,8 +441,8 @@ var _ = Describe("Server", func() {
 					shutdownChannel = nil
 					Eventually(dnsServerFinished).Should(Receive(Equal(err)))
 
-					Expect(fakeTCPServer.ShutdownCallCount()).To(Equal(1))
-					Expect(fakeUDPServer.ShutdownCallCount()).To(Equal(1))
+					Expect(fakeTCPServer.ShutdownContextCallCount()).To(Equal(1))
+					Expect(fakeUDPServer.ShutdownContextCallCount()).To(Equal(1))
 				})
 			})
 		})
