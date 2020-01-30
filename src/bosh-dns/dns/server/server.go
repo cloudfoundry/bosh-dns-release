@@ -13,7 +13,7 @@ import (
 
 type DNSServer interface {
 	ListenAndServe() error
-	Shutdown(context context.Context) error
+	ShutdownContext(context context.Context) error
 }
 
 type Server struct {
@@ -139,7 +139,7 @@ func (s Server) shutdown() error {
 		go func(server DNSServer) {
 			shutdownContext, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
 			defer cancel()
-			err <- server.Shutdown(shutdownContext)
+			err <- server.ShutdownContext(shutdownContext)
 			wg.Done()
 		}(server)
 	}
