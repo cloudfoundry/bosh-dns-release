@@ -67,12 +67,18 @@ func (s Server) monitorUpchecks() {
 			for {
 				if err := h.IsUp(); err != nil {
 					danger += 1
+					s.logger.Warn("server", "upcheck failed")
 					if danger >= limit && s.shutdownChan != nil {
+						s.logger.Error("server", "upcheck failed, restarting process")
 						close(s.shutdownChan)
 						s.shutdownChan = nil
 						return
 					}
 				} else {
+					if danger > 0 {
+						s.logger.Info("server", "upcheck passed")
+					}
+					s.logger.Debug("server", "upcheck passed")
 					danger = 0
 				}
 
@@ -123,6 +129,7 @@ func (s Server) listenAndServe(err chan error) {
 }
 
 func (s Server) shutdown() error {
+	s.logger.Info("server", "shutdown")
 	err := make(chan error, len(s.servers))
 
 	wg := &sync.WaitGroup{}
