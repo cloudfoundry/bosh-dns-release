@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/nu7hatch/gouuid"
-	"log"
 )
 
 var valueSanitizer = valueSanitizer_{}
