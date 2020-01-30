@@ -410,8 +410,20 @@ var _ = Describe("Server", func() {
 					}()
 
 					close(shutdownChannel)
+
 					shutdownChannel = nil
 					Eventually(dnsServerFinished).Should(Receive(nil))
+
+					// context.WithTimeout wraps context.WithDeadline
+					Expect(fakeTCPServer.ShutdownCallCount()).To(Equal(1))
+					tcpContext := fakeTCPServer.ShutdownArgsForCall(0)
+					_, hasDeadline := tcpContext.Deadline()
+					Expect(hasDeadline).To(BeTrue())
+
+					Expect(fakeUDPServer.ShutdownCallCount()).To(Equal(1))
+					udpContext := fakeUDPServer.ShutdownArgsForCall(0)
+					_, hasDeadline = udpContext.Deadline()
+					Expect(hasDeadline).To(BeTrue())
 
 					Expect(fakeTCPServer.ShutdownCallCount()).To(Equal(1))
 					Expect(fakeUDPServer.ShutdownCallCount()).To(Equal(1))

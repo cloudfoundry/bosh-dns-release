@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -12,7 +13,7 @@ import (
 
 type DNSServer interface {
 	ListenAndServe() error
-	Shutdown() error
+	Shutdown(context context.Context) error
 }
 
 type Server struct {
@@ -129,8 +130,9 @@ func (s Server) shutdown() error {
 
 	for _, server := range s.servers {
 		go func(server DNSServer) {
-			err <- server.Shutdown()
-
+			shutdownContext, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+			defer cancel()
+			err <- server.Shutdown(shutdownContext)
 			wg.Done()
 		}(server)
 	}

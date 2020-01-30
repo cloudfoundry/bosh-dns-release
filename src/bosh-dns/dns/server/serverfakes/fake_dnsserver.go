@@ -3,23 +3,27 @@ package serverfakes
 
 import (
 	"bosh-dns/dns/server"
+	"context"
 	"sync"
 )
 
 type FakeDNSServer struct {
 	ListenAndServeStub        func() error
 	listenAndServeMutex       sync.RWMutex
-	listenAndServeArgsForCall []struct{}
-	listenAndServeReturns     struct {
+	listenAndServeArgsForCall []struct {
+	}
+	listenAndServeReturns struct {
 		result1 error
 	}
 	listenAndServeReturnsOnCall map[int]struct {
 		result1 error
 	}
-	ShutdownStub        func() error
+	ShutdownStub        func(context.Context) error
 	shutdownMutex       sync.RWMutex
-	shutdownArgsForCall []struct{}
-	shutdownReturns     struct {
+	shutdownArgsForCall []struct {
+		arg1 context.Context
+	}
+	shutdownReturns struct {
 		result1 error
 	}
 	shutdownReturnsOnCall map[int]struct {
@@ -32,7 +36,8 @@ type FakeDNSServer struct {
 func (fake *FakeDNSServer) ListenAndServe() error {
 	fake.listenAndServeMutex.Lock()
 	ret, specificReturn := fake.listenAndServeReturnsOnCall[len(fake.listenAndServeArgsForCall)]
-	fake.listenAndServeArgsForCall = append(fake.listenAndServeArgsForCall, struct{}{})
+	fake.listenAndServeArgsForCall = append(fake.listenAndServeArgsForCall, struct {
+	}{})
 	fake.recordInvocation("ListenAndServe", []interface{}{})
 	fake.listenAndServeMutex.Unlock()
 	if fake.ListenAndServeStub != nil {
@@ -41,7 +46,8 @@ func (fake *FakeDNSServer) ListenAndServe() error {
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.listenAndServeReturns.result1
+	fakeReturns := fake.listenAndServeReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeDNSServer) ListenAndServeCallCount() int {
@@ -50,7 +56,15 @@ func (fake *FakeDNSServer) ListenAndServeCallCount() int {
 	return len(fake.listenAndServeArgsForCall)
 }
 
+func (fake *FakeDNSServer) ListenAndServeCalls(stub func() error) {
+	fake.listenAndServeMutex.Lock()
+	defer fake.listenAndServeMutex.Unlock()
+	fake.ListenAndServeStub = stub
+}
+
 func (fake *FakeDNSServer) ListenAndServeReturns(result1 error) {
+	fake.listenAndServeMutex.Lock()
+	defer fake.listenAndServeMutex.Unlock()
 	fake.ListenAndServeStub = nil
 	fake.listenAndServeReturns = struct {
 		result1 error
@@ -58,6 +72,8 @@ func (fake *FakeDNSServer) ListenAndServeReturns(result1 error) {
 }
 
 func (fake *FakeDNSServer) ListenAndServeReturnsOnCall(i int, result1 error) {
+	fake.listenAndServeMutex.Lock()
+	defer fake.listenAndServeMutex.Unlock()
 	fake.ListenAndServeStub = nil
 	if fake.listenAndServeReturnsOnCall == nil {
 		fake.listenAndServeReturnsOnCall = make(map[int]struct {
@@ -69,19 +85,22 @@ func (fake *FakeDNSServer) ListenAndServeReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeDNSServer) Shutdown() error {
+func (fake *FakeDNSServer) Shutdown(arg1 context.Context) error {
 	fake.shutdownMutex.Lock()
 	ret, specificReturn := fake.shutdownReturnsOnCall[len(fake.shutdownArgsForCall)]
-	fake.shutdownArgsForCall = append(fake.shutdownArgsForCall, struct{}{})
-	fake.recordInvocation("Shutdown", []interface{}{})
+	fake.shutdownArgsForCall = append(fake.shutdownArgsForCall, struct {
+		arg1 context.Context
+	}{arg1})
+	fake.recordInvocation("Shutdown", []interface{}{arg1})
 	fake.shutdownMutex.Unlock()
 	if fake.ShutdownStub != nil {
-		return fake.ShutdownStub()
+		return fake.ShutdownStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.shutdownReturns.result1
+	fakeReturns := fake.shutdownReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeDNSServer) ShutdownCallCount() int {
@@ -90,7 +109,22 @@ func (fake *FakeDNSServer) ShutdownCallCount() int {
 	return len(fake.shutdownArgsForCall)
 }
 
+func (fake *FakeDNSServer) ShutdownCalls(stub func(context.Context) error) {
+	fake.shutdownMutex.Lock()
+	defer fake.shutdownMutex.Unlock()
+	fake.ShutdownStub = stub
+}
+
+func (fake *FakeDNSServer) ShutdownArgsForCall(i int) context.Context {
+	fake.shutdownMutex.RLock()
+	defer fake.shutdownMutex.RUnlock()
+	argsForCall := fake.shutdownArgsForCall[i]
+	return argsForCall.arg1
+}
+
 func (fake *FakeDNSServer) ShutdownReturns(result1 error) {
+	fake.shutdownMutex.Lock()
+	defer fake.shutdownMutex.Unlock()
 	fake.ShutdownStub = nil
 	fake.shutdownReturns = struct {
 		result1 error
@@ -98,6 +132,8 @@ func (fake *FakeDNSServer) ShutdownReturns(result1 error) {
 }
 
 func (fake *FakeDNSServer) ShutdownReturnsOnCall(i int, result1 error) {
+	fake.shutdownMutex.Lock()
+	defer fake.shutdownMutex.Unlock()
 	fake.ShutdownStub = nil
 	if fake.shutdownReturnsOnCall == nil {
 		fake.shutdownReturnsOnCall = make(map[int]struct {
@@ -116,7 +152,11 @@ func (fake *FakeDNSServer) Invocations() map[string][][]interface{} {
 	defer fake.listenAndServeMutex.RUnlock()
 	fake.shutdownMutex.RLock()
 	defer fake.shutdownMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeDNSServer) recordInvocation(key string, args []interface{}) {
