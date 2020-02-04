@@ -33,10 +33,7 @@ type RecursorPool interface {
 // the server starting.  It does track history around which recursors have
 // failed. This follows the standard DNS specification.
 //
-// The core assumption behind "smart" is that all upstream recursors are equal,
-// and all answers are fair game for bosh-dns to choose from. This is done by
-// randomizing the recursors. This does not mesh well with network topologies
-// that rely on ordering the recursors.
+// Each recursor will be queried until one succeeds or all recursors were tried
 
 func NewFailoverRecursorPool(recursors []string, recursorSelection string, logger logger.Logger) RecursorPool {
 	if recursorSelection == config.SmartRecursorSelection {

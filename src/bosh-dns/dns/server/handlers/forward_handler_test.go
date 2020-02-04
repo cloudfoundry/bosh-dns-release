@@ -84,26 +84,37 @@ var _ = Describe("ForwardHandler", func() {
 			})
 		})
 
-		Context("when the recursor returns SERVFAIL", func() {
-			var msg *dns.Msg
+		Context("when first recursor returns a message", func() {
 
-			BeforeEach(func() {
-				fakeExchanger.ExchangeReturns(&dns.Msg{
-					MsgHdr: dns.MsgHdr{
-						Rcode: dns.RcodeServerFailure,
-					},
-				}, 0, nil)
-				msg = &dns.Msg{}
-			})
+			DescribeTable("non-success codes are treated as errors",
+				func(rcode int, expectedErr string) {
+					fakeExchanger.ExchangeReturns(&dns.Msg{
+						MsgHdr: dns.MsgHdr{
+							Rcode: rcode,
+						},
+					}, 0, nil)
 
-			It("returns an error", func() {
-				fakeRecursorPool.PerformStrategicallyStub = func(f func(string) error) error {
-					Expect(f("127.0.0.1")).To(MatchError("Received SERVFAIL from upstream (recursor: 127.0.0.1)"))
-					return nil
-				}
+					fakeRecursorPool.PerformStrategicallyStub = func(f func(string) error) error {
+						err := f("127.0.0.1")
+						Expect(err).To(MatchError(expectedErr))
+						return err
+					}
 
-				recursionHandler.ServeDNS(fakeWriter, msg)
-			})
+					recursionHandler.ServeDNS(fakeWriter, &dns.Msg{
+						Question: []dns.Question{
+							{
+								Name: "a domain",
+							},
+						},
+					})
+
+					Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
+					response := fakeWriter.WriteMsgArgsForCall(0)
+					Expect(response.Rcode).To(Equal(dns.RcodeServerFailure))
+				},
+				Entry("returns SERVFAIL", dns.RcodeServerFailure, "Received SERVFAIL from upstream (recursor: 127.0.0.1)"),
+				Entry("returns NXDOMAIN", dns.RcodeNameError, "Received NXDOMAIN from upstream (recursor: 127.0.0.1)"),
+			)
 		})
 
 		Context("when no working recursors are configured", func() {
