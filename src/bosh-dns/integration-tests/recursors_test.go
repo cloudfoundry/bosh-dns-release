@@ -215,7 +215,7 @@ var _ = Describe("Integration", func() {
 
 			It("timeouts when recursor takes longer than configured recursor_timeout", func() {
 				dnsResponse := helpers.DigWithOptions("slow-recursor.com.", environment.ServerAddress(), helpers.DigOpts{SkipRcodeCheck: true, Timeout: 5 * time.Second, Port: environment.Port()})
-				Expect(dnsResponse.Rcode).To(Equal(dns.RcodeServerFailure))
+				Expect(dnsResponse.Rcode).To(Equal(dns.RcodeNameError))
 			})
 
 			It("forwards large UDP EDNS messages", func() {

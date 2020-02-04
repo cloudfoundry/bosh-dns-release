@@ -1314,7 +1314,7 @@ var _ = Describe("main", func() {
 						r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
-						Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(r.Rcode).To(Equal(dns.RcodeNameError))
 						Expect(r.Answer).To(HaveLen(0))
 					})
 				})
@@ -1513,9 +1513,9 @@ var _ = Describe("main", func() {
 			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 			Expect(time.Now().Sub(startTime)).Should(BeNumerically(">", 999*time.Millisecond))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(r.Rcode).To(Equal(dns.RcodeServerFailure))
+			Expect(r.Rcode).To(Equal(dns.RcodeNameError))
 
-			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=SERVFAIL ancount=0 error=\[no response from recursors\] time=\d+ns`))
+			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=NXDOMAIN ancount=0 error=\[no response from recursors\] time=\d+ns`))
 		})
 
 		It("logs the recursor used to resolve", func() {

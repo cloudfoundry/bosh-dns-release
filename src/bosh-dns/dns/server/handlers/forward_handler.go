@@ -101,7 +101,7 @@ func (ForwardHandler) network(responseWriter dns.ResponseWriter) string {
 func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter, req *dns.Msg, before time.Time, recursor string) {
 	responseMessage := &dns.Msg{}
 	responseMessage.SetReply(req)
-	responseMessage.SetRcode(req, dns.RcodeServerFailure)
+	responseMessage.SetRcode(req, dns.RcodeNameError)
 	r.logRecursor(before, req, responseMessage, recursor)
 	if err := responseWriter.WriteMsg(responseMessage); err != nil {
 		r.logger.Error(r.logTag, "error writing response: %s", err.Error())

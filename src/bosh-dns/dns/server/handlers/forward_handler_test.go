@@ -67,18 +67,18 @@ var _ = Describe("ForwardHandler", func() {
 				msg.SetQuestion("example.com.", dns.TypeANY)
 			})
 
-			It("indicates that there are no recursers availible", func() {
+			It("indicates that there are no recursers available", func() {
 				recursionHandler.ServeDNS(fakeWriter, msg)
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 
 				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 				tag, logMsg, _ := fakeLogger.DebugArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
-				Expect(logMsg).To(Equal("handlers.ForwardHandler Request qtype=[ANY] qname=[example.com.] rcode=SERVFAIL ancount=0 error=[no recursors configured] time=0ns"))
+				Expect(logMsg).To(Equal("handlers.ForwardHandler Request qtype=[ANY] qname=[example.com.] rcode=NXDOMAIN ancount=0 error=[no recursors configured] time=0ns"))
 
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Question).To(Equal(msg.Question))
-				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+				Expect(message.Rcode).To(Equal(dns.RcodeNameError))
 				Expect(message.Authoritative).To(Equal(false))
 				Expect(message.RecursionAvailable).To(Equal(false))
 			})
@@ -110,7 +110,7 @@ var _ = Describe("ForwardHandler", func() {
 
 					Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 					response := fakeWriter.WriteMsgArgsForCall(0)
-					Expect(response.Rcode).To(Equal(dns.RcodeServerFailure))
+					Expect(response.Rcode).To(Equal(dns.RcodeNameError))
 				},
 				Entry("returns SERVFAIL", dns.RcodeServerFailure, "received SERVFAIL for my.domain from upstream (recursor: 127.0.0.1)"),
 				Entry("returns NXDOMAIN", dns.RcodeNameError, "received NXDOMAIN for my.domain from upstream (recursor: 127.0.0.1)"),
@@ -143,11 +143,11 @@ var _ = Describe("ForwardHandler", func() {
 				Expect(args[1]).To(Equal("first recursor failed to reply"))
 				tag, logMsg, _ = fakeLogger.DebugArgsForCall(2)
 				Expect(tag).To(Equal("ForwardHandler"))
-				Expect(logMsg).To(Equal("handlers.ForwardHandler Request qtype=[ANY] qname=[example.com.] rcode=SERVFAIL ancount=0 error=[first recursor failed to reply] time=0ns"))
+				Expect(logMsg).To(Equal("handlers.ForwardHandler Request qtype=[ANY] qname=[example.com.] rcode=NXDOMAIN ancount=0 error=[first recursor failed to reply] time=0ns"))
 
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Question).To(Equal(msg.Question))
-				Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+				Expect(message.Rcode).To(Equal(dns.RcodeNameError))
 				Expect(message.Authoritative).To(Equal(false))
 				Expect(message.RecursionAvailable).To(Equal(false))
 			})
@@ -300,7 +300,7 @@ var _ = Describe("ForwardHandler", func() {
 
 						message := fakeWriter.WriteMsgArgsForCall(0)
 						Expect(message.Question).To(Equal(msg.Question))
-						Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+						Expect(message.Rcode).To(Equal(dns.RcodeNameError))
 						Expect(message.Authoritative).To(Equal(false))
 						Expect(message.RecursionAvailable).To(Equal(false))
 					})
