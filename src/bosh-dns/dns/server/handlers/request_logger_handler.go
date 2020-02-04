@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"code.cloudfoundry.org/clock"
-	"fmt"
-
 	"bosh-dns/dns/server/handlers/internal"
+	"code.cloudfoundry.org/clock"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
@@ -37,14 +35,6 @@ func (h RequestLoggerHandler) ServeDNS(responseWriter dns.ResponseWriter, req *d
 	h.Handler.ServeDNS(respWriter, req)
 
 	duration := h.clock.Now().Sub(before).Nanoseconds()
-
-	types := make([]string, len(req.Question))
-	domains := make([]string, len(req.Question))
-
-	for i, q := range req.Question {
-		types[i] = fmt.Sprintf("%d", q.Qtype)
-		domains[i] = q.Name
-	}
 
 	internal.LogRequest(h.logger, h.Handler, h.logTag, duration, req, dnsMsg, "")
 }

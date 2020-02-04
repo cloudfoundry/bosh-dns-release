@@ -103,7 +103,7 @@ var _ = Describe("ForwardHandler", func() {
 					recursionHandler.ServeDNS(fakeWriter, &dns.Msg{
 						Question: []dns.Question{
 							{
-								Name: "a domain",
+								Name: "my.domain",
 							},
 						},
 					})
@@ -112,8 +112,8 @@ var _ = Describe("ForwardHandler", func() {
 					response := fakeWriter.WriteMsgArgsForCall(0)
 					Expect(response.Rcode).To(Equal(dns.RcodeServerFailure))
 				},
-				Entry("returns SERVFAIL", dns.RcodeServerFailure, "Received SERVFAIL from upstream (recursor: 127.0.0.1)"),
-				Entry("returns NXDOMAIN", dns.RcodeNameError, "Received NXDOMAIN from upstream (recursor: 127.0.0.1)"),
+				Entry("returns SERVFAIL", dns.RcodeServerFailure, "received SERVFAIL for my.domain from upstream (recursor: 127.0.0.1)"),
+				Entry("returns NXDOMAIN", dns.RcodeNameError, "received NXDOMAIN for my.domain from upstream (recursor: 127.0.0.1)"),
 			)
 		})
 

@@ -5,10 +5,13 @@ import (
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
 	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
+	"code.cloudfoundry.org/clock/fakeclock"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net"
+	"time"
 )
 
 var _ bool = Describe("CacheHandler", func() {
@@ -17,6 +20,8 @@ var _ bool = Describe("CacheHandler", func() {
 		fakeWriter     *internalfakes.FakeResponseWriter
 		fakeDnsHandler *handlersfakes.FakeDNSHandler
 		fakeTruncater  *dnsresolverfakes.FakeResponseTruncater
+		fakeClock      *fakeclock.FakeClock
+		fakeLogger     *loggerfakes.FakeLogger
 		response       *dns.Msg
 	)
 
@@ -24,7 +29,9 @@ var _ bool = Describe("CacheHandler", func() {
 		fakeDnsHandler = &handlersfakes.FakeDNSHandler{}
 		fakeWriter = &internalfakes.FakeResponseWriter{}
 		fakeTruncater = &dnsresolverfakes.FakeResponseTruncater{}
-		cacheHandler = handlers.NewCachingDNSHandler(fakeDnsHandler, fakeTruncater)
+		fakeClock = fakeclock.NewFakeClock(time.Now())
+		fakeLogger = &loggerfakes.FakeLogger{}
+		cacheHandler = handlers.NewCachingDNSHandler(fakeDnsHandler, fakeTruncater, fakeClock, fakeLogger)
 
 		response = &dns.Msg{
 			Answer: []dns.RR{&dns.A{A: net.ParseIP("99.99.99.99")}},

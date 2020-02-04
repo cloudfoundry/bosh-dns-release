@@ -61,7 +61,8 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 		exchangeAnswer, _, err := client.Exchange(request, recursor)
 
 		if exchangeAnswer != nil && exchangeAnswer.MsgHdr.Rcode != dns.RcodeSuccess {
-			err = fmt.Errorf("Received %s from upstream (recursor: %s)", dns.RcodeToString[exchangeAnswer.MsgHdr.Rcode], recursor)
+			question := request.Question[0].Name
+			err = fmt.Errorf("received %s for %s from upstream (recursor: %s)", dns.RcodeToString[exchangeAnswer.MsgHdr.Rcode], question, recursor)
 		}
 
 		if err == nil {

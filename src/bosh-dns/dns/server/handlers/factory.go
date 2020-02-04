@@ -36,7 +36,7 @@ func (f *Factory) CreateHTTPJSONHandler(url string, cache bool) dns.Handler {
 	handler = NewHTTPJSONHandler(url, httpClient, f.logger, f.truncater)
 
 	if cache {
-		handler = NewCachingDNSHandler(handler, f.truncater)
+		handler = NewCachingDNSHandler(handler, f.truncater, f.clock, f.logger)
 	}
 	return handler
 }
@@ -53,7 +53,7 @@ func (f *Factory) CreateForwardHandler(recursors []string, cache bool) dns.Handl
 	handler = NewForwardHandler(pool, f.exchangerFactory, f.clock, f.logger, f.truncater)
 
 	if cache {
-		handler = NewCachingDNSHandler(handler, f.truncater)
+		handler = NewCachingDNSHandler(handler, f.truncater, f.clock, f.logger)
 	}
 	return handler
 }

@@ -188,7 +188,7 @@ func mainExitCode() int {
 	}
 
 	if config.Cache.Enabled {
-		mux.Handle(".", handlers.NewCachingDNSHandler(forwardHandler, truncater))
+		mux.Handle(".", handlers.NewCachingDNSHandler(forwardHandler, truncater, clock, logger))
 	} else {
 		mux.Handle(".", forwardHandler)
 	}
