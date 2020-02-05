@@ -380,7 +380,7 @@ var _ = Describe("Integration", func() {
 					It("always attempts to query the first configured recursor", func() {
 
 						dnsResponse := helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
-							helpers.DigOpts{Port: environment.Port(), Timeout: 1 * time.Second},
+							helpers.DigOpts{Port: environment.Port(), Timeout: 3 * time.Second},
 						)
 						Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
 							gomegadns.Response{"ip": recursorEnv.configurableResponse}))
@@ -390,7 +390,7 @@ var _ = Describe("Integration", func() {
 
 						By("then bosh-dns fails overs to the second recursor")
 						dnsResponse = helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
-							helpers.DigOpts{Port: environment.Port(), Timeout: 1 * time.Second},
+							helpers.DigOpts{Port: environment.Port(), Timeout: 3 * time.Second},
 						)
 						Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
 							gomegadns.Response{"ip": secondTestRecursor.configurableResponse}))
@@ -401,7 +401,7 @@ var _ = Describe("Integration", func() {
 
 						By("then bosh-dns resumes with the first recursor's response")
 						dnsResponse = helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
-							helpers.DigOpts{Port: environment.Port(), Timeout: 1 * time.Second},
+							helpers.DigOpts{Port: environment.Port(), Timeout: 3 * time.Second},
 						)
 						Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
 							gomegadns.Response{"ip": recursorEnv.configurableResponse}))
