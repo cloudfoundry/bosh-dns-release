@@ -29,12 +29,17 @@ packages:
 
 properties:
   address:
-    description: "Address on which the DNS server will bind. Defaults to host IP address"
+    description: "Address in which the DNS server will bind"
+    default: 169.254.0.2
   aliased_address:
-    description: "Address that will be added on loopback interface. Defaults to none"
+    description: "Address that will be added by default"
+    default: 169.254.0.2
   addresses_files_glob:
     description: "Glob for any files to look for extra addresses to listen on"
     default: C:\var\vcap\jobs\*\dns\addresses.json
+  port:
+    description: "Port that the DNS server will bind to"
+    default: 53
   log_level:
     description: Logging level (DEBUG, INFO, WARN, ERROR, NONE)
     default: INFO
@@ -69,12 +74,18 @@ properties:
     description: "Array of handler configurations"
     default: []
     example:
-      - domain: local.internal.
+      - domain: endpoint.local.
         cache:
           enabled: true
         source:
           type: http
           url: http://some.endpoint.local
+      - domain: corp.intranet.local.
+        cache:
+          enabled: true
+        source:
+          type: dns
+          recursors: [ 10.0.0.2 ]
 
   handlers_files_glob:
     description: "Glob for any files to look for DNS handler information"
