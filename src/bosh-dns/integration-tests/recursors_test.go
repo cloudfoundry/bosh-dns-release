@@ -1,6 +1,7 @@
 package integration_tests
 
 import (
+	"bosh-dns/dns/server/handlers"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"bosh-dns/acceptance_tests/helpers"
-	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/record"
 
 	testrecursor "bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor/config"
@@ -182,7 +182,7 @@ var _ = Describe("Integration", func() {
 				Consistently(func() []dns.RR {
 					dnsResponse := helpers.DigWithPort("always-different-with-timeout-example.com.", environment.ServerAddress(), environment.Port())
 					return dnsResponse.Answer
-				}, "4s", "1s").Should(ConsistOf(
+				}, "2s", "1s").Should(ConsistOf(
 					gomegadns.MatchResponse(gomegadns.Response{
 						"ip": initialIP,
 					}),
@@ -194,7 +194,7 @@ var _ = Describe("Integration", func() {
 				Eventually(func() []dns.RR {
 					dnsResponse := helpers.DigWithPort("always-different-with-timeout-example.com.", environment.ServerAddress(), environment.Port())
 					return dnsResponse.Answer
-				}, "4s", "1s").Should(ConsistOf(
+				}, 5*time.Second, 500*time.Millisecond).Should(ConsistOf(
 					gomegadns.MatchResponse(gomegadns.Response{
 						"ip": nextIP.String(),
 					}),
@@ -291,15 +291,13 @@ var _ = Describe("Integration", func() {
 					})
 
 					It("always chooses recursors serially", func() {
-						for i := 0; i < 10; i++ {
-							err := environment.Restart()
-							Expect(err).NotTo(HaveOccurred())
+						err := environment.Restart()
+						Expect(err).NotTo(HaveOccurred())
 
-							dnsResponse := helpers.DigWithPort(testQuestion, environment.ServerAddress(), environment.Port())
-							Expect(dnsResponse.Answer).To(HaveLen(1))
+						dnsResponse := helpers.DigWithPort(testQuestion, environment.ServerAddress(), environment.Port())
+						Expect(dnsResponse.Answer).To(HaveLen(1))
 
-							Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(gomegadns.Response{"ip": "1.1.1.1"}))
-						}
+						Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(gomegadns.Response{"ip": "1.1.1.1"}))
 					})
 				})
 
@@ -322,7 +320,7 @@ var _ = Describe("Integration", func() {
 							Expect(dnsResponse.Answer).To(HaveLen(1))
 
 							return dnsResponse.Answer[0]
-						}, 5*time.Minute).ShouldNot(Equal(initialUpstreamResponse))
+						}, 30*time.Second).ShouldNot(Equal(initialUpstreamResponse))
 					})
 				})
 			})
@@ -355,14 +353,8 @@ var _ = Describe("Integration", func() {
 
 					By("forcing the preference shift to the second upstream recursor")
 					for i := 0; i < handlers.FailHistoryThreshold; i++ {
-						time.Sleep(6 * time.Second)
-
-						// Need to configure timeout to be greater than bosh-dns's upstream timeout
-						// Otherwise, this can lead to racey timesouts, where the client timeout is less
-						// than bosh-dns upstream timeout per failed recursor
-						// To reproduce: change timeout to "100 * time.Millisecond", and run on Windows
 						dnsResponse := helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
-							helpers.DigOpts{Port: environment.Port(), Timeout: 10 * time.Second},
+							helpers.DigOpts{Port: environment.Port(), Timeout: 3 * time.Second},
 						)
 						Expect(dnsResponse.Answer[0]).ShouldNot(Equal(initialUpstreamResponse))
 						fmt.Printf("Running %d times out of %d total\n", i, handlers.FailHistoryThreshold)
@@ -375,7 +367,7 @@ var _ = Describe("Integration", func() {
 					By("validating that we still use the second recursor")
 					Consistently(func() dns.RR {
 						return helpers.DigWithPort(testQuestion, environment.ServerAddress(), environment.Port()).Answer[0]
-					}, 10*time.Second).ShouldNot(Equal(initialUpstreamResponse))
+					}, 5*time.Second, 500*time.Millisecond).ShouldNot(Equal(initialUpstreamResponse))
 				})
 			})
 
@@ -386,42 +378,34 @@ var _ = Describe("Integration", func() {
 					})
 
 					It("always attempts to query the first configured recursor", func() {
-						// This constant is a measure of our confidence level in this test not behaving
-						// like "smart".
-						// The lower the number, the less confidence we have...but is faster.
-						// The higher the number, the more confidence we have...but is slower.
-						const iterations = 10
 
-						for i := 0; i < iterations; i++ {
-							fmt.Printf("Running %d times out of %d total\n", i, iterations)
+						dnsResponse := helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
+							helpers.DigOpts{Port: environment.Port(), Timeout: 1 * time.Second},
+						)
+						Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
+							gomegadns.Response{"ip": recursorEnv.configurableResponse}))
 
-							dnsResponse := helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
-								helpers.DigOpts{Port: environment.Port(), Timeout: 10 * time.Second},
-							)
-							Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
-								gomegadns.Response{"ip": recursorEnv.configurableResponse}))
+						By("stopping the first recursor")
+						recursorEnv.stop()
 
-							By("stopping the first recursor")
-							recursorEnv.stop()
+						By("then bosh-dns fails overs to the second recursor")
+						dnsResponse = helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
+							helpers.DigOpts{Port: environment.Port(), Timeout: 1 * time.Second},
+						)
+						Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
+							gomegadns.Response{"ip": secondTestRecursor.configurableResponse}))
 
-							By("then bosh-dns fails overs to the second recursor")
-							dnsResponse = helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
-								helpers.DigOpts{Port: environment.Port(), Timeout: 10 * time.Second},
-							)
-							Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
-								gomegadns.Response{"ip": secondTestRecursor.configurableResponse}))
+						By("bringing the first recursor back")
+						err := recursorEnv.start()
+						Expect(err).NotTo(HaveOccurred())
 
-							By("bringing the first recursor back")
-							err := recursorEnv.start()
-							Expect(err).NotTo(HaveOccurred())
+						By("then bosh-dns resumes with the first recursor's response")
+						dnsResponse = helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
+							helpers.DigOpts{Port: environment.Port(), Timeout: 1 * time.Second},
+						)
+						Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
+							gomegadns.Response{"ip": recursorEnv.configurableResponse}))
 
-							By("then bosh-dns resumes with the first recursor's response")
-							dnsResponse = helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
-								helpers.DigOpts{Port: environment.Port(), Timeout: 10 * time.Second},
-							)
-							Expect(dnsResponse.Answer[0]).Should(gomegadns.MatchResponse(
-								gomegadns.Response{"ip": recursorEnv.configurableResponse}))
-						}
 					})
 
 					It("returns an error if all recursors fail", func() {
@@ -430,7 +414,7 @@ var _ = Describe("Integration", func() {
 
 						helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
 						helpers.DigOpts{Port: environment.Port(), SkipErrCheck: true, SkipRcodeCheck: true})
-						Eventually(environment.Output(), 10*time.Second).Should(gbytes.Say(`no response from recursors`))
+						Eventually(environment.Output(), 5*time.Second, 500*time.Millisecond).Should(gbytes.Say(`no response from recursors`))
 					})
 				})
 			})

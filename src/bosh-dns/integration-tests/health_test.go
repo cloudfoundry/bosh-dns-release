@@ -39,7 +39,7 @@ var _ = Describe("Integration", func() {
 					r, err := t.GetResponseBody()
 					Expect(err).ToNot(HaveOccurred())
 					return r.State
-				}, 31*time.Second).Should(Equal(api.StatusFailing))
+				}, 5*time.Second, 500*time.Millisecond).Should(Equal(api.StatusFailing))
 
 				err = t.MakeHealthyExit(0, 0)
 				Expect(err).NotTo(HaveOccurred())
@@ -48,7 +48,7 @@ var _ = Describe("Integration", func() {
 					r, err := t.GetResponseBody()
 					Expect(err).ToNot(HaveOccurred())
 					return r.State
-				}, 31*time.Second).Should(Equal(api.StatusRunning))
+				}, 5*time.Second, 500*time.Millisecond).Should(Equal(api.StatusRunning))
 			})
 
 			It("respects health status according to job providing link", func() {
@@ -60,7 +60,7 @@ var _ = Describe("Integration", func() {
 					r, err := t.GetResponseBody()
 					Expect(err).NotTo(HaveOccurred())
 					return r.GroupState["0"]
-				}, 31*time.Second).Should(Equal(api.StatusFailing))
+				}, 5*time.Second, 500*time.Millisecond).Should(Equal(api.StatusFailing))
 
 				state, err := t.GetResponseBody()
 				Expect(err).NotTo(HaveOccurred())
@@ -75,7 +75,7 @@ var _ = Describe("Integration", func() {
 					r, err := t.GetResponseBody()
 					Expect(err).NotTo(HaveOccurred())
 					return r.GroupState["0"]
-				}, 31*time.Second).Should(Equal(api.StatusRunning))
+				}, 5*time.Second, 500*time.Millisecond).Should(Equal(api.StatusRunning))
 			})
 		})
 
@@ -119,7 +119,7 @@ var _ = Describe("Integration", func() {
 						fmt.Sprintf("q-g0s0.bosh-dns.default.bosh-dns.bosh."), e.ServerAddress(),
 						helpers.DigOpts{Port: e.Port(), SkipRcodeCheck: true})
 					return dnsResponse.Answer
-				}, 10 *time.Second).Should(ConsistOf(
+				}, 5 *time.Second, 500*time.Millisecond).Should(ConsistOf(
 					gomegadns.MatchResponse(gomegadns.Response{
 						"ip":  "127.0.0.2",
 						"ttl": 0,
@@ -135,7 +135,7 @@ var _ = Describe("Integration", func() {
 						fmt.Sprintf("q-g0s0.bosh-dns.default.bosh-dns.bosh."),
 						e.ServerAddress(), e.Port())
 					return dnsResponse.Answer
-				}, 31*time.Second).Should(ConsistOf(
+				}, 5*time.Second, 500*time.Millisecond).Should(ConsistOf(
 					gomegadns.MatchResponse(gomegadns.Response{
 						"ip":  "127.0.0.2",
 						"ttl": 0,
@@ -154,7 +154,7 @@ var _ = Describe("Integration", func() {
 						fmt.Sprintf("q-g0s0.bosh-dns.default.bosh-dns.bosh."),
 						e.ServerAddress(), e.Port())
 					return dnsResponse.Answer
-				}, 31*time.Second).Should(ConsistOf(
+				}, 5*time.Second, 500*time.Millisecond).Should(ConsistOf(
 					gomegadns.MatchResponse(gomegadns.Response{
 						"ip":  "127.0.0.2",
 						"ttl": 0,

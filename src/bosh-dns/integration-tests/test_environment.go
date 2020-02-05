@@ -102,6 +102,8 @@ func (t *testEnvironment) writeConfig() error {
 		Cache: config.Cache{
 			Enabled: t.caching,
 		},
+		RequestTimeout: config.DurationJSON(time.Second),
+		RecursorTimeout: config.DurationJSON(time.Second),
 	}
 
 	if t.healthEnabled {
@@ -111,6 +113,7 @@ func (t *testEnvironment) writeConfig() error {
 			CertificateFile: "../healthcheck/assets/test_certs/test_client.pem",
 			PrivateKeyFile:  "../healthcheck/assets/test_certs/test_client.key",
 			CAFile:          "../healthcheck/assets/test_certs/test_ca.pem",
+			CheckInterval:   config.DurationJSON(time.Second),
 		}
 	}
 	configJSON, err := json.Marshal(cnf)

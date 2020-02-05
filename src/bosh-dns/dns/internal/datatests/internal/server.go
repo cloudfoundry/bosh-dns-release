@@ -26,6 +26,7 @@ func StartSampleServer() Server {
 	executable, err := gexec.Build("bosh-dns/dns")
 	Expect(err).NotTo(HaveOccurred())
 	SetDefaultEventuallyTimeout(2 * time.Second)
+	SetDefaultEventuallyPollingInterval(500 * time.Millisecond)
 
 	listenPort, err := testhelpers.GetFreePort()
 	Expect(err).NotTo(HaveOccurred())

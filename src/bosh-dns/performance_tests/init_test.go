@@ -43,6 +43,7 @@ func setupServers() {
 	Expect(err).NotTo(HaveOccurred())
 
 	SetDefaultEventuallyTimeout(2 * time.Second)
+	SetDefaultEventuallyPollingInterval(500*time.Millisecond)
 
 	for i := 2; i <= 102; i++ {
 		startHealthServer(fmt.Sprintf("127.0.0.%d", i))

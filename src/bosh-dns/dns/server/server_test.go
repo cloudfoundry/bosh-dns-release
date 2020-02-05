@@ -144,7 +144,9 @@ var _ = Describe("Server", func() {
 		udpUpcheck = upCheck()
 
 		SetDefaultEventuallyTimeout(timeout + 2*time.Second)
+		SetDefaultEventuallyPollingInterval(500*time.Millisecond)
 		SetDefaultConsistentlyDuration(timeout + 2*time.Second)
+		SetDefaultConsistentlyPollingInterval(500*time.Millisecond)
 
 		pollingInterval = 5 * time.Second
 	})

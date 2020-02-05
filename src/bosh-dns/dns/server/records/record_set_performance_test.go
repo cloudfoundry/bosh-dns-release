@@ -91,7 +91,7 @@ var _ = Describe("Record Set Performance", func() {
 		var totalTimeLastRecord time.Duration
 		var count int
 
-		for count = 0; count < 4000; count++ {
+		for count = 0; count < 1000; count++ {
 			startTime := time.Now()
 			ips, err := recordSet.Resolve("q-m0s0.my-group.my-network.my-deployment.domain.")
 			totalTime += time.Since(startTime) / time.Microsecond

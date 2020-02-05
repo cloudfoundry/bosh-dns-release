@@ -215,7 +215,7 @@ var _ = Describe("main", func() {
 				"api/assets/test_certs/test_ca.pem",
 				"api/assets/test_certs/test_wrong_cn_client.pem",
 				"api/assets/test_certs/test_client.key",
-				5 * time.Second,
+				1 * time.Second,
 				logger,
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -353,8 +353,8 @@ var _ = Describe("main", func() {
 							return len(server.ReceivedRequests())
 						}
 					}
-					Eventually(serverRequestLen(healthServers[0]), 5*time.Second).Should(BeNumerically(">", 2))
-					Eventually(serverRequestLen(healthServers[1]), 5*time.Second).Should(BeNumerically(">", 2))
+					Eventually(serverRequestLen(healthServers[0]), 3*time.Second).Should(BeNumerically(">", 2))
+					Eventually(serverRequestLen(healthServers[1]), 3*time.Second).Should(BeNumerically(">", 2))
 				})
 
 				It("returns json records", func() {
@@ -463,7 +463,7 @@ var _ = Describe("main", func() {
 							parsed = append(parsed, nextRecord)
 						}
 						return parsed
-					}, 1*time.Second).Should(ConsistOf([]api.InstanceRecord{
+					}, 1*time.Second, 500*time.Millisecond).Should(ConsistOf([]api.InstanceRecord{
 						{
 							ID:          "my-instance-2",
 							Group:       "my-group",

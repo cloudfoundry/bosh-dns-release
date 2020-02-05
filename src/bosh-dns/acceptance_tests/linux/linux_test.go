@@ -33,10 +33,10 @@ var _ = Describe("Alias address binding", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-		Eventually(session.Out).Should(gbytes.Say("upcheck\\.bosh-dns\\.\\s+0\\s+IN\\s+A\\s+127\\.0\\.0\\.1"))
-		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
+		Expect(session.Out).Should(gbytes.Say("Got answer:"))
+		Expect(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+		Expect(session.Out).Should(gbytes.Say("upcheck\\.bosh-dns\\.\\s+0\\s+IN\\s+A\\s+127\\.0\\.0\\.1"))
+		Expect(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
 
 	It("exposes a debug API through a CLI", func() {
@@ -57,10 +57,10 @@ var _ = Describe("Alias address binding", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-		Eventually(session.Out).Should(gbytes.Say("Got answer:"))
-		Eventually(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
-		Eventually(session.Out).Should(gbytes.Say(";upcheck\\.bosh-dns\\.\\s+IN\\s+A"))
-		Eventually(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
+		Expect(session.Out).Should(gbytes.Say("Got answer:"))
+		Expect(session.Out).Should(gbytes.Say("flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+		Expect(session.Out).Should(gbytes.Say(";upcheck\\.bosh-dns\\.\\s+IN\\s+A"))
+		Expect(session.Out).Should(gbytes.Say("SERVER: 169.254.0.2#53"))
 	})
 
 	Context("when the healtcheck becomes unreachable", func() {
@@ -159,7 +159,7 @@ var _ = Describe("Alias address binding", func() {
 					Eventually(session, 10*time.Second).Should(gexec.Exit())
 
 					return session
-				}, 20*time.Second, time.Second*2).Should(gexec.Exit(0))
+				}, 20*time.Second, time.Second*1).Should(gexec.Exit(0))
 
 				output := string(session.Out.Contents())
 				Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))

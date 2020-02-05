@@ -79,7 +79,7 @@ var _ = Describe("Integration", func() {
 
 			Eventually(func() string {
 				return secureGetRespBody(client, firstInstance.IP, 2345).State
-			}, 31*time.Second).Should(Equal("running"))
+			}, 31*time.Second, 1*time.Second).Should(Equal("running"))
 		})
 	})
 })

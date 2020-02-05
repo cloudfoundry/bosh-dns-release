@@ -83,12 +83,12 @@ var _ = Describe("HealthWatcher", func() {
 					for i := 0; i < 5; i++ {
 						go healthWatcher.RunCheck(ip)
 					}
-					Eventually(fakeChecker.GetStatusCallCount, 5*time.Second).Should(Equal(1))
+					Eventually(fakeChecker.GetStatusCallCount, 3*time.Second).Should(Equal(1))
 					Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
 				})
 
 				It("only checks a given IP once", func() {
-					Consistently(fakeChecker.GetStatusCallCount, 5*time.Second).Should(Equal(1))
+					Consistently(fakeChecker.GetStatusCallCount, 3*time.Second).Should(Equal(1))
 					Eventually(func() api.HealthStatus {
 						return healthWatcher.HealthState(ip).State
 					}).Should(Equal(healthiness.StateUnknown))
