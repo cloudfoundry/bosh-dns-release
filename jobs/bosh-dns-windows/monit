@@ -13,7 +13,7 @@ if p('override_nameserver')
     name: "bosh-dns-nameserverconfig-windows",
     executable: "/var/vcap/packages/bosh-dns-windows/bin/bosh-dns-nameserverconfig.exe",
 
-    args: ["--bindAddress", p('address', spec.ip) == "0.0.0.0" ? "127.0.0.1" : p('address', spec.ip)]
+    args: ["--bindAddress", p('address') == "0.0.0.0" ? "127.0.0.1" : p('address')]
   }
 end
 

@@ -10,7 +10,6 @@ go.exe install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
 
 Push-Location "${env:GOPATH}\src\bosh-dns\acceptance_tests\windows"
 
-$env:LOCAL_IP_ADDRESS = "<%= spec.ip %>"
 ginkgo -randomizeAllSpecs -randomizeSuites -race <%= p('suites') %>
 
 Pop-Location

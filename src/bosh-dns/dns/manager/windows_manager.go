@@ -35,7 +35,7 @@ try {
   # read back the servers in case set silently failed
   [array]$servers = DnsServers($InterfaceName)
   if($servers[0] -ne $DNSAddress) {
-      Write-Error "Failed to set '${DNSAddress}' as the first dns client server address"
+      throw "Failed to set '${DNSAddress}' as the first dns client server address"
   }
 } catch {
   $Host.UI.WriteErrorLine($_.Exception.Message)
