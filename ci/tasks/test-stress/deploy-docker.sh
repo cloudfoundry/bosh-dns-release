@@ -17,7 +17,7 @@ main() {
       -o "${BBL_STATE_DIR}/cloud-config/ops.yml" \
       -o ops/docker-addressable-zones-template.yml \
       -v jumpbox_table_id=$(bosh int $BBL_STATE_DIR/vars/terraform.tfstate --path /modules/0/resources/aws_route_table.bosh_route_table/primary/id) \
-      -v default_table_id=$(bosh int $BBL_STATE_DIR/vars/terraform.tfstate --path /modules/0/resources/aws_route_table.internal_route_table/primary/id) \
+      -v default_table_id=$(bosh int $BBL_STATE_DIR/vars/terraform.tfstate --path /modules/0/resources/aws_route_table.nated_route_table/primary/id) \
       --vars-file "${BBL_STATE_DIR}/vars/cloud-config-vars.yml"
 
     bosh upload-stemcell $stemcell_path
