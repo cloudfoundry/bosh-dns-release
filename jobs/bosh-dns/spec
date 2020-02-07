@@ -35,10 +35,10 @@ packages:
 properties:
   address:
     description: "Address in which the DNS server will bind"
-    default: 127.0.0.1
+    default: 169.254.0.2
   aliased_address:
     description: "Address that will be added by default"
-    default: 127.0.0.1
+    default: 169.254.0.2
   addresses_files_glob:
     description: "Glob for any files to look for extra addresses to listen on"
     default: /var/vcap/jobs/*/dns/addresses.json
