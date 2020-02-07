@@ -1,0 +1,6 @@
+- path: /azs/name=z1/cpi?
+  type: replace
+  value: default
+- path: /azs/name=z2/cpi?
+  type: replace
+  value: default

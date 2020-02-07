@@ -23,6 +23,10 @@ deploy_n() {
   pushd $test_stress_assets/bosh-workspace
     bosh -v
 
+    bosh cloud-config -n > default-cloud-config.yml
+    bosh update-cloud-config -n default-cloud-config.yml \
+      -o $test_stress_assets/docker-hosts-deployment/ops/set-az-default-cpi.yml
+
     bosh update-config -n --name=docker --type=cloud cloud-config.yml
 
     bosh update-config -n --name=docker --type=cpi cpi-config.yml \
