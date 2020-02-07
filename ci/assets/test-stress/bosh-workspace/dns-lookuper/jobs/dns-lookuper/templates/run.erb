@@ -11,9 +11,13 @@ success=0
 for deployment_index in $(seq 1 $DEPLOYMENT_COUNT); do
   for instance_index in $(seq 0 $(($INSTANCE_COUNT-1))); do
     host="q-i${instance_index}.bosh-dns.docker-net.${DEPLOYMENT_NAME_PREFIX}-${deployment_index}.bosh"
-    if [[ -z "$(dig +short ${host})" ]] ; then
+    response=$(dig ${host})
+    code=$?
+    if [[ "$code" != "0" || "$response" != *"ANSWER: 1"* ]] ; then
       failure=$((failure+1))
       echo "Failed to lookup ${host}"
+      echo "$response"
+      echo "($code)"
 
       # output some extra debug in case of failure
       echo "Extra dig"
