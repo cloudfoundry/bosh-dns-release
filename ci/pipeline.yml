@@ -236,6 +236,7 @@ jobs:
         file: bosh-dns-release/ci/tasks/test-stress/deploy-docker.yml
         input_mapping:
           bbl-state: updated-bbl-state
+          stemcell: aws-xenial-stemcell
       - task: deploy-containers
         file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
         input_mapping:
