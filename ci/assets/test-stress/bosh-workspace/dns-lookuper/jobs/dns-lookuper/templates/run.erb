@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -uo pipefail
 
 export DEPLOYMENT_NAME_PREFIX=<%= p('deployment_name_prefix') %>
 export DEPLOYMENT_COUNT=<%= p('deployment_count') %>
@@ -23,6 +23,9 @@ for deployment_index in $(seq 1 $DEPLOYMENT_COUNT); do
       echo "Extra dig"
       dig upcheck.bosh-dns
       dig "${host}"
+
+      # output bosh-dns logs
+      cat /var/vcap/sys/log/bosh-dns/bosh_dns.std*.log
 
       uptime
     else

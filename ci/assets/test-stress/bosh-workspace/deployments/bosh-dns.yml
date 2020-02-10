@@ -17,6 +17,7 @@ instance_groups:
   - name: bosh-dns
     release: bosh-dns
     properties:
+      log_level: debug
       api:
         server:
           tls: ((dns_api_server_tls))
