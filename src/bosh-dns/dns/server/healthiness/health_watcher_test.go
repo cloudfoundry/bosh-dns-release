@@ -92,17 +92,19 @@ var _ = Describe("HealthWatcher", func() {
 
 				It("other lookups will wait for the check", func() {
 					Expect(healthWatcher.HealthState(ip)).To(Equal(api.HealthResult{State: healthiness.StateUnchecked}))
+					wg := sync.WaitGroup{}
 					for i := 0; i < 5; i++ {
+						wg.Add(1)
 						go func() {
 							result := healthWatcher.RunCheck(ip)
 							Expect(result.State).To(Equal(api.StatusFailing))
+							wg.Done()
 						}()
 					}
-					Consistently(fakeChecker.GetStatusCallCount, 3*time.Second).Should(Equal(1))
+					wg.Wait()
+					Expect(fakeChecker.GetStatusCallCount()).To(Equal(1))
 					Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
-					Eventually(func() api.HealthStatus {
-						return healthWatcher.HealthState(ip).State
-					}).Should(Equal(api.StatusFailing))
+					Expect(healthWatcher.HealthState(ip).State).To(Equal(api.StatusFailing))
 				})
 			})
 		})
