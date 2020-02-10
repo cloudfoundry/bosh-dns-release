@@ -33,7 +33,7 @@ type healthTracker interface {
 type healthWatcher interface {
 	HealthState(ip string) api.HealthResult
 	Track(ip string)
-	RunCheck(ip string)
+	RunCheck(ip string) api.HealthResult
 }
 
 func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool, clock clock.Clock, synchronousCheckTimeout time.Duration, wg *sync.WaitGroup) healthFilter {

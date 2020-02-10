@@ -8,10 +8,10 @@ import (
 )
 
 type FakeHealthChecker struct {
-	GetStatusStub        func(ip string) api.HealthResult
+	GetStatusStub        func(string) api.HealthResult
 	getStatusMutex       sync.RWMutex
 	getStatusArgsForCall []struct {
-		ip string
+		arg1 string
 	}
 	getStatusReturns struct {
 		result1 api.HealthResult
@@ -23,21 +23,22 @@ type FakeHealthChecker struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeHealthChecker) GetStatus(ip string) api.HealthResult {
+func (fake *FakeHealthChecker) GetStatus(arg1 string) api.HealthResult {
 	fake.getStatusMutex.Lock()
 	ret, specificReturn := fake.getStatusReturnsOnCall[len(fake.getStatusArgsForCall)]
 	fake.getStatusArgsForCall = append(fake.getStatusArgsForCall, struct {
-		ip string
-	}{ip})
-	fake.recordInvocation("GetStatus", []interface{}{ip})
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("GetStatus", []interface{}{arg1})
 	fake.getStatusMutex.Unlock()
 	if fake.GetStatusStub != nil {
-		return fake.GetStatusStub(ip)
+		return fake.GetStatusStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.getStatusReturns.result1
+	fakeReturns := fake.getStatusReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeHealthChecker) GetStatusCallCount() int {
@@ -46,13 +47,22 @@ func (fake *FakeHealthChecker) GetStatusCallCount() int {
 	return len(fake.getStatusArgsForCall)
 }
 
+func (fake *FakeHealthChecker) GetStatusCalls(stub func(string) api.HealthResult) {
+	fake.getStatusMutex.Lock()
+	defer fake.getStatusMutex.Unlock()
+	fake.GetStatusStub = stub
+}
+
 func (fake *FakeHealthChecker) GetStatusArgsForCall(i int) string {
 	fake.getStatusMutex.RLock()
 	defer fake.getStatusMutex.RUnlock()
-	return fake.getStatusArgsForCall[i].ip
+	argsForCall := fake.getStatusArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeHealthChecker) GetStatusReturns(result1 api.HealthResult) {
+	fake.getStatusMutex.Lock()
+	defer fake.getStatusMutex.Unlock()
 	fake.GetStatusStub = nil
 	fake.getStatusReturns = struct {
 		result1 api.HealthResult
@@ -60,6 +70,8 @@ func (fake *FakeHealthChecker) GetStatusReturns(result1 api.HealthResult) {
 }
 
 func (fake *FakeHealthChecker) GetStatusReturnsOnCall(i int, result1 api.HealthResult) {
+	fake.getStatusMutex.Lock()
+	defer fake.getStatusMutex.Unlock()
 	fake.GetStatusStub = nil
 	if fake.getStatusReturnsOnCall == nil {
 		fake.getStatusReturnsOnCall = make(map[int]struct {

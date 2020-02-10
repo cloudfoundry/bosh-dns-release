@@ -25,4 +25,6 @@ func (hw *nopHealthWatcher) Run(signal <-chan struct{}) {
 	<-signal
 }
 
-func (hw *nopHealthWatcher) RunCheck(ip string) {}
+func (hw *nopHealthWatcher) RunCheck(ip string) api.HealthResult {
+	return api.HealthResult{State: api.StatusRunning}
+}

@@ -1,6 +1,7 @@
 package healthiness_test
 
 import (
+	"sync"
 	"time"
 
 	"bosh-dns/dns/server/healthiness"
@@ -21,7 +22,7 @@ var _ = Describe("HealthWatcher", func() {
 		fakeLogger  *loggerfakes.FakeLogger
 		interval    time.Duration
 		signal      chan struct{}
-		stopped     chan struct{}
+		stopped     sync.WaitGroup
 
 		healthWatcher healthiness.HealthWatcher
 	)
@@ -33,17 +34,24 @@ var _ = Describe("HealthWatcher", func() {
 		interval = time.Second
 		healthWatcher = healthiness.NewHealthWatcher(1, fakeChecker, fakeClock, interval, fakeLogger)
 		signal = make(chan struct{})
-		stopped = make(chan struct{})
+		stopped = sync.WaitGroup{}
+		started := sync.WaitGroup{}
+
+		started.Add(1)
+		stopped.Add(1)
 
 		go func() {
+			started.Done()
 			healthWatcher.Run(signal)
-			close(stopped)
+			stopped.Done()
 		}()
+
+		started.Wait()
 	})
 
 	AfterEach(func() {
 		close(signal)
-		Eventually(stopped).Should(BeClosed())
+		stopped.Wait()
 		Eventually(fakeClock.WatcherCount).Should(Equal(0))
 	})
 
@@ -78,20 +86,23 @@ var _ = Describe("HealthWatcher", func() {
 				JustBeforeEach(func() {
 					fakeChecker.GetStatusStub = func(ip string) api.HealthResult {
 						time.Sleep(1 * time.Second)
-						return api.HealthResult{State: healthiness.StateUnknown}
+						return api.HealthResult{State: api.StatusFailing}
 					}
-					for i := 0; i < 5; i++ {
-						go healthWatcher.RunCheck(ip)
-					}
-					Eventually(fakeChecker.GetStatusCallCount, 3*time.Second).Should(Equal(1))
-					Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
 				})
 
-				It("only checks a given IP once", func() {
+				It("other lookups will wait for the check", func() {
+					Expect(healthWatcher.HealthState(ip)).To(Equal(api.HealthResult{State: healthiness.StateUnchecked}))
+					for i := 0; i < 5; i++ {
+						go func() {
+							result := healthWatcher.RunCheck(ip)
+							Expect(result.State).To(Equal(api.StatusFailing))
+						}()
+					}
 					Consistently(fakeChecker.GetStatusCallCount, 3*time.Second).Should(Equal(1))
+					Expect(fakeChecker.GetStatusArgsForCall(0)).To(Equal(ip))
 					Eventually(func() api.HealthStatus {
 						return healthWatcher.HealthState(ip).State
-					}).Should(Equal(healthiness.StateUnknown))
+					}).Should(Equal(api.StatusFailing))
 				})
 			})
 		})

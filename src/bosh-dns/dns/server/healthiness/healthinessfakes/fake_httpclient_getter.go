@@ -8,10 +8,10 @@ import (
 )
 
 type FakeHTTPClientGetter struct {
-	GetStub        func(endpoint string) (*http.Response, error)
+	GetStub        func(string) (*http.Response, error)
 	getMutex       sync.RWMutex
 	getArgsForCall []struct {
-		endpoint string
+		arg1 string
 	}
 	getReturns struct {
 		result1 *http.Response
@@ -25,21 +25,22 @@ type FakeHTTPClientGetter struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeHTTPClientGetter) Get(endpoint string) (*http.Response, error) {
+func (fake *FakeHTTPClientGetter) Get(arg1 string) (*http.Response, error) {
 	fake.getMutex.Lock()
 	ret, specificReturn := fake.getReturnsOnCall[len(fake.getArgsForCall)]
 	fake.getArgsForCall = append(fake.getArgsForCall, struct {
-		endpoint string
-	}{endpoint})
-	fake.recordInvocation("Get", []interface{}{endpoint})
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("Get", []interface{}{arg1})
 	fake.getMutex.Unlock()
 	if fake.GetStub != nil {
-		return fake.GetStub(endpoint)
+		return fake.GetStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.getReturns.result1, fake.getReturns.result2
+	fakeReturns := fake.getReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeHTTPClientGetter) GetCallCount() int {
@@ -48,13 +49,22 @@ func (fake *FakeHTTPClientGetter) GetCallCount() int {
 	return len(fake.getArgsForCall)
 }
 
+func (fake *FakeHTTPClientGetter) GetCalls(stub func(string) (*http.Response, error)) {
+	fake.getMutex.Lock()
+	defer fake.getMutex.Unlock()
+	fake.GetStub = stub
+}
+
 func (fake *FakeHTTPClientGetter) GetArgsForCall(i int) string {
 	fake.getMutex.RLock()
 	defer fake.getMutex.RUnlock()
-	return fake.getArgsForCall[i].endpoint
+	argsForCall := fake.getArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeHTTPClientGetter) GetReturns(result1 *http.Response, result2 error) {
+	fake.getMutex.Lock()
+	defer fake.getMutex.Unlock()
 	fake.GetStub = nil
 	fake.getReturns = struct {
 		result1 *http.Response
@@ -63,6 +73,8 @@ func (fake *FakeHTTPClientGetter) GetReturns(result1 *http.Response, result2 err
 }
 
 func (fake *FakeHTTPClientGetter) GetReturnsOnCall(i int, result1 *http.Response, result2 error) {
+	fake.getMutex.Lock()
+	defer fake.getMutex.Unlock()
 	fake.GetStub = nil
 	if fake.getReturnsOnCall == nil {
 		fake.getReturnsOnCall = make(map[int]struct {

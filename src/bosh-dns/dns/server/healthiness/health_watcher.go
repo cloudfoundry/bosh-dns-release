@@ -25,7 +25,7 @@ type HealthWatcher interface {
 	Track(ip string)
 	Untrack(ip string)
 	Run(signal <-chan struct{})
-	RunCheck(ip string)
+	RunCheck(ip string) api.HealthResult
 }
 
 type healthWatcher struct {
@@ -36,7 +36,7 @@ type healthWatcher struct {
 
 	checkWorkPool *workpool.WorkPool
 	state         map[string]api.HealthResult
-	currentChecks map[string]bool
+	currentChecks map[string]*sync.Cond
 	stateMutex    *sync.RWMutex
 	logger        boshlog.Logger
 }
@@ -52,7 +52,7 @@ func NewHealthWatcher(workpoolSize int, checker HealthChecker, clock clock.Clock
 
 		checkWorkPool: wp,
 		state:         map[string]api.HealthResult{},
-		currentChecks: map[string]bool{},
+		currentChecks: map[string]*sync.Cond{},
 		stateMutex:    &sync.RWMutex{},
 		logger:        logger,
 	}
@@ -125,23 +125,26 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 	}
 }
 
-func (hw *healthWatcher) RunCheck(ip string) {
+func (hw *healthWatcher) RunCheck(ip string) api.HealthResult {
 	hw.stateMutex.Lock()
-	if hw.currentChecks[ip] {
-		hw.logger.Debug("healthWatcher", "Aborting check for IP %s - request already in flight", ip)
+	cond := hw.currentChecks[ip]
+	if cond != nil {
+		hw.logger.Debug("healthWatcher", "Request already in flight for IP %s", ip)
+		cond.Wait()
+		// pending request has either updated hw.state or failed
+		result := hw.state[ip]
 		hw.stateMutex.Unlock()
-		return
+		return result
 	}
-	hw.currentChecks[ip] = true
+	cond = sync.NewCond(hw.stateMutex)
+	hw.currentChecks[ip] = cond
 	hw.stateMutex.Unlock()
 	healthInfo := hw.checker.GetStatus(ip)
 	hw.stateMutex.Lock()
-	hw.currentChecks[ip] = false
+	hw.currentChecks[ip] = nil
 
 	wasHealthy, found := hw.state[ip]
 	hw.state[ip] = healthInfo
-
-	hw.stateMutex.Unlock()
 
 	oldState := wasHealthy
 	newState := healthInfo
@@ -151,4 +154,8 @@ func (hw *healthWatcher) RunCheck(ip string) {
 	} else if oldState.State != newState.State {
 		hw.logger.Info("healthWatcher", "State for IP <%s> changed from %s to %s", ip, oldState.State, newState.State)
 	}
+	cond.Broadcast() // wake other threads waiting on this update
+
+	hw.stateMutex.Unlock()
+	return newState
 }

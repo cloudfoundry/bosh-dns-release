@@ -376,8 +376,9 @@ var _ = Describe("HealthFilter", func() {
 				BeforeEach(func() {
 					syncStrategy = "1"
 
-					fakeHealthWatcher.RunCheckStub = func(ip string) {
+					fakeHealthWatcher.RunCheckStub = func(ip string) api.HealthResult {
 						fakeHealthWatcher.HealthStateReturns(api.HealthResult{State: api.StatusRunning})
+						return api.HealthResult{State: api.StatusRunning}
 					}
 					healthStrategy = "3"
 					recs = []record.Record{
@@ -426,8 +427,9 @@ var _ = Describe("HealthFilter", func() {
 
 				Context("when it takes too long to check health", func() {
 					BeforeEach(func() {
-						fakeHealthWatcher.RunCheckStub = func(ip string) {
+						fakeHealthWatcher.RunCheckStub = func(ip string) api.HealthResult {
 							clock.WaitForWatcherAndIncrement(2 * time.Second)
+							return api.HealthResult{State: healthiness.StateUnchecked}
 						}
 						fakeHealthWatcher.HealthStateStub = func(ip string) api.HealthResult {
 							return api.HealthResult{State: healthiness.StateUnchecked}
