@@ -30,7 +30,7 @@ var _ = Describe("Shuffle", func() {
 		Expect(shuffler.Shuffle(src)).To(ConsistOf(src[0], src[1], src[2], src[3]))
 
 		for i := 0; i < len(src); i++ {
-			Eventually(func() dns.RR { return shuffler.Shuffle(src)[i] }).ShouldNot(Equal(src[i]))
+			Eventually(func() dns.RR { return shuffler.Shuffle(src)[0] }).Should(Equal(src[i]))
 		}
 	})
 

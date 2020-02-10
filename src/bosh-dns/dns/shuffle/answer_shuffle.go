@@ -18,13 +18,22 @@ func New() AnswerShuffle {
 }
 
 func (s AnswerShuffle) Shuffle(src []dns.RR) []dns.RR {
-	dst := make([]dns.RR, len(src))
-	copy(dst, src)
+	srccopy := make([]dns.RR, len(src))
+	copy(srccopy, src)
+	dst := make([]dns.RR, len(srccopy))
 
-	for i := len(src) - 1; i > 0; i-- {
-		j := mathrand.Intn(i + 1)
-		dst[i], dst[j] = dst[j], dst[i]
+	for i := 0; i < len(dst); i++ {
+		j := mathrand.Intn(len(srccopy))
+		answer := srccopy[j]
+		srccopy = s.remove(j, srccopy)
+		dst[i] = answer
 	}
 
 	return dst
+}
+
+func (s AnswerShuffle) remove(index int, recs []dns.RR) []dns.RR {
+	copy(recs[index:], recs[index+1:]) // left shift
+	recs = recs[:len(recs)-1] // truncate
+	return recs
 }

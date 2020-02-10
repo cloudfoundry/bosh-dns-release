@@ -16,13 +16,22 @@ func NewStringShuffler() StringShuffle {
 }
 
 func (s StringShuffle) Shuffle(src []string) []string {
-	dst := make([]string, len(src))
-	copy(dst, src)
+	srccopy := make([]string, len(src))
+	copy(srccopy, src)
+	dst := make([]string, len(srccopy))
 
-	for i := len(src) - 1; i > 0; i-- {
-		j := mathrand.Intn(i + 1)
-		dst[i], dst[j] = dst[j], dst[i]
+	for i := 0; i < len(dst); i++ {
+		j := mathrand.Intn(len(srccopy))
+		answer := srccopy[j]
+		srccopy = s.remove(j, srccopy)
+		dst[i] = answer
 	}
 
 	return dst
+}
+
+func (s StringShuffle) remove(index int, strs []string) []string {
+	copy(strs[index:], strs[index+1:]) // left shift
+	strs = strs[:len(strs)-1] // truncate
+	return strs
 }
