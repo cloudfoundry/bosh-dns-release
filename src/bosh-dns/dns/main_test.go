@@ -129,7 +129,8 @@ var _ = Describe("main", func() {
 					["my-instance-2", "2", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "bosh"],
 					["my-instance-3", "3", "my-group", ["7"], "az1", "1", "my-network", "my-deployment", "127.0.0.2", "foo"],
 					["my-instance-4", "4", "my-group", ["8"], "az2", "2", "my-network", "my-deployment-2", "127.0.0.3", "foo"],
-					["primer-instance", "5", "primer-group", ["9"], "az1", "1", "primer-network", "primer-deployment", "127.0.0.254", "primer"]
+					["primer-instance", "5", "primer-group", ["9"], "az1", "1", "primer-network", "primer-deployment", "127.0.0.254", "primer"],
+					["primer-instance-2", "6", "primer-group", ["10"], "az2", "2", "primer-network", "primer-deployment", "127.0.0.253", "primer"]
 				],
 				"aliases": {
 					"texas.nebraska": [{
@@ -258,7 +259,7 @@ var _ = Describe("main", func() {
 			Eventually(func() int {
 				c := &dns.Client{}
 				m := &dns.Msg{}
-				m.SetQuestion("primer-instance.primer-group.primer-network.primer-deployment.primer.", dns.TypeANY)
+				m.SetQuestion("q-s0.primer-group.primer-network.primer-deployment.primer.", dns.TypeANY)
 				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 				if err != nil {
 					return -1
@@ -440,6 +441,17 @@ var _ = Describe("main", func() {
 							IP:          "127.0.0.254",
 							Domain:      "primer.",
 							AZ:          "az1",
+							Index:       "",
+							HealthState: "unknown",
+						},
+						{
+							ID:          "primer-instance-2",
+							Group:       "primer-group",
+							Network:     "primer-network",
+							Deployment:  "primer-deployment",
+							IP:          "127.0.0.253",
+							Domain:      "primer.",
+							AZ:          "az2",
 							Index:       "",
 							HealthState: "unknown",
 						},

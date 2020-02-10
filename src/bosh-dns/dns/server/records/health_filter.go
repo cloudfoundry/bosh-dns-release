@@ -57,16 +57,23 @@ func (q *healthFilter) Filter(mm criteria.MatchMaker, recs []record.Record) []re
 	}
 	records := q.nextFilter.Filter(crit, recs)
 
-	if q.shouldTrack {
-		q.processRecords(crit, records)
-	}
-
-	healthyRecords, unhealthyRecords, maybeHealthyRecords := q.sortRecords(records, crit["g"])
-
 	healthStrategy := "0"
 	if len(crit["s"]) > 0 {
 		healthStrategy = crit["s"][0]
 	}
+
+	skipTracking := false
+	if healthStrategy == "0" && len(records) == 1 {
+		// if there's only 1 target the smart strategy will always return it, healthy or not
+		// there's no value in tracking the health for this fqdn
+		skipTracking = true
+	}
+
+	if q.shouldTrack && !skipTracking {
+		q.processRecords(crit, records)
+	}
+
+	healthyRecords, unhealthyRecords, maybeHealthyRecords := q.sortRecords(records, crit["g"])
 
 	switch healthStrategy {
 	case "1": // unhealthy ones

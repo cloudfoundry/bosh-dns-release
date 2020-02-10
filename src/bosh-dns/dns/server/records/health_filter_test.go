@@ -352,6 +352,22 @@ var _ = Describe("HealthFilter", func() {
 					Consistently(healthChan).ShouldNot(Receive(Equal(record.Host{IP: "2.2.2.2", FQDN: "my-domain.some.fqdn.bosh."})))
 				})
 			})
+
+			Context("when using smart strategy with 1 record", func() {
+				BeforeEach(func() {
+					healthStrategy = "0"
+				})
+
+				It("does not send a message", func() {
+					recs := []record.Record{
+						record.Record{IP: "1.1.1.1"},
+					}
+					fakeFilter.FilterReturns(recs)
+					healthFilter.Filter(crit, recs)
+
+					Consistently(healthChan).ShouldNot(Receive(Equal(record.Host{IP: "1.1.1.1", FQDN: "my-domain.some.fqdn.bosh."})))
+				})
+			})
 		})
 
 		Context("synchronous", func() {
