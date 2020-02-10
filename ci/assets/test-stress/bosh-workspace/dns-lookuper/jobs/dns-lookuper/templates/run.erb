@@ -25,7 +25,7 @@ for deployment_index in $(seq 1 $DEPLOYMENT_COUNT); do
       dig "${host}"
 
       # output bosh-dns logs
-      cat /var/vcap/sys/log/bosh-dns/bosh_dns.std*.log
+      tail -n 250 /var/vcap/sys/log/bosh-dns/bosh_dns.std*.log
 
       uptime
     else
