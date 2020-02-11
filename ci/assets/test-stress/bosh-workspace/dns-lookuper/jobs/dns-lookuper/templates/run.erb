@@ -11,7 +11,7 @@ success=0
 for deployment_index in $(seq 1 $DEPLOYMENT_COUNT); do
   for instance_index in $(seq 0 $(($INSTANCE_COUNT-1))); do
     host="q-i${instance_index}.bosh-dns.docker-net.${DEPLOYMENT_NAME_PREFIX}-${deployment_index}.bosh"
-    response=$(dig ${host})
+    response=$(dig @169.254.0.2 ${host})
     code=$?
     if [[ "$code" != "0" || "$response" != *"ANSWER: 1"* ]] ; then
       failure=$((failure+1))
@@ -21,15 +21,19 @@ for deployment_index in $(seq 1 $DEPLOYMENT_COUNT); do
 
       # output some extra debug in case of failure
       echo "Extra dig"
-      dig upcheck.bosh-dns
-      dig "${host}"
+      dig @169.254.0.2 upcheck.bosh-dns
+      dig @169.254.0.2 "${host}"
 
       # output bosh-dns logs
       tail -n 250 /var/vcap/sys/log/bosh-dns/bosh_dns.std*.log
 
-      # check dropped packets
+      # check kernel/interface dropped packets
       netstat -i
       netstat -s
+
+      # check bosh-dns dropped packets
+      PID=$(cat /var/vcap/sys/run/bosh-dns/bosh-dns.pid)
+      cat /proc/$PID/net/udp
 
       uptime
     else
