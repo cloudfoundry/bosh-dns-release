@@ -109,7 +109,7 @@ properties:
     default: 5s
 
   cache.enabled:
-    description: "When enabled bosh-dns will cache up to a max of 1000 recursed entries"
+    description: "When enabled bosh-dns will cache recursor responses using the default coredns cache plugin"
     default: false
 
   upcheck_domains:
