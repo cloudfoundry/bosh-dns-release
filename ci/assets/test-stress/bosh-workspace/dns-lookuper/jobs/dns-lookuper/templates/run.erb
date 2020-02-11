@@ -27,6 +27,10 @@ for deployment_index in $(seq 1 $DEPLOYMENT_COUNT); do
       # output bosh-dns logs
       tail -n 250 /var/vcap/sys/log/bosh-dns/bosh_dns.std*.log
 
+      # check dropped packets
+      netstat -i
+      netstat -s
+
       uptime
     else
       success=$((success+1))
