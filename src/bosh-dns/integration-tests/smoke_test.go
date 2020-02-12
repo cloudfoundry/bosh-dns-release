@@ -15,6 +15,7 @@ var _ = Describe("Integration", func() {
 	Describe("Smoke Tests", func() {
 		var (
 			responses                                      []record.Record
+			hosts                                          []record.Host
 			instanceID, agentID, instanceIP, instanceIndex string
 			e                                              TestEnvironment
 		)
@@ -31,10 +32,16 @@ var _ = Describe("Integration", func() {
 				IP:            instanceIP,
 				InstanceIndex: instanceIndex,
 			}}
+			hosts = []record.Host{
+				{
+					IP: "234.234.234.234",
+					FQDN: "abcdabcd.group.network.deployment.domain",
+				},
+			}
 		})
 
 		JustBeforeEach(func() {
-			e = NewTestEnvironment(responses, []string{}, false, "serial", []string{}, false)
+			e = NewTestEnvironment(responses, hosts, []string{}, false, "serial", []string{}, false)
 			if err := e.Start(); err != nil {
 				Fail(fmt.Sprintf("could not start test environment: %s", err))
 			}
@@ -67,13 +74,23 @@ var _ = Describe("Integration", func() {
 				))
 			})
 
-			It("returns Rcode failure for arpaing bosh instances", func() {
+			It("returns PTR for arpaing bosh instances", func() {
 				dnsResponse := helpers.ReverseDigWithOptions(
 					instanceIP,
 					e.ServerAddress(),
 					helpers.DigOpts{SkipRcodeCheck: true, Port: e.Port()},
 				)
 				Expect(dnsResponse.Rcode).To(Equal(dns.RcodeSuccess))
+				Expect(dnsResponse.Answer[0].(*dns.PTR).Ptr).To(Equal("abcdabcd.group.network.deployment.domain."))
+			})
+
+			It("returns name error for arpaing non-existent IPs", func() {
+				dnsResponse := helpers.ReverseDigWithOptions(
+					"192.168.1.1",
+					e.ServerAddress(),
+					helpers.DigOpts{SkipRcodeCheck: true, Port: e.Port()},
+				)
+				Expect(dnsResponse.Rcode).To(Equal(dns.RcodeNameError))
 			})
 
 			It("finds and resolves aliases specified in other jobs on the same instance", func() {

@@ -7,6 +7,17 @@ import (
 )
 
 type FakeIPProvider struct {
+	GetFQDNsStub        func(string) []string
+	getFQDNsMutex       sync.RWMutex
+	getFQDNsArgsForCall []struct {
+		arg1 string
+	}
+	getFQDNsReturns struct {
+		result1 []string
+	}
+	getFQDNsReturnsOnCall map[int]struct {
+		result1 []string
+	}
 	HasIPStub        func(string) bool
 	hasIPMutex       sync.RWMutex
 	hasIPArgsForCall []struct {
@@ -20,6 +31,66 @@ type FakeIPProvider struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeIPProvider) GetFQDNs(arg1 string) []string {
+	fake.getFQDNsMutex.Lock()
+	ret, specificReturn := fake.getFQDNsReturnsOnCall[len(fake.getFQDNsArgsForCall)]
+	fake.getFQDNsArgsForCall = append(fake.getFQDNsArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("GetFQDNs", []interface{}{arg1})
+	fake.getFQDNsMutex.Unlock()
+	if fake.GetFQDNsStub != nil {
+		return fake.GetFQDNsStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.getFQDNsReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeIPProvider) GetFQDNsCallCount() int {
+	fake.getFQDNsMutex.RLock()
+	defer fake.getFQDNsMutex.RUnlock()
+	return len(fake.getFQDNsArgsForCall)
+}
+
+func (fake *FakeIPProvider) GetFQDNsCalls(stub func(string) []string) {
+	fake.getFQDNsMutex.Lock()
+	defer fake.getFQDNsMutex.Unlock()
+	fake.GetFQDNsStub = stub
+}
+
+func (fake *FakeIPProvider) GetFQDNsArgsForCall(i int) string {
+	fake.getFQDNsMutex.RLock()
+	defer fake.getFQDNsMutex.RUnlock()
+	argsForCall := fake.getFQDNsArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeIPProvider) GetFQDNsReturns(result1 []string) {
+	fake.getFQDNsMutex.Lock()
+	defer fake.getFQDNsMutex.Unlock()
+	fake.GetFQDNsStub = nil
+	fake.getFQDNsReturns = struct {
+		result1 []string
+	}{result1}
+}
+
+func (fake *FakeIPProvider) GetFQDNsReturnsOnCall(i int, result1 []string) {
+	fake.getFQDNsMutex.Lock()
+	defer fake.getFQDNsMutex.Unlock()
+	fake.GetFQDNsStub = nil
+	if fake.getFQDNsReturnsOnCall == nil {
+		fake.getFQDNsReturnsOnCall = make(map[int]struct {
+			result1 []string
+		})
+	}
+	fake.getFQDNsReturnsOnCall[i] = struct {
+		result1 []string
+	}{result1}
 }
 
 func (fake *FakeIPProvider) HasIP(arg1 string) bool {
@@ -36,7 +107,8 @@ func (fake *FakeIPProvider) HasIP(arg1 string) bool {
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.hasIPReturns.result1
+	fakeReturns := fake.hasIPReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeIPProvider) HasIPCallCount() int {
@@ -45,13 +117,22 @@ func (fake *FakeIPProvider) HasIPCallCount() int {
 	return len(fake.hasIPArgsForCall)
 }
 
+func (fake *FakeIPProvider) HasIPCalls(stub func(string) bool) {
+	fake.hasIPMutex.Lock()
+	defer fake.hasIPMutex.Unlock()
+	fake.HasIPStub = stub
+}
+
 func (fake *FakeIPProvider) HasIPArgsForCall(i int) string {
 	fake.hasIPMutex.RLock()
 	defer fake.hasIPMutex.RUnlock()
-	return fake.hasIPArgsForCall[i].arg1
+	argsForCall := fake.hasIPArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeIPProvider) HasIPReturns(result1 bool) {
+	fake.hasIPMutex.Lock()
+	defer fake.hasIPMutex.Unlock()
 	fake.HasIPStub = nil
 	fake.hasIPReturns = struct {
 		result1 bool
@@ -59,6 +140,8 @@ func (fake *FakeIPProvider) HasIPReturns(result1 bool) {
 }
 
 func (fake *FakeIPProvider) HasIPReturnsOnCall(i int, result1 bool) {
+	fake.hasIPMutex.Lock()
+	defer fake.hasIPMutex.Unlock()
 	fake.HasIPStub = nil
 	if fake.hasIPReturnsOnCall == nil {
 		fake.hasIPReturnsOnCall = make(map[int]struct {
@@ -73,9 +156,15 @@ func (fake *FakeIPProvider) HasIPReturnsOnCall(i int, result1 bool) {
 func (fake *FakeIPProvider) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.getFQDNsMutex.RLock()
+	defer fake.getFQDNsMutex.RUnlock()
 	fake.hasIPMutex.RLock()
 	defer fake.hasIPMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeIPProvider) recordInvocation(key string, args []interface{}) {

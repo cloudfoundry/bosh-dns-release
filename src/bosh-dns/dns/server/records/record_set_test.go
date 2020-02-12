@@ -335,6 +335,43 @@ var _ = Describe("RecordSet", func() {
 		})
 	})
 
+	Describe("GetFQDNs", func() {
+		BeforeEach(func() {
+			aliasList = mustNewConfigFromMap(map[string][]string{
+				"alias1": {""},
+			})
+		})
+
+		It("returns fqdns if an IP is known", func() {
+			jsonBytes := []byte(`{
+				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
+				"record_infos": [
+					["instance0", "0", "my-group", "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "withadot."],
+					["instance1", "1", "my-group", "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", "nodot"],
+					["instance2", "2", "my-group", "az3", null, "my-network", "1", "my-deployment", "123.123.123.125", "domain."]
+				],
+				"records": [
+					["123.123.123.123", "instance0.my-group.my-network.my-deployment.withadot"],
+					["123.123.123.123", "0.my-group.my-network.my-deployment.withadot"],
+					["123.123.123.124", "instance1.my-group.my-network.my-deployment.nodot"],
+					["123.123.123.124", "1.my-group.my-network.my-deployment.nodot"],
+					["123.123.123.125", "instance2.my-group.my-network.my-deployment.domain"],
+					["123.123.123.125", "2.my-group.my-network.my-deployment.domain"]
+				]
+			}`)
+			fileReader.GetReturns(jsonBytes, nil)
+
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(recordSet.GetFQDNs("123.123.123.123")).To(Equal([]string{"instance0.my-group.my-network.my-deployment.withadot.", "0.my-group.my-network.my-deployment.withadot."}))
+			Expect(recordSet.GetFQDNs("123.123.123.124")).To(Equal([]string{"instance1.my-group.my-network.my-deployment.nodot.", "1.my-group.my-network.my-deployment.nodot."}))
+			Expect(recordSet.GetFQDNs("123.123.123.125")).To(Equal([]string{"instance2.my-group.my-network.my-deployment.domain.", "2.my-group.my-network.my-deployment.domain."}))
+			Expect(recordSet.GetFQDNs("127.0.0.1")).To(BeEmpty())
+		})
+	})
+
 	Describe("auto refreshing records", func() {
 		var (
 			subscriptionChan chan bool

@@ -126,7 +126,7 @@ var _ = Describe("Integration", func() {
 		JustBeforeEach(func() {
 			var err error
 
-			environment = NewTestEnvironment(responses, recursors, caching, recursorSelection, excludedRecursors, false)
+			environment = NewTestEnvironment(responses, []record.Host{}, recursors, caching, recursorSelection, excludedRecursors, false)
 			if err := environment.Start(); err != nil {
 				Fail(fmt.Sprintf("could not start test environment: %s", err))
 			}

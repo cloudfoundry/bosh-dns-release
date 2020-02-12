@@ -144,7 +144,17 @@ var _ = Describe("main", func() {
 						"initial_health_check": "synchronous",
 						"root_domain": "bosh"
 					}]
-				}
+				},
+				"Version": 3,
+				"records": [
+					["127.0.0.1", "my-instance.my-group.my-network.my-deployment.bosh"],
+					["127.0.0.2", "my-instance-1.my-group.my-network.my-deployment.bosh"],
+					["127.0.0.3", "my-instance-2.my-group.my-network.my-deployment-2.bosh"],
+					["127.0.0.2", "my-instance-3.my-group.my-network.my-deployment.foo"],
+					["127.0.0.3", "my-instance-4.my-group.my-network.my-deployment-2.foo"],
+					["127.0.0.254", "primer-instance.my-group.my-network.my-deployment.primer"],
+					["127.0.0.253", "primer-instance-2.my-group.my-network.my-deployment.primer"]
+				]
 			}`
 			aliases2JSONContent = `{
 				"one.alias.": ["my-instance.my-group.my-network.my-deployment.bosh."],
@@ -869,22 +879,24 @@ var _ = Describe("main", func() {
 			Context("arpa.", func() {
 				Context("when arpaing internal ips", func() {
 					It("responds with an rcode success", func() {
-						m.SetQuestion("1.0.0.127.in-addr.arpa.", dns.TypePTR)
+						m.SetQuestion("254.0.0.127.in-addr.arpa.", dns.TypePTR)
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
 						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 						Expect(r.Authoritative).To(BeTrue())
 						Expect(r.RecursionAvailable).To(BeFalse())
+						Expect(len(r.Answer)).To(Equal(1))
+						Expect(r.Answer[0].(*dns.PTR).Ptr).To(Equal("primer-instance.my-group.my-network.my-deployment.primer."))
 					})
 				})
 
 				It("logs handler time", func() {
-					m.SetQuestion("1.0.0.127.in-addr.arpa.", dns.TypePTR)
+					m.SetQuestion("254.0.0.127.in-addr.arpa.", dns.TypePTR)
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ArpaHandler Request qtype=\[PTR\] qname=\[1\.0\.0\.127\.in-addr\.arpa\.\] rcode=NOERROR ancount=0 time=\d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ArpaHandler Request qtype=\[PTR\] qname=\[254\.0\.0\.127\.in-addr\.arpa\.\] rcode=NOERROR ancount=1 time=\d+ns`))
 				})
 			})
 

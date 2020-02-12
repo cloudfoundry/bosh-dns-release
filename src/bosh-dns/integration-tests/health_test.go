@@ -101,7 +101,7 @@ var _ = Describe("Integration", func() {
 			})
 
 			JustBeforeEach(func() {
-				e = NewTestEnvironment(responses, []string{}, false, "serial", []string{}, true)
+				e = NewTestEnvironment(responses, []record.Host{}, []string{}, false, "serial", []string{}, true)
 				if err := e.Start(); err != nil {
 					Fail(fmt.Sprintf("could not start test environment: %s", err))
 				}

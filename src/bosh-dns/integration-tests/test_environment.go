@@ -35,9 +35,10 @@ type TestEnvironment interface {
 	Output() *gbytes.Buffer
 }
 
-func NewTestEnvironment(records []record.Record, recursors []string, caching bool, recursorSelection string, excludedRecursors []string, healthEnabled bool) TestEnvironment {
+func NewTestEnvironment(records []record.Record, hosts []record.Host, recursors []string, caching bool, recursorSelection string, excludedRecursors []string, healthEnabled bool) TestEnvironment {
 	return &testEnvironment{
 		records:           records,
+		hosts:             hosts,
 		recursors:         recursors,
 		caching:           caching,
 		recursorSelection: recursorSelection,
@@ -55,6 +56,7 @@ type testEnvironment struct {
 	configFile    string
 
 	records           []record.Record
+	hosts             []record.Host
 	recordsFile       string
 	recursors         []string
 	recursorSelection string
@@ -145,6 +147,7 @@ func (t *testEnvironment) writeRecords() error {
 		Keys    []string                             `json:"record_keys"`
 		Infos   [][]interface{}                      `json:"record_infos"`
 		Aliases map[string][]records.AliasDefinition `json:"aliases"`
+		Records [][2]string                          `json:"records"`
 	}{}
 
 	swap.Keys = []string{"ip", "id", "agent_id", "instance_index", "instance_group", "deployment", "network", "domain"}
@@ -165,6 +168,10 @@ func (t *testEnvironment) writeRecords() error {
 			"default",
 			"bosh",
 		})
+	}
+
+	for _, val := range t.hosts {
+		swap.Records = append(swap.Records, [2]string{val.IP, val.FQDN})
 	}
 
 	swap.Aliases = map[string][]records.AliasDefinition{

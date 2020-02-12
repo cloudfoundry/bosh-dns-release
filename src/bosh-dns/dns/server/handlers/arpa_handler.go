@@ -17,6 +17,7 @@ type DNSHandler interface {
 
 type IPProvider interface {
 	HasIP(string) bool
+	GetFQDNs(string) []string
 }
 
 type ArpaHandler struct {
@@ -70,6 +71,7 @@ func (a ArpaHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 
 	m.Authoritative = true
 	m.RecursionAvailable = false
+	m.SetReply(req)
 	if len(req.Question) == 0 {
 		m.SetRcode(req, dns.RcodeSuccess)
 		a.logErrors(w, w.WriteMsg(m))
@@ -83,8 +85,22 @@ func (a ArpaHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 		a.logErrors(w, w.WriteMsg(m))
 		return
 	}
-	if a.ipProvider.HasIP(ip) {
+
+	fqdns := a.ipProvider.GetFQDNs(ip)
+	if fqdns != nil && len(fqdns) > 0 {
 		m.SetRcode(req, dns.RcodeSuccess)
+		for _, fqdn := range fqdns {
+			m.Answer = append(m.Answer, &dns.PTR{
+				Hdr: dns.RR_Header{
+					Name:   req.Question[0].Name,
+					Rrtype: dns.TypePTR,
+					Class:  dns.ClassINET,
+					Ttl:    0,
+				},
+				Ptr: fqdn,
+			})
+		}
+
 		a.logErrors(w, w.WriteMsg(m))
 		return
 	}

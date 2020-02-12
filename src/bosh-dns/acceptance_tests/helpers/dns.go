@@ -16,6 +16,7 @@ type DigOpts struct {
 	SkipRcodeCheck bool
 	SkipErrCheck   bool
 	Timeout        time.Duration
+	Type           uint16
 }
 
 func Dig(domain, server string) *dns.Msg {
@@ -36,15 +37,16 @@ func ReverseDigWithOptions(domain, server string, opts DigOpts) *dns.Msg {
 	}
 	reversedAddress := strings.Join([]string(reversedOctets), ".")
 	reversedAddress += ".in-addr.arpa."
+	opts.Type = dns.TypePTR
 	return DigWithOptions(reversedAddress, server, opts)
 }
 
 func ReverseDig(domain, server string) *dns.Msg {
-	return ReverseDigWithOptions(domain, server, DigOpts{})
+	return ReverseDigWithOptions(domain, server, DigOpts{Type: dns.TypePTR})
 }
 
 func IPv6ReverseDig(domain, server string) *dns.Msg {
-	return IPv6ReverseDigWithOptions(domain, server, DigOpts{})
+	return IPv6ReverseDigWithOptions(domain, server, DigOpts{Type: dns.TypePTR})
 }
 
 func IPv6ReverseDigWithOptions(domain, server string, opts DigOpts) *dns.Msg {
@@ -60,6 +62,7 @@ func IPv6ReverseDigWithOptions(domain, server string, opts DigOpts) *dns.Msg {
 	}
 	reversedAddress := strings.Join(reversedOctets, ".")
 	reversedAddress += ".ip6.arpa."
+	opts.Type = dns.TypePTR
 	return DigWithOptions(reversedAddress, server, opts)
 }
 
@@ -69,7 +72,11 @@ func DigWithOptions(domain, server string, opts DigOpts) *dns.Msg {
 	if opts.BufferSize > dns.MinMsgSize {
 		m.SetEdns0(opts.BufferSize, false)
 	}
-	m.SetQuestion(domain, dns.TypeA)
+
+	if opts.Type == dns.TypeNone {
+		opts.Type = dns.TypeA
+	}
+	m.SetQuestion(domain, opts.Type)
 
 	port := 53
 	if opts.Port != 0 {

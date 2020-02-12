@@ -49,6 +49,8 @@ type RecordSet struct {
 
 	domains []string
 	Records []record.Record
+	Hosts   []record.Host
+	Version uint64
 }
 
 func NewRecordSet(
@@ -229,6 +231,21 @@ func (r *RecordSet) HasIP(ip string) bool {
 	return false
 }
 
+func (r *RecordSet) GetFQDNs(ip string) []string {
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+
+	fqdns := []string{}
+
+	for _, r := range r.Hosts {
+		if r.IP == ip {
+			fqdns = append(fqdns, dns.Fqdn(r.FQDN))
+		}
+	}
+	r.logger.Debug("RecordSet", "Domains for %s: %v", ip, fqdns)
+	return fqdns
+}
+
 func (r *RecordSet) Domains() []string {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
@@ -241,7 +258,7 @@ func (r *RecordSet) update() {
 	if err != nil {
 		return
 	}
-	records, updatedAliases, err := createFromJSON(contents, r.logger, r.aliasQueryEncoder)
+	records, updatedAliases, hosts, version, err := createFromJSON(contents, r.logger, r.aliasQueryEncoder)
 	if err != nil {
 		return
 	}
@@ -249,7 +266,13 @@ func (r *RecordSet) update() {
 	r.recordsMutex.Lock()
 	defer r.recordsMutex.Unlock()
 
+	if r.Version != version {
+		r.logger.Info("RecordSet", "DNS blob updated from %d to %d", r.Version, version)
+	}
+
+	r.Version = version
 	r.Records = records
+	r.Hosts = hosts
 
 	r.mergedAliasList = aliases.NewConfig().Merge(r.aliasList).Merge(updatedAliases)
 
@@ -269,20 +292,24 @@ type AliasQueryEncoder interface {
 	EncodeAliasesIntoQueries([]record.Record, map[string][]AliasDefinition) map[string][]string
 }
 
-func createFromJSON(j []byte, logger boshlog.Logger, aliasEncoder AliasQueryEncoder) ([]record.Record, aliases.Config, error) {
+func createFromJSON(j []byte, logger boshlog.Logger, aliasEncoder AliasQueryEncoder) ([]record.Record, aliases.Config, []record.Host, uint64, error) {
 	swap := struct {
 		Keys    []string                     `json:"record_keys"`
 		Infos   [][]interface{}              `json:"record_infos"`
 		Aliases map[string][]AliasDefinition `json:"aliases"`
+		Version uint64                       `json:"Version"`
+		Records [][2]string                  `json:"records"` // ip -> domain
 	}{}
 
 	err := json.Unmarshal(j, &swap)
 	if err != nil {
 		logger.Warn("RecordSet", "Unable to parse records file. Error: %v", err)
-		return nil, aliases.NewConfig(), err
+		return nil, aliases.NewConfig(), nil, 0, err
 	}
+	logger.Debug("RecordSet", "Read DNS blob version %d", swap.Version)
 
 	records := make([]record.Record, 0, len(swap.Infos))
+	hosts := make([]record.Host, 0, len(swap.Records))
 
 	idIndex := -1
 	numIDIndex := -1
@@ -383,10 +410,17 @@ func createFromJSON(j []byte, logger boshlog.Logger, aliasEncoder AliasQueryEnco
 	if updatedAliases, err = aliases.NewConfigFromMap(aliasesToConfigure); err != nil {
 		logger.Warn("RecordSet", "Unable to configure aliases from records. Error: %v", err)
 		// TODO: return records?
-		return nil, aliases.NewConfig(), err
+		return nil, aliases.NewConfig(), nil, 0, err
 	}
 
-	return records, updatedAliases, nil
+	for _, hostArr := range swap.Records {
+		hosts = append(hosts, record.Host{
+			IP:   hostArr[0],
+			FQDN: hostArr[1],
+		})
+	}
+
+	return records, updatedAliases, hosts, swap.Version, nil
 }
 
 func assertStringIntegerValue(field *string, info []interface{}, fieldIdx int, fieldName string, infoIdx int, logger boshlog.Logger) bool {
