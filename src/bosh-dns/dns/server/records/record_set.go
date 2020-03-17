@@ -48,9 +48,9 @@ type RecordSet struct {
 	aliasQueryEncoder   AliasQueryEncoder
 
 	domains []string
-	Records []record.Record
-	Hosts   []record.Host
-	Version uint64
+	records []record.Record
+	hosts   []record.Host
+	version uint64
 }
 
 func NewRecordSet(
@@ -168,7 +168,7 @@ func (r *RecordSet) unsafeResolveRecords(domains []string, shouldTrack bool) ([]
 		r.logger.Debug("RecordSet", "Error parsing domains %v: %v", domains, err)
 		return nil, CriteriaError
 	}
-	domainRecords := r.filterRecords(domainFilter, allCriteria, r.Records)
+	domainRecords := r.filterRecords(domainFilter, allCriteria, r.records)
 	if len(domainRecords) == 0 {
 		r.logger.Debug("RecordSet", "No records match domains %v", domains)
 		return nil, DomainError
@@ -225,14 +225,14 @@ func (r *RecordSet) filterRecords(filterer Filterer, filterCriteria []criteria.C
 func (r *RecordSet) AllRecords() []record.Record {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
-	return r.Records
+	return r.records
 }
 
 func (r *RecordSet) HasIP(ip string) bool {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
 
-	for _, r := range r.Records {
+	for _, r := range r.records {
 		if r.IP == ip {
 			return true
 		}
@@ -246,7 +246,7 @@ func (r *RecordSet) GetFQDNs(ip string) []string {
 
 	fqdns := []string{}
 
-	for _, r := range r.Hosts {
+	for _, r := range r.hosts {
 		if r.IP == ip {
 			fqdns = append(fqdns, dns.Fqdn(r.FQDN))
 		}
@@ -275,20 +275,20 @@ func (r *RecordSet) update() {
 	r.recordsMutex.Lock()
 	defer r.recordsMutex.Unlock()
 
-	if r.Version != version {
-		r.logger.Info("RecordSet", "DNS blob updated from %d to %d", r.Version, version)
+	if r.version != version {
+		r.logger.Info("RecordSet", "DNS blob updated from %d to %d", r.version, version)
 	}
 
-	r.Version = version
-	r.Records = records
-	r.Hosts = hosts
+	r.version = version
+	r.records = records
+	r.hosts = hosts
 
 	r.mergedAliasList = aliases.NewConfig().Merge(r.aliasList).Merge(updatedAliases)
 
 	r.trackerSubscription <- records
 
 	domains := make(map[string]struct{})
-	for _, record := range r.Records {
+	for _, record := range r.records {
 		domains[record.Domain] = struct{}{}
 	}
 	r.domains = make([]string, len(domains))

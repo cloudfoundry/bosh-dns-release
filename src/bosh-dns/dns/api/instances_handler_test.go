@@ -4,7 +4,6 @@ import (
 	"bosh-dns/dns/api"
 	"bosh-dns/dns/api/fakes"
 	"bosh-dns/dns/server/record"
-	"bosh-dns/dns/server/records"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -20,7 +19,6 @@ var _ = Describe("InstancesHandler", func() {
 		fakeHealthStateGetter *fakes.FakeHealthStateGetter
 		fakeRecordManager     *fakes.FakeRecordManager
 		handler               *api.InstancesHandler
-		recordSet             *records.RecordSet
 
 		w *httptest.ResponseRecorder
 		r *http.Request
@@ -32,8 +30,6 @@ var _ = Describe("InstancesHandler", func() {
 		// URL path doesn't matter here since routing is handled elsewhere
 		r = httptest.NewRequest("GET", "/?address=foo", nil)
 		w = httptest.NewRecorder()
-
-		recordSet = &records.RecordSet{}
 	})
 
 	JustBeforeEach(func() {
@@ -47,9 +43,6 @@ var _ = Describe("InstancesHandler", func() {
 	})
 
 	Context("when record set is empty", func() {
-		BeforeEach(func() {
-			recordSet.Records = []record.Record{}
-		})
 
 		It("returns an empty json array", func() {
 			handler.ServeHTTP(w, r)

@@ -278,7 +278,10 @@ var _ = Describe("RecordSet", func() {
 		})
 
 		It("returns all records", func() {
-			Expect(recordSet.AllRecords()).To(Equal(recordSet.Records))
+			all := recordSet.AllRecords()
+			Expect(all).To(HaveLen(2))
+			Expect(all[0].ID).To(Equal("instance0"))
+			Expect(all[1].ID).To(Equal("instance1"))
 		})
 	})
 

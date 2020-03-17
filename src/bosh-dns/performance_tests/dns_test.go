@@ -119,10 +119,10 @@ var _ = Describe("DNS", func() {
 			recordSetReader := records.NewFileReader("assets/records.json", fs, clock.NewClock(), logger, signal)
 			recordSet, err := records.NewRecordSet(recordSetReader, aliases.NewConfig(), healthWatcher, uint(5), shutdown, logger)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(recordSet.Records).To(HaveLen(102))
+			Expect(recordSet.AllRecords()).To(HaveLen(102))
 
 			records := []string{}
-			for _, record := range recordSet.Records {
+			for _, record := range recordSet.AllRecords() {
 				composed := fmt.Sprintf(
 					"%s.%s.%s.%s.%s",
 					record.ID,
