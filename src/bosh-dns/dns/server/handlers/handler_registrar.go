@@ -63,12 +63,14 @@ func (h *HandlerRegistrar) Run(signal chan struct{}) error {
 				delete(currentDomains, domain)
 
 				if _, ok := h.domains[domain]; !ok {
+					h.logger.Info("HandlerRegistrar", "Register %s as internal domain", domain)
 					h.domains[domain] = struct{}{}
 					h.mux.Handle(domain, NewRequestLoggerHandler(h.handler, h.clock, h.logger))
 				}
 			}
 
 			for domain := range currentDomains {
+				h.logger.Info("HandlerRegistrar", "Unregister %s as internal domain", domain)
 				delete(h.domains, domain)
 				h.mux.HandleRemove(domain)
 			}
