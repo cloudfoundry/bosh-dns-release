@@ -126,7 +126,7 @@ func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
 
-	aliasExpansions := r.ExpandAliases(fqdn)
+	aliasExpansions := r.unsafeExpandAliases(fqdn)
 	r.logger.Debug("RecordSet", "Expand %s to %v", fqdn, aliasExpansions)
 
 	aliasIPs := []string{}
@@ -136,7 +136,7 @@ func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
 		}
 	}
 
-	finalRecords, err := r.ResolveRecords(aliasExpansions, true)
+	finalRecords, err := r.unsafeResolveRecords(aliasExpansions, true)
 	if err != nil {
 		if !errors.Is(err, DomainError) || len(aliasIPs) == 0 {
 			return nil, err
@@ -156,6 +156,10 @@ func (r *RecordSet) ResolveRecords(domains []string, shouldTrack bool) ([]record
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
 
+	return r.unsafeResolveRecords(domains, shouldTrack)
+}
+
+func (r *RecordSet) unsafeResolveRecords(domains []string, shouldTrack bool) ([]record.Record, error) {
 	domainFilter := r.filtererFactory.NewQueryFilterer()
 	healthFilter := r.filtererFactory.NewHealthFilterer(r.healthChan, shouldTrack)
 
@@ -181,6 +185,11 @@ func (r *RecordSet) ResolveRecords(domains []string, shouldTrack bool) ([]record
 func (r *RecordSet) ExpandAliases(fqdn string) []string {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
+
+	return r.unsafeExpandAliases(fqdn)
+}
+
+func (r *RecordSet) unsafeExpandAliases(fqdn string) []string {
 	resolutions := r.mergedAliasList.Resolutions(fqdn)
 	if len(resolutions) == 0 {
 		resolutions = []string{fqdn}
@@ -189,8 +198,6 @@ func (r *RecordSet) ExpandAliases(fqdn string) []string {
 }
 
 func (r *RecordSet) parseCriteria(resolutions []string) ([]criteria.Criteria, error) {
-	r.recordsMutex.RLock()
-	defer r.recordsMutex.RUnlock()
 	crits := []criteria.Criteria{}
 
 	for _, resolution := range resolutions {

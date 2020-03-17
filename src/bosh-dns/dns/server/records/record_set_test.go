@@ -9,9 +9,9 @@ import (
 	"bosh-dns/dns/server/records/recordsfakes"
 	"bosh-dns/healthcheck/api"
 	"errors"
-	"strings"
-
 	"fmt"
+	"strings"
+	"sync"
 
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 	. "github.com/onsi/ginkgo"
@@ -1241,5 +1241,140 @@ var _ = Describe("RecordSet", func() {
 				})
 			})
 		})
+	})
+
+	Context("Handling parallel reads and writes", func() {
+		var (
+			subscriptionChan chan bool
+		)
+
+		BeforeEach(func() {
+			subscriptionChan = make(chan bool, 1)
+			fileReader.SubscribeReturns(subscriptionChan)
+			for i := 0; i < 10; i++ {
+				jsonBytes := []byte(fmt.Sprintf(`{
+									"record_keys": ["id", "instance_group", "group_ids", "az", "az_id", "network", "deployment", "ip", "domain", "instance_index"],
+									"record_infos": [
+										["instance0", "my-group", ["1"], "az1", "1", "my-network", "my-deployment", "123.123.123.123", "domain.", 0],
+										["instance1", "my-group", ["1"], "az2", "1", "my-network", "my-deployment", "123.123.123.124", "domain.", 1]
+									],
+									"aliases": {
+										"a1.internal.": [
+											{
+												"group_id": "1",
+												"root_domain": "domain"
+											}
+										]
+									},
+									"Version": %d,
+									"records": [
+										["123.123.123.123", "instance0.my-group.my-network.my-deployment.domain."],
+										["123.123.123.124", "instance1.my-group.my-network.my-deployment.domain."]
+									]
+								}`, i))
+				fileReader.GetReturnsOnCall(i, jsonBytes, nil)
+			}
+
+			aliasList = mustNewConfigFromMap(map[string][]string{
+				"a1.internal.": []string{"*.my-group.my-network.my-deployment.domain."},
+			})
+
+			fakeHealthFilterer.FilterStub = func(mm criteria.MatchMaker, recs []record.Record) []record.Record {
+				return recs
+			}
+
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
+
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("does not deadlock", func(done Done) {
+			wg := sync.WaitGroup{}
+
+			for i := 0; i < 100; i++ {
+				wg.Add(1)
+				go func() {
+					defer GinkgoRecover()
+					for j := 0; j < 10; j++ {
+						records := recordSet.AllRecords()
+						Expect(records).To(HaveLen(2))
+					}
+					wg.Done()
+				}()
+
+				wg.Add(1)
+				go func() {
+					defer GinkgoRecover()
+					for j := 0; j < 10; j++ {
+						domains := recordSet.Domains()
+						Expect(domains).To(ConsistOf("domain.", "a1.internal."))
+					}
+					wg.Done()
+				}()
+
+				wg.Add(1)
+				go func() {
+					defer GinkgoRecover()
+					for j := 0; j < 10; j++ {
+						domains := recordSet.ExpandAliases("a1.internal.")
+						Expect(domains).To(ConsistOf("q-s0.my-group.my-network.my-deployment.domain."))
+					}
+					wg.Done()
+				}()
+
+				wg.Add(1)
+				go func() {
+					defer GinkgoRecover()
+					for j := 0; j < 10; j++ {
+						domains := recordSet.GetFQDNs("123.123.123.123")
+						Expect(domains).To(ConsistOf("instance0.my-group.my-network.my-deployment.domain."))
+					}
+					wg.Done()
+				}()
+
+				wg.Add(1)
+				go func() {
+					defer GinkgoRecover()
+					for j := 0; j < 10; j++ {
+						present := recordSet.HasIP("123.123.123.123")
+						Expect(present).To(BeTrue())
+					}
+					wg.Done()
+				}()
+
+				wg.Add(1)
+				go func() {
+					defer GinkgoRecover()
+					for j := 0; j < 10; j++ {
+						ips, err := recordSet.Resolve("a1.internal.")
+						Expect(err).ToNot(HaveOccurred())
+						Expect(ips).To(ConsistOf("123.123.123.123", "123.123.123.124"))
+					}
+					wg.Done()
+				}()
+
+				wg.Add(1)
+				go func() {
+					defer GinkgoRecover()
+					for j := 0; j < 10; j++ {
+						records, err := recordSet.ResolveRecords([]string{"q-s0.my-group.my-network.my-deployment.domain."}, false)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(records).To(HaveLen(2))
+					}
+					wg.Done()
+				}()
+			}
+			wg.Add(1)
+			go func() {
+				for i := 0; i < 10; i++ {
+					subscriptionChan <- true
+				}
+				wg.Done()
+			}()
+
+			wg.Wait()
+			done <- true
+		}, 10)
 	})
 })
