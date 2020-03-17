@@ -684,7 +684,7 @@ var _ = Describe("main", func() {
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request qtype=\[A\] qname=\[one\.alias\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[one\.alias\.\] rcode=NOERROR ancount=1 time=\d+ns`))
 					})
 				})
 
@@ -705,7 +705,7 @@ var _ = Describe("main", func() {
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("10.11.12.13"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request qtype=\[A\] qname=\[ip\.alias\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[ip\.alias\.\] rcode=NOERROR ancount=1 time=\d+ns`))
 					})
 				})
 
@@ -730,7 +730,7 @@ var _ = Describe("main", func() {
 						ips := []string{response.Answer[0].(*dns.A).A.String(), response.Answer[1].(*dns.A).A.String()}
 						Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.3"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request qtype=\[A\] qname=\[internal\.alias\.\] rcode=NOERROR ancount=2 time=\d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[internal\.alias\.\] rcode=NOERROR ancount=2 time=\d+ns`))
 					})
 
 					Context("with a group alias", func() {
@@ -755,7 +755,7 @@ var _ = Describe("main", func() {
 							ips := []string{response.Answer[0].(*dns.A).A.String(), response.Answer[1].(*dns.A).A.String()}
 							Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.2"))
 
-							Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request qtype=\[A\] qname=\[group\.internal\.alias\.\] rcode=NOERROR ancount=2 time=\d+ns`))
+							Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[group\.internal\.alias\.\] rcode=NOERROR ancount=2 time=\d+ns`))
 						})
 					})
 
@@ -783,7 +783,7 @@ var _ = Describe("main", func() {
 								Expect(ips).To(ConsistOf("127.0.0.1", "127.0.0.2"))
 
 								Eventually(session.Out).Should(
-									gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request qtype=\[A\] qname=\[.*glob\.internal\.alias\.\] rcode=NOERROR ancount=2 time=\d+ns`),
+									gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[.*glob\.internal\.alias\.\] rcode=NOERROR ancount=2 time=\d+ns`),
 								)
 							}
 						})
@@ -807,7 +807,7 @@ var _ = Describe("main", func() {
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request qtype=\[A\] qname=\[texas\.nebraska\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[texas\.nebraska\.\] rcode=NOERROR ancount=1 time=\d+ns`))
 					})
 				})
 
@@ -828,7 +828,7 @@ var _ = Describe("main", func() {
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.2"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request qtype=\[A\] qname=\[my-instance-1\.placeholder\.alias\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[my-instance-1\.placeholder\.alias\.\] rcode=NOERROR ancount=1 time=\d+ns`))
 					})
 				})
 			})
@@ -896,7 +896,7 @@ var _ = Describe("main", func() {
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ArpaHandler Request qtype=\[PTR\] qname=\[254\.0\.0\.127\.in-addr\.arpa\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ArpaHandler Request id=\d+ qtype=\[PTR\] qname=\[254\.0\.0\.127\.in-addr\.arpa\.\] rcode=NOERROR ancount=1 time=\d+ns`))
 				})
 			})
 
@@ -1020,7 +1020,7 @@ var _ = Describe("main", func() {
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request qtype=\[A\] qname=\[my-instance-3\.my-group\.my-network\.my-deployment\.foo\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[my-instance-3\.my-group\.my-network\.my-deployment\.foo\.\] rcode=NOERROR ancount=1 time=\d+ns`))
 				})
 			})
 
@@ -1539,7 +1539,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeNameError))
 
-			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=NXDOMAIN ancount=0 error=\[no response from recursors\] time=\d+ns`))
+			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=NXDOMAIN ancount=0 error=\[no response from recursors\] time=\d+ns`))
 		})
 
 		It("logs the recursor used to resolve", func() {
@@ -1572,8 +1572,8 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 
-			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=NOERROR ancount=1 recursor=8\.8\.8\.8:53\ time=\d+ns`))
-			Consistently(session.Out).ShouldNot(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ForwardHandler Request qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=NOERROR ancount=1 recursor=8\.8\.8\.8:53\ time=\d+ns`))
+			Consistently(session.Out).ShouldNot(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=NOERROR ancount=1 time=\d+ns`))
 		})
 
 		AfterEach(func() {

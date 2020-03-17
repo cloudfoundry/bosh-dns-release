@@ -47,6 +47,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 				{Name: "q-what.bosh.", Qtype: dns.TypeA},
 			},
 		}
+		dnsRequest.Id = 123
 		dnsResponse = &dns.Msg{
 			Question: []dns.Question{
 				{Name: "q-what.bosh.", Qtype: dns.TypeA},
@@ -59,6 +60,19 @@ var _ = Describe("RequestLoggerHandler", func() {
 	})
 
 	Describe("log request", func() {
+
+		Context("when a request is received", func() {
+			It("logs a debug message", func() {
+				internal.LogReceivedRequest(fakeLogger, handler, "mytag", dnsRequest)
+
+				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
+				_, message, _ := fakeLogger.DebugArgsForCall(0)
+
+				fmt.Println(message)
+				Expect(message).To(Equal("handlers.RequestLoggerHandler Received request id=123 qtype=[A] qname=[q-what.bosh.]"))
+			})
+		})
+
 		Context("when passed a successful rcode", func() {
 			It("logs a debug message", func() {
 				dnsResponse.Rcode = dns.RcodeSuccess
@@ -77,7 +91,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
 				fmt.Println(message)
-				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=NOERROR ancount=1 time=1ns"))
+				Expect(message).To(Equal("handlers.RequestLoggerHandler Request id=123 qtype=[A] qname=[q-what.bosh.] rcode=NOERROR ancount=1 time=1ns"))
 			})
 		})
 
@@ -90,7 +104,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
 				fmt.Println(message)
-				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=NXDOMAIN ancount=0 time=1ns"))
+				Expect(message).To(Equal("handlers.RequestLoggerHandler Request id=123 qtype=[A] qname=[q-what.bosh.] rcode=NXDOMAIN ancount=0 time=1ns"))
 			})
 		})
 
@@ -103,7 +117,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
 				fmt.Println(message)
-				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=NOERROR ancount=0 custom-message time=1ns"))
+				Expect(message).To(Equal("handlers.RequestLoggerHandler Request id=123 qtype=[A] qname=[q-what.bosh.] rcode=NOERROR ancount=0 custom-message time=1ns"))
 			})
 		})
 
@@ -116,7 +130,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
 				fmt.Println(message)
-				Expect(message).To(Equal("handlers.RequestLoggerHandler Request qtype=[A] qname=[q-what.bosh.] rcode=SERVFAIL ancount=0 time=1ns"))
+				Expect(message).To(Equal("handlers.RequestLoggerHandler Request id=123 qtype=[A] qname=[q-what.bosh.] rcode=SERVFAIL ancount=0 time=1ns"))
 			})
 		})
 	})

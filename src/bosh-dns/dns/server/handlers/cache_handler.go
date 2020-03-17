@@ -38,6 +38,7 @@ func NewCachingDNSHandler(next dns.Handler, truncater dnsresolver.ResponseTrunca
 }
 
 func (c CachingDNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+	internal.LogReceivedRequest(c.logger, c, c.logTag, r)
 	var dnsMsg *dns.Msg
 	truncatingWriter := internal.WrapWriterWithIntercept(w, func(resp *dns.Msg) {
 		dnsMsg=resp

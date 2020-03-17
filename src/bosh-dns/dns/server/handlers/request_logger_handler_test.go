@@ -69,13 +69,18 @@ var _ = Describe("RequestLoggerHandler", func() {
 		It("logs the request info", func() {
 			m := &dns.Msg{}
 			m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
+			m.Id = 123
 
 			handler.ServeDNS(fakeWriter, m)
 
-			Expect(fakeLogger.DebugCallCount()).To(Equal(1))
+			Expect(fakeLogger.DebugCallCount()).To(Equal(2))
 			tag, message, _ := fakeLogger.DebugArgsForCall(0)
 			Expect(tag).To(Equal("RequestLoggerHandler"))
-			Expect(message).To(Equal("dns.HandlerFunc Request qtype=[ANY] qname=[upcheck.bosh-dns.] rcode=NOERROR ancount=0 time=3ns"))
+			Expect(message).To(Equal("dns.HandlerFunc Received request id=123 qtype=[ANY] qname=[upcheck.bosh-dns.]"))
+
+			tag, message, _ = fakeLogger.DebugArgsForCall(1)
+			Expect(tag).To(Equal("RequestLoggerHandler"))
+			Expect(message).To(Equal("dns.HandlerFunc Request id=123 qtype=[ANY] qname=[upcheck.bosh-dns.] rcode=NOERROR ancount=0 time=3ns"))
 		})
 	})
 })

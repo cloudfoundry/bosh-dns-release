@@ -46,6 +46,7 @@ func NewForwardHandler(recursors RecursorPool, exchangerFactory ExchangerFactory
 }
 
 func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns.Msg) {
+	internal.LogReceivedRequest(r.logger, r, r.logTag, request)
 	before := r.clock.Now()
 
 	if len(request.Question) == 0 {

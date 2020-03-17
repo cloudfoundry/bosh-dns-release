@@ -25,6 +25,7 @@ func NewRequestLoggerHandler(child dns.Handler, clock clock.Clock, logger logger
 }
 
 func (h RequestLoggerHandler) ServeDNS(responseWriter dns.ResponseWriter, req *dns.Msg) {
+	internal.LogReceivedRequest(h.logger, h.Handler, h.logTag, req)
 	var dnsMsg *dns.Msg
 	respWriter := internal.WrapWriterWithIntercept(responseWriter, func(msg *dns.Msg) {
 		dnsMsg=msg
