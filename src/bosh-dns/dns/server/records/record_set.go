@@ -282,8 +282,11 @@ func (r *RecordSet) update() {
 	for _, record := range r.Records {
 		domains[record.Domain] = struct{}{}
 	}
+	r.domains = make([]string, len(domains))
+	i := 0
 	for domain := range domains {
-		r.domains = append(r.domains, domain)
+		r.domains[i] = domain
+		i++
 	}
 }
 

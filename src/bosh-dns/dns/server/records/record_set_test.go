@@ -388,6 +388,11 @@ var _ = Describe("RecordSet", func() {
 				]
 			}`)
 			fileReader.GetReturns(jsonBytes, nil)
+
+			aliasList = mustNewConfigFromMap(map[string][]string{
+				"analias.": []string{"*.my-group.my-network.my-deployment.bosh."},
+			})
+
 			var err error
 			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
 			Expect(err).ToNot(HaveOccurred())
@@ -414,7 +419,7 @@ var _ = Describe("RecordSet", func() {
 				jsonBytes := []byte(`{
 				"record_keys": ["id", "num_id", "group_ids", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
 				"record_infos": [
-					["instance0", "0", ["2"], "my-group", "az1", "1", "my-network", "1", "my-deployment", "234.234.234.234", "bosh."]
+					["instance0", "0", ["2"], "my-group", "az1", "1", "my-network", "1", "my-deployment", "234.234.234.234", "bosh2."]
 				],
 				"aliases": {
 				  "foodomain.bar.": [
@@ -433,7 +438,7 @@ var _ = Describe("RecordSet", func() {
 
 			It("updates its set of records", func() {
 				Eventually(func() []string {
-					_, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh.")
+					_, err := recordSet.Resolve("instance0.my-group.my-network.my-deployment.bosh2.")
 					Expect(err).NotTo(HaveOccurred())
 					Expect(fakeHealthFilterer.FilterCallCount()).To(BeNumerically(">", 0))
 					_, recs := fakeHealthFilterer.FilterArgsForCall(fakeHealthFilterer.FilterCallCount() - 1)
@@ -455,6 +460,10 @@ var _ = Describe("RecordSet", func() {
 					}
 					return ips
 				}).Should(Equal([]string{"234.234.234.234"}))
+			})
+
+			It("Updates its set of domains", func() {
+				Eventually(recordSet.Domains).Should(Equal([]string{"bosh2.", "analias."}))
 			})
 
 			It("notifies its own subscribers", func() {
