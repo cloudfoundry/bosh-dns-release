@@ -226,7 +226,7 @@ var _ = Describe("main", func() {
 				"api/assets/test_certs/test_ca.pem",
 				"api/assets/test_certs/test_wrong_cn_client.pem",
 				"api/assets/test_certs/test_client.key",
-				1 * time.Second,
+				1*time.Second,
 				logger,
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -241,6 +241,7 @@ var _ = Describe("main", func() {
 			cfg.JobsDir = jobsDir
 			cfg.HandlersFilesGlob = handlersFilesGlob
 			cfg.UpcheckDomains = []string{"health.check.bosh.", "health.check.ca."}
+			cfg.InternalCheckDomain = "glob.internal.alias."
 
 			cfg.API = config.APIConfig{
 				Port:            listenAPIPort,
@@ -840,7 +841,6 @@ var _ = Describe("main", func() {
 
 				It("responds with a success rcode on the main listen address", func() {
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-
 
 					Expect(err).NotTo(HaveOccurred())
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
@@ -1604,6 +1604,7 @@ var _ = Describe("main", func() {
 			cfg.Port = listenPort
 			cfg.Recursors = []string{"8.8.8.8"}
 			cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
+			cfg.InternalCheckDomain = "glob.internal.alias."
 			cfg.AliasFilesGlob = path.Join(aliasesDir, "*")
 			cfg.AddressesFilesGlob = path.Join(addressesDir, "*")
 			cfg.JobsDir = jobsDir
@@ -1640,6 +1641,7 @@ var _ = Describe("main", func() {
 			cfg.Address = listenAddress
 			cfg.Port = listenPort
 			cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
+			cfg.InternalCheckDomain = "glob.internal.alias."
 			cfg.BindTimeout = config.DurationJSON(-1)
 			cfg.JobsDir = jobsDir
 
@@ -1663,6 +1665,7 @@ var _ = Describe("main", func() {
 			cfg.Address = listenAddress
 			cfg.Port = listenPort
 			cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
+			cfg.InternalCheckDomain = "glob.internal.alias."
 			cfg.BindTimeout = config.DurationJSON(-1)
 			cfg.JobsDir = ""
 
@@ -1707,6 +1710,7 @@ var _ = Describe("main", func() {
 				cfg.Address = listenAddress
 				cfg.Port = listenPort
 				cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
+				cfg.InternalCheckDomain = "glob.internal.alias."
 				cfg.HandlersFilesGlob = filepath.Join(handlersDir, "*")
 				cmd = newCommandWithConfig(cfg)
 
@@ -1731,6 +1735,7 @@ var _ = Describe("main", func() {
 				cfg.Address = listenAddress
 				cfg.Port = listenPort
 				cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
+				cfg.InternalCheckDomain = "glob.internal.alias."
 				cfg.HandlersFilesGlob = filepath.Join(handlersDir, "*")
 				cmd = newCommandWithConfig(cfg)
 

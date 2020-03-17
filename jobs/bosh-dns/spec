@@ -122,6 +122,10 @@ properties:
     default:
       - upcheck.bosh-dns.
 
+  internal_check_domain:
+    description: "Domain name to use to validate internal resolution is working"
+    default: "cloud-controller-ng.service.cf.internal"
+
   health.enabled:
     description: "Enable healthchecks for DNS resolution"
     default: false

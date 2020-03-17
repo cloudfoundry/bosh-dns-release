@@ -2,13 +2,18 @@ package server_test
 
 import (
 	"fmt"
+	"net"
 
 	boshlogf "github.com/cloudfoundry/bosh-utils/logger/fakes"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
 
 	"bosh-dns/dns/internal/testhelpers"
 	"bosh-dns/dns/server"
 	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/server/internal/internalfakes"
+	"bosh-dns/dns/server/records/dnsresolver"
+	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -44,7 +49,15 @@ var _ = Describe("Upcheck", func() {
 	var listenDomain string
 	var ports map[string]int
 	var addresses map[string]string
+	var discoveryHandler handlers.DiscoveryHandler
+	var fakeWriter *internalfakes.FakeResponseWriter
+	var fakeLogger *loggerfakes.FakeLogger
+	var fakeRecordSet *dnsresolverfakes.FakeRecordSet
+	var fakeShuffler *dnsresolverfakes.FakeAnswerShuffler
+	var fakeTruncater *dnsresolverfakes.FakeResponseTruncater
+
 	upcheckDomain := "upcheck.bosh-dns."
+	internalDomain := "test.internal.domain."
 
 	JustBeforeEach(func() {
 		var err error
@@ -70,12 +83,28 @@ var _ = Describe("Upcheck", func() {
 		ports = map[string]int{}
 		addresses = map[string]string{}
 		listenDomain = "127.0.0.1"
-		dnsHandler = handlers.NewUpcheckHandler(&boshlogf.FakeLogger{})
+		mux := dns.NewServeMux()
+		mux.Handle(upcheckDomain, handlers.NewUpcheckHandler(&boshlogf.FakeLogger{}))
+		fakeWriter = &internalfakes.FakeResponseWriter{}
+		fakeLogger = &loggerfakes.FakeLogger{}
+		fakeRecordSet = &dnsresolverfakes.FakeRecordSet{}
+		fakeShuffler = &dnsresolverfakes.FakeAnswerShuffler{}
+		fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
+			return input
+		}
+
+		fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
+		fakeTruncater = &dnsresolverfakes.FakeResponseTruncater{}
+		discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler, fakeTruncater))
+		mux.Handle(internalDomain, discoveryHandler)
+		dnsHandler = mux
+
+		fakeRecordSet.ResolveReturns([]string{"2601:0646:0102:0095:0000:0000:0000:0025", "123.123.123.123"}, nil)
 	})
 
 	Context("when the upcheck target is a malformed address", func() {
 		DescribeTable("returns an error", func(network string) {
-			subject = server.NewDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, internalDomain, network)
 
 			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
@@ -91,7 +120,7 @@ var _ = Describe("Upcheck", func() {
 	Context("when the target server resolves the upcheck domain", func() {
 		Context("when the target address is 127.0.0.1", func() {
 			DescribeTable("it checks on 127.0.0.1", func(network string) {
-				subject = server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports[network]), upcheckDomain, network)
+				subject = server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports[network]), upcheckDomain, internalDomain, network)
 
 				err := subject.IsUp()
 				Expect(err).NotTo(HaveOccurred())
@@ -103,7 +132,7 @@ var _ = Describe("Upcheck", func() {
 
 		Context("when the target address is 0.0.0.0", func() {
 			DescribeTable("it checks on 127.0.0.1", func(network string) {
-				subject = server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports[network]), upcheckDomain, network)
+				subject = server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports[network]), upcheckDomain, internalDomain, network)
 
 				err := subject.IsUp()
 				Expect(err).NotTo(HaveOccurred())
@@ -117,7 +146,7 @@ var _ = Describe("Upcheck", func() {
 	Context("when the upcheck takes a long time", func() {
 		DescribeTable("times out with error", func(network string) {
 			// 203.0.113.0/24 is reserved for documentation as per RFC 5737
-			subject = server.NewDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, internalDomain, network)
 
 			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
@@ -136,7 +165,7 @@ var _ = Describe("Upcheck", func() {
 		})
 
 		DescribeTable("returns with error", func(network string) {
-			subject = server.NewDNSAnswerValidatingUpcheck(addresses[network], upcheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck(addresses[network], upcheckDomain, internalDomain, network)
 
 			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
@@ -155,7 +184,7 @@ var _ = Describe("Upcheck", func() {
 		})
 
 		DescribeTable("returns with error", func(network string) {
-			subject = server.NewDNSAnswerValidatingUpcheck(addresses[network], upcheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck(addresses[network], upcheckDomain, internalDomain, network)
 
 			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())

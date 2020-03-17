@@ -18,20 +18,21 @@ const (
 )
 
 type Config struct {
-	Address           string       `json:"address"`
-	Port              int          `json:"port"`
-	BindTimeout       DurationJSON `json:"timeout,omitempty"`
-	RequestTimeout    DurationJSON `json:"request_timeout,omitempty"`
-	RecursorTimeout   DurationJSON `json:"recursor_timeout,omitempty"`
-	Recursors         []string     `json:"recursors,omitempty"`
-	ExcludedRecursors []string     `json:"excluded_recursors,omitempty"`
-	RecordsFile       string       `json:"records_file,omitempty"`
-	RecursorSelection string       `json:"recursor_selection"`
-	AliasFilesGlob    string       `json:"alias_files_glob,omitempty"`
-	HandlersFilesGlob string       `json:"handlers_files_glob,omitempty"`
-	AddressesFilesGlob string       `json:"addresses_files_glob,omitempty"`
-	UpcheckDomains     []string     `json:"upcheck_domains,omitempty"`
-	JobsDir            string       `json:"jobs_dir,omitempty"`
+	Address             string       `json:"address"`
+	Port                int          `json:"port"`
+	BindTimeout         DurationJSON `json:"timeout,omitempty"`
+	RequestTimeout      DurationJSON `json:"request_timeout,omitempty"`
+	RecursorTimeout     DurationJSON `json:"recursor_timeout,omitempty"`
+	Recursors           []string     `json:"recursors,omitempty"`
+	ExcludedRecursors   []string     `json:"excluded_recursors,omitempty"`
+	RecordsFile         string       `json:"records_file,omitempty"`
+	RecursorSelection   string       `json:"recursor_selection"`
+	AliasFilesGlob      string       `json:"alias_files_glob,omitempty"`
+	HandlersFilesGlob   string       `json:"handlers_files_glob,omitempty"`
+	AddressesFilesGlob  string       `json:"addresses_files_glob,omitempty"`
+	UpcheckDomains      []string     `json:"upcheck_domains,omitempty"`
+	InternalCheckDomain string       `json:"internal_check_domains,omitempty"`
+	JobsDir             string       `json:"jobs_dir,omitempty"`
 
 	LogLevel string `json:"log_level,omitempty"`
 
@@ -57,13 +58,13 @@ type APIConfig struct {
 }
 
 type HealthConfig struct {
-	Enabled           bool         `json:"enabled"`
-	Port              int          `json:"port"`
-	CertificateFile   string       `json:"certificate_file"`
-	PrivateKeyFile    string       `json:"private_key_file"`
-	CAFile            string       `json:"ca_file"`
-	CheckInterval     DurationJSON `json:"check_interval,omitempty"`
-	MaxTrackedQueries int          `json:"max_tracked_queries,omitempty"`
+	Enabled                 bool         `json:"enabled"`
+	Port                    int          `json:"port"`
+	CertificateFile         string       `json:"certificate_file"`
+	PrivateKeyFile          string       `json:"private_key_file"`
+	CAFile                  string       `json:"ca_file"`
+	CheckInterval           DurationJSON `json:"check_interval,omitempty"`
+	MaxTrackedQueries       int          `json:"max_tracked_queries,omitempty"`
 	SynchronousCheckTimeout DurationJSON `json:"synchronous_check_timeout,omitempty"`
 }
 
@@ -102,8 +103,8 @@ func NewDefaultConfig() Config {
 		RecursorTimeout:   DurationJSON(2 * time.Second),
 		RecursorSelection: "smart",
 		Health: HealthConfig{
-			MaxTrackedQueries: 2000,
-			CheckInterval: DurationJSON(20 * time.Second),
+			MaxTrackedQueries:       2000,
+			CheckInterval:           DurationJSON(20 * time.Second),
 			SynchronousCheckTimeout: DurationJSON(time.Second),
 		},
 		LogLevel: boshlog.AsString(boshlog.LevelDebug),

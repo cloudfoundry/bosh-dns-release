@@ -182,8 +182,8 @@ func mainExitCode() int {
 	for _, upcheckDomain := range config.UpcheckDomains {
 		mux.Handle(upcheckDomain, handlers.NewUpcheckHandler(logger))
 		for _, addr := range listenAddrs {
-			upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(addr, upcheckDomain, "udp"))
-			upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(addr, upcheckDomain, "tcp"))
+			upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(addr, config.InternalCheckDomain, recordSet.Hosts[0].FQDN, "udp"))
+			upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(addr, config.InternalCheckDomain, recordSet.Hosts[0].FQDN, "tcp"))
 		}
 	}
 

@@ -38,6 +38,7 @@ var _ = Describe("Config", func() {
 		requestTimeout          string
 		timeout                 string
 		upcheckDomains          []string
+		internalCheckDomain     string
 		upcheckInterval         string
 		synchronousCheckTimeout string
 	)
@@ -64,24 +65,26 @@ var _ = Describe("Config", func() {
 		requestTimeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		timeout = fmt.Sprintf("%vs", rand.Int31n(16))
 		upcheckDomains = []string{"upcheck.domain.", "health2.bosh."}
+		internalCheckDomain = "cloud_controller_ng.service.cf.internal."
 		upcheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
 		synchronousCheckTimeout = "1s"
 	})
 
 	It("returns config from a config file", func() {
 		configContents, err := json.Marshal(map[string]interface{}{
-			"address":              listenAddress,
-			"addresses_files_glob": addressesFileGlob,
-			"alias_files_glob":     aliasesFileGlob,
-			"handlers_files_glob":  handlersFileGlob,
-			"port":                 listenPort,
-			"log_level":            logLevel,
-			"recursor_timeout":     recursorTimeout,
-			"request_timeout":      requestTimeout,
-			"excluded_recursors":   []string{"169.254.169.254", "169.10.10.10:1234"},
-			"timeout":              timeout,
-			"upcheck_domains":      upcheckDomains,
-			"jobs_dir":             "/var/vcap/jobs",
+			"address":                listenAddress,
+			"addresses_files_glob":   addressesFileGlob,
+			"alias_files_glob":       aliasesFileGlob,
+			"handlers_files_glob":    handlersFileGlob,
+			"port":                   listenPort,
+			"log_level":              logLevel,
+			"recursor_timeout":       recursorTimeout,
+			"request_timeout":        requestTimeout,
+			"excluded_recursors":     []string{"169.254.169.254", "169.10.10.10:1234"},
+			"timeout":                timeout,
+			"upcheck_domains":        upcheckDomains,
+			"internal_check_domains": internalCheckDomain,
+			"jobs_dir":               "/var/vcap/jobs",
 			"api": map[string]interface{}{
 				"port":             listenAPIPort,
 				"certificate_file": apiCertificateFile,
@@ -89,13 +92,13 @@ var _ = Describe("Config", func() {
 				"ca_file":          apiCAFile,
 			},
 			"health": map[string]interface{}{
-				"enabled":             true,
-				"port":                healthPort,
-				"certificate_file":    healthCertificateFile,
-				"private_key_file":    healthPrivateKeyFile,
-				"ca_file":             healthCAFile,
-				"check_interval":      upcheckInterval,
-				"max_tracked_queries": healthMaxTrackedQueries,
+				"enabled":                   true,
+				"port":                      healthPort,
+				"certificate_file":          healthCertificateFile,
+				"private_key_file":          healthPrivateKeyFile,
+				"ca_file":                   healthCAFile,
+				"check_interval":            upcheckInterval,
+				"max_tracked_queries":       healthMaxTrackedQueries,
 				"synchronous_check_timeout": synchronousCheckTimeout,
 			},
 			"cache": map[string]interface{}{
@@ -141,25 +144,26 @@ var _ = Describe("Config", func() {
 				PrivateKeyFile:  apiPrivateKeyFile,
 				CAFile:          apiCAFile,
 			},
-			BindTimeout:        config.DurationJSON(timeoutDuration),
-			RequestTimeout:     config.DurationJSON(requestTimeoutDuration),
-			RecursorTimeout:    config.DurationJSON(recursorTimeoutDuration),
-			Recursors:          []string{},
-			ExcludedRecursors:  []string{"169.254.169.254:53", "169.10.10.10:1234"},
-			RecursorSelection:  "smart",
-			UpcheckDomains:     []string{"upcheck.domain.", "health2.bosh."},
-			AliasFilesGlob:     aliasesFileGlob,
-			HandlersFilesGlob:  handlersFileGlob,
-			AddressesFilesGlob: addressesFileGlob,
-			JobsDir:            "/var/vcap/jobs",
+			BindTimeout:         config.DurationJSON(timeoutDuration),
+			RequestTimeout:      config.DurationJSON(requestTimeoutDuration),
+			RecursorTimeout:     config.DurationJSON(recursorTimeoutDuration),
+			Recursors:           []string{},
+			ExcludedRecursors:   []string{"169.254.169.254:53", "169.10.10.10:1234"},
+			RecursorSelection:   "smart",
+			UpcheckDomains:      []string{"upcheck.domain.", "health2.bosh."},
+			InternalCheckDomain: "cloud_controller_ng.service.cf.internal.",
+			AliasFilesGlob:      aliasesFileGlob,
+			HandlersFilesGlob:   handlersFileGlob,
+			AddressesFilesGlob:  addressesFileGlob,
+			JobsDir:             "/var/vcap/jobs",
 			Health: config.HealthConfig{
-				Enabled:           true,
-				Port:              healthPort,
-				CertificateFile:   healthCertificateFile,
-				PrivateKeyFile:    healthPrivateKeyFile,
-				CAFile:            healthCAFile,
-				CheckInterval:     config.DurationJSON(upcheckIntervalDuration),
-				MaxTrackedQueries: healthMaxTrackedQueries,
+				Enabled:                 true,
+				Port:                    healthPort,
+				CertificateFile:         healthCertificateFile,
+				PrivateKeyFile:          healthPrivateKeyFile,
+				CAFile:                  healthCAFile,
+				CheckInterval:           config.DurationJSON(upcheckIntervalDuration),
+				MaxTrackedQueries:       healthMaxTrackedQueries,
 				SynchronousCheckTimeout: config.DurationJSON(synchronousCheckTimeoutDuration),
 			},
 			Cache: config.Cache{

@@ -17,16 +17,18 @@ type Upcheck interface {
 }
 
 type DNSAnswerValidatingUpcheck struct {
-	target        string
-	upCheckDomain string
-	network       string
+	target         string
+	upCheckDomain  string
+	internalDomain string
+	network        string
 }
 
-func NewDNSAnswerValidatingUpcheck(target string, upcheckDomain string, network string) Upcheck {
+func NewDNSAnswerValidatingUpcheck(target string, upcheckDomain string, internalDomain string, network string) Upcheck {
 	return DNSAnswerValidatingUpcheck{
-		target:        target,
-		upCheckDomain: upcheckDomain,
-		network:       network,
+		target:         target,
+		upCheckDomain:  upcheckDomain,
+		internalDomain: internalDomain,
+		network:        network,
 	}
 }
 
@@ -63,6 +65,29 @@ func (uc DNSAnswerValidatingUpcheck) IsUp() error {
 
 	if !aRecord.A.Equal(net.ParseIP("127.0.0.1")) {
 		return uc.wrapError(errors.New("DNS upcheck does not return the correct answer"))
+	}
+
+	request = dns.Msg{
+		Question: []dns.Question{
+			{Name: uc.internalDomain, Qtype: dns.TypeA},
+		},
+	}
+	msg, _, err = dnsClient.Exchange(&request, uc.target)
+
+	if err != nil {
+		return uc.wrapError(err)
+	}
+	if msg.Rcode != dns.RcodeSuccess {
+		return uc.wrapError(errors.New("DNS resolve failed"))
+	}
+
+	if len(msg.Answer) == 0 {
+		return uc.wrapError(errors.New("DNS upcheck found no answers"))
+	}
+
+	_, ok = msg.Answer[0].(*dns.A)
+	if !ok {
+		return uc.wrapError(errors.New("upcheck must return A record"))
 	}
 
 	return nil
