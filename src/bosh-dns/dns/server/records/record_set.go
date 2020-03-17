@@ -215,8 +215,10 @@ func (r *RecordSet) filterRecords(filterer Filterer, filterCriteria []criteria.C
 	return finalRecords
 }
 
-func (r *RecordSet) AllRecords() *[]record.Record {
-	return &r.Records
+func (r *RecordSet) AllRecords() []record.Record {
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+	return r.Records
 }
 
 func (r *RecordSet) HasIP(ip string) bool {

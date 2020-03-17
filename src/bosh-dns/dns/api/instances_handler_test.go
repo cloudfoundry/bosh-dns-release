@@ -127,7 +127,7 @@ var _ = Describe("InstancesHandler", func() {
 
 		It("returns all records in json", func() {
 			r = httptest.NewRequest("GET", "/", nil)
-			fakeRecordManager.AllRecordsReturns(&[]record.Record{
+			fakeRecordManager.AllRecordsReturns([]record.Record{
 				{
 					ID:            "ID1",
 					NumID:         "NumId1",

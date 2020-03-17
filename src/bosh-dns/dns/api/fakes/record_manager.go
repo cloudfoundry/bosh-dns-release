@@ -8,15 +8,15 @@ import (
 )
 
 type FakeRecordManager struct {
-	AllRecordsStub        func() *[]record.Record
+	AllRecordsStub        func() []record.Record
 	allRecordsMutex       sync.RWMutex
 	allRecordsArgsForCall []struct {
 	}
 	allRecordsReturns struct {
-		result1 *[]record.Record
+		result1 []record.Record
 	}
 	allRecordsReturnsOnCall map[int]struct {
-		result1 *[]record.Record
+		result1 []record.Record
 	}
 	ExpandAliasesStub        func(string) []string
 	expandAliasesMutex       sync.RWMutex
@@ -47,7 +47,7 @@ type FakeRecordManager struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRecordManager) AllRecords() *[]record.Record {
+func (fake *FakeRecordManager) AllRecords() []record.Record {
 	fake.allRecordsMutex.Lock()
 	ret, specificReturn := fake.allRecordsReturnsOnCall[len(fake.allRecordsArgsForCall)]
 	fake.allRecordsArgsForCall = append(fake.allRecordsArgsForCall, struct {
@@ -70,32 +70,32 @@ func (fake *FakeRecordManager) AllRecordsCallCount() int {
 	return len(fake.allRecordsArgsForCall)
 }
 
-func (fake *FakeRecordManager) AllRecordsCalls(stub func() *[]record.Record) {
+func (fake *FakeRecordManager) AllRecordsCalls(stub func() []record.Record) {
 	fake.allRecordsMutex.Lock()
 	defer fake.allRecordsMutex.Unlock()
 	fake.AllRecordsStub = stub
 }
 
-func (fake *FakeRecordManager) AllRecordsReturns(result1 *[]record.Record) {
+func (fake *FakeRecordManager) AllRecordsReturns(result1 []record.Record) {
 	fake.allRecordsMutex.Lock()
 	defer fake.allRecordsMutex.Unlock()
 	fake.AllRecordsStub = nil
 	fake.allRecordsReturns = struct {
-		result1 *[]record.Record
+		result1 []record.Record
 	}{result1}
 }
 
-func (fake *FakeRecordManager) AllRecordsReturnsOnCall(i int, result1 *[]record.Record) {
+func (fake *FakeRecordManager) AllRecordsReturnsOnCall(i int, result1 []record.Record) {
 	fake.allRecordsMutex.Lock()
 	defer fake.allRecordsMutex.Unlock()
 	fake.AllRecordsStub = nil
 	if fake.allRecordsReturnsOnCall == nil {
 		fake.allRecordsReturnsOnCall = make(map[int]struct {
-			result1 *[]record.Record
+			result1 []record.Record
 		})
 	}
 	fake.allRecordsReturnsOnCall[i] = struct {
-		result1 *[]record.Record
+		result1 []record.Record
 	}{result1}
 }
 

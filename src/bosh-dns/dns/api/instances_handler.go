@@ -18,7 +18,7 @@ type HealthStateGetter interface {
 
 type RecordManager interface {
 	ResolveRecords(domains []string, shouldTrack bool) ([]record.Record, error)
-	AllRecords() *[]record.Record
+	AllRecords() []record.Record
 	ExpandAliases(fqdn string) []string
 }
 
@@ -38,7 +38,7 @@ func (h *InstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	address := r.URL.Query().Get("address")
 	var rs []record.Record
 	if address == "" {
-		rs = *h.recordManager.AllRecords()
+		rs = h.recordManager.AllRecords()
 	} else {
 		var err error
 		address = dns.Fqdn(address)
