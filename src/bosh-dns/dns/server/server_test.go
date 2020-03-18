@@ -220,10 +220,10 @@ var _ = Describe("Server", func() {
 						dnsServerFinished <- dnsServer.Run()
 					}()
 
-					Eventually(logger.DebugCallCount).Should(BeNumerically(">", 0))
-					tag, msg, _ := logger.DebugArgsForCall(0)
+					Eventually(logger.InfoCallCount).Should(BeNumerically(">", 0))
+					tag, msg, _ := logger.InfoArgsForCall(0)
 					Expect(tag).To(Equal("server"))
-					Expect(msg).To(Equal("done with upchecks"))
+					Expect(msg).To(Equal("bosh-dns ready"))
 				})
 			})
 

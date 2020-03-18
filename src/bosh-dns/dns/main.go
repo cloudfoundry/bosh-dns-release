@@ -77,6 +77,7 @@ func mainExitCode() int {
 
 	logger := boshlog.NewAsyncWriterLogger(level, os.Stdout)
 	logTag := "main"
+	logger.Info(logTag, "bosh-dns starting")
 	defer logger.FlushTimeout(5 * time.Second)
 
 	fs := boshsys.NewOsFileSystem(logger)
@@ -269,9 +270,10 @@ func mainExitCode() int {
 	}(config.API)
 
 	if err := dnsServer.Run(); err != nil {
-		logger.Error(logTag, err.Error())
+		logger.Error(logTag, "bosh-dns failed: %s", err.Error())
 		return 1
 	}
 
+	logger.Info(logTag, "bosh-dns stopped")
 	return 0
 }

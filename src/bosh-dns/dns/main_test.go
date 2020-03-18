@@ -1655,7 +1655,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(session, "5s").Should(gexec.Exit(1))
-			Eventually(session.Out).Should(gbytes.Say("[main].*ERROR - timed out waiting for server to bind"))
+			Eventually(session.Out).Should(gbytes.Say("[main].*ERROR - bosh-dns failed: timed out waiting for server to bind"))
 		})
 
 		It("exits 1 and logs a helpful error message when failing to parse jobs", func() {

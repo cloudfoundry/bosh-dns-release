@@ -49,7 +49,7 @@ func (s Server) Run() error {
 	case <-time.After(s.timeout):
 		return errors.New("timed out waiting for server to bind")
 	case <-done:
-		s.logger.Debug("server", "done with upchecks")
+		s.logger.Info("server", "bosh-dns ready")
 	}
 
 	s.monitorUpchecks()
