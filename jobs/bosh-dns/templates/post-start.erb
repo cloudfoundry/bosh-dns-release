@@ -1,4 +1,6 @@
 #!/bin/bash -exu
 
-dig +tcp +time=10 +tries=1 -p <%= p('port') %> upcheck.bosh-dns. @<%= p('address') %>
-dig +notcp +time=10 +tries=1 -p <%= p('port') %> upcheck.bosh-dns. @<%= p('address') %>
+/var/vcap/jobs/bosh-dns/bin/wait
+
+dig +tcp +time=10 +tries=1 -p <%= p('port') %> <%= p('upcheck_domains').first %> @<%= p('address') %>
+dig +notcp +time=10 +tries=1 -p <%= p('port') %> <%= p('upcheck_domains').first %> @<%= p('address') %>
