@@ -56,6 +56,7 @@ func (h UpcheckHandler) ServeDNS(resp dns.ResponseWriter, req *dns.Msg) {
 	out.SetReply(req)
 	// rcode is succeess by default
 
+	h.logger.Debug("UpcheckHandler", "Replying to %d", req.Id)
 	if err := resp.WriteMsg(out); err != nil {
 		h.logger.Error("UpcheckHandler", err.Error())
 	}
