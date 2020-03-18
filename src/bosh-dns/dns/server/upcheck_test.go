@@ -75,7 +75,7 @@ var _ = Describe("Upcheck", func() {
 
 	Context("when the upcheck target is a malformed address", func() {
 		DescribeTable("returns an error", func(network string) {
-			subject = server.NewDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, network, &boshlogf.FakeLogger{})
 
 			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
@@ -91,7 +91,7 @@ var _ = Describe("Upcheck", func() {
 	Context("when the target server resolves the upcheck domain", func() {
 		Context("when the target address is 127.0.0.1", func() {
 			DescribeTable("it checks on 127.0.0.1", func(network string) {
-				subject = server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports[network]), upcheckDomain, network)
+				subject = server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports[network]), upcheckDomain, network, &boshlogf.FakeLogger{})
 
 				err := subject.IsUp()
 				Expect(err).NotTo(HaveOccurred())
@@ -103,7 +103,7 @@ var _ = Describe("Upcheck", func() {
 
 		Context("when the target address is 0.0.0.0", func() {
 			DescribeTable("it checks on 127.0.0.1", func(network string) {
-				subject = server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports[network]), upcheckDomain, network)
+				subject = server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports[network]), upcheckDomain, network, &boshlogf.FakeLogger{})
 
 				err := subject.IsUp()
 				Expect(err).NotTo(HaveOccurred())
@@ -117,7 +117,7 @@ var _ = Describe("Upcheck", func() {
 	Context("when the upcheck takes a long time", func() {
 		DescribeTable("times out with error", func(network string) {
 			// 203.0.113.0/24 is reserved for documentation as per RFC 5737
-			subject = server.NewDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, network, &boshlogf.FakeLogger{})
 
 			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
@@ -136,7 +136,7 @@ var _ = Describe("Upcheck", func() {
 		})
 
 		DescribeTable("returns with error", func(network string) {
-			subject = server.NewDNSAnswerValidatingUpcheck(addresses[network], upcheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck(addresses[network], upcheckDomain, network, &boshlogf.FakeLogger{})
 
 			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())
@@ -155,7 +155,7 @@ var _ = Describe("Upcheck", func() {
 		})
 
 		DescribeTable("returns with error", func(network string) {
-			subject = server.NewDNSAnswerValidatingUpcheck(addresses[network], upcheckDomain, network)
+			subject = server.NewDNSAnswerValidatingUpcheck(addresses[network], upcheckDomain, network, &boshlogf.FakeLogger{})
 
 			err := subject.IsUp()
 			Expect(err).To(HaveOccurred())

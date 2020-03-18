@@ -3,8 +3,10 @@ package server
 import (
 	"errors"
 	"net"
+	"math/rand"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
 
@@ -20,13 +22,15 @@ type DNSAnswerValidatingUpcheck struct {
 	target        string
 	upCheckDomain string
 	network       string
+	logger        logger.Logger
 }
 
-func NewDNSAnswerValidatingUpcheck(target string, upcheckDomain string, network string) Upcheck {
+func NewDNSAnswerValidatingUpcheck(target string, upcheckDomain string, network string, logger logger.Logger) Upcheck {
 	return DNSAnswerValidatingUpcheck{
 		target:        target,
 		upCheckDomain: upcheckDomain,
 		network:       network,
+		logger:        logger,
 	}
 }
 
@@ -43,6 +47,9 @@ func (uc DNSAnswerValidatingUpcheck) IsUp() error {
 			{Name: uc.upCheckDomain, Qtype: dns.TypeA},
 		},
 	}
+	request.Id = uint16(rand.Uint32())
+
+	uc.logger.Debug("upcheck", "Sending upcheck %d to %s over %s", request.Id, uc.target, uc.network)
 	msg, _, err := dnsClient.Exchange(&request, uc.target)
 
 	if err != nil {

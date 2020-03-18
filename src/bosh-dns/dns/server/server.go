@@ -67,7 +67,7 @@ func (s Server) monitorUpchecks() {
 			for {
 				if err := h.IsUp(); err != nil {
 					danger += 1
-					s.logger.Warn("server", "upcheck failed")
+					s.logger.Warn("server", "upcheck failed (%s)", err.Error())
 					if danger >= limit && s.shutdownChan != nil {
 						s.logger.Error("server", "upcheck failed, restarting process")
 						close(s.shutdownChan)
@@ -110,7 +110,7 @@ func (s Server) doUpchecks(done chan struct{}) {
 				if err = upcheck.IsUp(); err == nil {
 					break
 				}
-				s.logger.Debug("upcheck", "waiting for server to come up", err)
+				s.logger.Debug("upcheck", "waiting for server to come up (%s)", err.Error())
 
 				time.Sleep(50 * time.Millisecond)
 			}
