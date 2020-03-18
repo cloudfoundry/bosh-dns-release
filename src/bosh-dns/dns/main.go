@@ -217,6 +217,8 @@ func mainExitCode() int {
 		logger,
 	)
 
+	handlerRegistrar.RegisterAgentTLD()
+	handlerRegistrar.UpdateDomainRegistrations()
 	go func() {
 		err := handlerRegistrar.Run(shutdown)
 		if err != nil {

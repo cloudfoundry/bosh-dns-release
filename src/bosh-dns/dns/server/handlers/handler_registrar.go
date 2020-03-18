@@ -45,35 +45,43 @@ func NewHandlerRegistrar(logger logger.Logger, clock clock.Clock, domainProvider
 	}
 }
 
+func (h *HandlerRegistrar) RegisterAgentTLD() {
+	h.mux.Handle(fmt.Sprintf("%s", criteria.BoshAgentTLD), NewRequestLoggerHandler(h.handler, h.clock, h.logger))
+}
+
+// not threadsafe - only call externally before Run is called
+func (h *HandlerRegistrar) UpdateDomainRegistrations() {
+	currentDomains := make(map[string]struct{}, len(h.domains))
+	for domain := range h.domains {
+		currentDomains[domain] = struct{}{}
+	}
+
+	for _, domain := range h.domainProvider.Domains() {
+		delete(currentDomains, domain)
+
+		if _, ok := h.domains[domain]; !ok {
+			h.logger.Info("HandlerRegistrar", "Register %s as internal domain", domain)
+			h.domains[domain] = struct{}{}
+			h.mux.Handle(domain, NewRequestLoggerHandler(h.handler, h.clock, h.logger))
+		}
+	}
+
+	for domain := range currentDomains {
+		h.logger.Info("HandlerRegistrar", "Unregister %s as internal domain", domain)
+		delete(h.domains, domain)
+		h.mux.HandleRemove(domain)
+	}
+}
+
 func (h *HandlerRegistrar) Run(signal chan struct{}) error {
 	ticker := h.clock.NewTicker(RegisterInterval)
-	h.mux.Handle(fmt.Sprintf("%s", criteria.BoshAgentTLD), NewRequestLoggerHandler(h.handler, h.clock, h.logger))
 
 	for {
 		select {
 		case <-signal:
 			return nil
 		case <-ticker.C():
-			currentDomains := make(map[string]struct{}, len(h.domains))
-			for domain := range h.domains {
-				currentDomains[domain] = struct{}{}
-			}
-
-			for _, domain := range h.domainProvider.Domains() {
-				delete(currentDomains, domain)
-
-				if _, ok := h.domains[domain]; !ok {
-					h.logger.Info("HandlerRegistrar", "Register %s as internal domain", domain)
-					h.domains[domain] = struct{}{}
-					h.mux.Handle(domain, NewRequestLoggerHandler(h.handler, h.clock, h.logger))
-				}
-			}
-
-			for domain := range currentDomains {
-				h.logger.Info("HandlerRegistrar", "Unregister %s as internal domain", domain)
-				delete(h.domains, domain)
-				h.mux.HandleRemove(domain)
-			}
+			h.UpdateDomainRegistrations()
 		}
 	}
 }

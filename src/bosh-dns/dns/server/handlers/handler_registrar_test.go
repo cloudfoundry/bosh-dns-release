@@ -37,6 +37,38 @@ var _ = Describe("HandlerRegistrar", func() {
 		handlerRegistrar = handlers.NewHandlerRegistrar(logger, clock, domainProvider, mux, childHandler)
 	})
 
+	Describe("RegisterAgentTLD", func() {
+		It("registers the agent TLD", func() {
+			handlerRegistrar.RegisterAgentTLD()
+
+			Expect(mux.HandleCallCount()).Should(Equal(1))
+
+			pattern, handler := mux.HandleArgsForCall(0)
+			Expect(pattern).To(Equal("bosh-agent-id"))
+			Expect(handler).To(BeAssignableToTypeOf(handlers.RequestLoggerHandler{}))
+			Expect(handler.(handlers.RequestLoggerHandler).Handler).To(Equal(childHandler))
+		})
+	})
+
+	Describe("UpdateDomainRegistrations", func() {
+		It("registers the current domains", func() {
+			domainProvider.DomainsReturns([]string{"initial-domain1", "initial-domain2"})
+			handlerRegistrar.UpdateDomainRegistrations()
+
+			Expect(mux.HandleCallCount()).Should(Equal(2))
+
+			pattern, handler := mux.HandleArgsForCall(0)
+			Expect(pattern).To(Equal("initial-domain1"))
+			Expect(handler).To(BeAssignableToTypeOf(handlers.RequestLoggerHandler{}))
+			Expect(handler.(handlers.RequestLoggerHandler).Handler).To(Equal(childHandler))
+
+			pattern, handler = mux.HandleArgsForCall(1)
+			Expect(pattern).To(Equal("initial-domain2"))
+			Expect(handler).To(BeAssignableToTypeOf(handlers.RequestLoggerHandler{}))
+			Expect(handler.(handlers.RequestLoggerHandler).Handler).To(Equal(childHandler))
+		})
+	})
+
 	Describe("Run", func() {
 		var shutdown chan struct{}
 
@@ -59,14 +91,14 @@ var _ = Describe("HandlerRegistrar", func() {
 			defer close(shutdown)
 
 			clock.WaitForWatcherAndIncrement(handlers.RegisterInterval)
-			Eventually(mux.HandleCallCount).Should(Equal(3))
+			Eventually(mux.HandleCallCount).Should(Equal(2))
 
-			pattern, handler := mux.HandleArgsForCall(1)
+			pattern, handler := mux.HandleArgsForCall(0)
 			Expect(pattern).To(Equal("initial-domain1"))
 			Expect(handler).To(BeAssignableToTypeOf(handlers.RequestLoggerHandler{}))
 			Expect(handler.(handlers.RequestLoggerHandler).Handler).To(Equal(childHandler))
 
-			pattern, handler = mux.HandleArgsForCall(2)
+			pattern, handler = mux.HandleArgsForCall(1)
 			Expect(pattern).To(Equal("initial-domain2"))
 			Expect(handler).To(BeAssignableToTypeOf(handlers.RequestLoggerHandler{}))
 			Expect(handler.(handlers.RequestLoggerHandler).Handler).To(Equal(childHandler))
@@ -78,14 +110,14 @@ var _ = Describe("HandlerRegistrar", func() {
 				defer close(shutdown)
 
 				clock.WaitForWatcherAndIncrement(handlers.RegisterInterval)
-				Eventually(mux.HandleCallCount).Should(Equal(3))
+				Eventually(mux.HandleCallCount).Should(Equal(2))
 
 				domainProvider.DomainsReturns([]string{"initial-domain1", "initial-domain2", "new-domain"})
 
 				clock.WaitForWatcherAndIncrement(handlers.RegisterInterval)
-				Eventually(mux.HandleCallCount).Should(Equal(4))
+				Eventually(mux.HandleCallCount).Should(Equal(3))
 
-				pattern, handler := mux.HandleArgsForCall(3)
+				pattern, handler := mux.HandleArgsForCall(2)
 				Expect(pattern).To(Equal("new-domain"))
 				Expect(handler).To(BeAssignableToTypeOf(handlers.RequestLoggerHandler{}))
 				Expect(handler.(handlers.RequestLoggerHandler).Handler).To(Equal(childHandler))
@@ -98,7 +130,7 @@ var _ = Describe("HandlerRegistrar", func() {
 				defer close(shutdown)
 
 				clock.WaitForWatcherAndIncrement(handlers.RegisterInterval)
-				Eventually(mux.HandleCallCount).Should(Equal(3))
+				Eventually(mux.HandleCallCount).Should(Equal(2))
 
 				domainProvider.DomainsReturns([]string{"initial-domain2"})
 
