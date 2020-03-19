@@ -1,3 +1,9 @@
 #!/bin/bash
 
-exec /var/vcap/packages/bosh-dns/bin/bosh-dns-wait --address <%= p('address') %> --port <%= p('port') %> --checkDomain <%= p('upcheck_domains').first %> --timeout 5m
+# check bosh-dns listen address
+/var/vcap/packages/bosh-dns/bin/bosh-dns-wait --address <%= p('address') %> --port <%= p('port') %> --checkDomain <%= p('upcheck_domains').first %> --timeout 5m
+
+<% if p('override_nameserver') %>
+# check default nameserver
+/var/vcap/packages/bosh-dns/bin/bosh-dns-wait --checkDomain <%= p('upcheck_domains').first %> --timeout 5m
+<% end %>
