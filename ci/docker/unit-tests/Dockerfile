@@ -5,6 +5,7 @@ RUN \
   && apt-get install -y \
     build-essential \
     curl \
+    git \
   && apt-get clean
 
 COPY --from=golang:1 /usr/local/go /usr/local/go
