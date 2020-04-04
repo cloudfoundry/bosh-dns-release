@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "954ff07a1b7b79a8dcfb92f5f396582b5afdd3a7"
+  revision = "71c987d412e9336d1aa32422c0812f7ba63b0eab"
 
 [[projects]]
   branch = "master"
@@ -395,7 +395,7 @@
     "ssh/internal/bcrypt_pbkdf",
   ]
   pruneopts = "NUT"
-  revision = "0ec3e9974c59449edd84298612e9f16fa13368e8"
+  revision = "baeed622b8d86045ff442b324772b0ad306a2b3f"
 
 [[projects]]
   digest = "1:467bb8fb8fa786448b8d486cd0bb7c1a5577dcd7310441aa02a20110cd9f727d"
@@ -436,7 +436,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6284e2fdc456f167592787ea32f27cc1f39fbe6dd6165bf00b32e9224fe76b75"
+  digest = "1:f5c39c7edc047576d659c8da8b9abc83a9c4411381ffa5e484ec5fa3fb515142"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -444,7 +444,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "9dae0f8f577553e0f21298e18926efc9644c281d"
+  revision = "c3d80250170dec19bf61949c81233cede5ddaf61"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -485,7 +485,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e55d2d469458fdc380d1a45e866d78bf0d644b308240ace71db243ea643da9de"
+  digest = "1:6d451d07397cb8bf85b394345b9522492d71a6be1abbaaf8355dc3f934204a1e"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -502,7 +502,7 @@
     "internal/packagesinternal",
   ]
   pruneopts = "NUT"
-  revision = "3db5fc6bac0358b90dfd2b02750065c676e9474d"
+  revision = "44a64ad78b9b521790ab78240c17a3bc75b5eaa7"
 
 [[projects]]
   branch = "master"
@@ -521,7 +521,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "f447254575fde2c994d6f2d03076c476bfe61854"
+  revision = "c50568487044f7393f957c36b91edbf731220cba"
 
 [[projects]]
   digest = "1:634ba50bc431d4d278abbb3593c18962291cf43cae92cc16c47e63ba4c54ba37"
