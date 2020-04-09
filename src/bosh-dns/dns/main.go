@@ -22,6 +22,7 @@ import (
 	"bosh-dns/dns/server/aliases"
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/healthiness"
+	"bosh-dns/dns/server/monitoring"
 	"bosh-dns/dns/server/records"
 	"bosh-dns/dns/server/records/dnsresolver"
 	"bosh-dns/dns/shuffle"
@@ -153,9 +154,6 @@ func mainExitCode() int {
 
 	truncater := dnsresolver.NewResponseTruncater()
 	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, shuffle.New(), truncater)
-	discoveryHandler := handlers.NewDiscoveryHandler(logger, localDomain)
-
-	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordSet, mux, discoveryHandler)
 
 	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, logger)
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
@@ -188,11 +186,21 @@ func mainExitCode() int {
 		}
 	}
 
-	if config.Cache.Enabled {
-		mux.Handle(".", handlers.NewCachingDNSHandler(forwardHandler, truncater, clock, logger))
-	} else {
-		mux.Handle(".", forwardHandler)
+	var (
+		nextInternalHandler  dns.Handler = handlers.NewDiscoveryHandler(logger, localDomain)
+		nextExternalHandler  dns.Handler = forwardHandler
+		metricsServerWrapper *monitoring.MetricsServerWrapper
+	)
+	if config.Metrics.Enabled {
+		metricsAddr := fmt.Sprintf("127.0.0.1:%d", config.Metrics.Port)
+		metricsServerWrapper = monitoring.NewMetricsServerWrapper(logger, monitoring.MetricsServer(metricsAddr))
+		nextExternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), nextExternalHandler)
+		nextInternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), nextInternalHandler)
 	}
+	if config.Cache.Enabled {
+		nextExternalHandler = handlers.NewCachingDNSHandler(nextExternalHandler, truncater, clock, logger)
+	}
+	mux.Handle(".", nextExternalHandler)
 
 	servers := []server.DNSServer{}
 	numListeners := runtime.NumCPU()
@@ -218,6 +226,7 @@ func mainExitCode() int {
 		logger,
 	)
 
+	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordSet, mux, nextInternalHandler)
 	handlerRegistrar.RegisterAgentTLD()
 	handlerRegistrar.UpdateDomainRegistrations()
 	go func() {
@@ -226,6 +235,13 @@ func mainExitCode() int {
 			logger.Error(logTag, fmt.Sprintf("could not start handler registrar: %s", err.Error()))
 		}
 	}()
+
+	if metricsServerWrapper != nil {
+		go func() {
+			err := metricsServerWrapper.Run(shutdown)
+			logger.Error(logTag, "could not start metric server: %s", err.Error())
+		}()
+	}
 
 	go healthWatcher.Run(shutdown)
 

@@ -3,6 +3,7 @@ package handlers
 import (
 	"bosh-dns/dns/server/handlers/internal"
 	"bosh-dns/dns/server/records/dnsresolver"
+
 	"code.cloudfoundry.org/clock"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/coredns/coredns/plugin/cache"
@@ -41,7 +42,7 @@ func (c CachingDNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	internal.LogReceivedRequest(c.logger, c, c.logTag, r)
 	var dnsMsg *dns.Msg
 	truncatingWriter := internal.WrapWriterWithIntercept(w, func(resp *dns.Msg) {
-		dnsMsg=resp
+		dnsMsg = resp
 		c.truncater.TruncateIfNeeded(w, r, resp)
 	})
 
@@ -51,7 +52,7 @@ func (c CachingDNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	}
 
 	indicator := &requestContext{
-		fromCache:      true,
+		fromCache: true,
 	}
 	requestContext := context.WithValue(context.Background(), "indicator", indicator)
 
