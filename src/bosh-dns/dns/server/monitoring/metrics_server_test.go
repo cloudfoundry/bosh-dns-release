@@ -6,7 +6,6 @@ import (
 	"bosh-dns/dns/server/monitoring/monitoringfakes"
 	"context"
 	"errors"
-	"net"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/coredns/coredns/plugin/metrics"
@@ -68,26 +67,21 @@ var _ = Describe("MetricsServerWrapper", func() {
 			metritcsReporter monitoring.MetricsReporter
 			metricsServer    monitoring.CoreDNSMetricsServer
 			fakeWriter       *internalfakes.FakeResponseWriter
-			response         *dns.Msg
 		)
 
 		BeforeEach(func() {
 			fakeWriter = &internalfakes.FakeResponseWriter{}
 			metricsServer = monitoring.MetricsServer("127.0.0.1:53088")
 			metritcsReporter = monitoring.NewMetricsServerWrapper(fakeLogger, metricsServer).MetricsReporter()
-			response = &dns.Msg{
-				Answer: []dns.RR{&dns.A{A: net.ParseIP("99.99.99.99")}},
-			}
-			response.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 		})
 
 		It("collects metrics", func() {
 			m := &dns.Msg{}
-			m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 
 			metritcsReporter.Report(context.Background(), fakeWriter, m)
 
 			Expect(findMetric(metricsServer, "coredns_dns_request_count_total")).To(Equal(1.0))
+			Expect(findMetric(metricsServer, "coredns_dns_response_rcode_count_total")).To(Equal(1.0))
 		})
 	})
 })

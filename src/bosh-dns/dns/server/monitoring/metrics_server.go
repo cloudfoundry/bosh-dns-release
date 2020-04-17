@@ -50,14 +50,14 @@ func (m *MetricsServerWrapper) Report(ctx context.Context, w dns.ResponseWriter,
 
 func (m *MetricsServerWrapper) Run(shutdown chan struct{}) error {
 	if err := m.coreDNSServer.OnStartup(); err != nil {
-		return bosherr.WrapError(err, "setting up metrics on startup")
+		return bosherr.WrapError(err, "setting up the metrics listener")
 	}
 	for {
 		select {
 		case <-shutdown:
 			err := m.coreDNSServer.OnFinalShutdown()
 			if err != nil {
-				return bosherr.WrapError(err, "tear down and restart of the metrics listener")
+				return bosherr.WrapError(err, "tearing down the metrics listener")
 			}
 			return nil
 		}
