@@ -3,7 +3,7 @@
 set -exu
 
 # Target the director
-start-bosh \
+source start-bosh \
     -o /usr/local/bosh-deployment/local-bosh-release-tarball.yml \
     -o /usr/local/bosh-deployment/local-dns.yml \
     -v local_bosh_release="$(echo -n "$PWD"/bosh-candidate-release/*.tgz)"
