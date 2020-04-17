@@ -40,6 +40,7 @@ var _ = Describe("Config", func() {
 		upcheckDomains          []string
 		upcheckInterval         string
 		synchronousCheckTimeout string
+		metricsPort             int
 	)
 
 	BeforeEach(func() {
@@ -66,6 +67,7 @@ var _ = Describe("Config", func() {
 		upcheckDomains = []string{"upcheck.domain.", "health2.bosh."}
 		upcheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
 		synchronousCheckTimeout = "1s"
+		metricsPort = 53088
 	})
 
 	It("returns config from a config file", func() {
@@ -89,14 +91,18 @@ var _ = Describe("Config", func() {
 				"ca_file":          apiCAFile,
 			},
 			"health": map[string]interface{}{
-				"enabled":             true,
-				"port":                healthPort,
-				"certificate_file":    healthCertificateFile,
-				"private_key_file":    healthPrivateKeyFile,
-				"ca_file":             healthCAFile,
-				"check_interval":      upcheckInterval,
-				"max_tracked_queries": healthMaxTrackedQueries,
+				"enabled":                   true,
+				"port":                      healthPort,
+				"certificate_file":          healthCertificateFile,
+				"private_key_file":          healthPrivateKeyFile,
+				"ca_file":                   healthCAFile,
+				"check_interval":            upcheckInterval,
+				"max_tracked_queries":       healthMaxTrackedQueries,
 				"synchronous_check_timeout": synchronousCheckTimeout,
+			},
+			"metrics": map[string]interface{}{
+				"enabled": true,
+				"port":    metricsPort,
 			},
 			"cache": map[string]interface{}{
 				"enabled": true,
@@ -153,14 +159,18 @@ var _ = Describe("Config", func() {
 			AddressesFilesGlob: addressesFileGlob,
 			JobsDir:            "/var/vcap/jobs",
 			Health: config.HealthConfig{
-				Enabled:           true,
-				Port:              healthPort,
-				CertificateFile:   healthCertificateFile,
-				PrivateKeyFile:    healthPrivateKeyFile,
-				CAFile:            healthCAFile,
-				CheckInterval:     config.DurationJSON(upcheckIntervalDuration),
-				MaxTrackedQueries: healthMaxTrackedQueries,
+				Enabled:                 true,
+				Port:                    healthPort,
+				CertificateFile:         healthCertificateFile,
+				PrivateKeyFile:          healthPrivateKeyFile,
+				CAFile:                  healthCAFile,
+				CheckInterval:           config.DurationJSON(upcheckIntervalDuration),
+				MaxTrackedQueries:       healthMaxTrackedQueries,
 				SynchronousCheckTimeout: config.DurationJSON(synchronousCheckTimeoutDuration),
+			},
+			Metrics: config.MetricsConfig{
+				Enabled: true,
+				Port:    metricsPort,
 			},
 			Cache: config.Cache{
 				Enabled: true,
@@ -253,6 +263,18 @@ var _ = Describe("Config", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(dnsConfig.Health.MaxTrackedQueries).To(Equal(2000))
+		})
+	})
+
+	Context("metrics.port", func() {
+		It("defaults to 53088 and metrics are disabled by default", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.Metrics.Enabled).To(Equal(false))
+			Expect(dnsConfig.Metrics.Port).To(Equal(53088))
 		})
 	})
 

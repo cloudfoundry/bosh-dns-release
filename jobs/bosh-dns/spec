@@ -117,6 +117,14 @@ properties:
     description: "When enabled bosh-dns will cache recursor responses using the default coredns cache plugin"
     default: false
 
+  metrics.enabled:
+    description: "When enabled bosh-dns will start a metrics server using the default coredns metrics plugin"
+    default: false
+
+  metrics.port:
+    description: "Internal port for metrics server to listen to"
+    default: 53088
+
   upcheck_domains:
     description: "Domain names that the dns server should respond to with successful answers. Answer ip will always be 127.0.0.1"
     default:
