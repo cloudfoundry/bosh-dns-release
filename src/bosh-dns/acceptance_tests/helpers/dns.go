@@ -17,6 +17,7 @@ type DigOpts struct {
 	SkipErrCheck   bool
 	Timeout        time.Duration
 	Type           uint16
+	Id             uint16
 }
 
 func Dig(domain, server string) *dns.Msg {
@@ -77,6 +78,10 @@ func DigWithOptions(domain, server string, opts DigOpts) *dns.Msg {
 		opts.Type = dns.TypeA
 	}
 	m.SetQuestion(domain, opts.Type)
+
+	if opts.Id != 0 {
+		m.Id = opts.Id
+	}
 
 	port := 53
 	if opts.Port != 0 {

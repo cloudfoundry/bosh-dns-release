@@ -200,6 +200,57 @@ var _ = Describe("Integration", func() {
 					}),
 				))
 			})
+
+			Context("negative caching", func() {
+				Context("recursor down", func() {
+					It("does not negative cache", func() {
+
+						recursorEnv.stop()
+
+						dnsResponse := helpers.DigWithOptions("recursor-small.com.", environment.ServerAddress(), helpers.DigOpts{Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true})
+
+						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeNameError))
+						Expect(dnsResponse.Answer).To(HaveLen(0))
+
+						recursorEnv.start()
+
+						dnsResponse = helpers.DigWithOptions("recursor-small.com.", environment.ServerAddress(), helpers.DigOpts{Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true})
+
+						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(dnsResponse.Answer).To(HaveLen(2))
+					})
+				})
+
+				Context("slow recursor", func() {
+					It("does not negative cache", func() {
+
+						dnsResponse := helpers.DigWithOptions("alternating-slow-recursor.com.", environment.ServerAddress(), helpers.DigOpts{Id: 1, Timeout: 5*time.Second, Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true})
+
+						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeNameError))
+						Expect(dnsResponse.Answer).To(HaveLen(0))
+
+						dnsResponse = helpers.DigWithOptions("alternating-slow-recursor.com.", environment.ServerAddress(), helpers.DigOpts{Id: 2, Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true})
+
+						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(dnsResponse.Answer).To(HaveLen(1))
+					})
+				})
+
+				Context("recursor returns error", func() {
+					It("does not negative cache", func() {
+
+						dnsResponse := helpers.DigWithOptions("alternating-nameerror-recursor.com.", environment.ServerAddress(), helpers.DigOpts{Id: 1, Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true})
+
+						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeNameError))
+						Expect(dnsResponse.Answer).To(HaveLen(0))
+
+						dnsResponse = helpers.DigWithOptions("alternating-nameerror-recursor.com.", environment.ServerAddress(), helpers.DigOpts{Id: 2, Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true})
+
+						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(dnsResponse.Answer).To(HaveLen(1))
+					})
+				})
+			})
 		})
 
 		Context("handling upstream recursor responses", func() {

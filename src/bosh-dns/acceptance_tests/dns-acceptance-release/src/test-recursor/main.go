@@ -175,6 +175,61 @@ func main() {
 		}
 	})
 
+	dns.HandleFunc("alternating-slow-recursor.com.", func(resp dns.ResponseWriter, req *dns.Msg) {
+		msg := new(dns.Msg)
+		msg.SetReply(req)
+		msg.SetRcode(req, dns.RcodeSuccess)
+		msg.Authoritative = true
+		msg.RecursionAvailable = true
+
+		aRec := &dns.A{
+			Hdr: dns.RR_Header{
+				Name:   req.Question[0].Name,
+				Rrtype: dns.TypeA,
+				Class:  dns.ClassINET,
+				Ttl:    5,
+			},
+			A: net.ParseIP("127.0.0.1").To4(),
+		}
+		msg.Answer = append(msg.Answer, aRec)
+
+		if msg.Id % 2 == 1 {
+			time.Sleep(2 * time.Second)
+		}
+		err := resp.WriteMsg(msg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+
+	dns.HandleFunc("alternating-nameerror-recursor.com.", func(resp dns.ResponseWriter, req *dns.Msg) {
+		msg := new(dns.Msg)
+		msg.SetReply(req)
+		msg.Authoritative = true
+		msg.RecursionAvailable = true
+
+		if msg.Id % 2 == 1 {
+			msg.SetRcode(req, dns.RcodeNameError)
+		} else {
+			msg.SetRcode(req, dns.RcodeSuccess)
+			aRec := &dns.A{
+				Hdr: dns.RR_Header{
+					Name:   req.Question[0].Name,
+					Rrtype: dns.TypeA,
+					Class:  dns.ClassINET,
+					Ttl:    5,
+				},
+				A: net.ParseIP("127.0.0.1").To4(),
+			}
+			msg.Answer = append(msg.Answer, aRec)
+		}
+
+		err := resp.WriteMsg(msg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+
 	dns.HandleFunc("compressed-ip-truncated-recursor-large.com.", func(resp dns.ResponseWriter, req *dns.Msg) {
 		msg := new(dns.Msg)
 		msg.SetReply(req)
