@@ -153,7 +153,7 @@
   revision = "3f9db97f856818214da2e1057f8ad84803971cff"
 
 [[projects]]
-  digest = "1:7beb0b38399dd0f16d27476a1351d9d5a1288757c7c673fece30b65f95fb04e5"
+  digest = "1:61e61e2587bc70b60b1f391b3c360c69c467869d656a068d03c7d5f086cf7ef6"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -163,8 +163,8 @@
     "ptypes/timestamp",
   ]
   pruneopts = "NUT"
-  revision = "1b794fe86dd6a0c7c52ae69b5c9cb0aeedc52afa"
-  version = "v1.4.0"
+  revision = "6c66de79d66478d166c7ea05f5d2ccaf016fbd6b"
+  version = "v1.4.1"
 
 [[projects]]
   digest = "1:ab3ec1fe3e39bac4b3ab63390767766622be35b7cab03f47f787f9ec60522a53"
@@ -276,7 +276,7 @@
   version = "v1.12.0"
 
 [[projects]]
-  digest = "1:ebf3be88d533b1eafffb944d11cf3bfa90f55c0fd1cb7d47d6fe3a1b3fcd3bf0"
+  digest = "1:b2abc1dcb28e20f039afb157a5d8251ff98bf0560d0fc4516227fb8856322f97"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -296,8 +296,8 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "6be6c439588487cd908a3a700795660c2a16dfec"
-  version = "v1.9.0"
+  revision = "1a3d249459a44387a05ca2d2c2b3d5f3db596dcb"
+  version = "v1.10.0"
 
 [[projects]]
   digest = "1:6846140b3f116579680eefdc17145f2bcf064b68deb9febf86b4419a454049af"
@@ -410,7 +410,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6a4ce771562691d3226d780284873e61e58e97079c2d357a9f51ab97e9a99c51"
+  digest = "1:fc8f421b24f4454123bc636499a09bba42c008e1cf1bc2358ecd93b638dbec89"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -432,11 +432,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "e0ff5e5a1de5b859e2d48a2830d7933b3ab5b75f"
+  revision = "7e3656a0809f6f95abd88ac65313578f80b00df2"
 
 [[projects]]
   branch = "master"
-  digest = "1:5743361bd4a2cd297b741a0677734e12164e896c3e69636621a25bfe8694549d"
+  digest = "1:a772da2244ce03c62860881e14d23eb3a73e9e4b2bcbe5c39aca3eb3333e4a83"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -445,7 +445,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "bc7a7d42d5c30f4d0fe808715c002826ce2c624e"
+  revision = "6aff5f38e54f06f432ddfd9b4af5bf0de052bc08"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -507,7 +507,7 @@
     "internal/packagesinternal",
   ]
   pruneopts = "NUT"
-  revision = "542909fd99441a8c7598df366f17343150c16b0d"
+  revision = "2212a7e161a54c76aa397a96d267a553b8aeda7c"
 
 [[projects]]
   branch = "master"
@@ -526,7 +526,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "b979b6f78d84775ef7a93ffc8034924947960f29"
+  revision = "43844f6eee31fd8ee95bfe5daf9a24a45c5f3df2"
 
 [[projects]]
   digest = "1:b645296172b36b957017999510493722a0a919dba205e01421bd3b31051294f5"
@@ -577,7 +577,7 @@
   version = "v1.29.1"
 
 [[projects]]
-  digest = "1:4016f95c99c4974f9aa4a54d08846306a2548797e841b349edb5e1d3a16b3d0c"
+  digest = "1:d9915d65d4e7bbc01bd5b98d4b11b308a0f5d55c3ab3b72e91ebb1e0f02667ca"
   name = "google.golang.org/protobuf"
   packages = [
     "encoding/prototext",
@@ -612,8 +612,8 @@
     "types/known/timestamppb",
   ]
   pruneopts = "NUT"
-  revision = "3b9eee12916ce611400f93d6c2fed2fc2911b0ad"
-  version = "v1.21.0"
+  revision = "8b0d71ac935315b10385aaaf30175de0c74bbba6"
+  version = "v1.22.0"
 
 [[projects]]
   digest = "1:0914bf7efc3e3052163e92b859a89f3b407ad353d7c3b7f59a1bbb4fd05bb25d"
