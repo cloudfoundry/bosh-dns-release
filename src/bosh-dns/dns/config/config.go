@@ -37,9 +37,10 @@ type Config struct {
 
 	API APIConfig `json:"api"`
 
-	Health  HealthConfig  `json:"health"`
-	Metrics MetricsConfig `json:"metrics"`
-	Cache   Cache         `json:"cache"`
+	Health                HealthConfig          `json:"health"`
+	Metrics               MetricsConfig         `json:"metrics"`
+	Cache                 Cache                 `json:"cache"`
+	InternalUpcheckDomain InternalUpcheckDomain `json:"internal_upcheck_domain"`
 }
 
 func (c Config) GetLogLevel() (boshlog.LogLevel, error) {
@@ -75,6 +76,11 @@ type MetricsConfig struct {
 
 type Cache struct {
 	Enabled bool `json:"enabled"`
+}
+
+type InternalUpcheckDomain struct {
+	Enabled  bool   `json:"enabled"`
+	DNSQuery string `json:"dns_query"`
 }
 
 type DurationJSON time.Duration

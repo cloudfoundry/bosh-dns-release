@@ -36,6 +36,10 @@
   cache: {
     enabled: p('cache.enabled')
   },
-  handlers_files_glob: p('handlers_files_glob')
+  handlers_files_glob: p('handlers_files_glob'),
+  internal_upcheck_domain: {
+    enabled: p('internal_upcheck_domain.enabled'),
+    dns_query: "q-i#{spec.index}.#{spec.name}.*.#{spec.deployment}.bosh."
+  }
 }.to_json
 %>

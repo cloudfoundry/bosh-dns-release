@@ -123,6 +123,10 @@ properties:
     default:
       - upcheck.bosh-dns.
 
+  internal_upcheck_domain.enabled:
+    description: "Enables an upcheck, which validates that internal domain resolution is working"
+    default: false
+
   health.enabled:
     description: "Enable healthchecks for DNS resolution"
     default: false

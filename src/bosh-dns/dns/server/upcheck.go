@@ -2,8 +2,9 @@ package server
 
 import (
 	"errors"
-	"net"
+	"fmt"
 	"math/rand"
+	"net"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	"github.com/cloudfoundry/bosh-utils/logger"
@@ -19,18 +20,33 @@ type Upcheck interface {
 }
 
 type DNSAnswerValidatingUpcheck struct {
-	target        string
-	upCheckDomain string
-	network       string
-	logger        logger.Logger
+	target            string
+	upCheckDomain     string
+	network           string
+	qType             uint16
+	checkAnswerRecord bool
+	logger            logger.Logger
 }
 
 func NewDNSAnswerValidatingUpcheck(target string, upcheckDomain string, network string, logger logger.Logger) Upcheck {
 	return DNSAnswerValidatingUpcheck{
-		target:        target,
-		upCheckDomain: upcheckDomain,
-		network:       network,
-		logger:        logger,
+		target:            target,
+		upCheckDomain:     upcheckDomain,
+		network:           network,
+		qType:             dns.TypeA,
+		checkAnswerRecord: true,
+		logger:            logger,
+	}
+}
+
+func NewInternalDNSAnswerValidatingUpcheck(target string, upcheckDomain string, network string, logger logger.Logger) Upcheck {
+	return DNSAnswerValidatingUpcheck{
+		target:            target,
+		upCheckDomain:     upcheckDomain,
+		network:           network,
+		qType:             dns.TypeANY,
+		checkAnswerRecord: false,
+		logger:            logger,
 	}
 }
 
@@ -44,32 +60,34 @@ func (uc DNSAnswerValidatingUpcheck) IsUp() error {
 	dnsClient := dns.Client{Net: uc.network}
 	request := dns.Msg{
 		Question: []dns.Question{
-			{Name: uc.upCheckDomain, Qtype: dns.TypeA},
+			{Name: uc.upCheckDomain, Qtype: uc.qType},
 		},
 	}
 	request.Id = uint16(rand.Uint32())
 
-	uc.logger.Debug("upcheck", "Sending upcheck %d to %s over %s", request.Id, uc.target, uc.network)
+	uc.logger.Debug("upcheck", "Sending upcheck %d with domain %s to %s over %s", request.Id, uc.upCheckDomain, uc.target, uc.network)
 	msg, _, err := dnsClient.Exchange(&request, uc.target)
 
 	if err != nil {
 		return uc.wrapError(err)
 	}
 	if msg.Rcode != dns.RcodeSuccess {
-		return uc.wrapError(errors.New("DNS resolve failed"))
+		return uc.wrapError(errors.New(fmt.Sprintf("DNS resolve failed for upcheck domain %s", uc.upCheckDomain)))
 	}
 
 	if len(msg.Answer) == 0 {
-		return uc.wrapError(errors.New("DNS upcheck found no answers"))
+		return uc.wrapError(errors.New(fmt.Sprintf("DNS upcheck found no answers for upcheck domain %s", uc.upCheckDomain)))
 	}
 
-	aRecord, ok := msg.Answer[0].(*dns.A)
-	if !ok {
-		return uc.wrapError(errors.New("upcheck must return A record"))
-	}
+	if uc.checkAnswerRecord {
+		aRecord, ok := msg.Answer[0].(*dns.A)
+		if !ok {
+			return uc.wrapError(errors.New(fmt.Sprintf("upcheck for domain %s must return A record", uc.upCheckDomain)))
+		}
 
-	if !aRecord.A.Equal(net.ParseIP("127.0.0.1")) {
-		return uc.wrapError(errors.New("DNS upcheck does not return the correct answer"))
+		if !aRecord.A.Equal(net.ParseIP("127.0.0.1")) {
+			return uc.wrapError(errors.New("DNS upcheck does not return the correct answer '127.0.0.1'"))
+		}
 	}
 
 	return nil
