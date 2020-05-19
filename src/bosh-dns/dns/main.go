@@ -183,6 +183,10 @@ func mainExitCode() int {
 		for _, addr := range listenAddrs {
 			upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(addr, upcheckDomain, "udp", logger))
 			upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(addr, upcheckDomain, "tcp", logger))
+			if config.InternalUpcheckDomain.Enabled {
+				upchecks = append(upchecks, server.NewInternalDNSAnswerValidatingUpcheck(addr, config.InternalUpcheckDomain.DNSQuery, "udp", logger))
+				upchecks = append(upchecks, server.NewInternalDNSAnswerValidatingUpcheck(addr, config.InternalUpcheckDomain.DNSQuery, "tcp", logger))
+			}
 		}
 	}
 

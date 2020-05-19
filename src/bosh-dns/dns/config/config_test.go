@@ -107,6 +107,10 @@ var _ = Describe("Config", func() {
 			"cache": map[string]interface{}{
 				"enabled": true,
 			},
+			"internal_upcheck_domain": map[string]interface{}{
+				"enabled":   true,
+				"dns_query": "internal.test.query.",
+			},
 			"handlers": []map[string]interface{}{{
 				"domain": "some.tld.",
 				"cache": map[string]interface{}{
@@ -174,6 +178,10 @@ var _ = Describe("Config", func() {
 			},
 			Cache: config.Cache{
 				Enabled: true,
+			},
+			InternalUpcheckDomain: config.InternalUpcheckDomain{
+				Enabled:  true,
+				DNSQuery: "internal.test.query.",
 			},
 		}))
 	})
