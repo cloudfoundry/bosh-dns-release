@@ -130,18 +130,21 @@ var _ = Describe("ForwardHandler", func() {
 				recursionHandler.ServeDNS(fakeWriter, msg)
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 
-				Expect(fakeLogger.DebugCallCount()).To(Equal(4))
-				tag, logMsg, args := fakeLogger.DebugArgsForCall(1)
+				Expect(fakeLogger.ErrorCallCount()).To(Equal(2))
+				Expect(fakeLogger.DebugCallCount()).To(Equal(2))
+				tag, logMsg, args := fakeLogger.ErrorArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
-				Expect(logMsg).To(Equal("error recursing to %q: %s"))
-				Expect(args[0]).To(Equal("127.0.0.1"))
-				Expect(args[1]).To(Equal("first recursor failed to reply"))
-				tag, logMsg, args = fakeLogger.DebugArgsForCall(2)
+				Expect(logMsg).To(Equal("error recursing for %s to %q: %s"))
+				Expect(args[0]).To(Equal("example.com."))
+				Expect(args[1]).To(Equal("127.0.0.1"))
+				Expect(args[2]).To(Equal("first recursor failed to reply"))
+				tag, logMsg, args = fakeLogger.ErrorArgsForCall(1)
 				Expect(tag).To(Equal("ForwardHandler"))
-				Expect(logMsg).To(Equal("error recursing to %q: %s"))
-				Expect(args[0]).To(Equal("10.244.5.4"))
-				Expect(args[1]).To(Equal("first recursor failed to reply"))
-				tag, logMsg, _ = fakeLogger.DebugArgsForCall(3)
+				Expect(logMsg).To(Equal("error recursing for %s to %q: %s"))
+				Expect(args[0]).To(Equal("example.com."))
+				Expect(args[1]).To(Equal("10.244.5.4"))
+				Expect(args[2]).To(Equal("first recursor failed to reply"))
+				tag, logMsg, _ = fakeLogger.DebugArgsForCall(1)
 				Expect(tag).To(Equal("ForwardHandler"))
 				Expect(logMsg).To(Equal(fmt.Sprintf("handlers.ForwardHandler Request id=%d qtype=[ANY] qname=[example.com.] rcode=NXDOMAIN ancount=0 error=[first recursor failed to reply] time=0ns", msg.Id)))
 
@@ -158,8 +161,8 @@ var _ = Describe("ForwardHandler", func() {
 
 					recursionHandler.ServeDNS(fakeWriter, msg)
 
-					Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
-					tag, msg, args := fakeLogger.ErrorArgsForCall(0)
+					Expect(fakeLogger.ErrorCallCount()).To(Equal(3))
+					tag, msg, args := fakeLogger.ErrorArgsForCall(2)
 					Expect(tag).To(Equal("ForwardHandler"))
 					Expect(fmt.Sprintf(msg, args...)).To(Equal("error writing response: failed to write message"))
 				})
@@ -284,14 +287,15 @@ var _ = Describe("ForwardHandler", func() {
 				})
 
 				It("writes a failure result", func() {
-					Expect(fakeLogger.DebugCallCount()).To(Equal(4))
-					tag, msg, args := fakeLogger.DebugArgsForCall(1)
+					Expect(fakeLogger.DebugCallCount()).To(Equal(2))
+					Expect(fakeLogger.ErrorCallCount()).To(Equal(2))
+					tag, msg, args := fakeLogger.ErrorArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing to "127.0.0.1": failed to exchange`))
+					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing for example.com. to "127.0.0.1": failed to exchange`))
 
-					tag, msg, args = fakeLogger.DebugArgsForCall(2)
+					tag, msg, args = fakeLogger.ErrorArgsForCall(1)
 					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing to "10.244.5.4": failed to exchange`))
+					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing for example.com. to "10.244.5.4": failed to exchange`))
 				})
 
 				Context("when all recursors fail", func() {

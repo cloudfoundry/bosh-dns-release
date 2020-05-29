@@ -61,28 +61,37 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 	err := r.recursors.PerformStrategically(func(recursor string) error {
 		exchangeAnswer, _, err := client.Exchange(request, recursor)
 
+		if err != nil {
+			question := request.Question[0].Name
+			r.logger.Error(r.logTag, "error recursing for %s to %q: %s", question, recursor, err.Error())
+		}
+
 		if exchangeAnswer != nil && exchangeAnswer.MsgHdr.Rcode != dns.RcodeSuccess {
 			question := request.Question[0].Name
 			err = fmt.Errorf("received %s for %s from upstream (recursor: %s)", dns.RcodeToString[exchangeAnswer.MsgHdr.Rcode], question, recursor)
-		}
-
-		if err == nil {
-			r.truncater.TruncateIfNeeded(responseWriter, request, exchangeAnswer)
-
-			r.logRecursor(before, request, exchangeAnswer, "recursor="+recursor)
-			if writeErr := responseWriter.WriteMsg(exchangeAnswer); writeErr != nil {
-				r.logger.Error(r.logTag, "error writing response: %s", writeErr.Error())
+			if exchangeAnswer.MsgHdr.Rcode == dns.RcodeNameError {
+				r.logger.Debug(r.logTag, "error recursing to %q: %s", recursor, err.Error())
+			} else {
+				r.logger.Error(r.logTag, "error recursing to %q: %s", recursor, err.Error())
 			}
-
-			return nil
 		}
 
-		r.logger.Debug(r.logTag, "error recursing to %q: %s", recursor, err.Error())
-		return err
+		if err != nil {
+			return err
+		}
+
+		r.truncater.TruncateIfNeeded(responseWriter, request, exchangeAnswer)
+
+		r.logRecursor(before, request, exchangeAnswer, "recursor="+recursor)
+		if writeErr := responseWriter.WriteMsg(exchangeAnswer); writeErr != nil {
+			r.logger.Error(r.logTag, "error writing response: %s", writeErr.Error())
+		}
+
+		return nil
 	})
 
 	if err != nil {
-		r.writeNoResponseMessage(responseWriter, request, before, "error=["+err.Error() + "]")
+		r.writeNoResponseMessage(responseWriter, request, before, "error=["+err.Error()+"]")
 	}
 }
 
