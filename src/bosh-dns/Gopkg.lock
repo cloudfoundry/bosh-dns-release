@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "fa15a6f68ca08467bc66f79f06a2ddbb53198961"
+  revision = "5ed3e9b4c9de5f42aa56c9d2986ec58fbf6905cc"
 
 [[projects]]
   branch = "master"
@@ -440,11 +440,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "0ba52f642ac2f9371a88bfdde41f4b4e195a37c0"
+  revision = "3c3fba18258b2a1398a025a6aeb7374d2a470009"
 
 [[projects]]
   branch = "master"
-  digest = "1:5dbeb123eab7e5a6baa68ca58ea52446be9cbe520e60210370aa0dadcd31bdc3"
+  digest = "1:8a57a5ddd27159f5177a801e5fa48ed3bcb90e5618952d0efe0fb21b48f9dab9"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -453,7 +453,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "fe76b779f299728f3bd63f77ea2c815504229c3b"
+  revision = "05986578812163b26672dabd9b425240ae2bb0ad"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -494,7 +494,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f23f12a49c0d67463b86a1183fa6bb641a918981d227a71068956e227533e096"
+  digest = "1:7ae4fe7692630ef69a7e7f4922765bbbabe0ade74c6e8f005db933b792dc5c3d"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -515,7 +515,7 @@
     "internal/packagesinternal",
   ]
   pruneopts = "NUT"
-  revision = "cb1345f3a375367f8439bba882e90348348288d9"
+  revision = "a64b76657301576cd9227c1802c591029a395785"
 
 [[projects]]
   branch = "master"
@@ -534,7 +534,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "e9a78aa275b76bea0505dad5d819f8200c85b0eb"
+  revision = "705c0b31589bca1a2230cd79e5d1bfca376f4a7f"
 
 [[projects]]
   digest = "1:b645296172b36b957017999510493722a0a919dba205e01421bd3b31051294f5"
@@ -585,7 +585,7 @@
   version = "v1.29.1"
 
 [[projects]]
-  digest = "1:0693f1182e1896fb3970135212ee3984814b56c571d865b2380ccb90ee9e05a8"
+  digest = "1:310da5159baf5e46ce8d11a0cbcfe4c32cfdcb759e4fb284a71d094304e94be1"
   name = "google.golang.org/protobuf"
   packages = [
     "encoding/prototext",
@@ -620,8 +620,8 @@
     "types/known/timestamppb",
   ]
   pruneopts = "NUT"
-  revision = "d165be301fb1e13390ad453281ded24385fd8ebc"
-  version = "v1.23.0"
+  revision = "5c3dd7024aed895adfe053f26b5a479e991cbca9"
+  version = "v1.24.0"
 
 [[projects]]
   branch = "v1"
