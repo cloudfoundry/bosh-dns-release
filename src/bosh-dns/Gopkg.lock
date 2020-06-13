@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "5bc6670a4f8938772f980ffc9e950ec9f0b3e2b8"
+  revision = "7f673ba6be2a505f686f094901e540ac39233d07"
 
 [[projects]]
   branch = "master"
@@ -249,7 +249,7 @@
   version = "v1.4.4"
 
 [[projects]]
-  digest = "1:5e7faee769715c45db0701dd942f96307b6631c549e0c1a360b51d60da07c688"
+  digest = "1:2c3fcbe823fda10c61a36292cf30d4cb0b14ddff376ea4bd591e6a182979912f"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -281,8 +281,8 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "9bef594084d663dc2c58c2874b5d2edf06071744"
-  version = "v1.12.3"
+  revision = "4943fe132fbcccacbd3d896c73e7ff993558259b"
+  version = "v1.13.0"
 
 [[projects]]
   digest = "1:8d0fe95432805159fd26380192db6173ca74cde6ac507cc0cf8a49978606d3a6"
@@ -369,7 +369,7 @@
   version = "v0.10.0"
 
 [[projects]]
-  digest = "1:e24da9e7d73b52820f67c5c7b8918b3110e3f8842cc8b0518545087376b673fb"
+  digest = "1:515735f7de1dad807d24a72b144f1007efa292467da3787bb1928ccd0575ac67"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -377,8 +377,8 @@
     "internal/util",
   ]
   pruneopts = "NUT"
-  revision = "fce2797c0a7014c95e72ad044cf057299f801660"
-  version = "v0.1.0"
+  revision = "9d2ce6b66e29005fbf51122f14a354308d5d57b2"
+  version = "v0.1.1"
 
 [[projects]]
   branch = "master"
@@ -445,7 +445,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e97ceb0e3f5892297d319dd8265793c6c277ad5e30ee54c2c30d95e1613aac06"
+  digest = "1:b45841d2849b172d05bceab74758324a01cd87f68f29bce11b1f3eb45bbf1803"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -454,7 +454,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "6fdc65e7d9800cc59998e8ac0d9406a20ff5f399"
+  revision = "226ff32320da7b90d0b5bc2365f4e359c466fb78"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -495,7 +495,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7ae4fe7692630ef69a7e7f4922765bbbabe0ade74c6e8f005db933b792dc5c3d"
+  digest = "1:52c43539998eb4c78c45e7568e3ed4994c0721e27f71505026e9c69e79561fac"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -514,9 +514,10 @@
     "internal/gopathwalk",
     "internal/imports",
     "internal/packagesinternal",
+    "internal/typesinternal",
   ]
   pruneopts = "NUT"
-  revision = "c42cb6316fb67c8585afba656680ace2f1638b86"
+  revision = "54c614fe050cac95ace393a63f164149942ecbde"
 
 [[projects]]
   branch = "master"
@@ -535,7 +536,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "12044bf5ea91b8a5a57c6f153de38a18d4193ec9"
+  revision = "7676ae05be1122540d5cebd33d3d5eb63459ecfc"
 
 [[projects]]
   digest = "1:b645296172b36b957017999510493722a0a919dba205e01421bd3b31051294f5"
