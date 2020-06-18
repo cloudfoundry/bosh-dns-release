@@ -262,6 +262,7 @@ var _ = Describe("main", func() {
 
 			cfg.Metrics = config.MetricsConfig{
 				Enabled: metricsEnabled,
+				Address: "127.0.0.1",
 				Port:    53088 + ginkgoconfig.GinkgoConfig.ParallelNode,
 			}
 
