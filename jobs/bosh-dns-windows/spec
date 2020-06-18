@@ -118,6 +118,10 @@ properties:
     description: "Internal port for metrics server to listen to"
     default: 53088
 
+  metrics.address:
+    description: "Address for metrics server to bind to"
+    default: 127.0.0.1
+
   upcheck_domains:
     description: "Domain names that the dns server should respond to with successful answers. Answer ip will always be 127.0.0.1"
     default:

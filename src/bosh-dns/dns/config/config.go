@@ -70,8 +70,9 @@ type HealthConfig struct {
 }
 
 type MetricsConfig struct {
-	Enabled bool `json:"enabled"`
-	Port    int  `json:"port"`
+	Enabled bool   `json:"enabled"`
+	Address string `json:"address"`
+	Port    int    `json:"port"`
 }
 
 type Cache struct {
@@ -120,6 +121,7 @@ func NewDefaultConfig() Config {
 		},
 		Metrics: MetricsConfig{
 			Enabled: false,
+			Address: "127.0.0.1",
 			Port:    53088,
 		},
 		LogLevel: boshlog.AsString(boshlog.LevelDebug),

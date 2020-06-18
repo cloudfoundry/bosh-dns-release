@@ -196,7 +196,7 @@ func mainExitCode() int {
 		metricsServerWrapper *monitoring.MetricsServerWrapper
 	)
 	if config.Metrics.Enabled {
-		metricsAddr := fmt.Sprintf("127.0.0.1:%d", config.Metrics.Port)
+		metricsAddr := fmt.Sprintf("%s:%d", config.Metrics.Address, config.Metrics.Port)
 		metricsServerWrapper = monitoring.NewMetricsServerWrapper(logger, monitoring.MetricsServer(metricsAddr))
 		nextExternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), nextExternalHandler)
 		nextInternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), nextInternalHandler)

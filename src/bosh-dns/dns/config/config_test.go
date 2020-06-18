@@ -40,6 +40,7 @@ var _ = Describe("Config", func() {
 		upcheckDomains          []string
 		upcheckInterval         string
 		synchronousCheckTimeout string
+		metricsAddress          string
 		metricsPort             int
 	)
 
@@ -68,6 +69,7 @@ var _ = Describe("Config", func() {
 		upcheckInterval = fmt.Sprintf("%vs", rand.Int31n(13))
 		synchronousCheckTimeout = "1s"
 		metricsPort = 53088
+		metricsAddress = "127.0.0.1"
 	})
 
 	It("returns config from a config file", func() {
@@ -102,6 +104,7 @@ var _ = Describe("Config", func() {
 			},
 			"metrics": map[string]interface{}{
 				"enabled": true,
+				"address": metricsAddress,
 				"port":    metricsPort,
 			},
 			"cache": map[string]interface{}{
@@ -174,6 +177,7 @@ var _ = Describe("Config", func() {
 			},
 			Metrics: config.MetricsConfig{
 				Enabled: true,
+				Address: metricsAddress,
 				Port:    metricsPort,
 			},
 			Cache: config.Cache{
@@ -274,15 +278,35 @@ var _ = Describe("Config", func() {
 		})
 	})
 
-	Context("metrics.port", func() {
-		It("defaults to 53088 and metrics are disabled by default", func() {
+	Context("metrics", func() {
+		It("is disabled by default", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)
 
 			dnsConfig, err := config.LoadFromFile(configFilePath)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(dnsConfig.Metrics.Enabled).To(Equal(false))
+		})
+
+		It("has sensible defaults for port and address", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
 			Expect(dnsConfig.Metrics.Port).To(Equal(53088))
+			Expect(dnsConfig.Metrics.Address).To(Equal("127.0.0.1"))
+		})
+
+		It("can override the port and address", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "metrics": {"address": "0.0.0.0", "port": 53089, "enabled": true}}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.Metrics.Enabled).To(Equal(true))
+			Expect(dnsConfig.Metrics.Address).To(Equal("0.0.0.0"))
+			Expect(dnsConfig.Metrics.Port).To(Equal(53089))
 		})
 	})
 
