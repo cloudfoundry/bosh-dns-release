@@ -42,5 +42,10 @@
     enabled: p('internal_upcheck_domain.enabled'),
     dns_query: "q-i#{spec.index}.#{spec.name}.*.#{spec.deployment}.bosh."
   }
+  logging: {
+    format: {
+      timestamp: p('logging.format.timestamp')
+    }
+  }
 }.to_json
 %>
