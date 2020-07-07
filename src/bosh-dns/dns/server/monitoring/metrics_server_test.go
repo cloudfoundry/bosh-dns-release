@@ -80,8 +80,8 @@ var _ = Describe("MetricsServerWrapper", func() {
 
 			metritcsReporter.Report(context.Background(), fakeWriter, m)
 
-			Expect(findMetric(metricsServer, "coredns_dns_request_count_total")).To(Equal(1.0))
-			Expect(findMetric(metricsServer, "coredns_dns_response_rcode_count_total")).To(Equal(1.0))
+			Expect(findMetric(metricsServer, "coredns_dns_requests_total")).To(Equal(1.0))
+			Expect(findMetric(metricsServer, "coredns_dns_responses_total")).To(Equal(1.0))
 		})
 	})
 })
