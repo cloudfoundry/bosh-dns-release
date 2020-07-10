@@ -683,7 +683,7 @@ var _ = Describe("main", func() {
 						Expect(err).NotTo(HaveOccurred())
 
 						Expect(resp.StatusCode).To(Equal(http.StatusOK))
-						Expect(string(metrics)).To(MatchRegexp("coredns_dns_requests_total{server=\"\",type=\"ANY\",zone=\".\"} [1-9][0-9]*"))
+						Expect(string(metrics)).To(MatchRegexp("coredns_dns_requests_total{family=\"1\",proto=\"tcp\",server=\"\",type=\"ANY\",zone=\".\"} [1-9][0-9]*"))
 					})
 				})
 
