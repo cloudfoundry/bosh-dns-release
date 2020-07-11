@@ -536,7 +536,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "20a17af7bd0e4f36067f15aa96b4c1ebf1e4b3de"
+  revision = "8698661620497c6fd6244a2fb2ff2518e6a6e892"
 
 [[projects]]
   digest = "1:b0755b8d3a1da2ea5d21d3d68fde6c9486da3c0edc7a1309f931ca36e6bc8c12"
