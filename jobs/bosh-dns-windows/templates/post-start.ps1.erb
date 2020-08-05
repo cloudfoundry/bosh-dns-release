@@ -25,6 +25,7 @@ for ($i=0; $i -lt 5 -and !$resolves; $i++) {
   {
       Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. -Server $address
       Resolve-DnsName -TcpOnly -DnsOnly -Name upcheck.bosh-dns. -Server $address
+      $resolves = $true
   }
   catch
   {
