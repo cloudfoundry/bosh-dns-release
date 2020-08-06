@@ -16,15 +16,28 @@ if (! $up) {
   Exit 1
 }
 
-try
-{
-    Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. -Server $address
-    Resolve-DnsName -TcpOnly -DnsOnly -Name upcheck.bosh-dns. -Server $address
-}
-catch
-{
+$resolves = $false
+
+for ($i=0; $i -lt 5 -and !$resolves; $i++) {
+  ## If we do not throw, then the resolutions finish successfully
+  $resolves = $true
+  try
+  {
+      Resolve-DnsName -DnsOnly -Name upcheck.bosh-dns. -Server $address
+      Resolve-DnsName -TcpOnly -DnsOnly -Name upcheck.bosh-dns. -Server $address
+      $resolves = $true
+  }
+  catch
+  {
     $Host.UI.WriteErrorLine($_.Exception.Message)
-    Exit 1
+    $resolves = $false
+    start-sleep 1
+  }
+}
+
+if (! $resolves) {
+  Write-Error "tried to resolve five times but never succeeded "
+  Exit 1
 }
 
 (Get-Process -name bosh-dns).PriorityClass='High'
