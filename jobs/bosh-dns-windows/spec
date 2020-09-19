@@ -160,3 +160,11 @@ properties:
   health.synchronous_check_timeout:
     description: "Network timeout for synchronous health checks"
     default: 1s
+
+  post_start.retries:
+    description: "During the post start script, number of times to try Resolve-DnsName"
+    default: 20
+
+  post_start.delay:
+    description: "During the post start script, how long to wait between tries of Resolve-DnsName"
+    default: 15s
