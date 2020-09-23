@@ -4,22 +4,21 @@ import (
 	"bosh-dns/dns/server/monitoring"
 
 	"github.com/miekg/dns"
-	"golang.org/x/net/context"
 )
 
 type MetricsDNSHandler struct {
 	metricsReporter monitoring.MetricsReporter
-	next            dns.Handler
+	requestType     monitoring.DNSRequestType
 }
 
-func NewMetricsDNSHandler(metricsReporter monitoring.MetricsReporter, next dns.Handler) MetricsDNSHandler {
+func NewMetricsDNSHandler(metricsReporter monitoring.MetricsReporter, requestType monitoring.DNSRequestType) MetricsDNSHandler {
 	return MetricsDNSHandler{
 		metricsReporter: metricsReporter,
-		next:            next,
+		requestType: requestType,
 	}
 }
 
 func (m MetricsDNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
-	m.metricsReporter.Report(context.Background(), w, r)
-	m.next.ServeDNS(w, r)
+	requestContext := monitoring.NewRequestContext(m.requestType)
+	m.metricsReporter.Report(requestContext, w, r)
 }
