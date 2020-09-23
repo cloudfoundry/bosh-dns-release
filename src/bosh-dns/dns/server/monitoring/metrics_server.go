@@ -36,8 +36,10 @@ func NewMetricsServerWrapper(logger boshlog.Logger, server CoreDNSMetricsServer)
 	}
 }
 
-func MetricsServer(listenAddress string) CoreDNSMetricsServer {
-	return metrics.New(listenAddress)
+func MetricsServer(listenAddress string, internalDNSHandler dns.Handler, externalDNSHandler dns.Handler) CoreDNSMetricsServer {
+	m := metrics.New(listenAddress)
+	m.Next = pluginHandlerAdapter{internalHandler: internalDNSHandler, externalHandler: externalDNSHandler}
+	return m
 }
 
 func (m *MetricsServerWrapper) MetricsReporter() MetricsReporter {

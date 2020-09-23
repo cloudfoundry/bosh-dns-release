@@ -198,14 +198,14 @@ func mainExitCode() int {
 		nextExternalHandler  dns.Handler = forwardHandler
 		metricsServerWrapper *monitoring.MetricsServerWrapper
 	)
-	if config.Metrics.Enabled {
-		metricsAddr := fmt.Sprintf("%s:%d", config.Metrics.Address, config.Metrics.Port)
-		metricsServerWrapper = monitoring.NewMetricsServerWrapper(logger, monitoring.MetricsServer(metricsAddr))
-		nextExternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), nextExternalHandler)
-		nextInternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), nextInternalHandler)
-	}
 	if config.Cache.Enabled {
 		nextExternalHandler = handlers.NewCachingDNSHandler(nextExternalHandler, truncater, clock, logger)
+	}
+	if config.Metrics.Enabled {
+		metricsAddr := fmt.Sprintf("%s:%d", config.Metrics.Address, config.Metrics.Port)
+		metricsServerWrapper = monitoring.NewMetricsServerWrapper(logger, monitoring.MetricsServer(metricsAddr, nextInternalHandler, nextExternalHandler))
+		nextExternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), monitoring.DNSRequestTypeExternal)
+		nextInternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), monitoring.DNSRequestTypeInternal)
 	}
 	mux.Handle(".", nextExternalHandler)
 

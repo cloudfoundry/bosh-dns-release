@@ -2,9 +2,10 @@ package handlers_test
 
 import (
 	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/server/monitoring"
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
-	"bosh-dns/dns/server/monitoring/monitoringfakes"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo"
@@ -14,26 +15,33 @@ import (
 var _ bool = Describe("metricsHandler", func() {
 	var (
 		metricsHandler      handlers.MetricsDNSHandler
-		fakeMetricsReporter *monitoringfakes.FakeMetricsReporter
-		fakeWriter          *internalfakes.FakeResponseWriter
-		fakeDnsHandler      *handlersfakes.FakeDNSHandler
-		response            *dns.Msg
+		metricsReporter     monitoring.MetricsReporter
+		metricsServer       monitoring.CoreDNSMetricsServer
+
+		fakeWriter             *internalfakes.FakeResponseWriter
+		fakeDnsHandlerInternal *handlersfakes.FakeDNSHandler
+		fakeDnsHandlerExternal *handlersfakes.FakeDNSHandler
+		request                *dns.Msg
 	)
 
 	BeforeEach(func() {
-		fakeMetricsReporter = &monitoringfakes.FakeMetricsReporter{}
-		fakeDnsHandler = &handlersfakes.FakeDNSHandler{}
+		fakeDnsHandlerInternal = &handlersfakes.FakeDNSHandler{}
+		fakeDnsHandlerExternal = &handlersfakes.FakeDNSHandler{}
 		fakeWriter = &internalfakes.FakeResponseWriter{}
-		metricsHandler = handlers.NewMetricsDNSHandler(fakeMetricsReporter, fakeDnsHandler)
 
+		metricsServer = monitoring.MetricsServer("127.0.0.1:53088", fakeDnsHandlerInternal, fakeDnsHandlerExternal)
+		fakeLogger := &loggerfakes.FakeLogger{}
+		metricsReporter = monitoring.NewMetricsServerWrapper(fakeLogger, metricsServer).MetricsReporter()
+		metricsHandler = handlers.NewMetricsDNSHandler(metricsReporter, monitoring.DNSRequestTypeExternal)
+		request = &dns.Msg{}
 	})
 
 	Describe("ServeDNS", func() {
-		It("collects metrics", func() {
-			metricsHandler.ServeDNS(fakeWriter, response)
+		It("calls DNS handler", func() {
+			metricsHandler.ServeDNS(fakeWriter, request)
 
-			Expect(fakeMetricsReporter.ReportCallCount()).To(Equal(1))
-			Expect(fakeDnsHandler.ServeDNSCallCount()).To(Equal(1))
+			Expect(fakeDnsHandlerInternal.ServeDNSCallCount()).To(Equal(0))
+			Expect(fakeDnsHandlerExternal.ServeDNSCallCount()).To(Equal(1))
 		})
 	})
 })
