@@ -65,31 +65,21 @@ func New() *Cache {
 // key returns key under which we store the item, -1 will be returned if we don't store the message.
 // Currently we do not cache Truncated, errors zone transfers or dynamic update messages.
 // qname holds the already lowercased qname.
-func key(qname string, m *dns.Msg, t response.Type, do bool) (bool, uint64) {
+func key(qname string, m *dns.Msg, t response.Type) (bool, uint64) {
 	// We don't store truncated responses.
 	if m.Truncated {
 		return false, 0
 	}
-	// Nor errors or Meta or Update
+	// Nor errors or Meta or Update.
 	if t == response.OtherError || t == response.Meta || t == response.Update {
 		return false, 0
 	}
 
-	return true, hash(qname, m.Question[0].Qtype, do)
+	return true, hash(qname, m.Question[0].Qtype)
 }
 
-var one = []byte("1")
-var zero = []byte("0")
-
-func hash(qname string, qtype uint16, do bool) uint64 {
+func hash(qname string, qtype uint16) uint64 {
 	h := fnv.New64()
-
-	if do {
-		h.Write(one)
-	} else {
-		h.Write(zero)
-	}
-
 	h.Write([]byte{byte(qtype >> 8)})
 	h.Write([]byte{byte(qtype)})
 	h.Write([]byte(qname))
@@ -152,14 +142,10 @@ func (w *ResponseWriter) RemoteAddr() net.Addr {
 
 // WriteMsg implements the dns.ResponseWriter interface.
 func (w *ResponseWriter) WriteMsg(res *dns.Msg) error {
-	do := false
-	mt, opt := response.Typify(res, w.now().UTC())
-	if opt != nil {
-		do = opt.Do()
-	}
+	mt, _ := response.Typify(res, w.now().UTC())
 
 	// key returns empty string for anything we don't want to cache.
-	hasKey, key := key(w.state.Name(), res, mt, do)
+	hasKey, key := key(w.state.Name(), res, mt)
 
 	msgTTL := dnsutil.MinimalTTL(res, mt)
 	var duration time.Duration
@@ -187,18 +173,38 @@ func (w *ResponseWriter) WriteMsg(res *dns.Msg) error {
 		return nil
 	}
 
+	do := w.state.Do()
+
 	// Apply capped TTL to this reply to avoid jarring TTL experience 1799 -> 8 (e.g.)
+	// We also may need to filter out DNSSEC records, see toMsg() for similar code.
 	ttl := uint32(duration.Seconds())
-	for i := range res.Answer {
-		res.Answer[i].Header().Ttl = ttl
-	}
-	for i := range res.Ns {
-		res.Ns[i].Header().Ttl = ttl
-	}
-	for i := range res.Extra {
-		if res.Extra[i].Header().Rrtype != dns.TypeOPT {
-			res.Extra[i].Header().Ttl = ttl
+	j := 0
+	for _, r := range res.Answer {
+		if !do && isDNSSEC(r) {
+			continue
 		}
+		res.Answer[j].Header().Ttl = ttl
+		j++
+	}
+	res.Answer = res.Answer[:j]
+	j = 0
+	for _, r := range res.Ns {
+		if !do && isDNSSEC(r) {
+			continue
+		}
+		res.Ns[j].Header().Ttl = ttl
+		j++
+	}
+	res.Ns = res.Ns[:j]
+	j = 0
+	for _, r := range res.Extra {
+		if !do && isDNSSEC(r) {
+			continue
+		}
+		if res.Extra[j].Header().Rrtype != dns.TypeOPT {
+			res.Extra[j].Header().Ttl = ttl
+		}
+		j++
 	}
 	return w.ResponseWriter.WriteMsg(res)
 }
