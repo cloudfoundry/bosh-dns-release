@@ -232,7 +232,7 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "328152dc79b1547da63f950cd4cdd9afd50b2774"
+  revision = "05aa5d4ee32165add31ddef9d5d3946713e5dc5e"
 
 [[projects]]
   branch = "master"
