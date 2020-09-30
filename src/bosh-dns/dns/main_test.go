@@ -706,7 +706,6 @@ var _ = Describe("main", func() {
 
 					It("logs with rfc3339 formating", func() {
 
-						Expect(err).NotTo(HaveOccurred())
 						Eventually(session.Out).Should(gbytes.Say(`(\d+)-(0[1-9]|1[012])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):([0-5]\d):([0-5]\d|60)(\.\d+)?(([Zz])|([\+|\-]([01]\d|2[0-3])))`))
 					})
 				})
@@ -718,7 +717,6 @@ var _ = Describe("main", func() {
 
 					It("does not start the metrics server", func() {
 
-						Expect(err).NotTo(HaveOccurred())
 						Eventually(session.Out).Should(gbytes.Say(`(\d+)\/(0[1-9]|1[012])\/(0[1-9]|[12]\d|3[01])\s([01]\d|2[0-3]):([0-5]\d):([0-5]\d|60)`))
 					})
 				})

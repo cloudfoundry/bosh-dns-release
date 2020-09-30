@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -77,7 +78,7 @@ func mainExitCode() int {
 	}
 
 	logger := boshlog.NewAsyncWriterLogger(level, os.Stdout)
-	if string.EqualFold(config.GetLogTimeFormat(), "rfc3339") {
+	if strings.EqualFold(config.GetLogTimeFormat(), "rfc3339") {
 		logger.UseRFC3339Timestamps()
 	}
 	logTag := "main"
