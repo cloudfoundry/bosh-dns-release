@@ -15,6 +15,7 @@ import (
 const (
 	SmartRecursorSelection  = "smart"
 	SerialRecursorSelection = "serial"
+	RFCFormatting           = "rfc3339"
 )
 
 type Config struct {
@@ -52,12 +53,8 @@ func (c Config) GetLogLevel() (boshlog.LogLevel, error) {
 	return level, nil
 }
 
-func (c Config) GetLogTimeFormat() string {
-	var formatString = "rfc3339"
-	if strings.EqualFold(c.Logging.Format.TimeStamp, "deprecated") {
-		formatString = "deprecated"
-	}
-	return formatString
+func (c Config) UseRFC3339Formatting() bool {
+	return strings.EqualFold(c.Logging.Format.TimeStamp, RFCFormatting)
 }
 
 type APIConfig struct {

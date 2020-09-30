@@ -42,6 +42,7 @@ var _ = Describe("Config", func() {
 		synchronousCheckTimeout string
 		metricsAddress          string
 		metricsPort             int
+		logFormat               string
 	)
 
 	BeforeEach(func() {
@@ -70,6 +71,7 @@ var _ = Describe("Config", func() {
 		synchronousCheckTimeout = "1s"
 		metricsPort = 53088
 		metricsAddress = "127.0.0.1"
+		logFormat = "rfc3339"
 	})
 
 	It("returns config from a config file", func() {
@@ -124,6 +126,11 @@ var _ = Describe("Config", func() {
 					"url":  "http.server.address",
 				},
 			}},
+			"logging": map[string]interface{}{
+				"format": map[string]interface{}{
+					"timestamp": logFormat,
+				},
+			},
 		})
 		configFilePath := writeConfigFile(string(configContents))
 
@@ -186,6 +193,11 @@ var _ = Describe("Config", func() {
 			InternalUpcheckDomain: config.InternalUpcheckDomain{
 				Enabled:  true,
 				DNSQuery: "internal.test.query.",
+			},
+			Logging: config.LoggingConfig{
+				Format: config.FormatConfig{
+					TimeStamp: logFormat,
+				},
 			},
 		}))
 	})
@@ -344,6 +356,25 @@ var _ = Describe("Config", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(len(dnsConfig.Recursors)).To(Equal(0))
+	})
+
+	Context("LoggingFormat", func() {
+		It("is case insensitive", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "logging":{"format": {"timestamp": "Rfc3339"}} }`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.UseRFC3339Formatting()).To(Equal(true))
+		})
+		It("can revert to legacy", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "logging":{"format": {"timestamp": "deprecated"}} }`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.UseRFC3339Formatting()).To(Equal(false))
+		})
 	})
 
 	Context("AppendDefaultDNSPortIfMissing", func() {

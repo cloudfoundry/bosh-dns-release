@@ -118,7 +118,6 @@ var _ = Describe("main", func() {
 			recordsJSONContent  string
 			aliases1JSONContent string
 			aliases2JSONContent string
-			LoggingFormat       string
 		)
 
 		BeforeEach(func() {
@@ -174,7 +173,6 @@ var _ = Describe("main", func() {
 			healthEnabled = true
 			metricsEnabled = false
 			recursorList = []string{}
-			LoggingFormat = "rfc3339"
 		})
 
 		JustBeforeEach(func() {
@@ -698,29 +696,6 @@ var _ = Describe("main", func() {
 						Expect(err.Error()).To(MatchRegexp("connection refused"))
 					})
 				})
-
-				Context("with rfc3339 enabled", func() {
-					BeforeEach(func() {
-						LoggingFormat = "rfc3339"
-					})
-
-					It("logs with rfc3339 formating", func() {
-
-						Eventually(session.Out).Should(gbytes.Say(`(\d+)-(0[1-9]|1[012])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):([0-5]\d):([0-5]\d|60)(\.\d+)?(([Zz])|([\+|\-]([01]\d|2[0-3])))`))
-					})
-				})
-
-				Context("with rfc3339 disabled", func() {
-					BeforeEach(func() {
-						LoggingFormat = "deprecated"
-					})
-
-					It("does not start the metrics server", func() {
-
-						Eventually(session.Out).Should(gbytes.Say(`(\d+)\/(0[1-9]|1[012])\/(0[1-9]|[12]\d|3[01])\s([01]\d|2[0-3]):([0-5]\d):([0-5]\d|60)`))
-					})
-				})
-
 			})
 		})
 

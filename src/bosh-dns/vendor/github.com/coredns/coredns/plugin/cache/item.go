@@ -55,7 +55,7 @@ func newItem(m *dns.Msg, now time.Time, d time.Duration) *item {
 // So we're forced to always set this to 1; regardless if the answer came from the cache or not.
 // On newer systems(e.g. ubuntu 16.04 with glib version 2.23), this issue is resolved.
 // So we may set this bit back to 0 in the future ?
-func (i *item) toMsg(m *dns.Msg, now time.Time) *dns.Msg {
+func (i *item) toMsg(m *dns.Msg, now time.Time, do bool) *dns.Msg {
 	m1 := new(dns.Msg)
 	m1.SetReply(m)
 
@@ -64,6 +64,9 @@ func (i *item) toMsg(m *dns.Msg, now time.Time) *dns.Msg {
 	// just set it to true.
 	m1.Authoritative = true
 	m1.AuthenticatedData = i.AuthenticatedData
+	if !do {
+		m1.AuthenticatedData = false // when DNSSEC was not wanted, it can't be authenticated data.
+	}
 	m1.RecursionAvailable = i.RecursionAvailable
 	m1.Rcode = i.Rcode
 
@@ -72,23 +75,60 @@ func (i *item) toMsg(m *dns.Msg, now time.Time) *dns.Msg {
 	m1.Extra = make([]dns.RR, len(i.Extra))
 
 	ttl := uint32(i.ttl(now))
-	for j, r := range i.Answer {
+	j := 0
+	for _, r := range i.Answer {
+		if !do && isDNSSEC(r) {
+			continue
+		}
 		m1.Answer[j] = dns.Copy(r)
 		m1.Answer[j].Header().Ttl = ttl
+		j++
 	}
-	for j, r := range i.Ns {
+	m1.Answer = m1.Answer[:j]
+	j = 0
+	for _, r := range i.Ns {
+		if !do && isDNSSEC(r) {
+			continue
+		}
 		m1.Ns[j] = dns.Copy(r)
 		m1.Ns[j].Header().Ttl = ttl
+		j++
 	}
+	m1.Ns = m1.Ns[:j]
 	// newItem skips OPT records, so we can just use i.Extra as is.
-	for j, r := range i.Extra {
+	j = 0
+	for _, r := range i.Extra {
+		if !do && isDNSSEC(r) {
+			continue
+		}
 		m1.Extra[j] = dns.Copy(r)
 		m1.Extra[j].Header().Ttl = ttl
+		j++
 	}
+	m1.Extra = m1.Extra[:j]
 	return m1
 }
 
 func (i *item) ttl(now time.Time) int {
 	ttl := int(i.origTTL) - int(now.UTC().Sub(i.stored).Seconds())
 	return ttl
+}
+
+// isDNSSEC returns true if r is a DNSSEC record. NSEC,NSEC3,DS and RRSIG/SIG
+// are DNSSEC records. DNSKEYs is not in this list on the assumption that the
+// client explictly asked for it.
+func isDNSSEC(r dns.RR) bool {
+	switch r.Header().Rrtype {
+	case dns.TypeNSEC:
+		return true
+	case dns.TypeNSEC3:
+		return true
+	case dns.TypeDS:
+		return true
+	case dns.TypeRRSIG:
+		return true
+	case dns.TypeSIG:
+		return true
+	}
+	return false
 }

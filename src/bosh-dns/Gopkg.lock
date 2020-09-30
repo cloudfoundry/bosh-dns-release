@@ -66,7 +66,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:84b55069086d0b24b58d4d5e2ea3bb228520c9f75616e95617f89100a0448b55"
+  digest = "1:93809e5f455032b0923d72c0eb5f40d8a949e447e62de087d8c52cb526352f68"
   name = "github.com/cloudfoundry/bosh-utils"
   packages = [
     "errors",
@@ -80,7 +80,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "f6fb70428c10d1171f002da55e5dd9af26a7cbd1"
+  revision = "fe1f0beb6a7ddeb36790689d1b8a3eb485ca1d51"
 
 [[projects]]
   branch = "master"
@@ -110,7 +110,7 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:01e82e908dc9658fbd1958c5902cb8b8f12a2af77013822cae8725c8a4f42603"
+  digest = "1:7993161d3f8ee9bcf3e671fee19113f71095e7add667dfffbd5e41fb5cb02d9f"
   name = "github.com/coredns/coredns"
   packages = [
     "core/dnsserver",
@@ -141,8 +141,8 @@
     "request",
   ]
   pruneopts = "NUT"
-  revision = "f59c03d09c3a3a12f571ad1087b979325f3dae30"
-  version = "v1.7.0"
+  revision = "aa82ca62fb048562ffaf4aa24d3f2db8d8bd0333"
+  version = "v1.7.1"
 
 [[projects]]
   branch = "master"
@@ -245,8 +245,8 @@
     "winfile",
   ]
   pruneopts = "NUT"
-  revision = "327c577245448d8192115e77a76ea3d6aee88202"
-  version = "v1.4.4"
+  revision = "2683a83f3fb0c35b4908abeecadf6704cede46d1"
+  version = "v1.4.5"
 
 [[projects]]
   digest = "1:e47c0f6ae9106054b6ba64edc37aca055e792b69a120f73e0ffe70d936ee4813"
@@ -337,11 +337,12 @@
   version = "v0.9.1"
 
 [[projects]]
-  digest = "1:097cc61836050f45cbb712ae3bb45d66fba464c16b8fac09907fa3c1f753eff6"
+  digest = "1:31544e30ffb5e8b4ec79e37fad11339d9c35efd88005df65a81fcb3023611de1"
   name = "github.com/prometheus/client_golang"
   packages = [
     "prometheus",
     "prometheus/internal",
+    "prometheus/promauto",
     "prometheus/promhttp",
   ]
   pruneopts = "NUT"
@@ -365,11 +366,11 @@
     "model",
   ]
   pruneopts = "NUT"
-  revision = "f39dfa2b000545b3a763b844012958c275a62266"
-  version = "v0.13.0"
+  revision = "317b7b125e8fddda956d0c9574e5f03f438ed5bc"
+  version = "v0.14.0"
 
 [[projects]]
-  digest = "1:81515c09577f593364fa7ccc4df5d917165e45bf80f543ce2ebb1cbd598e9e57"
+  digest = "1:a43146292497c8e1192830ae0f0c3fa66156821e4391f48415bc9b34ff7c906e"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -377,8 +378,8 @@
     "internal/util",
   ]
   pruneopts = "NUT"
-  revision = "3a900613711866765af641f387dad41b639dbdc4"
-  version = "v0.1.3"
+  revision = "9dece15c53cd5e9fbfbd72d5108adcf526a3f486"
+  version = "v0.2.0"
 
 [[projects]]
   branch = "master"
@@ -390,7 +391,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5746db75ceacb93838e4c7aa871d29401f00bc1f61a77f22dfa59e80ccbffc97"
+  digest = "1:8b5cc33ecfc0bd0cba9f1a10ee26ee5787ced684fb3ee61a522622b4cef89eed"
   name = "golang.org/x/crypto"
   packages = [
     "blowfish",
@@ -404,7 +405,7 @@
     "ssh/internal/bcrypt_pbkdf",
   ]
   pruneopts = "NUT"
-  revision = "5c72a883971a4325f8c62bf07b6d38c20ea47a6a"
+  revision = "afb6bcd081ae5258e9449bf8b9af19593c9b261f"
 
 [[projects]]
   digest = "1:467bb8fb8fa786448b8d486cd0bb7c1a5577dcd7310441aa02a20110cd9f727d"
@@ -419,7 +420,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:239659f21b47bf534aec91794d83d3cc7c7f8eb80e673932a60ab49c386e68de"
+  digest = "1:443e163dac0f147746e5137efa5f31565347e51a744d7a7b9b1d84350e085f21"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -441,11 +442,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "62affa334b73ec65ed44a326519ac12c421905e3"
+  revision = "4acb6c075d100d6ce8757083ec7382423f2a7126"
 
 [[projects]]
   branch = "master"
-  digest = "1:b4d2a6e3661350eeea9799cf4c9dfb2a6684ab67ddf46b355e79c7d2761f6f30"
+  digest = "1:14f86b305e0931ea26c5261e30b5d1e9ec370be27e8293eac9a6863af2ec8b9d"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -454,7 +455,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "af09f7315aff1cbc48fb21d21aa55d67b4f914c5"
+  revision = "4d22bbb62b3c04fb12f5f29e0fbfb42d71d50e82"
 
 [[projects]]
   digest = "1:4e215023f245ee44676ce94f5031f41a7ba2089adf2d9c0175f36eeb6dd62f46"
@@ -495,7 +496,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:dc50816aeebbe629de167913ab2068accfbc83e241c47f0bb836ab88b31e56fa"
+  digest = "1:b63623309bf64a26ccb6aeea7e2681a6225261a938f742225661f47db49f472d"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -517,7 +518,7 @@
     "internal/typesinternal",
   ]
   pruneopts = "NUT"
-  revision = "d647fc2532668b2b75a92f468487b8085e6ed58b"
+  revision = "66e72d03b26e448b1d379376a19a702497da54aa"
 
 [[projects]]
   branch = "master"
@@ -536,7 +537,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "d0d6055680374906d0b570114573e9c22a601ef4"
+  revision = "01fc692af84b3cfa93e0595384cb659ce94be4e8"
 
 [[projects]]
   digest = "1:d10c71065128c005ce1f6f7f5161f5cd64eaa73ecd5e33f96609387168e01933"

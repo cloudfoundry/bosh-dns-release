@@ -78,7 +78,7 @@ func mainExitCode() int {
 	}
 
 	logger := boshlog.NewAsyncWriterLogger(level, os.Stdout)
-	if strings.EqualFold(config.GetLogTimeFormat(), "rfc3339") {
+	if config.UseRFC3339Formatting() {
 		logger.UseRFC3339Timestamps()
 	}
 	logTag := "main"

@@ -33,14 +33,19 @@ func NewServerHTTPS(addr string, group []*Config) (*ServerHTTPS, error) {
 		return nil, err
 	}
 	// The *tls* plugin must make sure that multiple conflicting
-	// TLS configuration return an error: it can only be specified once.
+	// TLS configuration returns an error: it can only be specified once.
 	var tlsConfig *tls.Config
 	for _, conf := range s.zones {
 		// Should we error if some configs *don't* have TLS?
 		tlsConfig = conf.TLSConfig
 	}
 
-	sh := &ServerHTTPS{Server: s, tlsConfig: tlsConfig, httpsServer: new(http.Server)}
+	srv := &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+	sh := &ServerHTTPS{Server: s, tlsConfig: tlsConfig, httpsServer: srv}
 	sh.httpsServer.Handler = sh
 
 	return sh, nil
