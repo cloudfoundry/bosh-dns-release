@@ -76,7 +76,10 @@ func mainExitCode() int {
 		return 1
 	}
 
-	logger := boshlog.NewAsyncWriterLogger(level, os.Stdout, config.GetLogTimeFormat())
+	logger := boshlog.NewAsyncWriterLogger(level, os.Stdout)
+	if string.EqualFold(config.GetLogTimeFormat(), "rfc3339") {
+		logger.UseRFC3339Timestamps()
+	}
 	logTag := "main"
 	logger.Info(logTag, "bosh-dns starting")
 	defer logger.FlushTimeout(5 * time.Second)

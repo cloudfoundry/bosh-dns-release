@@ -54,7 +54,7 @@ func (c Config) GetLogLevel() (boshlog.LogLevel, error) {
 
 func (c Config) GetLogTimeFormat() string {
 	var formatString = "rfc3339"
-	if c.Logging.Format.TimeStamp == "deprecated" {
+	if strings.EqualFold(c.Logging.Format.TimeStamp, "deprecated") {
 		formatString = "deprecated"
 	}
 	return formatString
