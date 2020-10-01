@@ -160,3 +160,7 @@ properties:
   health.synchronous_check_timeout:
     description: "Network timeout for synchronous health checks"
     default: 1s
+
+  logging.format.timestamp:
+    description: "Format for the timestamp in the component logs.  Valid values are 'rfc3339' and 'deprecated'."
+    default: "rfc3339"
