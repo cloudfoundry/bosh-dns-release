@@ -6,10 +6,10 @@ set -ex
 
 # EC keys not approved for DoD use so we turned them off in.WithInternalServiceDefaults()
 # If they get added back in, you can switch back to EC keys.
-openssl ecparam -genkey -name secp384r1 -out test_ca.key
-openssl ecparam -genkey -name secp384r1 -out test_fake_ca.key
-openssl ecparam -genkey -name secp384r1 -out test_server.key
-openssl ecparam -genkey -name secp384r1 -out test_client.key
+#openssl ecparam -genkey -name secp384r1 -out test_ca.key
+#openssl ecparam -genkey -name secp384r1 -out test_fake_ca.key
+#openssl ecparam -genkey -name secp384r1 -out test_server.key
+#openssl ecparam -genkey -name secp384r1 -out test_client.key
 
 openssl genrsa -out test_ca.key 2048
 openssl genrsa -out test_fake_ca.key 2048
@@ -56,6 +56,7 @@ openssl x509 -req -in test_client.csr \
  -extensions req_ext \
  -extfile openssl.client.cnf \
  -days 3649 -sha256 \
+ -out test_client.pem
 
 # Make client cert with the wrong root CA
 openssl x509 -req -in test_client.csr \

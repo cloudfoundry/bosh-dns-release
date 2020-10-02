@@ -18,4 +18,7 @@ CN = director.bosh-dns
 basicConstraints = CA:FALSE
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 extendedKeyUsage = clientAuth
+subjectAltName = @alt_names
 
+[alt_names]
+DNS.1 = director.bosh-dns

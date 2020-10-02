@@ -326,7 +326,7 @@ var _ = Describe("Config", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "timeout": "something"}`)
 
 			_, err := config.LoadFromFile(configFilePath)
-			Expect(err).To(MatchError("time: invalid duration something"))
+			Expect(err).To(MatchError(MatchRegexp(`time\: invalid duration \"?something\"?`)))
 		})
 
 		It("returns error if a timeout cannot be parsed", func() {
