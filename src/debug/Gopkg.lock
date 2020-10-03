@@ -64,7 +64,7 @@
     "system",
   ]
   pruneopts = "NUT"
-  revision = "ecce197fc94d3dbf5190380dd584d432cee15bdb"
+  revision = "fe1f0beb6a7ddeb36790689d1b8a3eb485ca1d51"
 
 [[projects]]
   branch = "master"
@@ -149,8 +149,8 @@
     "winfile",
   ]
   pruneopts = "NUT"
-  revision = "327c577245448d8192115e77a76ea3d6aee88202"
-  version = "v1.4.4"
+  revision = "2683a83f3fb0c35b4908abeecadf6704cede46d1"
+  version = "v1.4.5"
 
 [[projects]]
   digest = "1:50cc40d75346af40727bfc8668fa2cfbda459de3bc2b1c572f8ace247c5b5807"
@@ -220,7 +220,7 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "NUT"
-  revision = "5c72a883971a4325f8c62bf07b6d38c20ea47a6a"
+  revision = "7f63de1d35b0f77fa2b9faea3e7deb402a2383c8"
 
 [[projects]]
   branch = "master"
@@ -232,11 +232,11 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "05aa5d4ee32165add31ddef9d5d3946713e5dc5e"
+  revision = "0a1ea396d57c75b04aff7cb73d169717064c2b8a"
 
 [[projects]]
   branch = "master"
-  digest = "1:6a28d0231e6526e34fd40b9d56d6d927daba8eb89d472ccc1ce93d873474ccce"
+  digest = "1:1098bda12408e0202a98741f67192782cbcaa504f8dbe6b7b9e5122070c93088"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
@@ -244,7 +244,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "d9f96fdee20d1e5115ee34ba4016eae6cfb66eb9"
+  revision = "fdedc70b468f679c263a3ccaefc1faeed3239939"
 
 [[projects]]
   digest = "1:27f1a11ecfee360418360997a013764fd4da959413ad1a8ac2ea5b38508048fc"
