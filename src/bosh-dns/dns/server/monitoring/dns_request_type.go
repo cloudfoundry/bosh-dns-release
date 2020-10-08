@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/miekg/dns"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // DNSRequestType defines which type of dns request is handled
@@ -25,17 +27,54 @@ func NewRequestContext(t DNSRequestType) context.Context {
 }
 
 // NewPluginHandlerAdapter creates a new PluginHandler for both internal and external dns requests
-func NewPluginHandlerAdapter(internalHandler dns.Handler, externalHandler dns.Handler) pluginHandlerAdapter {
-	return pluginHandlerAdapter{internalHandler: internalHandler, externalHandler: externalHandler}
+func NewPluginHandlerAdapter(internalHandler dns.Handler, externalHandler dns.Handler, requestManager RequestCounter) pluginHandlerAdapter {
+	return pluginHandlerAdapter{internalHandler: internalHandler, externalHandler: externalHandler, requestManager: requestManager}
 }
 
 type pluginHandlerAdapter struct {
 	internalHandler dns.Handler
 	externalHandler dns.Handler
+	requestManager RequestCounter
 }
 
 func(p pluginHandlerAdapter) Name() string {
 	return "pluginHandlerAdapter"
+}
+
+//go:generate counterfeiter . RequestCounter
+
+type RequestCounter interface {
+	IncrementExternalCounter()
+	IncrementInternalCounter()
+}
+
+type RequestManager struct {
+	externalRequestsCounter prometheus.Counter
+	internalRequestsCounter prometheus.Counter
+}
+
+func NewRequestManager() RequestManager {
+	extReqs := promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "boshdns",
+		Subsystem: "requests",
+		Name:      "external_total",
+		Help:      "The count of external requests.",
+	})
+	intReqs := promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "boshdns",
+		Subsystem: "requests",
+		Name:      "internal_total",
+		Help:      "The count of internal requests.",
+	})
+	return RequestManager{externalRequestsCounter: extReqs, internalRequestsCounter: intReqs}
+}
+
+func(m RequestManager) IncrementExternalCounter() {
+	m.externalRequestsCounter.Inc()
+}
+
+func(m RequestManager) IncrementInternalCounter() {
+	m.internalRequestsCounter.Inc()
 }
 
 func(p pluginHandlerAdapter) ServeDNS(ctx context.Context, writer dns.ResponseWriter, m *dns.Msg) (int, error) {
@@ -47,8 +86,10 @@ func(p pluginHandlerAdapter) ServeDNS(ctx context.Context, writer dns.ResponseWr
 
 	if p.externalHandler != nil && v == DNSRequestTypeExternal {
 		p.externalHandler.ServeDNS(writer, m)
+		p.requestManager.IncrementExternalCounter()
 	} else if p.internalHandler != nil && v == DNSRequestTypeInternal {
 		p.internalHandler.ServeDNS(writer, m)
+		p.requestManager.IncrementInternalCounter()
 	}
 	return 0, nil
 }
