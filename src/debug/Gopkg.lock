@@ -64,7 +64,7 @@
     "system",
   ]
   pruneopts = "NUT"
-  revision = "fe1f0beb6a7ddeb36790689d1b8a3eb485ca1d51"
+  revision = "e47b266778ec6c76cf031a81ef236fa1bfcf8add"
 
 [[projects]]
   branch = "master"
@@ -115,12 +115,12 @@
   version = "v1.4.0"
 
 [[projects]]
-  digest = "1:1d18e7fbb182d4dd3ef9ad3b6a0a5f3d0f86ccee75b2097db59a7631265d084d"
+  digest = "1:4f2864b803e69a843d2d01c5c8d437a6228ff1bdbec55327e83e9c42e756137d"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "f6c00982823144337e56cdb71c712eaac151d29c"
-  version = "v0.1.7"
+  revision = "2e1b0c1546e0173c0907cf05c67b8ba29ed8b4d1"
+  version = "v0.1.8"
 
 [[projects]]
   digest = "1:4c2c63bfd4c2ae0c5a9d7f75cab1f4fac4e8c2ce58f52a73322cefc9bdb4c5bd"
@@ -232,11 +232,11 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "0a1ea396d57c75b04aff7cb73d169717064c2b8a"
+  revision = "dbdefad45b8998787d2fd6a2edea7fc79838207b"
 
 [[projects]]
   branch = "master"
-  digest = "1:1098bda12408e0202a98741f67192782cbcaa504f8dbe6b7b9e5122070c93088"
+  digest = "1:25901131080bad71abf70f90b4d7c093beca980ac4ed3ea4e61b98bb9e0fa26a"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
@@ -244,7 +244,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "fdedc70b468f679c263a3ccaefc1faeed3239939"
+  revision = "dfb3f7c4e6342ab64fe0e22bde473c74a5699721"
 
 [[projects]]
   digest = "1:27f1a11ecfee360418360997a013764fd4da959413ad1a8ac2ea5b38508048fc"
