@@ -16,6 +16,7 @@ func main() {
 	timeout := flag.Duration("timeout", time.Minute, "amount of time to wait for check to pass")
 	address := flag.String("address", "", "nameserver address")
 	port := flag.Int("port", 53, "nameserver port")
+	logFormat := flag.String("logFormat", "rfc3339", "log format")
 
 	flag.Parse()
 
@@ -24,6 +25,9 @@ func main() {
 	success := make(chan bool)
 
 	log := logger.NewAsyncWriterLogger(logger.LevelDebug, os.Stdout)
+    if *logFormat == "rfc3339" {
+        log.UseRFC3339Timestamps()
+    }
 
 	resolver := getResolver(log, *address, *port)
 	log.Info("wait", "resolving %s", *domain)

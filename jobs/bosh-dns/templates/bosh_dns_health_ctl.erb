@@ -8,6 +8,7 @@ LOG_DIR=/var/vcap/sys/log/bosh-dns
 JOB_DIR=/var/vcap/jobs/bosh-dns
 DNS_PACKAGE=/var/vcap/packages/bosh-dns
 SCRIPT_NAME=bosh_dns_health_ctl
+LOG_FORMAT=<%= p('logging.format.timestamp') %>
 
 function start_logging() {
   exec > >(prepend_datetime >> $LOG_DIR/${SCRIPT_NAME}.stdout.log)
@@ -15,7 +16,11 @@ function start_logging() {
 }
 
 function prepend_datetime() {
-  awk -W interactive '{ system("echo -n [$(date +\"%Y-%m-%d %H:%M:%S%z\")]"); print " " $0 }'
+  if [ "$LOG_FORMAT" == "deprecated" ]; then
+    awk -W interactive '{ system("echo -n [$(date +\"%Y-%m-%d %H:%M:%S%z\")]"); print " " $0 }'
+  else
+    perl -ne 'BEGIN { use Time::HiRes "time"; use POSIX "strftime"; STDOUT->autoflush(1) }; my $t = time; my $fsec = sprintf ".%09d", ($t-int($t))*1000000000; my $time = strftime("[%Y-%m-%dT%H:%M:%S".$fsec."Z]", localtime $t); print("$time $_")'
+  fi
 }
 
 function pid_exists() {

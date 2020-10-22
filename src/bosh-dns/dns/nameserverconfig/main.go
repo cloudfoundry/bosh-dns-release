@@ -18,7 +18,9 @@ import (
 
 func main() {
 	var bindAddress string
+	var logFormat string
 	flag.StringVar(&bindAddress, "bindAddress", "", "address that our dns server is binding to")
+	flag.StringVar(&logFormat, "logFormat", "rfc3339", "log format")
 	flag.Parse()
 
 	if net.ParseIP(bindAddress) == nil {
@@ -26,6 +28,9 @@ func main() {
 	}
 
 	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout)
+    if logFormat == "rfc3339" {
+        logger.UseRFC3339Timestamps()
+    }
 	defer logger.FlushTimeout(5 * time.Second)
 
 	shutdown := make(chan struct{})
