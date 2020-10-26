@@ -78,7 +78,7 @@ var _ bool = Describe("CacheHandler", func() {
 					cacheHandler.ServeDNS(fakeWriter, m)
 					Expect(fakeDnsHandler.ServeDNSCallCount()).To(Equal(1))
 					_, forwardedMsg := fakeDnsHandler.ServeDNSArgsForCall(0)
-					Expect(forwardedMsg).To(Equal(m))
+					Expect(forwardedMsg.Question).To(Equal(m.Question))
 				})
 
 				It("caches the response", func() {
