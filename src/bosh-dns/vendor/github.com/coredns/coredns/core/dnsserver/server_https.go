@@ -9,13 +9,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/plugin/pkg/dnsutil"
 	"github.com/coredns/coredns/plugin/pkg/doh"
 	"github.com/coredns/coredns/plugin/pkg/response"
 	"github.com/coredns/coredns/plugin/pkg/reuseport"
 	"github.com/coredns/coredns/plugin/pkg/transport"
-
-	"github.com/caddyserver/caddy"
 )
 
 // ServerHTTPS represents an instance of a DNS-over-HTTPS server.
@@ -39,6 +38,12 @@ func NewServerHTTPS(addr string, group []*Config) (*ServerHTTPS, error) {
 		// Should we error if some configs *don't* have TLS?
 		tlsConfig = conf.TLSConfig
 	}
+	if tlsConfig == nil {
+		return nil, fmt.Errorf("DoH requires TLS to be configured, see the tls plugin")
+	}
+	// http/2 is recommended when using DoH. We need to specify it in next protos
+	// or the upgrade won't happen.
+	tlsConfig.NextProtos = []string{"h2", "http/1.1"}
 
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,

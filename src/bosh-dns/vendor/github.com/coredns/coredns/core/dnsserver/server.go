@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/metrics/vars"
 	"github.com/coredns/coredns/plugin/pkg/edns"
@@ -20,7 +21,6 @@ import (
 	"github.com/coredns/coredns/plugin/pkg/transport"
 	"github.com/coredns/coredns/request"
 
-	"github.com/caddyserver/caddy"
 	"github.com/miekg/dns"
 	ot "github.com/opentracing/opentracing-go"
 )
@@ -240,6 +240,10 @@ func (s *Server) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 
 	for {
 		if h, ok := s.zones[q[off:]]; ok {
+			if h.pluginChain == nil { // zone defined, but has not got any plugins
+				errorAndMetricsFunc(s.Addr, w, r, dns.RcodeRefused)
+				return
+			}
 			if r.Question[0].Qtype != dns.TypeDS {
 				if h.FilterFunc == nil {
 					rcode, _ := h.pluginChain.ServeDNS(ctx, w, r)

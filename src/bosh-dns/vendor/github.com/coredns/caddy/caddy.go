@@ -20,7 +20,7 @@
 //   2. Call LoadCaddyfile() to get the Caddyfile.
 //      Pass in the name of the server type (like "http").
 //      Make sure the server type's package is imported
-//      (import _ "github.com/caddyserver/caddy/caddyhttp").
+//      (import _ "github.com/coredns/caddy/caddyhttp").
 //   3. Call caddy.Start() to start Caddy. You get back
 //      an Instance, on which you can call Restart() to
 //      restart it or Stop() to stop it.
@@ -43,8 +43,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caddyserver/caddy/caddyfile"
-	"github.com/caddyserver/caddy/telemetry"
+	"github.com/coredns/caddy/caddyfile"
 )
 
 // Configurable application parameters
@@ -600,12 +599,6 @@ func ValidateAndExecuteDirectives(cdyfile Input, inst *Instance, justValidate bo
 		return err
 	}
 
-	for _, sb := range sblocks {
-		for dir := range sb.Tokens {
-			telemetry.AppendUnique("directives", dir)
-		}
-	}
-
 	inst.context = stype.NewContext(inst)
 	if inst.context == nil {
 		return fmt.Errorf("server type %s produced a nil Context", stypeName)
@@ -615,8 +608,6 @@ func ValidateAndExecuteDirectives(cdyfile Input, inst *Instance, justValidate bo
 	if err != nil {
 		return fmt.Errorf("error inspecting server blocks: %v", err)
 	}
-
-	telemetry.Set("num_server_blocks", len(sblocks))
 
 	return executeDirectives(inst, cdyfile.Path(), stype.Directives(), sblocks, justValidate)
 }

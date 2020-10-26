@@ -18,12 +18,12 @@
   revision = "bbe0f8da39b3c59d42217afcc79019c754dabdfb"
 
 [[projects]]
-  digest = "1:bab9bb2c800328fcd24192210229808c748a6af39c1f95900061501003fabb5b"
+  digest = "1:628d0f7f5f0f6295ce5210a265a1f9bf58cf903f6798ff9af3b423c9d416f5b7"
   name = "github.com/bmatcuk/doublestar"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "5cf9061c537e876f6647559ac1a0624115c86b3a"
-  version = "v1.3.2"
+  revision = "eb4d9ac565e08f034b7f2631c445f08dd3975b97"
+  version = "v1.3.3"
 
 [[projects]]
   branch = "master"
@@ -64,7 +64,7 @@
     "system",
   ]
   pruneopts = "NUT"
-  revision = "b4389ba9b13646f51d0b1ff5640970fcdd3b3ffc"
+  revision = "93329b1c361428a37cca70fc118016f32c79a0ff"
 
 [[projects]]
   branch = "master"
@@ -224,7 +224,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:cdcf08b89db31bee537da787626270fef7851962a786fb2961c63551e150d6ee"
+  digest = "1:16f0ee0f81fd29eb5e4f99e318c583b36d809faaabe4afe5c15abfc3584e5290"
   name = "golang.org/x/net"
   packages = [
     "html",
@@ -232,11 +232,11 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "7b1cca2348c07eb09fef635269c8e01611260f9f"
+  revision = "146b70c837a4dc8b0c96afeee04a17816c439c9c"
 
 [[projects]]
   branch = "master"
-  digest = "1:77bae4da731e804b79c5b4999c6a57b0afcf0e75e28b8db9d75b2f29ba76c7c4"
+  digest = "1:43cbd63e05598fe5e9dc68fe25e514fa9871bb30e31a362ae6f408273e8cff12"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
@@ -244,7 +244,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "b09fb700fbb73bb06b1863b5741a67ef6dbfa433"
+  revision = "119d4633e4d1df8fe59217f0e60ce5a83f6b3958"
 
 [[projects]]
   digest = "1:27f1a11ecfee360418360997a013764fd4da959413ad1a8ac2ea5b38508048fc"
