@@ -26,6 +26,7 @@ package unix
 #include <mach/mach.h>
 #include <mach/message.h>
 #include <sys/event.h>
+#include <sys/kern_control.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/param.h>
@@ -70,14 +71,14 @@ struct sockaddr_any {
 */
 import "C"
 
-// Machine characteristics; for internal use.
+// Machine characteristics
 
 const (
-	sizeofPtr      = C.sizeofPtr
-	sizeofShort    = C.sizeof_short
-	sizeofInt      = C.sizeof_int
-	sizeofLong     = C.sizeof_long
-	sizeofLongLong = C.sizeof_longlong
+	SizeofPtr      = C.sizeofPtr
+	SizeofShort    = C.sizeof_short
+	SizeofInt      = C.sizeof_int
+	SizeofLong     = C.sizeof_long
+	SizeofLongLong = C.sizeof_longlong
 )
 
 // Basic types
@@ -124,6 +125,12 @@ type Log2phys_t C.struct_log2phys
 type Fsid C.struct_fsid
 
 type Dirent C.struct_dirent
+
+// File system limits
+
+const (
+	PathMax = C.PATH_MAX
+)
 
 // Sockets
 
@@ -275,3 +282,13 @@ const (
 // uname
 
 type Utsname C.struct_utsname
+
+// Clockinfo
+
+const SizeofClockinfo = C.sizeof_struct_clockinfo
+
+type Clockinfo C.struct_clockinfo
+
+// ctl_info
+
+type CtlInfo C.struct_ctl_info

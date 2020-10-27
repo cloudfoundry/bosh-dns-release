@@ -15,6 +15,7 @@ import (
 const (
 	SmartRecursorSelection  = "smart"
 	SerialRecursorSelection = "serial"
+	RFCFormatting           = "rfc3339"
 )
 
 type Config struct {
@@ -41,6 +42,7 @@ type Config struct {
 	Metrics               MetricsConfig         `json:"metrics"`
 	Cache                 Cache                 `json:"cache"`
 	InternalUpcheckDomain InternalUpcheckDomain `json:"internal_upcheck_domain"`
+	Logging               LoggingConfig         `json:"logging,omitempty"`
 }
 
 func (c Config) GetLogLevel() (boshlog.LogLevel, error) {
@@ -49,6 +51,10 @@ func (c Config) GetLogLevel() (boshlog.LogLevel, error) {
 		return boshlog.LevelNone, err
 	}
 	return level, nil
+}
+
+func (c Config) UseRFC3339Formatting() bool {
+	return strings.EqualFold(c.Logging.Format.TimeStamp, RFCFormatting)
 }
 
 type APIConfig struct {
@@ -82,6 +88,14 @@ type Cache struct {
 type InternalUpcheckDomain struct {
 	Enabled  bool   `json:"enabled"`
 	DNSQuery string `json:"dns_query"`
+}
+
+type LoggingConfig struct {
+	Format FormatConfig `json"format,omitempty"`
+}
+
+type FormatConfig struct {
+	TimeStamp string `json:"timestamp,omitempty"`
 }
 
 type DurationJSON time.Duration

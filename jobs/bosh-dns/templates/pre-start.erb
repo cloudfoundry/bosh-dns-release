@@ -1,4 +1,23 @@
 #!/bin/bash
+LOG_DIR=/var/vcap/sys/log/bosh-dns
+SCRIPT_NAME=pre-start
+
+function start_logging() {
+  exec > >(prepend_datetime >> $LOG_DIR/${SCRIPT_NAME}.stdout.log)
+  exec 2> >(prepend_datetime >> $LOG_DIR/${SCRIPT_NAME}.stderr.log)
+}
+
+function prepend_datetime() {
+  LOG_FORMAT=<%= p('logging.format.timestamp') %>
+
+  if [ "$LOG_FORMAT" == "deprecated" ]; then
+  awk -W interactive '{ system("echo -n [$(date +\"%Y-%m-%d %H:%M:%S%z\")]"); print " " $0 }'
+  else
+  perl -ne 'BEGIN { use Time::HiRes "time"; use POSIX "strftime"; STDOUT->autoflush(1) }; my $t = time; my $fsec = sprintf ".%09d", ($t-int($t))*1000000000; my $time = strftime("[%Y-%m-%dT%H:%M:%S".$fsec."Z]", localtime $t); print("$time $_")'
+  fi
+}
+
+start_logging
 
 <% if p('health.enabled') %>
 /var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl start

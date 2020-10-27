@@ -21,4 +21,4 @@ subjectAltName = @alt_names
 
 [ alt_names ]
 IP.1 = 127.0.0.1
-
+DNS.1 = api.bosh-dns
