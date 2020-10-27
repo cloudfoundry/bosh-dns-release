@@ -164,3 +164,7 @@ properties:
   logging.format.timestamp:
     description: "Format for the timestamp in the component logs.  Valid values are 'rfc3339' and 'deprecated'."
     default: "rfc3339"
+    
+  post_start.timeout:
+    description: "Number of seconds to attempt to retry Resolve-DnsName before timing out the post-start script"
+    default: 60

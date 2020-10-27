@@ -18,7 +18,7 @@ if (! $up) {
 
 $resolves = $false
 
-for ($i=0; $i -lt 5 -and !$resolves; $i++) {
+for ($i=0; $i -lt <%= p('post_start.timeout') %> -and !$resolves; $i++) {
   ## If we do not throw, then the resolutions finish successfully
   $resolves = $true
   try
