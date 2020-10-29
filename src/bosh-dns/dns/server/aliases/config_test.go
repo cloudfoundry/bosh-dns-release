@@ -176,6 +176,22 @@ var _ = Describe("Config", func() {
 		})
 	})
 
+	Describe("DomainResolutions", func() {
+		It("resolves a FQDNs to the aliases that match", func() {
+
+			c := MustNewConfigFromMap(map[string][]string{
+				"something.alias":    {"domain"},
+				"alias-wildcard":     {"*.domain"},
+				"_.alias-underscore": {"_.domain"},
+			})
+
+			Expect(c.DomainResolutions("domain.")).To(Equal([]string{"something.alias."}))
+			// TODO: Do we need to match on * and _ aliases? How do we handle healthiness checks?
+			//Expect(c.DomainResolutions("1.domain.")).To(Equal([]string{"alias-wildcard", "1.alias-underscore"}))
+		})
+
+	})
+
 	Describe("Merge", func() {
 		Context("when the target is an empty config", func() {
 			It("presents the original config", func() {

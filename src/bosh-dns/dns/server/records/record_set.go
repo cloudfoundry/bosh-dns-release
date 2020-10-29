@@ -30,7 +30,7 @@ type recordGroup map[*record.Record]struct{}
 
 var (
 	CriteriaError = errors.New("error parsing query criteria")
-	DomainError = errors.New("no records match requested domain")
+	DomainError   = errors.New("no records match requested domain")
 )
 
 type RecordSet struct {
@@ -240,16 +240,25 @@ func (r *RecordSet) HasIP(ip string) bool {
 	return false
 }
 
-func (r *RecordSet) GetFQDNs(ip string) []string {
+func (r *RecordSet) GetFQDNsAndAliases(ip string) []string {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
 
-	fqdns := []string{}
+	uniqueFqnds := make(map[string]bool)
 
-	for _, r := range r.hosts {
-		if r.IP == ip {
-			fqdns = append(fqdns, dns.Fqdn(r.FQDN))
+	for _, host := range r.hosts {
+		if host.IP == ip {
+			domain := dns.Fqdn(host.FQDN)
+			uniqueFqnds[domain] = true
+			for _, alias := range r.mergedAliasList.DomainResolutions(domain) {
+				uniqueFqnds[alias] = true
+			}
+
 		}
+	}
+	fqdns := []string{}
+	for domain, _ := range uniqueFqnds {
+		fqdns = append(fqdns, domain)
 	}
 	r.logger.Debug("RecordSet", "Domains for %s: %v", ip, fqdns)
 	return fqdns
