@@ -932,6 +932,20 @@ var _ = Describe("main", func() {
 						Expect(len(r.Answer)).To(Equal(1))
 						Expect(r.Answer[0].(*dns.PTR).Ptr).To(Equal("primer-instance.my-group.my-network.my-deployment.primer."))
 					})
+
+					It("responds with alias records", func(){
+						m.SetQuestion("1.0.0.127.in-addr.arpa.", dns.TypePTR)
+						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(len(r.Answer)).To(Equal(3))
+						var answers []string
+						for _, answer := range r.Answer {
+							answers = append(answers, answer.(*dns.PTR).Ptr)
+						}
+						Expect(answers).To(Equal([]string{"my-instance.my-group.my-network.my-deployment.bosh", "one.alias.", "internal.alias."}))
+					})
 				})
 
 				It("logs handler time", func() {
