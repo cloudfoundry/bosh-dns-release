@@ -128,6 +128,32 @@ func (c Config) Resolutions(maybeAlias string) []string {
 	return nil
 }
 
+func (c Config) DomainResolutions(domain string) []string {
+   var resolveAlias []string
+    for alias, domains := range c.aliases {
+        for _, aliasDomain := range domains {
+			if aliasDomain == domain {
+                  resolveAlias = append(resolveAlias, alias)
+                  break
+           }
+        }
+    }
+
+    //for alias, domains := range c.underscoreAliases {
+    //    for _, aliasDomain := range domains {
+    //       if aliasDomain == domain {
+    //              underscoreAlias := "_." + alias
+    //              resolveAlias = append(resolveAlias, underscoreAlias)
+    //              break
+    //       }
+    //    }
+    //}
+
+
+    return resolveAlias
+}
+
+
 func (c Config) Merge(other Config) Config {
 	for alias, targets := range other.aliases {
 		if _, found := c.aliases[alias]; found {

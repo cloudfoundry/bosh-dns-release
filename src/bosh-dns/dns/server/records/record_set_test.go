@@ -44,7 +44,7 @@ var _ = Describe("RecordSet", func() {
 		aliasList             aliases.Config
 		shutdownChan          chan struct{}
 		fakeHealthWatcher     *healthinessfakes.FakeHealthWatcher
-		fakeQueryFilterer    *recordsfakes.FakeFilterer
+		fakeQueryFilterer     *recordsfakes.FakeFilterer
 		fakeHealthFilterer    *recordsfakes.FakeFilterer
 		fakeFiltererFactory   *recordsfakes.FakeFiltererFactory
 		fakeAliasQueryEncoder *recordsfakes.FakeAliasQueryEncoder
@@ -338,10 +338,13 @@ var _ = Describe("RecordSet", func() {
 		})
 	})
 
-	Describe("GetFQDNs", func() {
+	Describe("GetFQDNsAndAliases", func() {
 		BeforeEach(func() {
 			aliasList = mustNewConfigFromMap(map[string][]string{
-				"alias1": {""},
+				"alias1": {"instance0.my-group.my-network.my-deployment.withadot"},
+				// Todo: Ignoreing wildcard and underscore matches for now
+				//"alias2": {"_.my-group.my-network.my-deployment.withadot"},
+				//"alias3": {"*.my-group.my-network.my-deployment.withadot"},
 			})
 		})
 
@@ -368,10 +371,10 @@ var _ = Describe("RecordSet", func() {
 			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(recordSet.GetFQDNs("123.123.123.123")).To(Equal([]string{"instance0.my-group.my-network.my-deployment.withadot.", "0.my-group.my-network.my-deployment.withadot."}))
-			Expect(recordSet.GetFQDNs("123.123.123.124")).To(Equal([]string{"instance1.my-group.my-network.my-deployment.nodot.", "1.my-group.my-network.my-deployment.nodot."}))
-			Expect(recordSet.GetFQDNs("123.123.123.125")).To(Equal([]string{"instance2.my-group.my-network.my-deployment.domain.", "2.my-group.my-network.my-deployment.domain."}))
-			Expect(recordSet.GetFQDNs("127.0.0.1")).To(BeEmpty())
+			Expect(recordSet.GetFQDNsAndAliases("123.123.123.123")).To(Equal([]string{"instance0.my-group.my-network.my-deployment.withadot.", "alias1.", "0.my-group.my-network.my-deployment.withadot."}))
+			Expect(recordSet.GetFQDNsAndAliases("123.123.123.124")).To(Equal([]string{"instance1.my-group.my-network.my-deployment.nodot.", "1.my-group.my-network.my-deployment.nodot."}))
+			Expect(recordSet.GetFQDNsAndAliases("123.123.123.125")).To(Equal([]string{"instance2.my-group.my-network.my-deployment.domain.", "2.my-group.my-network.my-deployment.domain."}))
+			Expect(recordSet.GetFQDNsAndAliases("127.0.0.1")).To(BeEmpty())
 		})
 	})
 
@@ -1330,7 +1333,7 @@ var _ = Describe("RecordSet", func() {
 				go func() {
 					defer GinkgoRecover()
 					for j := 0; j < 10; j++ {
-						domains := recordSet.GetFQDNs("123.123.123.123")
+						domains := recordSet.GetFQDNsAndAliases("123.123.123.123")
 						Expect(domains).To(ConsistOf("instance0.my-group.my-network.my-deployment.domain."))
 					}
 					wg.Done()
