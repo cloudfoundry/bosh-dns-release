@@ -87,8 +87,8 @@
   name = "github.com/fatih/color"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "daf2830f2741ebb735b21709a520c5f37d642d85"
-  version = "v1.9.0"
+  revision = "bc2269661d49c6c9d0e514eef49710556883f3fa"
+  version = "v1.10.0"
 
 [[projects]]
   digest = "1:0914bf7efc3e3052163e92b859a89f3b407ad353d7c3b7f59a1bbb4fd05bb25d"
@@ -224,7 +224,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:16f0ee0f81fd29eb5e4f99e318c583b36d809faaabe4afe5c15abfc3584e5290"
+  digest = "1:11fb737f33e98d11d354b212ecf0a5e794863f7d65178603dcec061d32d9be4c"
   name = "golang.org/x/net"
   packages = [
     "html",
@@ -232,11 +232,11 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "146b70c837a4dc8b0c96afeee04a17816c439c9c"
+  revision = "ff519b6c91021e6316e1df005bc19f266994ddda"
 
 [[projects]]
   branch = "master"
-  digest = "1:43cbd63e05598fe5e9dc68fe25e514fa9871bb30e31a362ae6f408273e8cff12"
+  digest = "1:b7136951fc24271a0f80f89d6c89a9e5577c813b6bd7f3c123c8d5d03bdebb2d"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
@@ -244,10 +244,10 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "119d4633e4d1df8fe59217f0e60ce5a83f6b3958"
+  revision = "201ba4db2418b54b698efb4d8082dcb504617cdb"
 
 [[projects]]
-  digest = "1:27f1a11ecfee360418360997a013764fd4da959413ad1a8ac2ea5b38508048fc"
+  digest = "1:d0ce967403a66635e6b31005cd17ae75c32408a632df63bc4d4e1c20992503f3"
   name = "golang.org/x/text"
   packages = [
     "encoding",
@@ -271,8 +271,8 @@
     "unicode/cldr",
   ]
   pruneopts = "NUT"
-  revision = "23ae387dee1f90d29a23c0e87ee0b46038fbed0e"
-  version = "v0.3.3"
+  revision = "22f1617af38ed4cd65b3b96e02bab267e560155c"
+  version = "v0.3.4"
 
 [[projects]]
   branch = "master"

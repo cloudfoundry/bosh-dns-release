@@ -31,10 +31,40 @@ type SockaddrDatalink struct {
 	raw    RawSockaddrDatalink
 }
 
+// SockaddrCtl implements the Sockaddr interface for AF_SYSTEM type sockets.
+type SockaddrCtl struct {
+	ID   uint32
+	Unit uint32
+	raw  RawSockaddrCtl
+}
+
+func (sa *SockaddrCtl) sockaddr() (unsafe.Pointer, _Socklen, error) {
+	sa.raw.Sc_len = SizeofSockaddrCtl
+	sa.raw.Sc_family = AF_SYSTEM
+	sa.raw.Ss_sysaddr = AF_SYS_CONTROL
+	sa.raw.Sc_id = sa.ID
+	sa.raw.Sc_unit = sa.Unit
+	return unsafe.Pointer(&sa.raw), SizeofSockaddrCtl, nil
+}
+
+func anyToSockaddrGOOS(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
+	switch rsa.Addr.Family {
+	case AF_SYSTEM:
+		pp := (*RawSockaddrCtl)(unsafe.Pointer(rsa))
+		if pp.Ss_sysaddr == AF_SYS_CONTROL {
+			sa := new(SockaddrCtl)
+			sa.ID = pp.Sc_id
+			sa.Unit = pp.Sc_unit
+			return sa, nil
+		}
+	}
+	return nil, EAFNOSUPPORT
+}
+
 // Some external packages rely on SYS___SYSCTL being defined to implement their
 // own sysctl wrappers. Provide it here, even though direct syscalls are no
 // longer supported on darwin.
-const SYS___SYSCTL = 202
+const SYS___SYSCTL = SYS_SYSCTL
 
 // Translate "kern.hostname" to []_C_int{0,1,2,3}.
 func nametomib(name string) (mib []_C_int, err error) {
