@@ -86,7 +86,7 @@ func (a ArpaHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 		return
 	}
 
-	fqdns := a.ipProvider.GetFQDNsAndAliases(ip)
+	fqdns := a.ipProvider.GetFQDNs(ip)
 	if fqdns != nil && len(fqdns) > 0 {
 		m.SetRcode(req, dns.RcodeSuccess)
 		for _, fqdn := range fqdns {

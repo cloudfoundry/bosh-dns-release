@@ -129,28 +129,17 @@ func (c Config) Resolutions(maybeAlias string) []string {
 }
 
 func (c Config) DomainResolutions(domain string) []string {
-   var resolveAlias []string
+   var exactMatchAliases []string
     for alias, domains := range c.aliases {
         for _, aliasDomain := range domains {
 			if aliasDomain == domain {
-                  resolveAlias = append(resolveAlias, alias)
+                  exactMatchAliases = append(exactMatchAliases, alias)
                   break
            }
         }
     }
 
-    //for alias, domains := range c.underscoreAliases {
-    //    for _, aliasDomain := range domains {
-    //       if aliasDomain == domain {
-    //              underscoreAlias := "_." + alias
-    //              resolveAlias = append(resolveAlias, underscoreAlias)
-    //              break
-    //       }
-    //    }
-    //}
-
-
-    return resolveAlias
+    return exactMatchAliases
 }
 
 
