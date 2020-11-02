@@ -944,7 +944,7 @@ var _ = Describe("main", func() {
 						for _, answer := range r.Answer {
 							answers = append(answers, answer.(*dns.PTR).Ptr)
 						}
-						Expect(answers).To(Equal([]string{"my-instance.my-group.my-network.my-deployment.bosh", "one.alias.", "internal.alias."}))
+						Expect(answers).To(Equal([]string{"my-instance.my-group.my-network.my-deployment.bosh.", "one.alias.", "internal.alias."}))
 					})
 				})
 

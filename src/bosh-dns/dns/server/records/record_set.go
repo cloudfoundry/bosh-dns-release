@@ -240,7 +240,7 @@ func (r *RecordSet) HasIP(ip string) bool {
 	return false
 }
 
-func (r *RecordSet) GetFQDNsAndAliases(ip string) []string {
+func (r *RecordSet) GetFQDNs(ip string) []string {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
 
