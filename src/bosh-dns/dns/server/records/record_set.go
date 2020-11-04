@@ -245,12 +245,15 @@ func (r *RecordSet) GetFQDNs(ip string) []string {
 	defer r.recordsMutex.RUnlock()
 
 	uniqueFqnds := make(map[string]bool)
+	for _, alias := range r.mergedAliasList.AliasResolutions(ip) {
+		uniqueFqnds[alias] = true
+	}
 
 	for _, host := range r.hosts {
 		if host.IP == ip {
 			domain := dns.Fqdn(host.FQDN)
 			uniqueFqnds[domain] = true
-			for _, alias := range r.mergedAliasList.DomainResolutions(domain) {
+			for _, alias := range r.mergedAliasList.AliasResolutions(domain) {
 				uniqueFqnds[alias] = true
 			}
 

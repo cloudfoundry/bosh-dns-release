@@ -128,7 +128,7 @@ func (c Config) Resolutions(maybeAlias string) []string {
 	return nil
 }
 
-func (c Config) DomainResolutions(domain string) []string {
+func (c Config) AliasResolutions(domain string) []string {
    var exactMatchAliases []string
     for alias, domains := range c.aliases {
         for _, aliasDomain := range domains {
