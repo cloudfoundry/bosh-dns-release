@@ -64,7 +64,7 @@
     "system",
   ]
   pruneopts = "NUT"
-  revision = "93329b1c361428a37cca70fc118016f32c79a0ff"
+  revision = "f523638849f6b7c351300b85f6f38a408d75fdf9"
 
 [[projects]]
   branch = "master"
@@ -232,11 +232,11 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "ff519b6c91021e6316e1df005bc19f266994ddda"
+  revision = "69a78807bb2bb6d1599c68698c6b009505012083"
 
 [[projects]]
   branch = "master"
-  digest = "1:b7136951fc24271a0f80f89d6c89a9e5577c813b6bd7f3c123c8d5d03bdebb2d"
+  digest = "1:4650e1f88ca1521a69a1d24c1e391e0468d9ee8e23089ebe1b51fd8dedd2f458"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
@@ -244,7 +244,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "201ba4db2418b54b698efb4d8082dcb504617cdb"
+  revision = "215b40eba54ce306708a8f09b19779f5c69bb13f"
 
 [[projects]]
   digest = "1:d0ce967403a66635e6b31005cd17ae75c32408a632df63bc4d4e1c20992503f3"

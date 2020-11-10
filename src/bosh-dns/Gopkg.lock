@@ -68,7 +68,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "93329b1c361428a37cca70fc118016f32c79a0ff"
+  revision = "f523638849f6b7c351300b85f6f38a408d75fdf9"
 
 [[projects]]
   branch = "master"
@@ -349,7 +349,7 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:84866882bba1bdaaa9e9d7fa1d489f872038fc016c40235fd2652d318310c06f"
+  digest = "1:a0ead71b73dca4d9f4eb6b95aa4a9205287fd3d717c6983551c43403b4b8b0e7"
   name = "github.com/prometheus/common"
   packages = [
     "expfmt",
@@ -357,8 +357,8 @@
     "model",
   ]
   pruneopts = "NUT"
-  revision = "317b7b125e8fddda956d0c9574e5f03f438ed5bc"
-  version = "v0.14.0"
+  revision = "20c99e7aa07352b599bd0517cd5ca945f4af0407"
+  version = "v0.15.0"
 
 [[projects]]
   digest = "1:a43146292497c8e1192830ae0f0c3fa66156821e4391f48415bc9b34ff7c906e"
@@ -433,11 +433,11 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "ff519b6c91021e6316e1df005bc19f266994ddda"
+  revision = "69a78807bb2bb6d1599c68698c6b009505012083"
 
 [[projects]]
   branch = "master"
-  digest = "1:89ebeb32ab16478a0cfa6f826c97e446f9038a4321fb1d8a5f265915686d3b9b"
+  digest = "1:2a86a0d900f08b44a66b6c3e8cb4d8dfe8a534d2fed0e6807e4641e2f8b64cd8"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -446,7 +446,7 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "201ba4db2418b54b698efb4d8082dcb504617cdb"
+  revision = "215b40eba54ce306708a8f09b19779f5c69bb13f"
 
 [[projects]]
   digest = "1:b8df5da6a9ef5cfef65d10ed33dbb877cbff969a0cee4934e5603eb405b2eb8f"
@@ -487,7 +487,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a57e734528cbaede2fca90b59473e2967cac683031ddf27789b71300268360aa"
+  digest = "1:a166aec27520f42b3920f7407e1a7488e8577a4ba1aee0f05b26933d23d405a7"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -509,7 +509,7 @@
     "internal/typesinternal",
   ]
   pruneopts = "NUT"
-  revision = "582c62ec74d06936c88d4b760c63cbc2925e69c7"
+  revision = "169ad6d6ecb228fea640e4aadaa45093069211af"
 
 [[projects]]
   branch = "master"
@@ -528,10 +528,10 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "24207fddd1c3948fcd60d2073016c974d694328f"
+  revision = "2640f1f9cdfb8e7a886fe761e88c011c5969a029"
 
 [[projects]]
-  digest = "1:b48dee7800c8bfabca8663f14affbc537a075986e1fd7dcd402d71601518fa31"
+  digest = "1:c1bd0f7bba5fd81b5cdf2efd84076e47a786ec74902180ccb7ebc004b5632166"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -576,8 +576,8 @@
     "tap",
   ]
   pruneopts = "NUT"
-  revision = "a767afcb69f50a47471acd75d5a1ad062561554d"
-  version = "v1.33.1"
+  revision = "56d63285d528c0d33f9bf8c355139d91edc047de"
+  version = "v1.33.2"
 
 [[projects]]
   digest = "1:fd328c5b52e433ea3ffc891bcc4f94469a82bf478558208db2b386aad8a304a1"
