@@ -18,12 +18,12 @@
   revision = "bbe0f8da39b3c59d42217afcc79019c754dabdfb"
 
 [[projects]]
-  digest = "1:628d0f7f5f0f6295ce5210a265a1f9bf58cf903f6798ff9af3b423c9d416f5b7"
+  digest = "1:42800cc5868028ee21ff8252e541b2461244686ba0248cc1e3fcaee5082ded41"
   name = "github.com/bmatcuk/doublestar"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "eb4d9ac565e08f034b7f2631c445f08dd3975b97"
-  version = "v1.3.3"
+  revision = "ec92414acf6b37022a5de45c2cfb10569c523730"
+  version = "v1.3.4"
 
 [[projects]]
   branch = "master"
@@ -64,7 +64,7 @@
     "system",
   ]
   pruneopts = "NUT"
-  revision = "f523638849f6b7c351300b85f6f38a408d75fdf9"
+  revision = "4ba3e9fa0520912d1358b87e53c86c771f0bb435"
 
 [[projects]]
   branch = "master"
@@ -216,11 +216,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c381e2867d447cca3e74dbfb0c8ed371a4583c694b35838c5c642a2b79480fc6"
+  digest = "1:c9d0c7346c55bc13efdb3dbf13938e909d22a7a7bf115af69a79e25553513bd0"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "NUT"
-  revision = "9e8e0b390897c84cad53ebe9ed2d1d331a5394d9"
+  revision = "be400aefbc4c83e9aab51e82b8d4b12760653b47"
 
 [[projects]]
   branch = "master"
@@ -232,19 +232,28 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "69a78807bb2bb6d1599c68698c6b009505012083"
+  revision = "c7110b5ffcbb9f2ac4de9fbd2600e37d42473a9a"
 
 [[projects]]
   branch = "master"
-  digest = "1:4650e1f88ca1521a69a1d24c1e391e0468d9ee8e23089ebe1b51fd8dedd2f458"
+  digest = "1:dfb68fb1b3338f9c32182e6eeaa8490395c0a5383a433c8d3d7504b7a8576013"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
+    "plan9",
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "215b40eba54ce306708a8f09b19779f5c69bb13f"
+  revision = "ed752295db8857b3a7f36c3f57e38509cadff471"
+
+[[projects]]
+  branch = "master"
+  digest = "1:7ac1379f114853e9fe4948e83191493603034d41b84333636b17bd0e8225ec2e"
+  name = "golang.org/x/term"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "7de9c90e9dd184706b838f536a1cbf40a296ddb7"
 
 [[projects]]
   digest = "1:d0ce967403a66635e6b31005cd17ae75c32408a632df63bc4d4e1c20992503f3"
@@ -329,12 +338,12 @@
   revision = "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
 
 [[projects]]
-  digest = "1:62a89978829993fb84e755bff5ae0e3d84837228898fd55b1a88a885036e1e51"
+  digest = "1:0b74852e34746033bb64ec0b21c16a4952917bdaf344446a1682f101c042e610"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "0b1645d91e851e735d3e23330303ce81f70adbe3"
-  version = "v2.3.0"
+  revision = "7649d4548cb53a614db133b2a8ac1f31859dda8c"
+  version = "v2.4.0"
 
 [solve-meta]
   analyzer-name = "dep"
