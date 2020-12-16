@@ -940,11 +940,12 @@ var _ = Describe("main", func() {
 						Expect(err).NotTo(HaveOccurred())
 						Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 						Expect(len(r.Answer)).To(Equal(3))
-						var answers []string
 						for _, answer := range r.Answer {
-							answers = append(answers, answer.(*dns.PTR).Ptr)
+							Expect(answer.(*dns.PTR).Ptr).Should(BeElementOf([]string{
+								"my-instance.my-group.my-network.my-deployment.bosh.",
+								"one.alias.",
+								"internal.alias."}))
 						}
-						Expect(answers).To(Equal([]string{"my-instance.my-group.my-network.my-deployment.bosh.", "one.alias.", "internal.alias."}))
 					})
 				})
 
