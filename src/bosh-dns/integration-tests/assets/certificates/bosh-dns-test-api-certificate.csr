@@ -1,3 +1,48 @@
+Certificate Request:
+    Data:
+        Version: 0 (0x0)
+        Subject: CN=bosh-dns-test-api-certificate
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:d3:04:55:48:d4:24:dc:04:c0:c0:71:91:54:87:
+                    bb:a3:9c:3d:a8:10:d3:bf:bd:91:85:08:07:ef:4c:
+                    cb:44:ec:0c:fc:30:27:3b:ab:11:e7:27:21:ee:0a:
+                    5e:b5:31:6f:ca:a9:3e:83:69:e5:ef:4e:6c:73:5e:
+                    c1:de:5a:07:62:8e:48:46:25:d9:a5:c1:b6:f8:41:
+                    bd:21:de:97:97:62:b7:26:fc:2f:3d:29:e9:9f:c9:
+                    10:a8:1b:aa:01:54:06:db:4f:2a:06:e2:2b:0f:95:
+                    2c:3a:98:e7:69:31:1f:ad:c6:9a:58:32:67:c8:76:
+                    8b:e9:4f:01:8a:a8:14:0e:45:f9:6e:6a:62:50:0e:
+                    c1:a3:76:00:95:5c:6e:10:eb:8c:6e:d7:0c:34:54:
+                    2b:9e:f9:77:c1:a8:e9:9a:31:98:7b:ea:2c:5d:6e:
+                    d3:59:6d:2e:99:0b:84:08:6e:df:c8:01:cd:ae:96:
+                    4a:cc:e6:2e:bd:33:bb:f3:ae:c6:81:5a:08:62:6a:
+                    20:fe:0e:b5:eb:7e:33:5b:bf:44:9d:93:f2:0d:cd:
+                    10:8e:82:05:b2:c4:98:f8:75:dc:a2:ad:60:41:81:
+                    83:86:9d:1f:b5:0a:62:b9:05:64:96:62:2e:ef:69:
+                    15:bc:e6:c8:d5:b1:97:14:55:a9:82:54:6a:d7:c5:
+                    44:b7
+                Exponent: 65537 (0x10001)
+        Attributes:
+            a0:00
+    Signature Algorithm: sha1WithRSAEncryption
+         81:9a:4b:39:07:e2:4c:f2:fc:ef:79:8d:ff:17:bf:8a:de:19:
+         27:85:25:8a:08:61:16:d1:51:73:12:a1:27:a9:49:24:0d:33:
+         43:fd:17:d5:9f:44:b2:0e:34:3a:f2:13:ee:c5:cb:43:cd:15:
+         ad:02:67:2f:15:3c:03:23:c7:32:08:2f:c7:04:7a:99:dc:e9:
+         42:c1:d4:76:40:e4:05:08:58:dc:30:ed:2e:9c:bf:4b:96:8e:
+         57:a8:79:52:0e:3b:28:41:8d:51:ef:35:12:26:f3:ea:74:3e:
+         7c:ce:ea:0a:e4:1a:9e:7a:2b:3b:8a:16:01:90:e3:b6:a7:58:
+         f0:06:83:8d:69:27:47:1c:27:52:08:41:76:81:a0:e3:ce:5c:
+         e8:6a:c5:b6:ab:fe:1f:5d:90:4b:e3:0c:30:bb:6f:16:94:62:
+         7d:27:fb:b9:89:0f:36:1c:00:67:e7:88:c1:40:cb:3f:2c:51:
+         24:19:94:09:dc:36:40:f1:11:30:e0:6d:e7:e3:77:1f:da:a4:
+         35:a2:8f:3d:14:80:34:b1:31:27:6d:3a:e7:ad:b1:12:5b:ea:
+         17:7f:7e:e9:97:a4:80:9e:3f:d9:07:d2:39:d5:18:74:f7:ac:
+         5e:97:08:75:fa:1d:4c:ba:8b:57:d5:c1:12:8c:6f:cb:20:6d:
+         56:34:00:8c
 -----BEGIN CERTIFICATE REQUEST-----
 MIICbTCCAVUCAQAwKDEmMCQGA1UEAxMdYm9zaC1kbnMtdGVzdC1hcGktY2VydGlm
 aWNhdGUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDTBFVI1CTcBMDA
@@ -6,11 +51,11 @@ XsHeWgdijkhGJdmlwbb4Qb0h3peXYrcm/C89KemfyRCoG6oBVAbbTyoG4isPlSw6
 mOdpMR+txppYMmfIdovpTwGKqBQORfluamJQDsGjdgCVXG4Q64xu1ww0VCue+XfB
 qOmaMZh76ixdbtNZbS6ZC4QIbt/IAc2ulkrM5i69M7vzrsaBWghiaiD+DrXrfjNb
 v0Sdk/INzRCOggWyxJj4ddyirWBBgYOGnR+1CmK5BWSWYi7vaRW85sjVsZcUVamC
-VGrXxUS3AgMBAAGgADANBgkqhkiG9w0BAQsFAAOCAQEAQTqqoDcmWwgONPD9lh25
-7tMZm14L0jNEMdE85ihZAF9sw/s4cBK71u8gD4OklRBCz2Puk5AWNy8fdO9d43XR
-g85XPtBqOPgI+vVdPYiR9qjuvy4cCjMh17ex2PozqDjUbGPgCWdAixBLugYTv7w5
-R2rP2a/7/eefzZHukwk+1dWRqrjRDMb8Q2PLTVubGZ8SHI4HbJSqs45hmFpYFV/Q
-I0cvQoLuSYDADfdfx4x/CnDkdFZ50YaeXkx9r0ZRtnxeZ7mYKtHHiSTKbW955bUi
-tkOuP9B4eQ1Zy486CVU96/9OodmobEDGaf34DoZvK8CCZ+cTdlrfgtYbCI9RGwQA
-wg==
+VGrXxUS3AgMBAAGgADANBgkqhkiG9w0BAQUFAAOCAQEAgZpLOQfiTPL873mN/xe/
+it4ZJ4UlighhFtFRcxKhJ6lJJA0zQ/0X1Z9Esg40OvIT7sXLQ80VrQJnLxU8AyPH
+MggvxwR6mdzpQsHUdkDkBQhY3DDtLpy/S5aOV6h5Ug47KEGNUe81Eibz6nQ+fM7q
+CuQannorO4oWAZDjtqdY8AaDjWknRxwnUghBdoGg485c6GrFtqv+H12QS+MMMLtv
+FpRifSf7uYkPNhwAZ+eIwUDLPyxRJBmUCdw2QPERMOBt5+N3H9qkNaKPPRSANLEx
+J206562xElvqF39+6ZekgJ4/2QfSOdUYdPesXpcIdfodTLqLV9XBEoxvyyBtVjQA
+jA==
 -----END CERTIFICATE REQUEST-----
