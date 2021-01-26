@@ -371,7 +371,7 @@ var _ = Describe("RecordSet", func() {
 
 			Expect(recordSet.GetFQDNs("123.123.123.123")).To(ConsistOf("alias1.", "instance0.my-group.my-network.my-deployment.withadot.", "0.my-group.my-network.my-deployment.withadot."))
 			Expect(recordSet.GetFQDNs("123.123.123.124")).To(ConsistOf("instance1.my-group.my-network.my-deployment.nodot.", "1.my-group.my-network.my-deployment.nodot.", "alias2."))
-			Expect(recordSet.GetFQDNs("123.123.123.125")).To(Equal([]string{"instance2.my-group.my-network.my-deployment.domain.", "2.my-group.my-network.my-deployment.domain."}))
+			Expect(recordSet.GetFQDNs("123.123.123.125")).To(ConsistOf("instance2.my-group.my-network.my-deployment.domain.", "2.my-group.my-network.my-deployment.domain."))
 			Expect(recordSet.GetFQDNs("127.0.0.1")).To(BeEmpty())
 		})
 	})
