@@ -1,3 +1,7 @@
+// Copyright 2019 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 // +build ignore
 
 // mkstdlib generates the zstdlib.go file, containing the Go standard
@@ -10,11 +14,11 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
+	exec "golang.org/x/sys/execabs"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"

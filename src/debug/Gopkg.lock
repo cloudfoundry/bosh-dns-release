@@ -64,7 +64,7 @@
     "system",
   ]
   pruneopts = "NUT"
-  revision = "4ba3e9fa0520912d1358b87e53c86c771f0bb435"
+  revision = "f3833792f5354be764bb8e58906e3e651be45854"
 
 [[projects]]
   branch = "master"
@@ -131,15 +131,15 @@
   version = "v0.0.12"
 
 [[projects]]
-  digest = "1:f4662cffd65f141f68c0fd7faf9e945316c38d3a66c7ee79946b9238f2c0f327"
+  digest = "1:36de80b02e6ff20e07872007fa17f55d0f8e4c73c0c191abdc19286b3768cf30"
   name = "github.com/mattn/go-runewidth"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "14e809f6d78fcf9f48ff9b70981472b64c05f754"
-  version = "v0.0.9"
+  revision = "59616a248b91ae20bf3eb93636a24c87d9ce6cea"
+  version = "v0.0.10"
 
 [[projects]]
-  digest = "1:17995b544cdab2ad44419d8c9f551416c63c0fdee5a8b916373188623ed77ea5"
+  digest = "1:1f3230329bc193cc4ce7c622998afc3d311fa11f78b9efd54fbdecf6e8bef637"
   name = "github.com/nxadm/tail"
   packages = [
     ".",
@@ -149,8 +149,8 @@
     "winfile",
   ]
   pruneopts = "NUT"
-  revision = "2683a83f3fb0c35b4908abeecadf6704cede46d1"
-  version = "v1.4.5"
+  revision = "ed4934787418681691173f6f7aa0499582e7611a"
+  version = "v1.4.6"
 
 [[projects]]
   digest = "1:e8185fbeb206515e08c0a5ee0aed0814e391c39c6a5c92a5878108fd1ed4d3d1"
@@ -181,7 +181,7 @@
   version = "v1.14.2"
 
 [[projects]]
-  digest = "1:34be348337536eaa0dac9b418d503faaf0d735a853ef4ce938564ad036ba4a80"
+  digest = "1:d1a4158009d329bdd236ab98789a598c4e0b2595d60f132fdebacaa73c0b1d13"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -201,8 +201,16 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "46e0cd22c9d45e5745e994abc67b128504ad7727"
-  version = "v1.10.3"
+  revision = "f9a2b5d71f6c392d3169b2f53d4c3531062044c4"
+  version = "v1.10.4"
+
+[[projects]]
+  digest = "1:e644b02192accfca6f351cf2611df249d502ab75f8cebb2e8b3976a3d6ee75f8"
+  name = "github.com/rivo/uniseg"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "75711fccf6a3e85bc74c241e2dddd06a9bc9e53d"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:0dbc6fba2dc1190b37bd69a44a8f898221e5ea5d41942b7b50a4f2c32b928462"
@@ -220,7 +228,7 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "NUT"
-  revision = "be400aefbc4c83e9aab51e82b8d4b12760653b47"
+  revision = "eec23a3978adcfd26c29f4153eaa3e3d9b2cc53a"
 
 [[projects]]
   branch = "master"
@@ -232,11 +240,11 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "c7110b5ffcbb9f2ac4de9fbd2600e37d42473a9a"
+  revision = "5f4716e94777e714bc2fb3e3a44599cb40817aac"
 
 [[projects]]
   branch = "master"
-  digest = "1:dfb68fb1b3338f9c32182e6eeaa8490395c0a5383a433c8d3d7504b7a8576013"
+  digest = "1:f610de5c7c8cbd28cbc6ee8405063c495c06f9e5a390d0112a7e3310f632e148"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
@@ -245,18 +253,18 @@
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "ed752295db8857b3a7f36c3f57e38509cadff471"
+  revision = "22da62e12c0cd9c1da93581e1113ca4d82a5be14"
 
 [[projects]]
   branch = "master"
-  digest = "1:7ac1379f114853e9fe4948e83191493603034d41b84333636b17bd0e8225ec2e"
+  digest = "1:9545dfc718dfc04f2bf1bd83110eea358887b778dfddcdc33fb54ce7d50dc88c"
   name = "golang.org/x/term"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "7de9c90e9dd184706b838f536a1cbf40a296ddb7"
+  revision = "2321bbc49cbf8303ea9834c419750e793e31be73"
 
 [[projects]]
-  digest = "1:d0ce967403a66635e6b31005cd17ae75c32408a632df63bc4d4e1c20992503f3"
+  digest = "1:71f4b937710573df214b940f7cc1dc0fc816974db00dba006f7a8a5dbe20c07e"
   name = "golang.org/x/text"
   packages = [
     "encoding",
@@ -280,8 +288,8 @@
     "unicode/cldr",
   ]
   pruneopts = "NUT"
-  revision = "22f1617af38ed4cd65b3b96e02bab267e560155c"
-  version = "v0.3.4"
+  revision = "75a595aef632b07c6eeaaa805adb6f0f66e4130e"
+  version = "v0.3.5"
 
 [[projects]]
   branch = "master"

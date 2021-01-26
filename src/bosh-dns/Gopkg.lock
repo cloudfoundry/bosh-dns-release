@@ -68,7 +68,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "4ba3e9fa0520912d1358b87e53c86c771f0bb435"
+  revision = "f3833792f5354be764bb8e58906e3e651be45854"
 
 [[projects]]
   branch = "master"
@@ -109,7 +109,7 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:60b620993dd2b43d58dab271347155038e46a1cd2aa2d3c37aec4ae5aea122d3"
+  digest = "1:b408fac11beba66654536b891352e980c2d0932881b4a3ed38da9e3d349f7bf2"
   name = "github.com/coredns/coredns"
   packages = [
     "core/dnsserver",
@@ -140,8 +140,8 @@
     "request",
   ]
   pruneopts = "NUT"
-  revision = "054c9ae1fbea39d586652664fbc9a5cedbd97618"
-  version = "v1.8.0"
+  revision = "95622f4c9ae65de9465b5fb022711e95be4df2ce"
+  version = "v1.8.1"
 
 [[projects]]
   branch = "master"
@@ -226,7 +226,7 @@
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
-  digest = "1:17995b544cdab2ad44419d8c9f551416c63c0fdee5a8b916373188623ed77ea5"
+  digest = "1:1f3230329bc193cc4ce7c622998afc3d311fa11f78b9efd54fbdecf6e8bef637"
   name = "github.com/nxadm/tail"
   packages = [
     ".",
@@ -236,8 +236,8 @@
     "winfile",
   ]
   pruneopts = "NUT"
-  revision = "2683a83f3fb0c35b4908abeecadf6704cede46d1"
-  version = "v1.4.5"
+  revision = "ed4934787418681691173f6f7aa0499582e7611a"
+  version = "v1.4.6"
 
 [[projects]]
   digest = "1:ee18304347399cf8810d5079ff61465c92a925342f21f6d617032952ba02e04e"
@@ -276,7 +276,7 @@
   version = "v1.14.2"
 
 [[projects]]
-  digest = "1:34be348337536eaa0dac9b418d503faaf0d735a853ef4ce938564ad036ba4a80"
+  digest = "1:d1a4158009d329bdd236ab98789a598c4e0b2595d60f132fdebacaa73c0b1d13"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -296,8 +296,8 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "46e0cd22c9d45e5745e994abc67b128504ad7727"
-  version = "v1.10.3"
+  revision = "f9a2b5d71f6c392d3169b2f53d4c3531062044c4"
+  version = "v1.10.4"
 
 [[projects]]
   digest = "1:c0d29acf123ca922207e9c30c0fe6caa181c2572156aa24103420956b2fc6f4c"
@@ -361,7 +361,7 @@
   version = "v0.15.0"
 
 [[projects]]
-  digest = "1:a43146292497c8e1192830ae0f0c3fa66156821e4391f48415bc9b34ff7c906e"
+  digest = "1:1b97f9f47fdd6a4b89166e654aa75fc4a0573c62b78a9a728ad37753fae8f045"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -369,8 +369,8 @@
     "internal/util",
   ]
   pruneopts = "NUT"
-  revision = "9dece15c53cd5e9fbfbd72d5108adcf526a3f486"
-  version = "v0.2.0"
+  revision = "d3334bf511d8b1570144f488cc14d08b539df979"
+  version = "v0.3.0"
 
 [[projects]]
   branch = "master"
@@ -378,11 +378,11 @@
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "10cdbea86bc0b922507ce91d43f4f78a5bea2e8f"
+  revision = "cf1acfcdf4751e0554ffa765d03e479ec491cad6"
 
 [[projects]]
   branch = "master"
-  digest = "1:7f86085412e967bd1156c7b32dc93c0d73733d4dd9c1aa67cd242413fc4067a3"
+  digest = "1:dfce02e9800527f7a7278e6c75de3fe5e8493a500fa2b70d29486266a8e6c70d"
   name = "golang.org/x/crypto"
   packages = [
     "blowfish",
@@ -396,7 +396,7 @@
     "ssh/internal/bcrypt_pbkdf",
   ]
   pruneopts = "NUT"
-  revision = "be400aefbc4c83e9aab51e82b8d4b12760653b47"
+  revision = "eec23a3978adcfd26c29f4153eaa3e3d9b2cc53a"
 
 [[projects]]
   digest = "1:4c6e4e4e7d0f334dd6201c3172d9795c5c87e19b2612a83ec309c899c4aa0903"
@@ -406,8 +406,8 @@
     "semver",
   ]
   pruneopts = "NUT"
-  revision = "3bfbaada29be620417d472f349d55056286b2119"
-  version = "v0.4.0"
+  revision = "6ce8bb3f08e0e47592fe93e007071d86dcf214bb"
+  version = "v0.4.1"
 
 [[projects]]
   branch = "master"
@@ -433,23 +433,24 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "c7110b5ffcbb9f2ac4de9fbd2600e37d42473a9a"
+  revision = "5f4716e94777e714bc2fb3e3a44599cb40817aac"
 
 [[projects]]
   branch = "master"
-  digest = "1:7be4d68b334614b1c504eaed876ca83ec0936d584ced5966ca6e3eb57bac49bb"
+  digest = "1:03372233d36274f8ea33dfacec2d9d058dc77790c880e624b1628263098cb8cc"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
+    "execabs",
     "internal/unsafeheader",
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "ed752295db8857b3a7f36c3f57e38509cadff471"
+  revision = "22da62e12c0cd9c1da93581e1113ca4d82a5be14"
 
 [[projects]]
-  digest = "1:b8df5da6a9ef5cfef65d10ed33dbb877cbff969a0cee4934e5603eb405b2eb8f"
+  digest = "1:e8955cd29d668878de0082fda242a1fa9fd5db3cdb9e816ba610f8e705486f4a"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -482,12 +483,11 @@
     "unicode/rangetable",
   ]
   pruneopts = "NUT"
-  revision = "22f1617af38ed4cd65b3b96e02bab267e560155c"
-  version = "v0.3.4"
+  revision = "75a595aef632b07c6eeaaa805adb6f0f66e4130e"
+  version = "v0.3.5"
 
 [[projects]]
-  branch = "master"
-  digest = "1:e49c2e118694702bc9489bf54e0a1f683dd0419b9acb8c4853a288f9d61fcc5c"
+  digest = "1:e0b738f0390478cbb64d048e563382d65a95ddc84c7cba34f2e70933c595c786"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -509,7 +509,8 @@
     "internal/typesinternal",
   ]
   pruneopts = "NUT"
-  revision = "654352759326a83ade56ef0d49787dedaa16078e"
+  revision = "fe37c9e135b934191089b245ac29325091462508"
+  version = "v0.1.0"
 
 [[projects]]
   branch = "master"
@@ -528,10 +529,10 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "06b3db80844671cc7ff39f70718ddc6f943bac08"
+  revision = "44e461bb6506e1f454f092a809a64f303b6c8e33"
 
 [[projects]]
-  digest = "1:296980386359557739d2ba51c3d14746e35e166ff7b3c7cf63caf295ff509462"
+  digest = "1:b894b39718a2d377f0cbc7851e6f59de2ed6620aa8977f1cb3dd81e10bcbb1d2"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -560,6 +561,7 @@
     "internal/grpcrand",
     "internal/grpcsync",
     "internal/grpcutil",
+    "internal/metadata",
     "internal/resolver",
     "internal/resolver/dns",
     "internal/resolver/passthrough",
@@ -579,8 +581,8 @@
     "tap",
   ]
   pruneopts = "NUT"
-  revision = "2cf12a82ed4381ce0b0f7d487ee2eca772ee18e3"
-  version = "v1.34.0"
+  revision = "577eb696279ea85069a02c9a4c2defafdab858c5"
+  version = "v1.35.0"
 
 [[projects]]
   digest = "1:fd328c5b52e433ea3ffc891bcc4f94469a82bf478558208db2b386aad8a304a1"
