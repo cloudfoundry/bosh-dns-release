@@ -91,7 +91,7 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 	})
 
 	if err != nil {
-		r.writeNoResponseMessage(responseWriter, request, before, "error=["+err.Error()+"]")
+		r.writeNoResponseMessage(responseWriter, request, before, "error=["+err.Error()+"]", err)
 	}
 }
 
@@ -108,10 +108,21 @@ func (ForwardHandler) network(responseWriter dns.ResponseWriter) string {
 	return network
 }
 
-func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter, req *dns.Msg, before time.Time, recursor string) {
+func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter, req *dns.Msg, before time.Time, recursor string, err error) {
 	responseMessage := &dns.Msg{}
 	responseMessage.SetReply(req)
-	responseMessage.SetRcode(req, dns.RcodeNameError)
+
+	switch err.(type) {
+	case net.Error:
+		if err.(net.Error).Timeout() {
+			responseMessage.SetRcode(req, dns.RcodeServerFailure)
+			break
+		}
+	default:
+		responseMessage.SetRcode(req, dns.RcodeNameError)
+		break
+	}
+
 	r.logRecursor(before, req, responseMessage, recursor)
 	if err := responseWriter.WriteMsg(responseMessage); err != nil {
 		r.logger.Error(r.logTag, "error writing response: %s", err.Error())

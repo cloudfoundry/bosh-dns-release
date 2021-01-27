@@ -41,7 +41,7 @@ var _ = Describe("RecursorPool", func() {
 				"three": 0,
 			}
 
-			pool := NewFailoverRecursorPool([]string{"one", "two", "three"}, config.SerialRecursorSelection, fakeLogger)
+			pool := NewFailoverRecursorPool([]string{"one", "two", "three"}, config.SerialRecursorSelection, 0, fakeLogger)
 			err := pool.PerformStrategically(work(recursorCallCount))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(recursorCallCount).To(Equal(map[string]int{
@@ -50,7 +50,7 @@ var _ = Describe("RecursorPool", func() {
 				"three": 0,
 			}))
 
-			pool = NewFailoverRecursorPool([]string{"bad", "two", "three"}, config.SerialRecursorSelection, fakeLogger)
+			pool = NewFailoverRecursorPool([]string{"bad", "two", "three"}, config.SerialRecursorSelection, 0, fakeLogger)
 			err = pool.PerformStrategically(work(recursorCallCount))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(recursorCallCount).To(Equal(map[string]int{
@@ -59,7 +59,7 @@ var _ = Describe("RecursorPool", func() {
 				"three": 0,
 			}))
 
-			pool = NewFailoverRecursorPool([]string{"bad", "bad", "three"}, config.SerialRecursorSelection, fakeLogger)
+			pool = NewFailoverRecursorPool([]string{"bad", "bad", "three"}, config.SerialRecursorSelection, 0, fakeLogger)
 			err = pool.PerformStrategically(work(recursorCallCount))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(recursorCallCount).To(Equal(map[string]int{
@@ -74,7 +74,7 @@ var _ = Describe("RecursorPool", func() {
 
 			BeforeEach(func() {
 				fakeLogger := &loggerfakes.FakeLogger{}
-				pool = NewFailoverRecursorPool([]string{"bad", "bad", "bad"}, config.SerialRecursorSelection, fakeLogger)
+				pool = NewFailoverRecursorPool([]string{"bad", "bad", "bad"}, config.SerialRecursorSelection, 0, fakeLogger)
 			})
 
 			It("fails when all recursors fail", func() {
@@ -132,14 +132,14 @@ var _ = Describe("RecursorPool", func() {
 				}
 			}
 
-			pool = NewFailoverRecursorPool(recursors, config.SmartRecursorSelection, fakeLogger)
+			pool = NewFailoverRecursorPool(recursors, config.SmartRecursorSelection, 0, fakeLogger)
 		})
 
 		It("returns an error if there are no recursors configured", func() {
-			pool = NewFailoverRecursorPool([]string{}, config.SmartRecursorSelection, fakeLogger)
+			pool = NewFailoverRecursorPool([]string{}, config.SmartRecursorSelection, 0, fakeLogger)
 			Expect(pool.PerformStrategically(func(string) error { return nil })).To(HaveOccurred())
 
-			pool = NewFailoverRecursorPool(nil, config.SmartRecursorSelection, fakeLogger)
+			pool = NewFailoverRecursorPool(nil, config.SmartRecursorSelection, 0, fakeLogger)
 			Expect(pool.PerformStrategically(func(string) error { return nil })).To(HaveOccurred())
 		})
 
