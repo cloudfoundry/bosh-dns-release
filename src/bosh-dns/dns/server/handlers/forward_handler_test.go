@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"bosh-dns/dns/config"
 	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 	"errors"
 	"net"
@@ -241,6 +242,143 @@ var _ = Describe("ForwardHandler", func() {
 				Entry("forwards query to recursor via udp for udp clients", "udp", nil),
 				Entry("forwards query to recursor via tcp for tcp clients", "tcp", &net.TCPAddr{}),
 			)
+
+			Context("i/o timout without retry", func() {
+				var (
+					requestMessage *dns.Msg
+				)
+
+				BeforeEach(func() {
+					fakeExchanger := &handlersfakes.FakeExchanger{}
+					fakeExchangerFactory := func(net string) handlers.Exchanger { return fakeExchanger }
+					recursionHandler = handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger, fakeTruncater)
+					requestMessage = &dns.Msg{}
+					requestMessage.SetQuestion("example.com.", dns.TypeANY)
+					o := &net.DNSError{
+						IsTimeout: true,
+					}
+					fakeExchanger.ExchangeReturns(&dns.Msg{}, 0, o)
+				})
+
+				It("server failure response based on i/o timeout", func() {
+					fakeWriter.RemoteAddrReturns(&net.TCPAddr{})
+
+					recursionHandler.ServeDNS(fakeWriter, requestMessage)
+					Expect(fakeTruncater.TruncateIfNeededCallCount()).To(Equal(0))
+					message := fakeWriter.WriteMsgArgsForCall(0)
+					Expect(message.Rcode).To(Equal(dns.RcodeServerFailure))
+				})
+			})
+
+			Context("i/o timeout with retry", func() {
+				var (
+					requestMessage *dns.Msg
+					dnsServer1     string
+					dnsServer2     string
+					protocol       string
+					retryCount     int
+					recursors      []string
+					factory        handlers.ExchangerFactory
+				)
+
+				BeforeEach(func() {
+					dnsServer1 = "127.0.0.1:62000"
+					dnsServer2 = "127.0.0.1:62001"
+					protocol = "udp"
+					retryCount = 2
+
+					requestMessage = &dns.Msg{}
+					requestMessage.SetQuestion("example.com.", dns.TypeANY)
+					factory = handlers.NewExchangerFactory(1 * time.Second)
+					recursors = []string{dnsServer1, dnsServer2}
+				})
+
+				It("smart recursors with retry", func() {
+					pool := handlers.NewFailoverRecursorPool(recursors, config.SmartRecursorSelection, retryCount, fakeLogger)
+					recursionHandler = handlers.NewForwardHandler(pool, factory, fakeClock, fakeLogger, fakeTruncater)
+
+					//create a fake dns endpoint that times out because of no response
+					listen, err := net.ListenPacket(protocol, dnsServer1)
+					readBytes1 := make([]byte, 1024)
+					retryCalled := 0
+					if err != nil {
+						Expect(err).ToNot(HaveOccurred())
+					}
+
+					defer listen.Close()
+					go func() {
+						for {
+							//ignore send information just response
+							listen.ReadFrom(readBytes1)
+							retryCalled++
+						}
+					}()
+
+					fineListener, err := net.ListenPacket(protocol, dnsServer2)
+					readBytes2 := make([]byte, 1024)
+					if err != nil {
+						Expect(err).ToNot(HaveOccurred())
+					}
+
+					defer fineListener.Close()
+					go func() {
+						for {
+							//ignore send information just response
+							bl, addr, _ := fineListener.ReadFrom(readBytes2)
+							fineListener.WriteTo(readBytes2[:bl], addr)
+
+						}
+					}()
+
+					recursionHandler.ServeDNS(fakeWriter, requestMessage)
+					message := fakeWriter.WriteMsgArgsForCall(0)
+					Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(retryCalled).To(Equal(retryCount))
+				})
+
+				It("serial recursors with retry", func() {
+					pool := handlers.NewFailoverRecursorPool(recursors, config.SerialRecursorSelection, retryCount, fakeLogger)
+					recursionHandler = handlers.NewForwardHandler(pool, factory, fakeClock, fakeLogger, fakeTruncater)
+
+					//create a fake dns endpoint that times out because of no response
+					listen, err := net.ListenPacket(protocol, dnsServer1)
+					readBytes1 := make([]byte, 1024)
+					retryCalled := 0
+					if err != nil {
+						Expect(err).ToNot(HaveOccurred())
+					}
+
+					defer listen.Close()
+					go func() {
+						for {
+							//ignore send information just response
+							listen.ReadFrom(readBytes1)
+							retryCalled++
+						}
+					}()
+
+					fineListener, err := net.ListenPacket(protocol, dnsServer2)
+					fineListener.SetReadDeadline(time.Time{})
+					readBytes2 := make([]byte, 1024)
+					if err != nil {
+						Expect(err).ToNot(HaveOccurred())
+					}
+
+					defer fineListener.Close()
+					go func() {
+						for {
+							//ignore send information just response
+							bl, addr, _ := fineListener.ReadFrom(readBytes2)
+							fineListener.WriteTo(readBytes2[:bl], addr)
+						}
+					}()
+
+					recursionHandler.ServeDNS(fakeWriter, requestMessage)
+					message := fakeWriter.WriteMsgArgsForCall(0)
+					Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(retryCalled).To(Equal(retryCount))
+				})
+			})
 
 			Context("truncation", func() {
 				var (
