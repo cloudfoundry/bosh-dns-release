@@ -50,6 +50,8 @@ variables:
   options:
     ca: dns_api_tls_ca
     common_name: api.bosh-dns
+    alternative_names:
+    - api.bosh-dns
     extended_key_usage:
     - server_auth
 - name: dns_api_client_tls
@@ -57,5 +59,7 @@ variables:
   options:
     ca: dns_api_tls_ca
     common_name: api.bosh-dns
+    alternative_names:
+    - api.bosh-dns
     extended_key_usage:
     - client_auth

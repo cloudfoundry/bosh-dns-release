@@ -15,6 +15,8 @@
     options:
       ca: dns_healthcheck_tls_ca
       common_name: health.bosh-dns
+      alternative_names:
+      - health.bosh-dns
       extended_key_usage:
         - server_auth
 
@@ -26,6 +28,8 @@
     options:
       ca: dns_healthcheck_tls_ca
       common_name: health.bosh-dns
+      alternative_names:
+      - health.bosh-dns
       extended_key_usage:
       - client_auth
 
