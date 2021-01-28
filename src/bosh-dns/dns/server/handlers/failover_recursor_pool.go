@@ -4,6 +4,7 @@ import (
 	"bosh-dns/dns/config"
 	"errors"
 	"fmt"
+	"net"
 	"sync/atomic"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
@@ -126,14 +127,20 @@ func (q *serialFailoverRecursorPool) PerformStrategically(work func(string) erro
 
 func performRetryLogic(work func(string) error, recursor string, retryCount int, logTag string, log logger.Logger) (err error) {
 	if retryCount == 0 {
-		return work(recursor)
+		err = work(recursor)
+		return err
 	}
 	for ret := 0; ret < retryCount; ret++ {
 		err = work(recursor)
 		if err == nil {
 			return err
 		}
-		log.Error(logTag, fmt.Sprintf("dns request error - retry “[%b/%b] - %s\n", ret, retryCount, recursor))
+		if _, ok := err.(net.Error); !ok {
+			log.Debug(logTag, fmt.Sprintf("dns request error %v no retry - %v\n", err, recursor))
+			return err
+		}
+
+		log.Error(logTag, fmt.Sprintf("dns request network error %s retry [%d/%d] for recoursor %s \n", err.(net.Error), ret+1, retryCount, recursor))
 	}
 	return err
 }
