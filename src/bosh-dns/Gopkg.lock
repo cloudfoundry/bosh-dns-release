@@ -68,7 +68,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "f3833792f5354be764bb8e58906e3e651be45854"
+  revision = "ab14c90ad9f233aa5037343549046cda9eafba58"
 
 [[projects]]
   branch = "master"
@@ -210,12 +210,12 @@
   version = "v6.0.1"
 
 [[projects]]
-  digest = "1:c198d1a97a4006645b3282e9e6a6db45904c0a74d788585a234594bc0aa129b3"
+  digest = "1:ebdab5c2f7e7e2b06d75f8850893e8b2f4fd8b3a240b76480fcd35ff604c9758"
   name = "github.com/miekg/dns"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "3b41a3134255be803026472cbb980adec17193c2"
-  version = "v1.1.35"
+  revision = "35023fab5c1d57c9ac56da33a897af8794eb9567"
+  version = "v1.1.38"
 
 [[projects]]
   branch = "master"
@@ -240,7 +240,7 @@
   version = "v1.4.6"
 
 [[projects]]
-  digest = "1:ee18304347399cf8810d5079ff61465c92a925342f21f6d617032952ba02e04e"
+  digest = "1:57570c4fd3519afb4eec9c878fdfa0a789bd2785df47f4192009fdabe06f9b3b"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -250,6 +250,7 @@
     "ginkgo/convert",
     "ginkgo/interrupthandler",
     "ginkgo/nodot",
+    "ginkgo/outline",
     "ginkgo/testrunner",
     "ginkgo/testsuite",
     "ginkgo/watch",
@@ -272,11 +273,11 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "55c858784e51c26077949c81b6defb6b97b76944"
-  version = "v1.14.2"
+  revision = "c75f46eb0a6e1e3de5a78dd0eb4e2492d4ec5829"
+  version = "v1.15.0"
 
 [[projects]]
-  digest = "1:d1a4158009d329bdd236ab98789a598c4e0b2595d60f132fdebacaa73c0b1d13"
+  digest = "1:ad328785556c11b848d6245e5e4ea7ec392924d69a83f39a76e19594a94bc322"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -296,8 +297,8 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "f9a2b5d71f6c392d3169b2f53d4c3531062044c4"
-  version = "v1.10.4"
+  revision = "3e036b855ae3e332843aff25edf11a0a37033156"
+  version = "v1.10.5"
 
 [[projects]]
   digest = "1:c0d29acf123ca922207e9c30c0fe6caa181c2572156aa24103420956b2fc6f4c"
@@ -361,7 +362,7 @@
   version = "v0.15.0"
 
 [[projects]]
-  digest = "1:1b97f9f47fdd6a4b89166e654aa75fc4a0573c62b78a9a728ad37753fae8f045"
+  digest = "1:06d85747f93373634ddbc549a8e5aa615bad974e73e0374a189d327d131aa0ee"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -369,8 +370,8 @@
     "internal/util",
   ]
   pruneopts = "NUT"
-  revision = "d3334bf511d8b1570144f488cc14d08b539df979"
-  version = "v0.3.0"
+  revision = "8c052e39736e894a5c92d6e36b09a13966c57fdc"
+  version = "v0.4.0"
 
 [[projects]]
   branch = "master"
@@ -487,10 +488,11 @@
   version = "v0.3.5"
 
 [[projects]]
-  digest = "1:e0b738f0390478cbb64d048e563382d65a95ddc84c7cba34f2e70933c595c786"
+  digest = "1:dc1659fa8c883e4a42d3554cc03aabdd714d3139c7cecb38c34da2cb59e34663"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
+    "go/ast/inspector",
     "go/gcexportdata",
     "go/internal/gcimporter",
     "go/internal/packagesdriver",
@@ -529,7 +531,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "44e461bb6506e1f454f092a809a64f303b6c8e33"
+  revision = "deb82836646031fbd5270d6e494a578ac0b028e6"
 
 [[projects]]
   digest = "1:b894b39718a2d377f0cbc7851e6f59de2ed6620aa8977f1cb3dd81e10bcbb1d2"

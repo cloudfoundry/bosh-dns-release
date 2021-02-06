@@ -64,7 +64,7 @@
     "system",
   ]
   pruneopts = "NUT"
-  revision = "f3833792f5354be764bb8e58906e3e651be45854"
+  revision = "ab14c90ad9f233aa5037343549046cda9eafba58"
 
 [[projects]]
   branch = "master"
@@ -153,7 +153,7 @@
   version = "v1.4.6"
 
 [[projects]]
-  digest = "1:e8185fbeb206515e08c0a5ee0aed0814e391c39c6a5c92a5878108fd1ed4d3d1"
+  digest = "1:dfa1820884c42c635f9767a11bd1dff0eab3438043a7a17253b94a09b49214d6"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -177,11 +177,11 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "55c858784e51c26077949c81b6defb6b97b76944"
-  version = "v1.14.2"
+  revision = "c75f46eb0a6e1e3de5a78dd0eb4e2492d4ec5829"
+  version = "v1.15.0"
 
 [[projects]]
-  digest = "1:d1a4158009d329bdd236ab98789a598c4e0b2595d60f132fdebacaa73c0b1d13"
+  digest = "1:ad328785556c11b848d6245e5e4ea7ec392924d69a83f39a76e19594a94bc322"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -201,8 +201,8 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "f9a2b5d71f6c392d3169b2f53d4c3531062044c4"
-  version = "v1.10.4"
+  revision = "3e036b855ae3e332843aff25edf11a0a37033156"
+  version = "v1.10.5"
 
 [[projects]]
   digest = "1:e644b02192accfca6f351cf2611df249d502ab75f8cebb2e8b3976a3d6ee75f8"
@@ -290,17 +290,6 @@
   pruneopts = "NUT"
   revision = "75a595aef632b07c6eeaaa805adb6f0f66e4130e"
   version = "v0.3.5"
-
-[[projects]]
-  branch = "master"
-  digest = "1:325a1b73817aa79fc85f10376ed41ea607f7dd7f6c6bfa46df6a28ef2857941f"
-  name = "golang.org/x/xerrors"
-  packages = [
-    ".",
-    "internal",
-  ]
-  pruneopts = "NUT"
-  revision = "5ec99f83aff198f5fbd629d6c8d8eb38a04218ca"
 
 [[projects]]
   digest = "1:cccb3a18e62abaccd19c309fc01a69da2509719f5a453cb2e66969f670503245"
