@@ -114,7 +114,6 @@ func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter
 
 	switch err.(type) {
 	case net.Error:
-		r.logger.Error(r.logTag, fmt.Sprintf("received a network error from server rcode=%d - %s", dns.RcodeServerFailure, err.Error()))
 		responseMessage.SetRcode(req, dns.RcodeServerFailure)
 	default:
 		responseMessage.SetRcode(req, dns.RcodeNameError)
