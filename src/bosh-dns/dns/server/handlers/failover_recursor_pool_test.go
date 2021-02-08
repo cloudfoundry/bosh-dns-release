@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"bosh-dns/dns/config"
 	. "bosh-dns/dns/server/handlers"
+	"net"
 
 	"errors"
 	"time"
@@ -244,6 +245,69 @@ var _ = Describe("RecursorPool", func() {
 					Fail("reached something like a deadlock")
 				}
 			}
+		})
+	})
+
+	Context("perform with retry logic", func() {
+		var (
+			pool       RecursorPool
+			fakeLogger = &loggerfakes.FakeLogger{}
+			called     int
+			netErr     *net.DNSError
+		)
+		BeforeEach(func() {
+			called = 0
+			netErr = &net.DNSError{
+				Err:       "i/o timeout",
+				IsTimeout: true,
+			}
+		})
+
+		It("perform with retry logic with default configuration and valid error response", func() {
+			pool = NewFailoverRecursorPool([]string{"retry"}, config.SmartRecursorSelection, 0, fakeLogger)
+			err := pool.PerformStrategically(func(n string) error {
+				called++
+				return errors.New("NXDOMAIN")
+			})
+
+			Expect(called).To(Equal(1))
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("perform with retry logic with default configuration and network issue", func() {
+			pool = NewFailoverRecursorPool([]string{"retry"}, config.SmartRecursorSelection, 0, fakeLogger)
+			err := pool.PerformStrategically(func(n string) error {
+				called++
+				return netErr
+			})
+
+			Expect(called).To(Equal(1))
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("perform with retry logic with retry count 1", func() {
+			pool = NewFailoverRecursorPool([]string{"retry"}, config.SmartRecursorSelection, 1, fakeLogger)
+			err := pool.PerformStrategically(func(n string) error {
+				called++
+				return netErr
+			})
+
+			Expect(called).To(Equal(2))
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("perform with retry logic with retry count 3", func() {
+			pool = NewFailoverRecursorPool([]string{"retry"}, config.SmartRecursorSelection, 3, fakeLogger)
+			err := pool.PerformStrategically(func(n string) error {
+				called++
+				if called == 4 {
+					return nil
+				}
+				return netErr
+			})
+
+			Expect(called).To(Equal(4))
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })

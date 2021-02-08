@@ -4,6 +4,7 @@ import (
 	"bosh-dns/dns/config"
 	"errors"
 	"fmt"
+	"github.com/miekg/dns"
 	"net"
 	"sync/atomic"
 
@@ -117,20 +118,15 @@ func newSmartFailoverRecursorPool(recursors []string, recursorSettings recursorR
 
 func (q *serialFailoverRecursorPool) PerformStrategically(work func(string) error) error {
 	for _, r := range q.recursors {
-		if err := performRetryLogic(work, r, q.recursorRetrySettings.retryCount, q.logTag, q.logger); err == nil {
+		if err := performWithRetryLogic(work, r, q.recursorRetrySettings.retryCount, q.logTag, q.logger); err == nil {
 			return nil
 		}
 	}
-
 	return ErrNoRecursorResponse
 }
 
-func performRetryLogic(work func(string) error, recursor string, retryCount int, logTag string, log logger.Logger) (err error) {
-	if retryCount == 0 {
-		err = work(recursor)
-		return err
-	}
-	for ret := 0; ret < retryCount; ret++ {
+func performWithRetryLogic(work func(string) error, recursor string, retryCount int, logTag string, log logger.Logger) (err error) {
+	for ret := -1; ret < retryCount; ret++ {
 		err = work(recursor)
 		if err == nil {
 			return err
@@ -139,9 +135,11 @@ func performRetryLogic(work func(string) error, recursor string, retryCount int,
 			log.Debug(logTag, fmt.Sprintf("dns request error %v no retry - %v\n", err, recursor))
 			return err
 		}
-
 		log.Error(logTag, fmt.Sprintf("dns request network error %s retry [%d/%d] for recoursor %s \n", err.(net.Error), ret+1, retryCount, recursor))
 	}
+
+	//retry count reached r
+	log.Error(logTag, fmt.Sprintf("write error response to client after retry count reached [%d/%d] with rcode=%d - %s \n", retryCount, retryCount, dns.RcodeServerFailure, err.Error()))
 	return err
 }
 
@@ -152,7 +150,7 @@ func (q *smartFailoverRecursorPool) PerformStrategically(work func(string) error
 	for i := uint64(0); i < uintRecursorCount; i++ {
 		index := int((i + offset) % uintRecursorCount)
 
-		err := performRetryLogic(work, q.recursors[index].name, q.recursorRetrySettings.retryCount, q.logTag, q.logger)
+		err := performWithRetryLogic(work, q.recursors[index].name, q.recursorRetrySettings.retryCount, q.logTag, q.logger)
 		if err == nil {
 			q.registerResult(index, false)
 			return nil

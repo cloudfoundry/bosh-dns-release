@@ -131,7 +131,7 @@ var _ = Describe("ForwardHandler", func() {
 				recursionHandler.ServeDNS(fakeWriter, msg)
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 
-				Expect(fakeLogger.ErrorCallCount()).To(Equal(2))
+				Expect(fakeLogger.ErrorCallCount()).To(Equal(3))
 				Expect(fakeLogger.DebugCallCount()).To(Equal(2))
 				tag, logMsg, args := fakeLogger.ErrorArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
@@ -162,7 +162,7 @@ var _ = Describe("ForwardHandler", func() {
 
 					recursionHandler.ServeDNS(fakeWriter, msg)
 
-					Expect(fakeLogger.ErrorCallCount()).To(Equal(3))
+					Expect(fakeLogger.ErrorCallCount()).To(Equal(4))
 					tag, msg, args := fakeLogger.ErrorArgsForCall(2)
 					Expect(tag).To(Equal("ForwardHandler"))
 					Expect(fmt.Sprintf(msg, args...)).To(Equal("error writing response: failed to write message"))
@@ -277,6 +277,7 @@ var _ = Describe("ForwardHandler", func() {
 					dnsServer2     string
 					protocol       string
 					retryCount     int
+					initialCall    int
 					recursors      []string
 					factory        handlers.ExchangerFactory
 				)
@@ -286,6 +287,7 @@ var _ = Describe("ForwardHandler", func() {
 					dnsServer2 = "127.0.0.1:62001"
 					protocol = "udp"
 					retryCount = 2
+					initialCall = 1
 
 					requestMessage = &dns.Msg{}
 					requestMessage.SetQuestion("example.com.", dns.TypeANY)
@@ -333,7 +335,7 @@ var _ = Describe("ForwardHandler", func() {
 					recursionHandler.ServeDNS(fakeWriter, requestMessage)
 					message := fakeWriter.WriteMsgArgsForCall(0)
 					Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(retryCalled).To(Equal(retryCount))
+					Expect(retryCalled).To(Equal(retryCount + initialCall))
 				})
 
 				It("serial recursors with retry", func() {
@@ -376,7 +378,7 @@ var _ = Describe("ForwardHandler", func() {
 					recursionHandler.ServeDNS(fakeWriter, requestMessage)
 					message := fakeWriter.WriteMsgArgsForCall(0)
 					Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(retryCalled).To(Equal(retryCount))
+					Expect(retryCalled).To(Equal(retryCount + initialCall))
 				})
 			})
 
@@ -426,7 +428,7 @@ var _ = Describe("ForwardHandler", func() {
 
 				It("writes a failure result", func() {
 					Expect(fakeLogger.DebugCallCount()).To(Equal(2))
-					Expect(fakeLogger.ErrorCallCount()).To(Equal(2))
+					Expect(fakeLogger.ErrorCallCount()).To(Equal(3))
 					tag, msg, args := fakeLogger.ErrorArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
 					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing for example.com. to "127.0.0.1": failed to exchange`))
