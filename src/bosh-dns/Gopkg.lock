@@ -68,7 +68,7 @@
     "uuid",
   ]
   pruneopts = "NUT"
-  revision = "ab14c90ad9f233aa5037343549046cda9eafba58"
+  revision = "910bbc6b59f7a1d2234612362f81d40a09f0e585"
 
 [[projects]]
   branch = "master"
@@ -226,7 +226,7 @@
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
-  digest = "1:1f3230329bc193cc4ce7c622998afc3d311fa11f78b9efd54fbdecf6e8bef637"
+  digest = "1:85d886fe78a7da9d756d4648297c3b2ea770c9e5c728eb28d0191a63c2275bda"
   name = "github.com/nxadm/tail"
   packages = [
     ".",
@@ -236,8 +236,8 @@
     "winfile",
   ]
   pruneopts = "NUT"
-  revision = "ed4934787418681691173f6f7aa0499582e7611a"
-  version = "v1.4.6"
+  revision = "abad231d8d07ef91e09cd4c4c457cac35ed3bbb9"
+  version = "v1.4.8"
 
 [[projects]]
   digest = "1:57570c4fd3519afb4eec9c878fdfa0a789bd2785df47f4192009fdabe06f9b3b"
@@ -362,7 +362,7 @@
   version = "v0.15.0"
 
 [[projects]]
-  digest = "1:06d85747f93373634ddbc549a8e5aa615bad974e73e0374a189d327d131aa0ee"
+  digest = "1:446a6019cafd99f99187d73960abdca84c01637f7e6fbd6d8f2ec875e99e465d"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -370,8 +370,8 @@
     "internal/util",
   ]
   pruneopts = "NUT"
-  revision = "8c052e39736e894a5c92d6e36b09a13966c57fdc"
-  version = "v0.4.0"
+  revision = "e971af51d579a49db14657a96eebec39cefb4755"
+  version = "v0.6.0"
 
 [[projects]]
   branch = "master"
@@ -531,7 +531,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "NUT"
-  revision = "deb82836646031fbd5270d6e494a578ac0b028e6"
+  revision = "e7f2df4ecc2d582d58055ae5ab48ef3ca683d3fd"
 
 [[projects]]
   digest = "1:b894b39718a2d377f0cbc7851e6f59de2ed6620aa8977f1cb3dd81e10bcbb1d2"
