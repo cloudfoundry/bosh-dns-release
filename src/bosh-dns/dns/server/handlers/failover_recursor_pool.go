@@ -132,10 +132,9 @@ func performWithRetryLogic(work func(string) error, recursor string, retryCount 
 			return err
 		}
 		if _, ok := err.(net.Error); !ok {
-			log.Debug(logTag, fmt.Sprintf("dns request error %v no retry - %v\n", err, recursor))
 			return err
 		}
-		log.Error(logTag, fmt.Sprintf("dns request network error %s retry [%d/%d] for recoursor %s \n", err.(net.Error), ret+1, retryCount, recursor))
+		log.Debug(logTag, fmt.Sprintf("dns request network error %s retry [%d/%d] for recoursor %s \n", err.(net.Error), ret+1, retryCount, recursor))
 	}
 
 	//retry count reached r
