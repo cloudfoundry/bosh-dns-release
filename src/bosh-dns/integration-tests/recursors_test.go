@@ -13,7 +13,7 @@ import (
 	"bosh-dns/acceptance_tests/helpers"
 	"bosh-dns/dns/server/record"
 
-	testrecursor "bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor/config"
+	testrecursor "../acceptance_tests/dns-acceptance-release/src/test-recursor/config"
 
 	gomegadns "bosh-dns/gomega-dns"
 

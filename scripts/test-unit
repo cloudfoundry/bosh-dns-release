@@ -9,16 +9,6 @@ main() {
 		GOPATH="$(cd "$DIR/.." && pwd)"
 		export PATH=$GOPATH/bin:$PATH
 
-		go install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
-
-		local recursive_flag='-r'
-		local packages="src/bosh-dns src/debug"
-
-		if [[ "$#" -gt 0 ]]; then
-				recursive_flag=''
-				packages=$*
-		fi
-
 		[[ -n "$(grep --exclude-dir vendor \
 			--exclude-dir test_yml_assets \
 			--exclude-dir performance_tests \
@@ -27,8 +17,14 @@ main() {
 			-ri panic src/bosh-dns)" \
 		]] && echo "panics detected in the code -- remove them" && exit 1
 
-		ginkgo -p $recursive_flag -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=acceptance_tests,integration-tests,performance_tests,test_yml_assets,vendor $packages
-		ginkgo $recursive_flag -randomizeAllSpecs -randomizeSuites -keepGoing -race src/bosh-dns/integration-tests
+		pushd src/bosh-dns
+			go run github.com/onsi/ginkgo/ginkgo -p -r -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=acceptance_tests,integration-tests,performance_tests,test_yml_assets,vendor .
+			go run github.com/onsi/ginkgo/ginkgo -r -randomizeAllSpecs -randomizeSuites -keepGoing -race integration-tests
+		popd
+
+		pushd src/debug
+			go run github.com/onsi/ginkgo/ginkgo -p -r -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=vendor .
+		popd
 }
 
 main "$@"

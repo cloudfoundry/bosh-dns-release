@@ -1,0 +1,22 @@
+# github.com/miekg/dns v1.1.4
+## explicit
+github.com/miekg/dns
+# golang.org/x/crypto v0.0.0-20190219172222-a4c6cb3142f2
+## explicit
+golang.org/x/crypto/ed25519
+golang.org/x/crypto/ed25519/internal/edwards25519
+# golang.org/x/net v0.0.0-20190213061140-3a22650c66bd
+## explicit
+golang.org/x/net/bpf
+golang.org/x/net/internal/iana
+golang.org/x/net/internal/socket
+golang.org/x/net/ipv4
+golang.org/x/net/ipv6
+# golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+## explicit
+# golang.org/x/sys v0.0.0-20190219092855-153ac476189d
+## explicit
+golang.org/x/sys/unix
+# gopkg.in/yaml.v2 v2.2.2
+## explicit
+gopkg.in/yaml.v2

@@ -1,4 +1,4 @@
-// +build linux darwin freebsd netbsd openbsd solaris dragonfly aix
+// +build linux darwin freebsd netbsd openbsd solaris dragonfly
 // +build !appengine !js
 
 package pb
