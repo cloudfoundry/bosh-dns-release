@@ -13,8 +13,6 @@ import (
 	"bosh-dns/acceptance_tests/helpers"
 	"bosh-dns/dns/server/record"
 
-	testrecursor "../acceptance_tests/dns-acceptance-release/src/test-recursor/config"
-
 	gomegadns "bosh-dns/gomega-dns"
 
 	"github.com/miekg/dns"
@@ -33,6 +31,11 @@ type testRecursor struct {
 	configurableResponse string
 }
 
+type Config struct {
+	Port                 int    `yaml:"port"`
+	ConfigurableResponse string `yaml:"configurable_response"`
+}
+
 func NewTestRecursor(port int, configurableResponse string) *testRecursor {
 	return &testRecursor{
 		address:              "127.0.0.1",
@@ -47,7 +50,7 @@ func (t *testRecursor) start() error {
 		panic("TEST_RECURSOR_BINARY must be set")
 	}
 
-	configYAML, err := yaml.Marshal(testrecursor.Config{
+	configYAML, err := yaml.Marshal(Config{
 		Port:                 t.port,
 		ConfigurableResponse: t.configurableResponse,
 	})
