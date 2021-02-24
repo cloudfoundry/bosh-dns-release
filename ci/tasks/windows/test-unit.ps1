@@ -9,10 +9,13 @@ $env:PATH = $env:GOPATH + "/bin;" + $env:PATH
 cd $env:GOPATH
 cd $env:GOPATH/src/bosh-dns
 
-go.exe install bosh-dns/vendor/github.com/onsi/ginkgo/ginkgo
+Push-Location "src\bosh-dns\acceptance_tests\dns-acceptance-release\src\test-recursor"
+$env:TEST_RECURSOR_BINARY = $PWD + "\test-recursor.exe"
+go.exe build -o $env:TEST_RECURSOR_BINARY .
+Pop-Location
 
-ginkgo.exe -p -r -race -keepGoing -randomizeAllSpecs -randomizeSuites dns healthcheck
-ginkgo.exe -r -race -keepGoing -randomizeAllSpecs -randomizeSuites integration-tests
+go.exe run github.com/onsi/ginkgo/ginkgo -p -r -race -keepGoing -randomizeAllSpecs -randomizeSuites dns healthcheck
+go.exe run github.com/onsi/ginkgo/ginkgo -r -race -keepGoing -randomizeAllSpecs -randomizeSuites integration-tests
 
 if ($LastExitCode -ne 0)
 {

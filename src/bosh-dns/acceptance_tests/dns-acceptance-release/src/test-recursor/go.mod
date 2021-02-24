@@ -1,4 +1,4 @@
-module bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
+module test-recursor
 
 go 1.15
 

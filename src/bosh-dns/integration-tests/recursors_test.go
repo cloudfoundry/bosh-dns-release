@@ -42,10 +42,9 @@ func NewTestRecursor(port int, configurableResponse string) *testRecursor {
 }
 
 func (t *testRecursor) start() error {
-	dir, _ := os.Getwd()
-	binaryLocation, err := gexec.BuildIn(dir+"/../acceptance_tests/dns-acceptance-release", "test-recursor")
-	if err != nil {
-		return err
+	binaryLocation := os.Getenv("TEST_RECURSOR_BINARY")
+	if binaryLocation == "" {
+		panic("TEST_RECURSOR_BINARY must be set")
 	}
 
 	configYAML, err := yaml.Marshal(testrecursor.Config{

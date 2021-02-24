@@ -9,7 +9,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"./test-recursor/config"
+	"test-recursor/config"
 )
 
 func main() {
