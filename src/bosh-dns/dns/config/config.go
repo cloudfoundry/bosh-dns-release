@@ -22,7 +22,7 @@ type Config struct {
 	Address            string       `json:"address"`
 	Port               int          `json:"port"`
 	BindTimeout        DurationJSON `json:"timeout,omitempty"`
-	RecursorRetryCount int          `json:"recursor_retry_count,omitempty"`
+	RecursorMaxRetries int          `json:"recursor_max_retries,omitempty"`
 	RequestTimeout     DurationJSON `json:"request_timeout,omitempty"`
 	RecursorTimeout    DurationJSON `json:"recursor_timeout,omitempty"`
 	Recursors          []string     `json:"recursors,omitempty"`

@@ -276,7 +276,7 @@ var _ = Describe("ForwardHandler", func() {
 					dnsServer1     string
 					dnsServer2     string
 					protocol       string
-					retryCount     int
+					maxRetries     int
 					initialCall    int
 					recursors      []string
 					factory        handlers.ExchangerFactory
@@ -286,7 +286,7 @@ var _ = Describe("ForwardHandler", func() {
 					dnsServer1 = "127.0.0.1:62000"
 					dnsServer2 = "127.0.0.1:62001"
 					protocol = "udp"
-					retryCount = 2
+					maxRetries = 2
 					initialCall = 1
 
 					requestMessage = &dns.Msg{}
@@ -296,7 +296,7 @@ var _ = Describe("ForwardHandler", func() {
 				})
 
 				It("smart recursors with retry", func() {
-					pool := handlers.NewFailoverRecursorPool(recursors, config.SmartRecursorSelection, retryCount, fakeLogger)
+					pool := handlers.NewFailoverRecursorPool(recursors, config.SmartRecursorSelection, maxRetries, fakeLogger)
 					recursionHandler = handlers.NewForwardHandler(pool, factory, fakeClock, fakeLogger, fakeTruncater)
 
 					//create a fake dns endpoint that times out because of no response
@@ -335,11 +335,11 @@ var _ = Describe("ForwardHandler", func() {
 					recursionHandler.ServeDNS(fakeWriter, requestMessage)
 					message := fakeWriter.WriteMsgArgsForCall(0)
 					Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(retryCalled).To(Equal(retryCount + initialCall))
+					Expect(retryCalled).To(Equal(maxRetries + initialCall))
 				})
 
 				It("serial recursors with retry", func() {
-					pool := handlers.NewFailoverRecursorPool(recursors, config.SerialRecursorSelection, retryCount, fakeLogger)
+					pool := handlers.NewFailoverRecursorPool(recursors, config.SerialRecursorSelection, maxRetries, fakeLogger)
 					recursionHandler = handlers.NewForwardHandler(pool, factory, fakeClock, fakeLogger, fakeTruncater)
 
 					//create a fake dns endpoint that times out because of no response
@@ -378,7 +378,7 @@ var _ = Describe("ForwardHandler", func() {
 					recursionHandler.ServeDNS(fakeWriter, requestMessage)
 					message := fakeWriter.WriteMsgArgsForCall(0)
 					Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(retryCalled).To(Equal(retryCount + initialCall))
+					Expect(retryCalled).To(Equal(maxRetries + initialCall))
 				})
 			})
 

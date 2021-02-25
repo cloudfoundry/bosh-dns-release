@@ -162,7 +162,7 @@ var _ = Describe("Config", func() {
 				CAFile:          apiCAFile,
 			},
 			BindTimeout:        config.DurationJSON(timeoutDuration),
-			RecursorRetryCount: 0,
+			RecursorMaxRetries: 0,
 			RequestTimeout:     config.DurationJSON(requestTimeoutDuration),
 			RecursorTimeout:    config.DurationJSON(recursorTimeoutDuration),
 			Recursors:          []string{},
@@ -279,20 +279,20 @@ var _ = Describe("Config", func() {
 			Expect(err).To(MatchError("invalid value for recursor_selection; expected 'serial' or 'smart'"))
 		})
 
-		It("recursor_retry_count default", func() {
+		It("recursor_max_retries default", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursor_selection": "smart" }`)
 
 			c, err := config.LoadFromFile(configFilePath)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(c.RecursorRetryCount).To(Equal(0))
+			Expect(c.RecursorMaxRetries).To(Equal(0))
 		})
 
-		It("recursor_retry_count with value", func() {
-			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursor_selection": "smart", "recursor_retry_count": 3 }`)
+		It("recursor_max_retries with value", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursor_selection": "smart", "recursor_max_retries": 3 }`)
 
 			c, err := config.LoadFromFile(configFilePath)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(c.RecursorRetryCount).To(Equal(3))
+			Expect(c.RecursorMaxRetries).To(Equal(3))
 		})
 	})
 

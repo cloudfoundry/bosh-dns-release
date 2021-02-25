@@ -102,7 +102,7 @@ properties:
   recursor_timeout:
     description: "A timeout value for when dialing, writing and reading from the configured recursors"
     default: 2s
-  recursor_retry_count:
+  recursor_max_retries:
     description: "Maximum number of retries for recursively resolving DNS queries"
     default: 0
   recursor_selection:
