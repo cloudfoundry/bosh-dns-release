@@ -14,6 +14,8 @@ robocopy /E . "${BOSH_INSTALL_TARGET}\src\"
 if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\"
 }
+
+Push-Location "${GOPATH}/src/bosh-dns"
 go build -o ${BOSH_INSTALL_TARGET}\bin\bosh-dns.exe "bosh-dns\dns"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: dns"
@@ -33,6 +35,7 @@ go build -o ${BOSH_INSTALL_TARGET}\bin\cli.exe "debug\cli"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: cli"
 }
+Pop-Location
 
 New-Item -ItemType "directory" -Force "emptyfolder"
 robocopy /PURGE "emptyfolder" "${BOSH_INSTALL_TARGET}/src"
