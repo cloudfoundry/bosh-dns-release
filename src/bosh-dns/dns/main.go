@@ -158,7 +158,7 @@ func mainExitCode() int {
 	truncater := dnsresolver.NewResponseTruncater()
 	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, shuffle.New(), truncater)
 
-	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, config.RecursorRetryCount, logger)
+	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, config.RecursorMaxRetries, logger)
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
 	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger, truncater)
 

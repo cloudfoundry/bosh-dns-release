@@ -36,9 +36,9 @@ type RecursorPool interface {
 //
 // Each recursor will be queried until one succeeds or all recursors were tried
 
-func NewFailoverRecursorPool(recursors []string, recursorSelection string, recursorRetryCount int, logger logger.Logger) RecursorPool {
+func NewFailoverRecursorPool(recursors []string, recursorSelection string, RecursorMaxRetries int, logger logger.Logger) RecursorPool {
 	recursorSettings := recursorRetrySettings{
-		retryCount: recursorRetryCount,
+		maxRetries: RecursorMaxRetries,
 	}
 	if recursorSelection == config.SmartRecursorSelection {
 		return newSmartFailoverRecursorPool(recursors, recursorSettings, logger)
@@ -64,7 +64,7 @@ type smartFailoverRecursorPool struct {
 }
 
 type recursorRetrySettings struct {
-	retryCount int
+	maxRetries int
 }
 
 type recursorWithHistory struct {
@@ -118,15 +118,15 @@ func newSmartFailoverRecursorPool(recursors []string, recursorSettings recursorR
 
 func (q *serialFailoverRecursorPool) PerformStrategically(work func(string) error) error {
 	for _, r := range q.recursors {
-		if err := performWithRetryLogic(work, r, q.recursorRetrySettings.retryCount, q.logTag, q.logger); err == nil {
+		if err := performWithRetryLogic(work, r, q.recursorRetrySettings.maxRetries, q.logTag, q.logger); err == nil {
 			return nil
 		}
 	}
 	return ErrNoRecursorResponse
 }
 
-func performWithRetryLogic(work func(string) error, recursor string, retryCount int, logTag string, log logger.Logger) (err error) {
-	for ret := 0; ret <= retryCount; ret++ {
+func performWithRetryLogic(work func(string) error, recursor string, maxRetries int, logTag string, log logger.Logger) (err error) {
+	for ret := 0; ret <= maxRetries; ret++ {
 		err = work(recursor)
 		if err == nil {
 			return err
@@ -134,11 +134,11 @@ func performWithRetryLogic(work func(string) error, recursor string, retryCount 
 		if _, ok := err.(net.Error); !ok {
 			return err
 		}
-		log.Debug(logTag, fmt.Sprintf("dns request network error %s retry [%d/%d] for recursor %s \n", err.(net.Error), ret+1, retryCount, recursor))
+		log.Debug(logTag, fmt.Sprintf("dns request network error %s retry [%d/%d] for recursor %s \n", err.(net.Error), ret+1, maxRetries, recursor))
 	}
 
 	//retry count reached
-	log.Error(logTag, fmt.Sprintf("write error response to client after retry count reached [%d/%d] with rcode=%d - %s \n", retryCount, retryCount, dns.RcodeServerFailure, err.Error()))
+	log.Error(logTag, fmt.Sprintf("write error response to client after retry count reached [%d/%d] with rcode=%d - %s \n", maxRetries, maxRetries, dns.RcodeServerFailure, err.Error()))
 	return err
 }
 
@@ -149,7 +149,7 @@ func (q *smartFailoverRecursorPool) PerformStrategically(work func(string) error
 	for i := uint64(0); i < uintRecursorCount; i++ {
 		index := int((i + offset) % uintRecursorCount)
 
-		err := performWithRetryLogic(work, q.recursors[index].name, q.recursorRetrySettings.retryCount, q.logTag, q.logger)
+		err := performWithRetryLogic(work, q.recursors[index].name, q.recursorRetrySettings.maxRetries, q.logTag, q.logger)
 		if err == nil {
 			q.registerResult(index, false)
 			return nil

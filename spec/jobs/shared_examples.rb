@@ -23,16 +23,16 @@ shared_examples_for 'common config.json' do
       end
     end
 
-    context 'recursor_retry_count' do
+    context 'recursor_max_retries' do
       it 'defaults to 0' do
-        expect(rendered['recursor_retry_count']).to eq(0)
+        expect(rendered['recursor_max_retries']).to eq(0)
       end
 
       context 'configured' do
-        let(:properties) { {'recursor_retry_count' => 3} }
+        let(:properties) { {'recursor_max_retries' => 3} }
 
-        it 'writes recursor_retry_count' do
-          expect(rendered['recursor_retry_count']).to eq(3)
+        it 'writes recursor_max_retries' do
+          expect(rendered['recursor_max_retries']).to eq(3)
         end
       end
     end
