@@ -31,6 +31,9 @@ if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: healthcheck"
 }
 
+Pop-Location
+
+Push-Location "${BOSH_INSTALL_TARGET}/src/debug"
 go build -o ${BOSH_INSTALL_TARGET}\bin\cli.exe "debug\cli"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: cli"
