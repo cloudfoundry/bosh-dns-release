@@ -15,7 +15,7 @@ if ($LASTEXITCODE -ge 8) {
     Write-Error "robocopy /E . ${BOSH_INSTALL_TARGET}\src\"
 }
 
-Push-Location "${GOPATH}/src/bosh-dns"
+Push-Location "${BOSH_INSTALL_TARGET}/src/bosh-dns"
 go build -o ${BOSH_INSTALL_TARGET}\bin\bosh-dns.exe "bosh-dns\dns"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Error compiling: dns"

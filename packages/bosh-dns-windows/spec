@@ -10,9 +10,11 @@ files:
 - bosh-dns/healthcheck/**/*
 - bosh-dns/tlsclient/**/*
 - bosh-dns/vendor/**/*
+- bosh-dns/go.*
 - exiter.ps1
 - debug/cli/**/*
 - debug/vendor/**/*
+- debug/go.*
 
 excluded_files:
 - bosh-dns/vendor/github.com/bmatcuk/doublestar/test/**/*
