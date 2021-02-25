@@ -10,7 +10,7 @@ cd $env:GOPATH
 cd $env:GOPATH/src/bosh-dns
 
 Push-Location "acceptance_tests\dns-acceptance-release\src\test-recursor"
-$env:TEST_RECURSOR_BINARY = $PWD + "\test-recursor.exe"
+$env:TEST_RECURSOR_BINARY = Join-Path -Path $PWD -ChildPath "test-recursor.exe"
 go.exe build -o $env:TEST_RECURSOR_BINARY .
 Pop-Location
 
