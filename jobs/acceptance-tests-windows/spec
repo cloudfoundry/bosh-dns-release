@@ -10,7 +10,4 @@ packages:
   - golang-1-windows
   - acceptance-tests-windows
 
-properties:
-  suites:
-    default: .
-    description: "Suites to execute within acceptance_tests/windows"
+properties: {}

@@ -8,6 +8,8 @@ files:
 - bosh-dns/tlsclient/**/*
 - bosh-dns/test_yml_assets/**/*
 - bosh-dns/vendor/**/*
+- bosh-dns/go.mod
+- bosh-dns/go.sum
 - bosh-dns/dns/manager/**/*
 - bosh-dns/gomega-dns/*
 - exiter.ps1

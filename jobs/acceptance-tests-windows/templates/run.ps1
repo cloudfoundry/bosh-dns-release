@@ -6,10 +6,10 @@ New-Item -Path ${env:GOPATH}\src -ItemType directory -Force
 Remove-Item -recurse -force -erroraction ignore ${env:GOPATH}\src\bosh-dns
 Copy-Item -recurse -force  "C:\var\vcap\packages\acceptance-tests-windows\src\bosh-dns" "$env:GOPATH\src\bosh-dns"
 
-Push-Location "${env:GOPATH}\src\bosh-dns\acceptance_tests\windows"
+Push-Location "${env:GOPATH}\src\bosh-dns"
 
 $env:LOCAL_IP_ADDRESS = "<%= spec.ip %>"
-go.exe run github.com/onsi/ginkgo/ginkgo -randomizeAllSpecs -randomizeSuites -race <%= p('suites') %>
+go.exe run github.com/onsi/ginkgo/ginkgo -randomizeAllSpecs -randomizeSuites -race acceptance_tests/windows
 
 Pop-Location
 
