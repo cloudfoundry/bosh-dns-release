@@ -1,9 +1,0 @@
-set -eu
-
-mkdir -p "${BOSH_INSTALL_TARGET}/src"
-mkdir -p "${BOSH_INSTALL_TARGET}/bin"
-
-mv bosh-dns "${BOSH_INSTALL_TARGET}/src/"
-
-cp bosh-cli/bosh-cli-3.0.1-linux-amd64 ${BOSH_INSTALL_TARGET}/bin/bosh
-chmod +x ${BOSH_INSTALL_TARGET}/bin/bosh
