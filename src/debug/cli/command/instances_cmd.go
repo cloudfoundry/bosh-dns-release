@@ -1,8 +1,8 @@
 package command
 
 import (
-	"../../../bosh-dns/dns/api"
-	"../../../bosh-dns/tlsclient"
+	"bosh-dns/dns/api"
+	"bosh-dns/tlsclient"
 	"encoding/json"
 	"fmt"
 	"net/http"
