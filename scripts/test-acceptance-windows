@@ -70,14 +70,6 @@ run_tests() {
     --input=bosh-dns-release="${release_dir}" \
     --input=envs="$PWD/envs"
 
-  # shared
-  echo "### tests: shared"
-  ENV_NAME="${env_name}" WINDOWS_OS_VERSION="${windows_version}" \
-  fly -t production execute --privileged \
-    --config="${task_dir}/test-acceptance-windows-shared.yml" \
-    --inputs-from=bosh-dns-release/test-acceptance-windows2019 \
-    --input=bosh-dns-release="${release_dir}" \
-    --input=envs="$PWD/envs"
 }
 
 main() {

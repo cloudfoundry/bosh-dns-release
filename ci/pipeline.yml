@@ -183,12 +183,6 @@ jobs:
             WINDOWS_OS_VERSION: windows2019
             ENV_NAME: windows2019
           timeout: 1h
-        - task: windows-shared
-          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-shared.yml
-          params:
-            WINDOWS_OS_VERSION: windows2019
-            ENV_NAME: windows2019
-          timeout: 2h
       ensure:
         task: bbl-destroy
         file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
