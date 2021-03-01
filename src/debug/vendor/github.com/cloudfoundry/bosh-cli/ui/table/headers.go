@@ -16,6 +16,13 @@ func NewHeader(title string) Header {
 	}
 }
 
+func NewHeadersFromStrings(titles []string) (headers []Header) {
+	for _, t := range titles {
+		headers = append(headers, NewHeader(t))
+	}
+	return
+}
+
 func (t *Table) SetColumnVisibility(headers []Header) error {
 	for tableHeaderIdx, _ := range t.Header {
 		t.Header[tableHeaderIdx].Hidden = true
@@ -30,6 +37,42 @@ func (t *Table) SetColumnVisibility(headers []Header) error {
 				foundHeader = true
 
 				break
+			}
+		}
+
+		if !foundHeader {
+			// key may be empty; if title is present
+			return fmt.Errorf("Failed to find header: %s", header.Key)
+		}
+	}
+
+	return nil
+}
+
+func (t *Table) SetColumnVisibilityFiltered(headers []Header, filterHeaders []Header) error {
+	for tableHeaderIdx, _ := range t.Header {
+		t.Header[tableHeaderIdx].Hidden = true
+	}
+
+	for _, header := range headers {
+		foundHeader := false
+
+		for tableHeaderIdx, tableHeader := range t.Header {
+			if tableHeader.Key == header.Key || tableHeader.Title == header.Title {
+				t.Header[tableHeaderIdx].Hidden = false
+				foundHeader = true
+
+				break
+			}
+		}
+
+		if !foundHeader {
+			for _, filterHeader := range filterHeaders {
+				if filterHeader.Key == header.Key || filterHeader.Title == header.Title {
+					foundHeader = true
+
+					break
+				}
 			}
 		}
 
