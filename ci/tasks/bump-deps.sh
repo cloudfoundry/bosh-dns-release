@@ -20,8 +20,8 @@ popd
 
 if [ "$(git status --porcelain)" != "" ]; then
   git status
-  git add vendor Gopkg.lock
-  git add ../debug/vendor ../debug/Gopkg.lock
+  git add vendor go.sum go.mod
+  git add ../debug/vendor ../debug/go.sum ../debug/go.mod
   git config user.name "CI Bot"
   git config user.email "cf-bosh-eng@pivotal.io"
   git commit -m "Update vendored dependencies"
