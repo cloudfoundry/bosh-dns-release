@@ -8,10 +8,14 @@ export GOPATH=$PWD/bumped-bosh-dns-release
 
 cd bumped-bosh-dns-release/src/bosh-dns
 
-dep ensure -v -update
+go get -u ./...
+go mod tidy
+go mod vendor
 
 pushd ../debug
-  dep ensure -v -update
+  go get -u ./...
+  go mod tidy
+  go mod vendor
 popd
 
 if [ "$(git status --porcelain)" != "" ]; then
