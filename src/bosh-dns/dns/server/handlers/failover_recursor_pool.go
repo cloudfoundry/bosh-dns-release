@@ -126,7 +126,7 @@ func (q *serialFailoverRecursorPool) PerformStrategically(work func(string) erro
 }
 
 func performWithRetryLogic(work func(string) error, recursor string, retryCount int, logTag string, log logger.Logger) (err error) {
-	for ret := -1; ret < retryCount; ret++ {
+	for ret := 0; ret <= retryCount; ret++ {
 		err = work(recursor)
 		if err == nil {
 			return err
@@ -134,10 +134,10 @@ func performWithRetryLogic(work func(string) error, recursor string, retryCount 
 		if _, ok := err.(net.Error); !ok {
 			return err
 		}
-		log.Debug(logTag, fmt.Sprintf("dns request network error %s retry [%d/%d] for recoursor %s \n", err.(net.Error), ret+1, retryCount, recursor))
+		log.Debug(logTag, fmt.Sprintf("dns request network error %s retry [%d/%d] for recursor %s \n", err.(net.Error), ret+1, retryCount, recursor))
 	}
 
-	//retry count reached r
+	//retry count reached
 	log.Error(logTag, fmt.Sprintf("write error response to client after retry count reached [%d/%d] with rcode=%d - %s \n", retryCount, retryCount, dns.RcodeServerFailure, err.Error()))
 	return err
 }

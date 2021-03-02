@@ -131,7 +131,7 @@ var _ = Describe("ForwardHandler", func() {
 				recursionHandler.ServeDNS(fakeWriter, msg)
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
 
-				Expect(fakeLogger.ErrorCallCount()).To(Equal(3))
+				Expect(fakeLogger.ErrorCallCount()).To(Equal(2))
 				Expect(fakeLogger.DebugCallCount()).To(Equal(2))
 				tag, logMsg, args := fakeLogger.ErrorArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
@@ -162,7 +162,7 @@ var _ = Describe("ForwardHandler", func() {
 
 					recursionHandler.ServeDNS(fakeWriter, msg)
 
-					Expect(fakeLogger.ErrorCallCount()).To(Equal(4))
+					Expect(fakeLogger.ErrorCallCount()).To(Equal(3))
 					tag, msg, args := fakeLogger.ErrorArgsForCall(2)
 					Expect(tag).To(Equal("ForwardHandler"))
 					Expect(fmt.Sprintf(msg, args...)).To(Equal("error writing response: failed to write message"))
@@ -428,7 +428,7 @@ var _ = Describe("ForwardHandler", func() {
 
 				It("writes a failure result", func() {
 					Expect(fakeLogger.DebugCallCount()).To(Equal(2))
-					Expect(fakeLogger.ErrorCallCount()).To(Equal(3))
+					Expect(fakeLogger.ErrorCallCount()).To(Equal(2))
 					tag, msg, args := fakeLogger.ErrorArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
 					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing for example.com. to "127.0.0.1": failed to exchange`))
