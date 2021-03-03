@@ -164,7 +164,7 @@ func mainExitCode() int {
 
 	mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger, recordSet, forwardHandler), clock, logger))
 
-	handlerFactory := handlers.NewFactory(exchangerFactory, clock, stringShuffler, config.RecursorRetryCount, logger, truncater)
+	handlerFactory := handlers.NewFactory(exchangerFactory, clock, stringShuffler, config.RecursorMaxRetries, logger, truncater)
 
 	delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
 	if err != nil {
