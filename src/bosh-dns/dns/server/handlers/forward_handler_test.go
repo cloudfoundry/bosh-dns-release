@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	. "github.com/onsi/ginkgo"
+	ginkgoconfig "github.com/onsi/ginkgo/config"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
@@ -283,8 +284,11 @@ var _ = Describe("ForwardHandler", func() {
 				)
 
 				BeforeEach(func() {
-					dnsServer1 = "127.0.0.1:62000"
-					dnsServer2 = "127.0.0.1:62001"
+					port1 := 62000 + ginkgoconfig.GinkgoConfig.ParallelNode
+					port2 := port1 + ginkgoconfig.GinkgoConfig.ParallelTotal + ginkgoconfig.GinkgoConfig.ParallelNode
+
+					dnsServer1 = fmt.Sprintf("127.0.0.1:%d", port1)
+					dnsServer2 = fmt.Sprintf("127.0.0.1:%d", port2)
 					protocol = "udp"
 					maxRetries = 2
 					initialCall = 1
