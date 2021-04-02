@@ -5,6 +5,7 @@ import (
 	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 	"errors"
 	"net"
+	"sync/atomic"
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
@@ -305,26 +306,22 @@ var _ = Describe("ForwardHandler", func() {
 
 					//create a fake dns endpoint that times out because of no response
 					listen, err := net.ListenPacket(protocol, dnsServer1)
+					Expect(err).ToNot(HaveOccurred())
 					readBytes1 := make([]byte, 1024)
-					retryCalled := 0
-					if err != nil {
-						Expect(err).ToNot(HaveOccurred())
-					}
+					var retryCalled int32 = 0
 
 					defer listen.Close()
 					go func() {
 						for {
 							//ignore send information just response
 							listen.ReadFrom(readBytes1)
-							retryCalled++
+							atomic.AddInt32(&retryCalled, 1)
 						}
 					}()
 
 					fineListener, err := net.ListenPacket(protocol, dnsServer2)
+					Expect(err).ToNot(HaveOccurred())
 					readBytes2 := make([]byte, 1024)
-					if err != nil {
-						Expect(err).ToNot(HaveOccurred())
-					}
 
 					defer fineListener.Close()
 					go func() {
@@ -339,7 +336,7 @@ var _ = Describe("ForwardHandler", func() {
 					recursionHandler.ServeDNS(fakeWriter, requestMessage)
 					message := fakeWriter.WriteMsgArgsForCall(0)
 					Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(retryCalled).To(Equal(maxRetries + initialCall))
+					Expect(atomic.LoadInt32(&retryCalled)).To(Equal(int32(maxRetries + initialCall)))
 				})
 
 				It("serial recursors with retry", func() {
@@ -348,27 +345,25 @@ var _ = Describe("ForwardHandler", func() {
 
 					//create a fake dns endpoint that times out because of no response
 					listen, err := net.ListenPacket(protocol, dnsServer1)
+					Expect(err).ToNot(HaveOccurred())
+
 					readBytes1 := make([]byte, 1024)
-					retryCalled := 0
-					if err != nil {
-						Expect(err).ToNot(HaveOccurred())
-					}
+					var retryCalled int32 = 0
 
 					defer listen.Close()
 					go func() {
 						for {
 							//ignore send information just response
 							listen.ReadFrom(readBytes1)
-							retryCalled++
+							atomic.AddInt32(&retryCalled, 1)
 						}
 					}()
 
 					fineListener, err := net.ListenPacket(protocol, dnsServer2)
+					Expect(err).ToNot(HaveOccurred())
+
 					fineListener.SetReadDeadline(time.Time{})
 					readBytes2 := make([]byte, 1024)
-					if err != nil {
-						Expect(err).ToNot(HaveOccurred())
-					}
 
 					defer fineListener.Close()
 					go func() {
@@ -382,7 +377,7 @@ var _ = Describe("ForwardHandler", func() {
 					recursionHandler.ServeDNS(fakeWriter, requestMessage)
 					message := fakeWriter.WriteMsgArgsForCall(0)
 					Expect(message.Rcode).To(Equal(dns.RcodeSuccess))
-					Expect(retryCalled).To(Equal(maxRetries + initialCall))
+					Expect(atomic.LoadInt32(&retryCalled)).To(Equal(int32(maxRetries + initialCall)))
 				})
 			})
 
