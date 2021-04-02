@@ -16,7 +16,7 @@ github.com/bmatcuk/doublestar
 github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.1
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.0-20210225204315-79b702191f60
+# github.com/cloudfoundry/bosh-utils v0.0.0-20210327100132-d1d58eaab188
 ## explicit
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -70,7 +70,8 @@ github.com/coredns/coredns/request
 github.com/flynn/go-shlex
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
-# github.com/golang/protobuf v1.4.3
+# github.com/golang/protobuf v1.5.2
+## explicit
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
@@ -82,7 +83,7 @@ github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc
 github.com/jpillora/backoff
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/miekg/dns v1.1.40
+# github.com/miekg/dns v1.1.41
 ## explicit
 github.com/miekg/dns
 # github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
@@ -94,7 +95,7 @@ github.com/nxadm/tail/ratelimiter
 github.com/nxadm/tail/util
 github.com/nxadm/tail/watch
 github.com/nxadm/tail/winfile
-# github.com/onsi/ginkgo v1.15.0
+# github.com/onsi/ginkgo v1.15.2
 ## explicit
 github.com/onsi/ginkgo
 github.com/onsi/ginkgo/config
@@ -124,7 +125,7 @@ github.com/onsi/ginkgo/reporters/stenographer
 github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable
 github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
 github.com/onsi/ginkgo/types
-# github.com/onsi/gomega v1.10.5
+# github.com/onsi/gomega v1.11.0
 ## explicit
 github.com/onsi/gomega
 github.com/onsi/gomega/format
@@ -149,7 +150,7 @@ github.com/opentracing/opentracing-go/log
 github.com/pivotal-cf/paraphernalia/secure/tlsconfig
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
-# github.com/prometheus/client_golang v1.9.0
+# github.com/prometheus/client_golang v1.10.0
 ## explicit
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
@@ -157,20 +158,19 @@ github.com/prometheus/client_golang/prometheus/promauto
 github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.2.0
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.18.0
+# github.com/prometheus/common v0.20.0
 ## explicit
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
 # github.com/prometheus/procfs v0.6.0
-## explicit
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
 # github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 ## explicit
 github.com/rcrowley/go-metrics
-# golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
+# golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
@@ -180,7 +180,7 @@ golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
+# golang.org/x/net v0.0.0-20210331212208-0fccb6fa2b5c
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -199,13 +199,14 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/trace
-# golang.org/x/sys v0.0.0-20210301091718-77cc2087c03b
+# golang.org/x/sys v0.0.0-20210402192133-700132347e07
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.5
+# golang.org/x/text v0.3.6
+## explicit
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -227,13 +228,11 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/tools v0.1.0
-## explicit
 golang.org/x/tools/go/ast/inspector
-# google.golang.org/genproto v0.0.0-20210226172003-ab064af71705
+# google.golang.org/genproto v0.0.0-20210402141018-6c239bbf2bb1
 ## explicit
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.36.0
-## explicit
+# google.golang.org/grpc v1.36.1
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
@@ -278,7 +277,7 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.25.0
+# google.golang.org/protobuf v1.26.0
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
@@ -289,22 +288,23 @@ google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
 google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldsort
 google.golang.org/protobuf/internal/filedesc
 google.golang.org/protobuf/internal/filetype
 google.golang.org/protobuf/internal/flags
 google.golang.org/protobuf/internal/genid
 google.golang.org/protobuf/internal/impl
-google.golang.org/protobuf/internal/mapsort
+google.golang.org/protobuf/internal/order
 google.golang.org/protobuf/internal/pragma
 google.golang.org/protobuf/internal/set
 google.golang.org/protobuf/internal/strs
 google.golang.org/protobuf/internal/version
 google.golang.org/protobuf/proto
+google.golang.org/protobuf/reflect/protodesc
 google.golang.org/protobuf/reflect/protoreflect
 google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
+google.golang.org/protobuf/types/descriptorpb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
