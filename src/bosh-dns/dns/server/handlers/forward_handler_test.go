@@ -307,29 +307,42 @@ var _ = Describe("ForwardHandler", func() {
 					//create a fake dns endpoint that times out because of no response
 					listen, err := net.ListenPacket(protocol, dnsServer1)
 					Expect(err).ToNot(HaveOccurred())
+					defer listen.Close()
+
 					readBytes1 := make([]byte, 1024)
 					var retryCalled int32 = 0
+					quit := make(chan struct{})
+					defer close(quit)
 
-					defer listen.Close()
 					go func() {
 						for {
-							//ignore send information just response
-							listen.ReadFrom(readBytes1)
-							atomic.AddInt32(&retryCalled, 1)
+							select {
+							case <-quit:
+								return
+							default:
+								//ignore sent information, simply timeout
+								listen.ReadFrom(readBytes1)
+								atomic.AddInt32(&retryCalled, 1)
+							}
 						}
 					}()
 
 					fineListener, err := net.ListenPacket(protocol, dnsServer2)
 					Expect(err).ToNot(HaveOccurred())
+					defer fineListener.Close()
+
 					readBytes2 := make([]byte, 1024)
 
-					defer fineListener.Close()
 					go func() {
 						for {
-							//ignore send information just response
-							bl, addr, _ := fineListener.ReadFrom(readBytes2)
-							fineListener.WriteTo(readBytes2[:bl], addr)
-
+							select {
+							case <-quit:
+								return
+							default:
+								//ignore sent information, just respond
+								bl, addr, _ := fineListener.ReadFrom(readBytes2)
+								fineListener.WriteTo(readBytes2[:bl], addr)
+							}
 						}
 					}()
 
@@ -346,31 +359,43 @@ var _ = Describe("ForwardHandler", func() {
 					//create a fake dns endpoint that times out because of no response
 					listen, err := net.ListenPacket(protocol, dnsServer1)
 					Expect(err).ToNot(HaveOccurred())
+					defer listen.Close()
 
 					readBytes1 := make([]byte, 1024)
 					var retryCalled int32 = 0
+					quit := make(chan struct{})
+					defer close(quit)
 
-					defer listen.Close()
 					go func() {
 						for {
-							//ignore send information just response
-							listen.ReadFrom(readBytes1)
-							atomic.AddInt32(&retryCalled, 1)
+							select {
+							case <-quit:
+								return
+							default:
+								//ignore sent information, simply timeout
+								listen.ReadFrom(readBytes1)
+								atomic.AddInt32(&retryCalled, 1)
+							}
 						}
 					}()
 
 					fineListener, err := net.ListenPacket(protocol, dnsServer2)
 					Expect(err).ToNot(HaveOccurred())
+					defer fineListener.Close()
 
 					fineListener.SetReadDeadline(time.Time{})
 					readBytes2 := make([]byte, 1024)
 
-					defer fineListener.Close()
 					go func() {
 						for {
-							//ignore send information just response
-							bl, addr, _ := fineListener.ReadFrom(readBytes2)
-							fineListener.WriteTo(readBytes2[:bl], addr)
+							select {
+							case <-quit:
+								return
+							default:
+								//ignore sent information, just respond
+								bl, addr, _ := fineListener.ReadFrom(readBytes2)
+								fineListener.WriteTo(readBytes2[:bl], addr)
+							}
 						}
 					}()
 
