@@ -129,7 +129,7 @@ properties:
     default: 53088
 
   metrics.address:
-    description: "Address for metrics server to bind to"
+    description: "Address for metrics server to bind to. Use 0.0.0.0 to bind to all addresses"
     default: 127.0.0.1
 
   upcheck_domains:
