@@ -16,7 +16,7 @@ github.com/bmatcuk/doublestar
 github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.1
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.0-20210405164104-56a124db2552
+# github.com/cloudfoundry/bosh-utils v0.0.0-20210412224541-4dc0ba7ee880
 ## explicit
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -33,7 +33,8 @@ github.com/cloudfoundry/go-socks5
 ## explicit
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.0
+# github.com/cloudfoundry/socks5-proxy v0.2.2
+## explicit
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.0
 github.com/coredns/caddy
@@ -172,7 +173,7 @@ github.com/prometheus/procfs/internal/util
 # github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 ## explicit
 github.com/rcrowley/go-metrics
-# golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+# golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
@@ -182,7 +183,7 @@ golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/net v0.0.0-20210410081132-afb366fc7cd1
+# golang.org/x/net v0.0.0-20210415231046-e915ea6b2b7d
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -201,7 +202,7 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/trace
-# golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57
+# golang.org/x/sys v0.0.0-20210415045647-66c3f260301c
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
@@ -230,7 +231,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/tools v0.1.0
 golang.org/x/tools/go/ast/inspector
-# google.golang.org/genproto v0.0.0-20210406143921-e86de6bf7a46
+# google.golang.org/genproto v0.0.0-20210416161957-9910b6c460de
 ## explicit
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.37.0

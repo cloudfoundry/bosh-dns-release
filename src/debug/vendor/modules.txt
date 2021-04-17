@@ -26,7 +26,7 @@ github.com/cloudfoundry/bosh-cli/ui
 github.com/cloudfoundry/bosh-cli/ui/fakes
 github.com/cloudfoundry/bosh-cli/ui/fmt
 github.com/cloudfoundry/bosh-cli/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.0-20210405164104-56a124db2552
+# github.com/cloudfoundry/bosh-utils v0.0.0-20210412224541-4dc0ba7ee880
 ## explicit
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -36,7 +36,7 @@ github.com/cloudfoundry/bosh-utils/system
 github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.0
+# github.com/cloudfoundry/socks5-proxy v0.2.2
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
 ## explicit
@@ -132,7 +132,7 @@ github.com/rivo/uniseg
 ## explicit
 github.com/vito/go-interact/interact
 github.com/vito/go-interact/interact/terminal
-# golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+# golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
@@ -143,7 +143,7 @@ golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20210410081132-afb366fc7cd1
+# golang.org/x/net v0.0.0-20210415231046-e915ea6b2b7d
 golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/html
@@ -155,7 +155,7 @@ golang.org/x/net/internal/socks
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
-# golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57
+# golang.org/x/sys v0.0.0-20210415045647-66c3f260301c
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
