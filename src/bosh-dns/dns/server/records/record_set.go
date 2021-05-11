@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
+	"strings"
 	"sync"
 
 	"strconv"
@@ -122,9 +123,12 @@ func (r *RecordSet) Subscribe() <-chan bool {
 	return c
 }
 
-func (r *RecordSet) Resolve(fqdn string) ([]string, error) {
+func (r *RecordSet) Resolve(fqdnRaw string) ([]string, error) {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
+
+	var fqdn string = strings.ToLower(fqdnRaw)
+	r.logger.Debug("RecordSet", "FQDN lower-cased from '%s' to '%s'", fqdnRaw, fqdn)
 
 	aliasExpansions := r.unsafeExpandAliases(fqdn)
 	r.logger.Debug("RecordSet", "Expand %s to %v", fqdn, aliasExpansions)

@@ -732,6 +732,27 @@ var _ = Describe("main", func() {
 					})
 				})
 
+				Context("alias resolution is case-insensitive", func() {
+					BeforeEach(func() {
+						m.SetQuestion("oNe.AlIAs.", dns.TypeA)
+					})
+
+					It("resolves to the appropriate domain before deferring to mux", func() {
+						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(response.Answer).To(HaveLen(1))
+						Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
+						Expect(response.Answer[0].Header().Name).To(Equal("oNe.AlIAs."))
+						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
+						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
+						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
+						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
+
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[oNe\.AlIAs\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+					})
+				})
+
 				Context("with an address resolving to an IP", func() {
 					BeforeEach(func() {
 						m.SetQuestion("ip.alias.", dns.TypeA)
@@ -1051,6 +1072,29 @@ var _ = Describe("main", func() {
 
 				It("responds to A queries for foo. with content from the record API", func() {
 					m.SetQuestion("my-instance-3.my-group.my-network.my-deployment.foo.", dns.TypeA)
+
+					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(r.Answer).To(HaveLen(1))
+
+					answer := r.Answer[0]
+					header := answer.Header()
+
+					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
+					Expect(r.Authoritative).To(BeTrue())
+					Expect(r.RecursionAvailable).To(BeTrue())
+
+					Expect(header.Rrtype).To(Equal(dns.TypeA))
+					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+					Expect(header.Ttl).To(Equal(uint32(0)))
+
+					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
+					Expect(answer.(*dns.A).A.String()).To(Equal("127.0.0.2"))
+				})
+
+				It("queries are correctly case-insensitive", func() {
+					m.SetQuestion("my-instANce-3.my-Group.my-netwOrk.My-deployment.fOo.", dns.TypeA)
 
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
