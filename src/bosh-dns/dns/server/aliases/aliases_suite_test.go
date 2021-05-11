@@ -3,6 +3,8 @@ package aliases_test
 import (
 	"bosh-dns/dns/server/aliases"
 
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -15,7 +17,17 @@ func TestAliases(t *testing.T) {
 }
 
 func MustNewConfigFromMap(load map[string][]string) aliases.Config {
-	config, err := aliases.NewConfigFromMap(load)
+	caseScrambledLoad := make(map[string][]string)
+	for k, v := range load {
+		mixedCaseKey := MixCase(k)
+		var mixedCaseValue []string
+		for _, value := range v {
+			mixedCaseValue = append(mixedCaseValue, MixCase(value))
+		}
+		caseScrambledLoad[mixedCaseKey] = mixedCaseValue
+	}
+
+	config, err := aliases.NewConfigFromMap(caseScrambledLoad)
 	if err != nil {
 		Fail(err.Error())
 	}

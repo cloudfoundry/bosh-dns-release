@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -29,6 +30,8 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
+
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -216,7 +219,6 @@ var _ = Describe("main", func() {
 			_, err = aliasesFile2.Write([]byte(aliases2JSONContent))
 			Expect(err).NotTo(HaveOccurred())
 
-			// httpJSONServer, handlersDir = setupHttpServer(handlerCachingEnabled, recursorPort)
 			var handlersFilesGlob string
 			if handlersDir != "" {
 				handlersFilesGlob = path.Join(handlersDir, "*")
@@ -277,7 +279,7 @@ var _ = Describe("main", func() {
 			Eventually(func() int {
 				c := &dns.Client{}
 				m := &dns.Msg{}
-				m.SetQuestion("q-s0.primer-group.primer-network.primer-deployment.primer.", dns.TypeANY)
+				SetQuestion(m, nil, "q-s0.primer-group.primer-network.primer-deployment.primer.", dns.TypeANY)
 				r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 				if err != nil {
 					return -1
@@ -310,7 +312,7 @@ var _ = Describe("main", func() {
 
 				m := &dns.Msg{}
 
-				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+				SetQuestion(m, nil, "my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 				r, _, err := c.Exchange(m, addr)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -359,7 +361,7 @@ var _ = Describe("main", func() {
 					c := &dns.Client{Net: "udp"}
 
 					m := &dns.Msg{}
-					m.SetQuestion("q-s0.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+					SetQuestion(m, nil, "q-s0.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
@@ -671,7 +673,7 @@ var _ = Describe("main", func() {
 
 						m := &dns.Msg{}
 
-						m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+						SetQuestion(m, nil, "app-id.internal-domain.", dns.TypeANY)
 						_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
 
@@ -712,8 +714,9 @@ var _ = Describe("main", func() {
 
 			Describe("alias resolution", func() {
 				Context("with only one resolving address", func() {
+					var casedQname string
 					BeforeEach(func() {
-						m.SetQuestion("one.alias.", dns.TypeA)
+						SetQuestion(m, &casedQname, "one.alias.", dns.TypeA)
 					})
 
 					It("resolves to the appropriate domain before deferring to mux", func() {
@@ -722,19 +725,20 @@ var _ = Describe("main", func() {
 
 						Expect(response.Answer).To(HaveLen(1))
 						Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
-						Expect(response.Answer[0].Header().Name).To(Equal("one.alias."))
+						Expect(response.Answer[0].Header().Name).To(Equal(casedQname))
 						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
 						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[one\.alias\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=1 time=\d+ns`))
 					})
 				})
 
 				Context("with an address resolving to an IP", func() {
+					var casedQname string
 					BeforeEach(func() {
-						m.SetQuestion("ip.alias.", dns.TypeA)
+						SetQuestion(m, &casedQname, "ip.alias.", dns.TypeA)
 					})
 
 					It("resolves to the appropriate domain before deferring to mux", func() {
@@ -743,13 +747,13 @@ var _ = Describe("main", func() {
 
 						Expect(response.Answer).To(HaveLen(1))
 						Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
-						Expect(response.Answer[0].Header().Name).To(Equal("ip.alias."))
+						Expect(response.Answer[0].Header().Name).To(Equal(casedQname))
 						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
 						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("10.11.12.13"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[ip\.alias\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=1 time=\d+ns`))
 					})
 				})
 
@@ -835,8 +839,9 @@ var _ = Describe("main", func() {
 				})
 
 				Context("with global alias configuration", func() {
+					var casedQname string
 					BeforeEach(func() {
-						m.SetQuestion("texas.nebraska.", dns.TypeA)
+						SetQuestion(m, &casedQname, "texas.nebraska.", dns.TypeA)
 					})
 
 					It("resolves the alias", func() {
@@ -845,19 +850,20 @@ var _ = Describe("main", func() {
 
 						Expect(response.Answer).To(HaveLen(1))
 						Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
-						Expect(response.Answer[0].Header().Name).To(Equal("texas.nebraska."))
+						Expect(response.Answer[0].Header().Name).To(Equal(casedQname))
 						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
 						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[texas\.nebraska\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=1 time=\d+ns`))
 					})
 				})
 
 				Context("with expanded alias interface", func() {
+					var casedQname string
 					BeforeEach(func() {
-						m.SetQuestion("my-instance-1.placeholder.alias.", dns.TypeA)
+						SetQuestion(m, &casedQname, "my-instance-1.placeholder.alias.", dns.TypeA)
 					})
 
 					It("resolves the alias", func() {
@@ -866,20 +872,21 @@ var _ = Describe("main", func() {
 
 						Expect(response.Answer).To(HaveLen(1))
 						Expect(response.Rcode).To(Equal(dns.RcodeSuccess))
-						Expect(response.Answer[0].Header().Name).To(Equal("my-instance-1.placeholder.alias."))
+						Expect(response.Answer[0].Header().Name).To(Equal(casedQname))
 						Expect(response.Answer[0].Header().Rrtype).To(Equal(dns.TypeA))
 						Expect(response.Answer[0].Header().Class).To(Equal(uint16(dns.ClassINET)))
 						Expect(response.Answer[0].Header().Ttl).To(Equal(uint32(0)))
 						Expect(response.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.2"))
 
-						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[my-instance-1\.placeholder\.alias\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+						Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*DEBUG \- handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=1 time=\d+ns`))
 					})
 				})
 			})
 
 			Context("upcheck domains", func() {
+				var casedQname string
 				BeforeEach(func() {
-					m.SetQuestion("health.check.bosh.", dns.TypeA)
+					SetQuestion(m, &casedQname, "health.check.bosh.", dns.TypeA)
 				})
 
 				It("responds with a success rcode on the main listen address", func() {
@@ -888,15 +895,15 @@ var _ = Describe("main", func() {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 					Expect(r.Answer).To(HaveLen(1))
-					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal("health.check.bosh."))
+					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal(casedQname))
 					Expect(r.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
-					m.SetQuestion("health.check.ca.", dns.TypeA)
+					SetQuestion(m, &casedQname, "health.check.ca.", dns.TypeA)
 					r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 					Expect(r.Answer).To(HaveLen(1))
-					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal("health.check.ca."))
+					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal(casedQname))
 					Expect(r.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 				})
 
@@ -906,15 +913,15 @@ var _ = Describe("main", func() {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 					Expect(r.Answer).To(HaveLen(1))
-					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal("health.check.bosh."))
+					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal(casedQname))
 					Expect(r.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
-					m.SetQuestion("health.check.ca.", dns.TypeA)
+					SetQuestion(m, &casedQname, "health.check.ca.", dns.TypeA)
 					r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress2, listenPort2))
 					Expect(err).NotTo(HaveOccurred())
 					Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 					Expect(r.Answer).To(HaveLen(1))
-					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal("health.check.ca."))
+					Expect(r.Answer[0].(*dns.A).Header().Name).To(Equal(casedQname))
 					Expect(r.Answer[0].(*dns.A).A.String()).To(Equal("127.0.0.1"))
 				})
 			})
@@ -922,7 +929,7 @@ var _ = Describe("main", func() {
 			Context("arpa.", func() {
 				Context("when arpaing internal ips", func() {
 					It("responds with an rcode success", func() {
-						m.SetQuestion("254.0.0.127.in-addr.arpa.", dns.TypePTR)
+						SetQuestion(m, nil, "254.0.0.127.in-addr.arpa.", dns.TypePTR)
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
@@ -933,8 +940,8 @@ var _ = Describe("main", func() {
 						Expect(r.Answer[0].(*dns.PTR).Ptr).To(Equal("primer-instance.my-group.my-network.my-deployment.primer."))
 					})
 
-					It("responds with alias records", func(){
-						m.SetQuestion("1.0.0.127.in-addr.arpa.", dns.TypePTR)
+					It("responds with alias records", func() {
+						SetQuestion(m, nil, "1.0.0.127.in-addr.arpa.", dns.TypePTR)
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
@@ -950,17 +957,18 @@ var _ = Describe("main", func() {
 				})
 
 				It("logs handler time", func() {
-					m.SetQuestion("254.0.0.127.in-addr.arpa.", dns.TypePTR)
+					var casedQname string
+					SetQuestion(m, &casedQname, "254.0.0.127.in-addr.arpa.", dns.TypePTR)
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ArpaHandler Request id=\d+ qtype=\[PTR\] qname=\[254\.0\.0\.127\.in-addr\.arpa\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ArpaHandler Request id=\d+ qtype=\[PTR\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=1 time=\d+ns`))
 				})
 			})
 
 			Context("domains from records.json", func() {
 				It("can interpret AZ-specific queries", func() {
-					m.SetQuestion("q-a1s0.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+					SetQuestion(m, nil, "q-a1s0.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
@@ -981,7 +989,7 @@ var _ = Describe("main", func() {
 					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
 					Expect(answer.(*dns.A).A.String()).To(Equal("127.0.0.1"))
 
-					m.SetQuestion("q-a2s0.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+					SetQuestion(m, nil, "q-a2s0.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 
 					r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
@@ -1005,7 +1013,7 @@ var _ = Describe("main", func() {
 
 				It("can interpret abbreviated group encoding", func() {
 					By("understanding q- queries", func() {
-						m.SetQuestion("q-a1s0.q-g7.foo.", dns.TypeA)
+						SetQuestion(m, nil, "q-a1s0.q-g7.foo.", dns.TypeA)
 
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
@@ -1027,7 +1035,7 @@ var _ = Describe("main", func() {
 					})
 
 					By("understanding specific instance hosts", func() {
-						m.SetQuestion("my-instance-3.q-g7.foo.", dns.TypeA)
+						SetQuestion(m, nil, "my-instance-3.q-g7.foo.", dns.TypeA)
 
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
@@ -1050,7 +1058,7 @@ var _ = Describe("main", func() {
 				})
 
 				It("responds to A queries for foo. with content from the record API", func() {
-					m.SetQuestion("my-instance-3.my-group.my-network.my-deployment.foo.", dns.TypeA)
+					SetQuestion(m, nil, "my-instance-3.my-group.my-network.my-deployment.foo.", dns.TypeA)
 
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
@@ -1073,12 +1081,13 @@ var _ = Describe("main", func() {
 				})
 
 				It("logs handler time", func() {
-					m.SetQuestion("my-instance-3.my-group.my-network.my-deployment.foo.", dns.TypeA)
+					var casedQname string
+					SetQuestion(m, &casedQname, "my-instance-3.my-group.my-network.my-deployment.foo.", dns.TypeA)
 
 					_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 					Expect(err).NotTo(HaveOccurred())
 
-					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[my-instance-3\.my-group\.my-network\.my-deployment\.foo\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+					Eventually(session.Out).Should(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.DiscoveryHandler Request id=\d+ qtype=\[A\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=1 time=\d+ns`))
 				})
 			})
 
@@ -1104,7 +1113,7 @@ var _ = Describe("main", func() {
 					Eventually(func() string {
 						c := &dns.Client{}
 						m := &dns.Msg{}
-						m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+						SetQuestion(m, nil, "my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
 
@@ -1119,7 +1128,7 @@ var _ = Describe("main", func() {
 					Eventually(func() []dns.RR {
 						c := &dns.Client{}
 						m := &dns.Msg{}
-						m.SetQuestion("texas.nebraska.", dns.TypeA)
+						SetQuestion(m, nil, "texas.nebraska.", dns.TypeA)
 						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
 						return response.Answer
@@ -1128,7 +1137,7 @@ var _ = Describe("main", func() {
 					Eventually(func() string {
 						c := &dns.Client{}
 						m := &dns.Msg{}
-						m.SetQuestion("massachusetts.nebraska.", dns.TypeA)
+						SetQuestion(m, nil, "massachusetts.nebraska.", dns.TypeA)
 						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
 
@@ -1148,7 +1157,7 @@ var _ = Describe("main", func() {
 
 				Context("when caching is disabled", func() {
 					BeforeEach(func() {
-						httpJSONServer, handlersDir = setupHttpServer(false, recursorList)
+						httpJSONServer, handlersDir = setupHttpServer(MixCase("app-id.internal-domain."), false, recursorList)
 					})
 
 					It("serves the addresses from the http server", func() {
@@ -1156,7 +1165,7 @@ var _ = Describe("main", func() {
 
 						m := &dns.Msg{}
 
-						m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+						SetQuestion(m, nil, "app-id.internal-domain.", dns.TypeANY)
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
@@ -1170,7 +1179,7 @@ var _ = Describe("main", func() {
 
 				Context("when caching is enabled", func() {
 					BeforeEach(func() {
-						httpJSONServer, handlersDir = setupHttpServer(true, recursorList)
+						httpJSONServer, handlersDir = setupHttpServer(MixCase("app-id.internal-domain."), true, recursorList)
 					})
 
 					It("should return cached answers", func() {
@@ -1178,7 +1187,7 @@ var _ = Describe("main", func() {
 
 						m := &dns.Msg{}
 
-						m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+						SetQuestion(m, nil, "app-id.internal-domain.", dns.TypeANY)
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
@@ -1190,7 +1199,7 @@ var _ = Describe("main", func() {
 
 						m = &dns.Msg{}
 
-						m.SetQuestion("app-id.internal-domain.", dns.TypeANY)
+						SetQuestion(m, nil, "app-id.internal-domain.", dns.TypeANY)
 						r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
@@ -1221,13 +1230,14 @@ var _ = Describe("main", func() {
 					server = &dns.Server{Addr: fmt.Sprintf("0.0.0.0:%d", recursorPort), Net: "tcp", UDPSize: 65535}
 
 					dns.HandleFunc(".", func(resp dns.ResponseWriter, req *dns.Msg) {
-						switch name := req.Question[0].Name; name {
+						lowercaseName := strings.ToLower(req.Question[0].Name)
+						switch name := lowercaseName; name {
 						case "test-target.recursor.internal.":
 							msg := new(dns.Msg)
 
 							msg.Answer = append(msg.Answer, &dns.A{
 								Hdr: dns.RR_Header{
-									Name:   req.Question[0].Name,
+									Name:   lowercaseName,
 									Rrtype: dns.TypeA,
 									Class:  dns.ClassINET,
 									Ttl:    30,
@@ -1248,7 +1258,7 @@ var _ = Describe("main", func() {
 
 							msg.Answer = append(msg.Answer, &dns.PTR{
 								Hdr: dns.RR_Header{
-									Name:   req.Question[0].Name,
+									Name:   lowercaseName,
 									Rrtype: dns.TypePTR,
 									Class:  dns.ClassINET,
 									Ttl:    0,
@@ -1271,7 +1281,7 @@ var _ = Describe("main", func() {
 
 							msg.Answer = append(msg.Answer, &dns.PTR{
 								Hdr: dns.RR_Header{
-									Name:   req.Question[0].Name,
+									Name:   lowercaseName,
 									Rrtype: dns.TypePTR,
 									Class:  dns.ClassINET,
 									Ttl:    0,
@@ -1307,7 +1317,7 @@ var _ = Describe("main", func() {
 
 					m := &dns.Msg{}
 
-					m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+					SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 					Expect(err).NotTo(HaveOccurred())
@@ -1320,7 +1330,7 @@ var _ = Describe("main", func() {
 
 				Context("when caching is enabled", func() {
 					BeforeEach(func() {
-						httpJSONServer, handlersDir = setupHttpServer(true, recursorList)
+						httpJSONServer, handlersDir = setupHttpServer(MixCase("test-target.recursor.internal."), true, recursorList)
 					})
 
 					It("serves cached responses for local recursor", func() {
@@ -1329,7 +1339,7 @@ var _ = Describe("main", func() {
 						m := &dns.Msg{}
 
 						// query the live server
-						m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+						SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
@@ -1343,7 +1353,7 @@ var _ = Describe("main", func() {
 						server.Shutdown()
 						Eventually(func() error {
 							m = &dns.Msg{}
-							m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+							SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
 							_, _, err = c.Exchange(m, fmt.Sprintf("127.0.0.1:%d", recursorPort))
 							return err
 						}, "5s").Should(HaveOccurred())
@@ -1351,7 +1361,7 @@ var _ = Describe("main", func() {
 						// do the same request again and get it from cache
 						m = &dns.Msg{}
 
-						m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+						SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
 						r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
@@ -1370,7 +1380,7 @@ var _ = Describe("main", func() {
 						m := &dns.Msg{}
 
 						// query the live server
-						m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+						SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
 						r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
@@ -1384,7 +1394,7 @@ var _ = Describe("main", func() {
 						server.Shutdown()
 						Eventually(func() error {
 							m = &dns.Msg{}
-							m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+							SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
 							_, _, err = c.Exchange(m, fmt.Sprintf("127.0.0.1:%d", recursorPort))
 							return err
 						}, "5s").Should(HaveOccurred())
@@ -1392,7 +1402,7 @@ var _ = Describe("main", func() {
 						// do the same request again and get it from cache
 						m = &dns.Msg{}
 
-						m.SetQuestion("test-target.recursor.internal.", dns.TypeANY)
+						SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
 						r, _, err = c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 						Expect(err).NotTo(HaveOccurred())
@@ -1404,12 +1414,13 @@ var _ = Describe("main", func() {
 				Context("arpa.", func() {
 					Context("when arpaing external ips", func() {
 						It("forwards ipv4 to a recursor", func() {
+							var casedQname string
 							c := &dns.Client{Net: "tcp"}
 
 							m := &dns.Msg{}
 							reverseAddr, err := dns.ReverseAddr("10.0.0.7")
 							Expect(err).NotTo(HaveOccurred())
-							m.SetQuestion(reverseAddr, dns.TypePTR)
+							SetQuestion(m, &casedQname, reverseAddr, dns.TypePTR)
 							r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 							Expect(err).NotTo(HaveOccurred())
@@ -1419,12 +1430,13 @@ var _ = Describe("main", func() {
 						})
 
 						It("forwards ipv6 to a recursor", func() {
+							var casedQname string
 							c := &dns.Client{Net: "tcp"}
 
 							m := &dns.Msg{}
 							reverseAddr, err := dns.ReverseAddr("2001:4870::1dec:4863")
 							Expect(err).NotTo(HaveOccurred())
-							m.SetQuestion(reverseAddr, dns.TypePTR)
+							SetQuestion(m, &casedQname, reverseAddr, dns.TypePTR)
 							r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
 							Expect(err).NotTo(HaveOccurred())
@@ -1454,7 +1466,7 @@ var _ = Describe("main", func() {
 				attempts := 5
 				c := &dns.Client{Net: protocol}
 				m := &dns.Msg{}
-				m.SetQuestion("primer-instance.primer-group.primer-network.primer-deployment.primer.", dns.TypeANY)
+				SetQuestion(m, nil, "primer-instance.primer-group.primer-network.primer-deployment.primer.", dns.TypeANY)
 
 				for j := 0; j < attempts; j++ {
 					wg.Add(concurrentRequests)
@@ -1497,7 +1509,7 @@ var _ = Describe("main", func() {
 					c := &dns.Client{Net: "udp"}
 
 					m := &dns.Msg{}
-					m.SetQuestion("q-s0.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+					SetQuestion(m, nil, "q-s0.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 
 					r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 
@@ -1589,7 +1601,8 @@ var _ = Describe("main", func() {
 
 			m := &dns.Msg{}
 
-			m.SetQuestion("bosh.io.", dns.TypeANY)
+			var casedQname string
+			SetQuestion(m, &casedQname, "bosh.io.", dns.TypeANY)
 
 			startTime := time.Now()
 			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
@@ -1597,7 +1610,7 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeNameError))
 
-			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=NXDOMAIN ancount=0 error=\[no response from recursors\] time=\d+ns`))
+			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[` + casedQname + `\] rcode=NXDOMAIN ancount=0 error=\[no response from recursors\] time=\d+ns`))
 		})
 
 		It("logs the recursor used to resolve", func() {
@@ -1624,14 +1637,15 @@ var _ = Describe("main", func() {
 
 			c := &dns.Client{}
 			m := &dns.Msg{}
-			m.SetQuestion("bosh.io.", dns.TypeANY)
+			var casedQname string
+			SetQuestion(m, &casedQname, "bosh.io.", dns.TypeANY)
 
 			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 
-			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=NOERROR ancount=1 recursor=8\.8\.8\.8:53\ time=\d+ns`))
-			Consistently(session.Out).ShouldNot(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[bosh\.io\.\] rcode=NOERROR ancount=1 time=\d+ns`))
+			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=1 recursor=8\.8\.8\.8:53\ time=\d+ns`))
+			Consistently(session.Out).ShouldNot(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=1 time=\d+ns`))
 		})
 
 		AfterEach(func() {
@@ -1896,13 +1910,13 @@ func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Serv
 	return server
 }
 
-func setupHttpServer(handlerCachingEnabled bool, recursorList []string) (*ghttp.Server, string) {
+func setupHttpServer(qname string, handlerCachingEnabled bool, recursorList []string) (*ghttp.Server, string) {
 	handlersDir, err := ioutil.TempDir("", "handlers")
 	Expect(err).NotTo(HaveOccurred())
 
 	httpJSONServer := ghttp.NewUnstartedServer()
 	httpJSONServer.AppendHandlers(ghttp.CombineHandlers(
-		ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=255"),
+		ghttp.VerifyRequest("GET", "/", "name="+qname+"&type=255"),
 		ghttp.RespondWith(http.StatusOK, `{
   "Status": 0,
   "TC": false,
@@ -1913,14 +1927,14 @@ func setupHttpServer(handlerCachingEnabled bool, recursorList []string) (*ghttp.
   "Question":
   [
     {
-      "name": "app-id.internal-domain.",
+      "name": "`+qname+`",
       "type": 28
     }
   ],
   "Answer":
   [
     {
-      "name": "app-id.internal-domain.",
+      "name": "`+qname+`",
       "type": 1,
       "TTL": 1526,
       "data": "192.168.0.1"

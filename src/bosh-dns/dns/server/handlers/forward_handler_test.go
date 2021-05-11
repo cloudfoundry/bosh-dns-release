@@ -19,6 +19,8 @@ import (
 
 	"fmt"
 
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+
 	. "github.com/onsi/ginkgo"
 	ginkgoconfig "github.com/onsi/ginkgo/config"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -64,10 +66,11 @@ var _ = Describe("ForwardHandler", func() {
 
 		Context("when there are no recursors configured", func() {
 			var msg *dns.Msg
+			var casedQname string
 			BeforeEach(func() {
 				fakeRecursorPool.PerformStrategicallyReturns(errors.New("no recursors configured"))
 				msg = &dns.Msg{}
-				msg.SetQuestion("example.com.", dns.TypeANY)
+				SetQuestion(msg, &casedQname, "example.com.", dns.TypeANY)
 			})
 
 			It("indicates that there are no recursers available", func() {
@@ -77,7 +80,7 @@ var _ = Describe("ForwardHandler", func() {
 				Expect(fakeLogger.DebugCallCount()).To(Equal(2))
 				tag, logMsg, _ := fakeLogger.DebugArgsForCall(1)
 				Expect(tag).To(Equal("ForwardHandler"))
-				Expect(logMsg).To(Equal(fmt.Sprintf("handlers.ForwardHandler Request id=%d qtype=[ANY] qname=[example.com.] rcode=NXDOMAIN ancount=0 error=[no recursors configured] time=0ns", msg.Id)))
+				Expect(logMsg).To(Equal(fmt.Sprintf("handlers.ForwardHandler Request id=%d qtype=[ANY] qname=["+casedQname+"] rcode=NXDOMAIN ancount=0 error=[no recursors configured] time=0ns", msg.Id)))
 
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Question).To(Equal(msg.Question))
@@ -122,11 +125,12 @@ var _ = Describe("ForwardHandler", func() {
 
 		Context("when no working recursors are configured", func() {
 			var msg *dns.Msg
+			var casedQname string
 
 			BeforeEach(func() {
 				fakeExchanger.ExchangeReturns(nil, 0, errors.New("first recursor failed to reply"))
 				msg = &dns.Msg{}
-				msg.SetQuestion("example.com.", dns.TypeANY)
+				SetQuestion(msg, &casedQname, "example.com.", dns.TypeANY)
 			})
 
 			It("sets a failure rcode", func() {
@@ -138,18 +142,18 @@ var _ = Describe("ForwardHandler", func() {
 				tag, logMsg, args := fakeLogger.ErrorArgsForCall(0)
 				Expect(tag).To(Equal("ForwardHandler"))
 				Expect(logMsg).To(Equal("error recursing for %s to %q: %s"))
-				Expect(args[0]).To(Equal("example.com."))
+				Expect(args[0]).To(Equal(casedQname))
 				Expect(args[1]).To(Equal("127.0.0.1"))
 				Expect(args[2]).To(Equal("first recursor failed to reply"))
 				tag, logMsg, args = fakeLogger.ErrorArgsForCall(1)
 				Expect(tag).To(Equal("ForwardHandler"))
 				Expect(logMsg).To(Equal("error recursing for %s to %q: %s"))
-				Expect(args[0]).To(Equal("example.com."))
+				Expect(args[0]).To(Equal(casedQname))
 				Expect(args[1]).To(Equal("10.244.5.4"))
 				Expect(args[2]).To(Equal("first recursor failed to reply"))
 				tag, logMsg, _ = fakeLogger.DebugArgsForCall(1)
 				Expect(tag).To(Equal("ForwardHandler"))
-				Expect(logMsg).To(Equal(fmt.Sprintf("handlers.ForwardHandler Request id=%d qtype=[ANY] qname=[example.com.] rcode=NXDOMAIN ancount=0 error=[first recursor failed to reply] time=0ns", msg.Id)))
+				Expect(logMsg).To(Equal(fmt.Sprintf("handlers.ForwardHandler Request id=%d qtype=[ANY] qname=["+casedQname+"] rcode=NXDOMAIN ancount=0 error=[first recursor failed to reply] time=0ns", msg.Id)))
 
 				message := fakeWriter.WriteMsgArgsForCall(0)
 				Expect(message.Question).To(Equal(msg.Question))
@@ -222,8 +226,9 @@ var _ = Describe("ForwardHandler", func() {
 					fakeWriter.RemoteAddrReturns(remoteAddrReturns)
 					recursionHandler := handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger, fakeTruncater)
 
+					var casedQname string
 					m := &dns.Msg{}
-					m.SetQuestion("example.com.", dns.TypeANY)
+					SetQuestion(m, &casedQname, "example.com.", dns.TypeANY)
 
 					recursionHandler.ServeDNS(fakeWriter, m)
 					message := fakeWriter.WriteMsgArgsForCall(0)
@@ -239,7 +244,7 @@ var _ = Describe("ForwardHandler", func() {
 
 					logTag, logMessage, _ := fakeLogger.DebugArgsForCall(1)
 					Expect(logTag).To(Equal("ForwardHandler"))
-					Expect(logMessage).To(Equal(fmt.Sprintf("handlers.ForwardHandler Request id=%d qtype=[ANY] qname=[example.com.] rcode=NOERROR ancount=1 recursor=127.0.0.1 time=0ns", m.Id)))
+					Expect(logMessage).To(Equal(fmt.Sprintf("handlers.ForwardHandler Request id=%d qtype=[ANY] qname=["+casedQname+"] rcode=NOERROR ancount=1 recursor=127.0.0.1 time=0ns", m.Id)))
 				},
 				Entry("forwards query to recursor via udp for udp clients", "udp", nil),
 				Entry("forwards query to recursor via tcp for tcp clients", "tcp", &net.TCPAddr{}),
@@ -255,7 +260,7 @@ var _ = Describe("ForwardHandler", func() {
 					fakeExchangerFactory := func(net string) handlers.Exchanger { return fakeExchanger }
 					recursionHandler = handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger, fakeTruncater)
 					requestMessage = &dns.Msg{}
-					requestMessage.SetQuestion("example.com.", dns.TypeANY)
+					SetQuestion(requestMessage, nil, "example.com.", dns.TypeANY)
 					o := &net.DNSError{
 						IsTimeout: true,
 					}
@@ -295,7 +300,7 @@ var _ = Describe("ForwardHandler", func() {
 					initialCall = 1
 
 					requestMessage = &dns.Msg{}
-					requestMessage.SetQuestion("example.com.", dns.TypeANY)
+					SetQuestion(requestMessage, nil, "example.com.", dns.TypeANY)
 					factory = handlers.NewExchangerFactory(1 * time.Second)
 					recursors = []string{dnsServer1, dnsServer2}
 				})
@@ -420,7 +425,7 @@ var _ = Describe("ForwardHandler", func() {
 					fakeExchangerFactory := func(net string) handlers.Exchanger { return fakeExchanger }
 					recursionHandler = handlers.NewForwardHandler(fakeRecursorPool, fakeExchangerFactory, fakeClock, fakeLogger, fakeTruncater)
 					requestMessage = &dns.Msg{}
-					requestMessage.SetQuestion("example.com.", dns.TypeANY)
+					SetQuestion(requestMessage, nil, "example.com.", dns.TypeANY)
 					fakeExchanger.ExchangeReturns(recursorAnswer, 0, nil)
 				})
 
@@ -440,12 +445,13 @@ var _ = Describe("ForwardHandler", func() {
 				var (
 					msg *dns.Msg
 				)
+				var casedQname string
 
 				BeforeEach(func() {
 					fakeExchanger.ExchangeReturns(&dns.Msg{}, 0, errors.New("failed to exchange"))
 
 					msg = &dns.Msg{}
-					msg.SetQuestion("example.com.", dns.TypeANY)
+					SetQuestion(msg, &casedQname, "example.com.", dns.TypeANY)
 
 					recursionHandler.ServeDNS(fakeWriter, msg)
 				})
@@ -455,11 +461,11 @@ var _ = Describe("ForwardHandler", func() {
 					Expect(fakeLogger.ErrorCallCount()).To(Equal(2))
 					tag, msg, args := fakeLogger.ErrorArgsForCall(0)
 					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing for example.com. to "127.0.0.1": failed to exchange`))
+					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing for ` + casedQname + ` to "127.0.0.1": failed to exchange`))
 
 					tag, msg, args = fakeLogger.ErrorArgsForCall(1)
 					Expect(tag).To(Equal("ForwardHandler"))
-					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing for example.com. to "10.244.5.4": failed to exchange`))
+					Expect(fmt.Sprintf(msg, args...)).To(Equal(`error recursing for ` + casedQname + ` to "10.244.5.4": failed to exchange`))
 				})
 
 				Context("when all recursors fail", func() {
@@ -488,7 +494,7 @@ var _ = Describe("ForwardHandler", func() {
 				}
 
 				m := &dns.Msg{}
-				m.SetQuestion("example.com.", dns.TypeANY)
+				SetQuestion(m, nil, "example.com.", dns.TypeANY)
 
 				recursionHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
@@ -506,7 +512,7 @@ var _ = Describe("ForwardHandler", func() {
 					fakeWriter.WriteMsgReturns(errors.New("failed to write message"))
 
 					m := &dns.Msg{}
-					m.SetQuestion("example.com.", dns.TypeANY)
+					SetQuestion(m, nil, "example.com.", dns.TypeANY)
 
 					recursionHandler.ServeDNS(fakeWriter, m)
 

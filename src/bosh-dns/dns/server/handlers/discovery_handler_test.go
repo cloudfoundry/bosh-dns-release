@@ -13,6 +13,8 @@ import (
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
 
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -56,7 +58,7 @@ var _ = Describe("DiscoveryHandler", func() {
 
 			It("returns rcode success for A questions when there are no matching records", func() {
 				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeA)
+				SetQuestion(m, nil, "my-instance.my-network.my-deployment.bosh.", dns.TypeA)
 
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
@@ -67,7 +69,7 @@ var _ = Describe("DiscoveryHandler", func() {
 
 			It("returns rcode success for AAAA questions when there are no matching records", func() {
 				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypeAAAA)
+				SetQuestion(m, nil, "my-instance.my-network.my-deployment.bosh.", dns.TypeAAAA)
 
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
@@ -79,7 +81,7 @@ var _ = Describe("DiscoveryHandler", func() {
 			It("returns success with no data for all other types if host lookup succeeds", func() {
 				fakeRecordSet.ResolveReturns([]string{"2601:0646:0102:0095:0000:0000:0000:0025", "123.123.123.123"}, nil)
 				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypePTR)
+				SetQuestion(m, nil, "my-instance.my-network.my-deployment.bosh.", dns.TypePTR)
 
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
@@ -92,7 +94,7 @@ var _ = Describe("DiscoveryHandler", func() {
 			It("returns name error for all other types if host lookup returns name error", func() {
 				fakeRecordSet.ResolveReturns(nil, records.DomainError)
 				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypePTR)
+				SetQuestion(m, nil, "my-instance.my-network.my-deployment.bosh.", dns.TypePTR)
 
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
@@ -105,7 +107,7 @@ var _ = Describe("DiscoveryHandler", func() {
 			It("returns success with no data for all other types if host lookup returns criteria error", func() {
 				fakeRecordSet.ResolveReturns(nil, records.CriteriaError)
 				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-network.my-deployment.bosh.", dns.TypePTR)
+				SetQuestion(m, nil, "my-instance.my-network.my-deployment.bosh.", dns.TypePTR)
 
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
@@ -123,7 +125,7 @@ var _ = Describe("DiscoveryHandler", func() {
 				fakeRecordSet.ResolveReturns([]string{"2601:0646:0102:0095:0000:0000:0000:0025", "123.123.123.123"}, nil)
 
 				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
+				SetQuestion(m, nil, "my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeA)
 
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				responseMsg := fakeWriter.WriteMsgArgsForCall(0)
@@ -152,7 +154,7 @@ var _ = Describe("DiscoveryHandler", func() {
 				fakeRecordSet.ResolveReturns([]string{"2601:0646:0102:0095:0000:0000:0000:0025", "4.2.2.2"}, nil)
 
 				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeAAAA)
+				SetQuestion(m, nil, "my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeAAAA)
 
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				responseMsg := fakeWriter.WriteMsgArgsForCall(0)
@@ -181,7 +183,7 @@ var _ = Describe("DiscoveryHandler", func() {
 				fakeRecordSet.ResolveReturns([]string{"2601:0646:0102:0095:0000:0000:0000:0025", "4.2.2.2"}, nil)
 
 				m := &dns.Msg{}
-				m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+				SetQuestion(m, nil, "my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 
 				discoveryHandler.ServeDNS(fakeWriter, m)
 				responseMsg := fakeWriter.WriteMsgArgsForCall(0)

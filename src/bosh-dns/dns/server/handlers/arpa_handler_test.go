@@ -7,6 +7,8 @@ import (
 
 	"github.com/miekg/dns"
 
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -47,7 +49,7 @@ var _ = Describe("ArpaHandler", func() {
 				Context("and they are about external ips", func() {
 					It("forwards the question up to a recursor", func() {
 						m := &dns.Msg{}
-						m.SetQuestion("109.22.25.104.in-addr.arpa.", dns.TypePTR)
+						SetQuestion(m, nil, "109.22.25.104.in-addr.arpa.", dns.TypePTR)
 
 						arpaHandler.ServeDNS(fakeWriter, m)
 						Expect(fakeForwarder.ServeDNSCallCount()).To(Equal(1))
@@ -66,7 +68,7 @@ var _ = Describe("ArpaHandler", func() {
 
 					It("responds with an PTR records", func() {
 						m := &dns.Msg{}
-						m.SetQuestion("4.3.2.1.in-addr.arpa.", dns.TypePTR)
+						SetQuestion(m, nil, "4.3.2.1.in-addr.arpa.", dns.TypePTR)
 
 						arpaHandler.ServeDNS(fakeWriter, m)
 						Expect(fakeIPProvider.GetFQDNsCallCount()).To(Equal(1))
@@ -88,7 +90,7 @@ var _ = Describe("ArpaHandler", func() {
 				Context("and they are about external ips", func() {
 					It("forwards the question up to a recursor", func() {
 						m := &dns.Msg{}
-						m.SetQuestion("0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.ip6.arpa.", dns.TypePTR)
+						SetQuestion(m, nil, "0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.ip6.arpa.", dns.TypePTR)
 
 						arpaHandler.ServeDNS(fakeWriter, m)
 						Expect(fakeForwarder.ServeDNSCallCount()).To(Equal(1))
@@ -107,7 +109,7 @@ var _ = Describe("ArpaHandler", func() {
 
 					It("responds with an empty response", func() {
 						m := &dns.Msg{}
-						m.SetQuestion("0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.d.a.e.d.f.e.e.b.4.3.2.1.ip6.arpa.", dns.TypePTR)
+						SetQuestion(m, nil, "0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.d.a.e.d.f.e.e.b.4.3.2.1.ip6.arpa.", dns.TypePTR)
 
 						arpaHandler.ServeDNS(fakeWriter, m)
 						Expect(fakeIPProvider.GetFQDNsCallCount()).To(Equal(1))
@@ -124,7 +126,7 @@ var _ = Describe("ArpaHandler", func() {
 
 					It("fills in the zeroes", func() {
 						m := &dns.Msg{}
-						m.SetQuestion("0.d.a.e.d.f.e.e.b.4.3.2.1.ip6.arpa.", dns.TypePTR)
+						SetQuestion(m, nil, "0.d.a.e.d.f.e.e.b.4.3.2.1.ip6.arpa.", dns.TypePTR)
 
 						arpaHandler.ServeDNS(fakeWriter, m)
 						Expect(fakeIPProvider.GetFQDNsCallCount()).To(Equal(1))
@@ -144,7 +146,7 @@ var _ = Describe("ArpaHandler", func() {
 			Describe("not a valid question", func() {
 				It("responds with rcode failure", func() {
 					m := &dns.Msg{}
-					m.SetQuestion("wut.wut.wuuuuuuuuuuuuut.ip39.arpa", dns.TypePTR)
+					SetQuestion(m, nil, "wut.wut.wuuuuuuuuuuuuut.ip39.arpa", dns.TypePTR)
 
 					arpaHandler.ServeDNS(fakeWriter, m)
 					Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))

@@ -5,6 +5,8 @@ import (
 
 	"github.com/miekg/dns"
 
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
@@ -20,7 +22,7 @@ func DescribeMatchingAnyA(serverFactory func() Server, entries ...TableEntry) bo
 				var err error
 
 				m := &dns.Msg{}
-				m.SetQuestion(hostname, dns.TypeANY)
+				SetQuestion(m, nil, hostname, dns.TypeANY)
 				r, _, err = c.Exchange(m, serverFactory().Bind)
 				if err != nil {
 					return -1

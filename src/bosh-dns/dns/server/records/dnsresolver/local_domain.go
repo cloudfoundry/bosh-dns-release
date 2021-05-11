@@ -4,6 +4,7 @@ import (
 	"bosh-dns/dns/server/records"
 	"errors"
 	"net"
+	"strings"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
@@ -54,9 +55,13 @@ func (d LocalDomain) Resolve(responseWriter dns.ResponseWriter, requestMsg *dns.
 }
 
 func (d LocalDomain) resolve(question dns.Question) ([]dns.RR, int) {
+	var lowercaseName = strings.ToLower(question.Name)
+
+	d.logger.Debug(d.logTag, "query lower-cased from '%s' to '%s'", question.Name, lowercaseName)
+
 	answers := []dns.RR{}
 
-	ipStrs, err := d.recordSet.Resolve(question.Name)
+	ipStrs, err := d.recordSet.Resolve(lowercaseName)
 	if err != nil {
 		d.logger.Debug(d.logTag, "failed to get ip addresses: %v", err)
 		if errors.Is(err, records.CriteriaError) {

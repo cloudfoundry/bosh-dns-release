@@ -10,6 +10,8 @@ import (
 
 	"net"
 
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,8 +33,9 @@ var _ = Describe("UpcheckHandler", func() {
 	Describe("ServeDNS", func() {
 		Context("when ANY record", func() {
 			It("returns success rcode", func() {
+				var casedQname string
 				m := &dns.Msg{}
-				m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
+				SetQuestion(m, &casedQname, "upcheck.bosh-dns.", dns.TypeANY)
 
 				upcheckHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
@@ -42,7 +45,7 @@ var _ = Describe("UpcheckHandler", func() {
 				Expect(len(message.Answer)).To(Equal(2))
 				Expect(message.Answer[0]).To(Equal(&dns.A{
 					Hdr: dns.RR_Header{
-						Name:   "upcheck.bosh-dns.",
+						Name:   casedQname,
 						Rrtype: dns.TypeA,
 						Class:  dns.ClassINET,
 						Ttl:    0,
@@ -51,7 +54,7 @@ var _ = Describe("UpcheckHandler", func() {
 				}))
 				Expect(message.Answer[1]).To(Equal(&dns.AAAA{
 					Hdr: dns.RR_Header{
-						Name:   "upcheck.bosh-dns.",
+						Name:   casedQname,
 						Rrtype: dns.TypeAAAA,
 						Class:  dns.ClassINET,
 						Ttl:    0,
@@ -63,8 +66,9 @@ var _ = Describe("UpcheckHandler", func() {
 
 		Context("when A record", func() {
 			It("returns success rcode", func() {
+				var casedQname string
 				m := &dns.Msg{}
-				m.SetQuestion("upcheck.bosh-dns.", dns.TypeA)
+				SetQuestion(m, &casedQname, "upcheck.bosh-dns.", dns.TypeA)
 
 				upcheckHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
@@ -74,7 +78,7 @@ var _ = Describe("UpcheckHandler", func() {
 				Expect(len(message.Answer)).To(Equal(1))
 				Expect(message.Answer[0]).To(Equal(&dns.A{
 					Hdr: dns.RR_Header{
-						Name:   "upcheck.bosh-dns.",
+						Name:   casedQname,
 						Rrtype: dns.TypeA,
 						Class:  dns.ClassINET,
 						Ttl:    0,
@@ -86,8 +90,9 @@ var _ = Describe("UpcheckHandler", func() {
 
 		Context("when AAAA record", func() {
 			It("returns success rcode", func() {
+				var casedQname string
 				m := &dns.Msg{}
-				m.SetQuestion("upcheck.bosh-dns.", dns.TypeAAAA)
+				SetQuestion(m, &casedQname, "upcheck.bosh-dns.", dns.TypeAAAA)
 
 				upcheckHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
@@ -97,7 +102,7 @@ var _ = Describe("UpcheckHandler", func() {
 				Expect(len(message.Answer)).To(Equal(1))
 				Expect(message.Answer[0]).To(Equal(&dns.AAAA{
 					Hdr: dns.RR_Header{
-						Name:   "upcheck.bosh-dns.",
+						Name:   casedQname,
 						Rrtype: dns.TypeAAAA,
 						Class:  dns.ClassINET,
 						Ttl:    0,
@@ -110,7 +115,7 @@ var _ = Describe("UpcheckHandler", func() {
 		Context("when not A, AAAA, or ANY record", func() {
 			It("returns success rcode", func() {
 				m := &dns.Msg{}
-				m.SetQuestion("upcheck.bosh-dns.", dns.TypeMX)
+				SetQuestion(m, nil, "upcheck.bosh-dns.", dns.TypeMX)
 
 				upcheckHandler.ServeDNS(fakeWriter, m)
 				message := fakeWriter.WriteMsgArgsForCall(0)
@@ -141,7 +146,7 @@ var _ = Describe("UpcheckHandler", func() {
 				fakeWriter.WriteMsgReturns(errors.New("failed to write message"))
 
 				m := &dns.Msg{}
-				m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
+				SetQuestion(m, nil, "upcheck.bosh-dns.", dns.TypeANY)
 				upcheckHandler.ServeDNS(fakeWriter, m)
 
 				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))

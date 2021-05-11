@@ -13,9 +13,12 @@ import (
 
 	"bytes"
 
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
@@ -84,7 +87,7 @@ var _ = Describe("HttpJsonHandler", func() {
 				client.GetReturns(fakeResponse, nil)
 
 				req := &dns.Msg{}
-				req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+				SetQuestion(req, nil, "app-id.internal-domain.", dns.TypeA)
 
 				handler.ServeDNS(fakeWriter, req)
 				Expect(client.GetCallCount()).To(Equal(1))
@@ -99,7 +102,7 @@ var _ = Describe("HttpJsonHandler", func() {
 				client.GetReturns(fakeResponse, nil)
 
 				req := &dns.Msg{}
-				req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+				SetQuestion(req, nil, "app-id.internal-domain.", dns.TypeA)
 
 				handler.ServeDNS(fakeWriter, req)
 				Expect(client.GetCallCount()).To(Equal(1))
@@ -129,8 +132,10 @@ var _ = Describe("HttpJsonHandler", func() {
 
 		Context("successful requests", func() {
 			BeforeEach(func() {
+				var casedName string
+				casedName = MixCase("app-id.internal-domain.")
 				fakeServerResponse = ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=28"),
+					ghttp.VerifyRequest("GET", "/", "name="+casedName+"&type=28"),
 					ghttp.RespondWith(http.StatusOK, `{
 						"Status": 0,
 						"TC": false,
@@ -141,20 +146,20 @@ var _ = Describe("HttpJsonHandler", func() {
 						"Question":
 						[
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 28
 							}
 						],
 						"Answer":
 						[
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 1526,
 								"data": "192.168.0.1"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 28,
 								"TTL": 224,
 								"data": "::1"
@@ -166,8 +171,9 @@ var _ = Describe("HttpJsonHandler", func() {
 			})
 
 			It("returns a DNS response based on answer given by backend server", func() {
+				var casedName string
 				req := &dns.Msg{}
-				req.SetQuestion("app-id.internal-domain.", dns.TypeAAAA)
+				SetQuestion(req, &casedName, "app-id.internal-domain.", dns.TypeAAAA)
 
 				handler.ServeDNS(fakeWriter, req)
 
@@ -180,7 +186,7 @@ var _ = Describe("HttpJsonHandler", func() {
 				Expect(resp.Answer).To(HaveLen(2))
 				Expect(resp.Answer[0]).To(Equal(&dns.A{
 					Hdr: dns.RR_Header{
-						Name:   "app-id.internal-domain.",
+						Name:   casedName,
 						Rrtype: dns.TypeA,
 						Class:  dns.ClassINET,
 						Ttl:    1526,
@@ -190,7 +196,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 				Expect(resp.Answer[1]).To(Equal(&dns.A{
 					Hdr: dns.RR_Header{
-						Name:   "app-id.internal-domain.",
+						Name:   casedName,
 						Rrtype: dns.TypeAAAA,
 						Class:  dns.ClassINET,
 						Ttl:    224,
@@ -220,7 +226,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 			It("logs the error ", func() {
 				req := &dns.Msg{}
-				req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+				SetQuestion(req, nil, "app-id.internal-domain.", dns.TypeA)
 				handler.ServeDNS(fakeWriter, req)
 
 				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
@@ -233,7 +239,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 			It("responds with a server fail", func() {
 				req := &dns.Msg{}
-				req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+				SetQuestion(req, nil, "app-id.internal-domain.", dns.TypeA)
 				handler.ServeDNS(fakeWriter, req)
 
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
@@ -272,7 +278,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 			It("returns a serve fail response", func() {
 				req := &dns.Msg{}
-				req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+				SetQuestion(req, nil, "app-id.internal-domain.", dns.TypeA)
 				handler.ServeDNS(fakeWriter, req)
 
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
@@ -287,7 +293,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 			It("logs the error", func() {
 				req := &dns.Msg{}
-				req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+				SetQuestion(req, nil, "app-id.internal-domain.", dns.TypeA)
 				handler.ServeDNS(fakeWriter, req)
 
 				Expect(fakeLogger.ErrorCallCount()).To(Equal(1))
@@ -308,7 +314,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 			It("returns a serve fail response", func() {
 				req := &dns.Msg{}
-				req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+				SetQuestion(req, nil, "app-id.internal-domain.", dns.TypeA)
 				handler.ServeDNS(fakeWriter, req)
 
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
@@ -324,9 +330,12 @@ var _ = Describe("HttpJsonHandler", func() {
 
 		Context("when the https server message is truncated", func() {
 			BeforeEach(func() {
+				var casedName string
+				casedName = MixCase("app-id.internal-domain.")
+
 				fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
 				fakeServerResponse = ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=1"),
+					ghttp.VerifyRequest("GET", "/", "name="+casedName+"&type=1"),
 					ghttp.RespondWith(http.StatusOK, `{
 						"Status": 0,
 						"TC": true,
@@ -337,14 +346,14 @@ var _ = Describe("HttpJsonHandler", func() {
 						"Question":
 						[
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 28
 							}
 						],
 						"Answer":
 						[
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 1526,
 								"data": "192.168.0.1"
@@ -357,7 +366,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 			It("returns a truncated dns message", func() {
 				req := &dns.Msg{}
-				req.SetQuestion("app-id.internal-domain.", dns.TypeA)
+				SetQuestion(req, nil, "app-id.internal-domain.", dns.TypeA)
 				handler.ServeDNS(fakeWriter, req)
 
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))
@@ -371,9 +380,12 @@ var _ = Describe("HttpJsonHandler", func() {
 
 		Context("when the non truncated http server response message is too large to fit in dns message", func() {
 			BeforeEach(func() {
+				var casedName string
+				casedName = MixCase("app-id.internal-domain.")
+
 				fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
 				fakeServerResponse = ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=1"),
+					ghttp.VerifyRequest("GET", "/", "name="+casedName+"&type=1"),
 					ghttp.RespondWith(http.StatusOK, `{
 						"Status": 0,
 						"TC": false,
@@ -384,85 +396,85 @@ var _ = Describe("HttpJsonHandler", func() {
 						"Question":
 						[
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 28
 							}
 						],
 						"Answer": [
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 1526,
 								"data": "192.168.0.1"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 1526,
 								"data": "192.168.0.2"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 1526,
 								"data": "192.168.0.3"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 224,
 								"data": "192.168.0.4"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 224,
 								"data": "192.168.0.5"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 224,
 								"data": "192.168.0.6"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 224,
 								"data": "192.168.0.7"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 224,
 								"data": "192.168.0.8"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 224,
 								"data": "192.168.0.9"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 224,
 								"data": "192.168.0.10"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 224,
 								"data": "192.168.0.11"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 224,
 								"data": "192.168.0.12"
 							},
 							{
-								"name": "app-id.internal-domain.",
+								"name": "`+casedName+`",
 								"type": 1,
 								"TTL": 224,
 								"data": "192.168.0.13"
@@ -475,7 +487,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 			It("truncates the answers to fit", func() {
 				request := &dns.Msg{}
-				request.SetQuestion("app-id.internal-domain.", dns.TypeA)
+				SetQuestion(request, nil, "app-id.internal-domain.", dns.TypeA)
 				handler.ServeDNS(fakeWriter, request)
 
 				Expect(fakeWriter.WriteMsgCallCount()).To(Equal(1))

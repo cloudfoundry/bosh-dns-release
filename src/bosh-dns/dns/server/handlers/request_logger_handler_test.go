@@ -9,6 +9,8 @@ import (
 
 	"time"
 
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -54,7 +56,7 @@ var _ = Describe("RequestLoggerHandler", func() {
 	Describe("ServeDNS", func() {
 		It("delegates to the child handler", func() {
 			m := dns.Msg{}
-			m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
+			SetQuestion(&m, nil, "upcheck.bosh-dns.", dns.TypeANY)
 
 			handler.ServeDNS(fakeWriter, &m)
 
@@ -67,8 +69,9 @@ var _ = Describe("RequestLoggerHandler", func() {
 		})
 
 		It("logs the request info", func() {
+			var casedQname string
 			m := &dns.Msg{}
-			m.SetQuestion("upcheck.bosh-dns.", dns.TypeANY)
+			SetQuestion(m, &casedQname, "upcheck.bosh-dns.", dns.TypeANY)
 			m.Id = 123
 
 			handler.ServeDNS(fakeWriter, m)
@@ -76,11 +79,11 @@ var _ = Describe("RequestLoggerHandler", func() {
 			Expect(fakeLogger.DebugCallCount()).To(Equal(2))
 			tag, message, _ := fakeLogger.DebugArgsForCall(0)
 			Expect(tag).To(Equal("RequestLoggerHandler"))
-			Expect(message).To(Equal("dns.HandlerFunc Received request id=123 qtype=[ANY] qname=[upcheck.bosh-dns.]"))
+			Expect(message).To(Equal("dns.HandlerFunc Received request id=123 qtype=[ANY] qname=[" + casedQname + "]"))
 
 			tag, message, _ = fakeLogger.DebugArgsForCall(1)
 			Expect(tag).To(Equal("RequestLoggerHandler"))
-			Expect(message).To(Equal("dns.HandlerFunc Request id=123 qtype=[ANY] qname=[upcheck.bosh-dns.] rcode=NOERROR ancount=0 time=3ns"))
+			Expect(message).To(Equal("dns.HandlerFunc Request id=123 qtype=[ANY] qname=[" + casedQname + "] rcode=NOERROR ancount=0 time=3ns"))
 		})
 	})
 })

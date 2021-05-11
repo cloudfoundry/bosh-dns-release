@@ -56,13 +56,17 @@ func (c *Config) UnmarshalJSON(j []byte) error {
 	return nil
 }
 
-func (c *Config) setAlias(alias string, domains []string) error {
-	if alias == "" {
+func (c *Config) setAlias(rawAlias string, domains []string) error {
+	if rawAlias == "" {
 		return errors.New("bad alias format: empty alias qn")
 	}
 
+	alias := strings.ToLower(rawAlias)
+
 	qualifedDomains := []string{}
-	for _, domain := range domains {
+	for _, rawDomain := range domains {
+		domain := strings.ToLower(rawDomain)
+
 		if strings.HasPrefix(domain, "*.") {
 			qualifedDomains = append(qualifedDomains, dns.Fqdn(strings.Replace(dns.Fqdn(domain), "*", "q-s0", 1)))
 		} else if net.ParseIP(domain) != nil {

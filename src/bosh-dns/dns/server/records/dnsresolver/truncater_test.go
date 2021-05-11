@@ -1,8 +1,11 @@
 package dnsresolver_test
 
 import (
-	"github.com/miekg/dns"
 	"net"
+
+	"github.com/miekg/dns"
+
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -145,7 +148,7 @@ var _ = Describe("TruncateIfNeeded", func() {
 
 func createRequest(ednsBuffer uint16) *dns.Msg {
 	m := &dns.Msg{}
-	m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+	SetQuestion(m, nil, "my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 	if ednsBuffer > 0 {
 		m.SetEdns0(ednsBuffer, false)
 	}
@@ -156,7 +159,7 @@ func createResponse(minSize int) *dns.Msg {
 	m := &dns.Msg{
 		Answer: []dns.RR{},
 	}
-	m.SetQuestion("my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
+	SetQuestion(m, nil, "my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 	m.SetRcode(m, dns.RcodeSuccess)
 
 	m.Compress = true // ensure compression won't avoid truncation
