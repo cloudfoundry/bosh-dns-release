@@ -1252,13 +1252,14 @@ var _ = Describe("main", func() {
 					server = &dns.Server{Addr: fmt.Sprintf("0.0.0.0:%d", recursorPort), Net: "tcp", UDPSize: 65535}
 
 					dns.HandleFunc(".", func(resp dns.ResponseWriter, req *dns.Msg) {
-						switch name := req.Question[0].Name; name {
+						lowercaseName := strings.ToLower(req.Question[0].Name)
+						switch name := lowercaseName; name {
 						case "test-target.recursor.internal.":
 							msg := new(dns.Msg)
 
 							msg.Answer = append(msg.Answer, &dns.A{
 								Hdr: dns.RR_Header{
-									Name:   req.Question[0].Name,
+									Name:   lowercaseName,
 									Rrtype: dns.TypeA,
 									Class:  dns.ClassINET,
 									Ttl:    30,
@@ -1279,7 +1280,7 @@ var _ = Describe("main", func() {
 
 							msg.Answer = append(msg.Answer, &dns.PTR{
 								Hdr: dns.RR_Header{
-									Name:   req.Question[0].Name,
+									Name:   lowercaseName,
 									Rrtype: dns.TypePTR,
 									Class:  dns.ClassINET,
 									Ttl:    0,
@@ -1302,7 +1303,7 @@ var _ = Describe("main", func() {
 
 							msg.Answer = append(msg.Answer, &dns.PTR{
 								Hdr: dns.RR_Header{
-									Name:   req.Question[0].Name,
+									Name:   lowercaseName,
 									Rrtype: dns.TypePTR,
 									Class:  dns.ClassINET,
 									Ttl:    0,
