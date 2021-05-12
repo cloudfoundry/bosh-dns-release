@@ -37,22 +37,27 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func SetQuestion(msg *dns.Msg, externString *string, z string, t uint16) *dns.Msg {
-	var casedZ strings.Builder
+func MixCase(str string) string {
+	var casedStr strings.Builder
 
-	for i, char := range z {
+	for i, char := range str {
 		if i%2 == 0 {
-			casedZ.WriteRune(unicode.ToLower(char))
+			casedStr.WriteRune(unicode.ToLower(char))
 		} else {
-			casedZ.WriteRune(unicode.ToUpper(char))
+			casedStr.WriteRune(unicode.ToUpper(char))
 		}
 	}
+	return casedStr.String()
+}
+
+func SetQuestion(msg *dns.Msg, externString *string, z string, t uint16) *dns.Msg {
+	var casedZ = MixCase(z)
 
 	if externString != nil {
-		*externString = casedZ.String()
+		*externString = casedZ
 	}
 
-	return msg.SetQuestion(casedZ.String(), t)
+	return msg.SetQuestion(casedZ, t)
 }
 
 var _ = Describe("main", func() {
@@ -236,7 +241,6 @@ var _ = Describe("main", func() {
 			_, err = aliasesFile2.Write([]byte(aliases2JSONContent))
 			Expect(err).NotTo(HaveOccurred())
 
-			// httpJSONServer, handlersDir = setupHttpServer(handlerCachingEnabled, recursorPort)
 			var handlersFilesGlob string
 			if handlersDir != "" {
 				handlersFilesGlob = path.Join(handlersDir, "*")
@@ -1175,7 +1179,7 @@ var _ = Describe("main", func() {
 
 				Context("when caching is disabled", func() {
 					BeforeEach(func() {
-						httpJSONServer, handlersDir = setupHttpServer(false, recursorList)
+						httpJSONServer, handlersDir = setupHttpServer(MixCase("app-id.internal-domain."), false, recursorList)
 					})
 
 					It("serves the addresses from the http server", func() {
@@ -1197,7 +1201,7 @@ var _ = Describe("main", func() {
 
 				Context("when caching is enabled", func() {
 					BeforeEach(func() {
-						httpJSONServer, handlersDir = setupHttpServer(true, recursorList)
+						httpJSONServer, handlersDir = setupHttpServer(MixCase("app-id.internal-domain."), true, recursorList)
 					})
 
 					It("should return cached answers", func() {
@@ -1347,7 +1351,7 @@ var _ = Describe("main", func() {
 
 				Context("when caching is enabled", func() {
 					BeforeEach(func() {
-						httpJSONServer, handlersDir = setupHttpServer(true, recursorList)
+						httpJSONServer, handlersDir = setupHttpServer(MixCase("test-target.recursor.internal."), true, recursorList)
 					})
 
 					It("serves cached responses for local recursor", func() {
@@ -1927,13 +1931,13 @@ func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Serv
 	return server
 }
 
-func setupHttpServer(handlerCachingEnabled bool, recursorList []string) (*ghttp.Server, string) {
+func setupHttpServer(qname string, handlerCachingEnabled bool, recursorList []string) (*ghttp.Server, string) {
 	handlersDir, err := ioutil.TempDir("", "handlers")
 	Expect(err).NotTo(HaveOccurred())
 
 	httpJSONServer := ghttp.NewUnstartedServer()
 	httpJSONServer.AppendHandlers(ghttp.CombineHandlers(
-		ghttp.VerifyRequest("GET", "/", "name=app-id.internal-domain.&type=255"),
+		ghttp.VerifyRequest("GET", "/", "name="+qname+"&type=255"),
 		ghttp.RespondWith(http.StatusOK, `{
   "Status": 0,
   "TC": false,
@@ -1944,14 +1948,14 @@ func setupHttpServer(handlerCachingEnabled bool, recursorList []string) (*ghttp.
   "Question":
   [
     {
-      "name": "app-id.internal-domain.",
+      "name": "`+qname+`",
       "type": 28
     }
   ],
   "Answer":
   [
     {
-      "name": "app-id.internal-domain.",
+      "name": "`+qname+`",
       "type": 1,
       "TTL": 1526,
       "data": "192.168.0.1"

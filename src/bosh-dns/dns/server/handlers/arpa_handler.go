@@ -44,7 +44,10 @@ func reverse(ss []string) []string {
 	return r
 }
 
-func (ArpaHandler) convertToRecordIP(query string) (string, error) {
+func (a ArpaHandler) convertToRecordIP(q string) (string, error) {
+	var query string = strings.ToLower(q)
+	a.logger.Debug("ArpaHandler", "query lower-cased from '%s' to '%s'", q, query)
+
 	if strings.HasSuffix(query, ".ip6.arpa.") {
 		segments := strings.Split(strings.TrimRight(query, ".ip6.arpa."), ".")
 		reversedSegments := reverse(segments)
