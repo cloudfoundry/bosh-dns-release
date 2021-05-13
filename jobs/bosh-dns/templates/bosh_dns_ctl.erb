@@ -62,6 +62,12 @@ function start_dns() {
   ulimit -n 65536
 
   pushd ${JOB_DIR}
+  # Setting GODEBUG to "x509ignoreCN=0" helps customers who have yet to update their TLS certs
+  # to include both a SAN and a CN. For some more information, check this
+  # <https://golang.org/pkg/crypto/x509/#Certificate.VerifyHostname>
+  # or check the Wayback Machine if the relevant info has been removed from that page.
+  export GODEBUG=x509ignoreCN=0
+
   chpst -u vcap:vcap \
     "${DNS_PACKAGE}/bin/bosh-dns" \
     --config "${JOB_DIR}/config/config.json" \
