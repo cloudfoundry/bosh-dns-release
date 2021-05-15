@@ -26,7 +26,7 @@ github.com/cloudfoundry/bosh-cli/ui
 github.com/cloudfoundry/bosh-cli/ui/fakes
 github.com/cloudfoundry/bosh-cli/ui/fmt
 github.com/cloudfoundry/bosh-cli/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.254
+# github.com/cloudfoundry/bosh-utils v0.0.256
 ## explicit
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -36,14 +36,14 @@ github.com/cloudfoundry/bosh-utils/system
 github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.5
+# github.com/cloudfoundry/socks5-proxy v0.2.6
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
 ## explicit
 github.com/cppforlife/go-semi-semantic/version
 # github.com/dustin/go-humanize v1.0.0
 github.com/dustin/go-humanize
-# github.com/fatih/color v1.10.0
+# github.com/fatih/color v1.11.0
 ## explicit
 github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.9
@@ -132,7 +132,7 @@ github.com/rivo/uniseg
 ## explicit
 github.com/vito/go-interact/interact
 github.com/vito/go-interact/interact/terminal
-# golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
+# golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
@@ -144,7 +144,7 @@ golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20210508051633-16afe75a6701
+# golang.org/x/net v0.0.0-20210510120150-4163338589ed
 golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/html
@@ -156,7 +156,7 @@ golang.org/x/net/internal/socks
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
-# golang.org/x/sys v0.0.0-20210507161434-a76c4d0a0096
+# golang.org/x/sys v0.0.0-20210514084401-e8d321eab015
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
