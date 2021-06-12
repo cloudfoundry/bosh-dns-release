@@ -4,10 +4,10 @@ go 1.15
 
 require (
 	bosh-dns v0.0.0
-	code.cloudfoundry.org/tlsconfig v0.0.0-20200131000646-bbe0f8da39b3
+	code.cloudfoundry.org/tlsconfig v0.0.0-20210611184518-7cab1d27de74
 	github.com/cheggaaa/pb v1.0.29 // indirect
 	github.com/cloudfoundry/bosh-cli v6.4.1+incompatible
-	github.com/cloudfoundry/bosh-utils v0.0.258
+	github.com/cloudfoundry/bosh-utils v0.0.261
 	github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4 // indirect
 	github.com/fatih/color v1.12.0 // indirect
 	github.com/jessevdk/go-flags v1.5.0
