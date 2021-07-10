@@ -26,7 +26,7 @@ github.com/cloudfoundry/bosh-cli/ui
 github.com/cloudfoundry/bosh-cli/ui/fakes
 github.com/cloudfoundry/bosh-cli/ui/fmt
 github.com/cloudfoundry/bosh-cli/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.263
+# github.com/cloudfoundry/bosh-utils v0.0.264
 ## explicit
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -107,7 +107,7 @@ github.com/onsi/ginkgo/reporters/stenographer
 github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable
 github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
 github.com/onsi/ginkgo/types
-# github.com/onsi/gomega v1.13.0
+# github.com/onsi/gomega v1.14.0
 ## explicit
 github.com/onsi/gomega
 github.com/onsi/gomega/format
