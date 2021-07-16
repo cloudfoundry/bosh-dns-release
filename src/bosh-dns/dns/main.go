@@ -84,6 +84,12 @@ func mainExitCode() int {
 	logger.Info(logTag, "bosh-dns starting")
 	defer logger.FlushTimeout(5 * time.Second)
 
+	recursionLogger := boshlog.NewAsyncWriterLogger(boshlog.LevelInfo, os.Stdout)
+	if config.UseRFC3339Formatting() {
+		recursionLogger.UseRFC3339Timestamps()
+	}
+	defer recursionLogger.FlushTimeout(5 * time.Second)
+
 	fs := boshsys.NewOsFileSystem(logger)
 
 	addressConfiguration, err := addressesconfig.ConfigFromGlob(
@@ -160,11 +166,11 @@ func mainExitCode() int {
 
 	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, config.RecursorMaxRetries, logger)
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
-	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger, truncater)
+	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger, recursionLogger, config.EnableRecursionLogging, truncater)
 
 	mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger, recordSet, forwardHandler), clock, logger))
 
-	handlerFactory := handlers.NewFactory(exchangerFactory, clock, stringShuffler, config.RecursorMaxRetries, logger, truncater)
+	handlerFactory := handlers.NewFactory(exchangerFactory, clock, stringShuffler, config.RecursorMaxRetries, logger, recursionLogger, config.EnableRecursionLogging, truncater)
 
 	delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
 	if err != nil {

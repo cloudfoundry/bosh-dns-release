@@ -35,7 +35,8 @@ type Config struct {
 	UpcheckDomains     []string     `json:"upcheck_domains,omitempty"`
 	JobsDir            string       `json:"jobs_dir,omitempty"`
 
-	LogLevel string `json:"log_level,omitempty"`
+	LogLevel               string   `json:"log_level,omitempty"`
+	EnableRecursionLogging bool     `json:"enable_recursion_logging"`
 
 	API APIConfig `json:"api"`
 
