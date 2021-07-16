@@ -8,6 +8,41 @@ import (
 )
 
 func LogRequest(logger logger.Logger, handler dns.Handler, logTag string, duration int64, request *dns.Msg, response *dns.Msg, customMessage string) {
+	logLine := getLogLine(handler, logTag, duration, request, response, customMessage)
+
+	logger.Debug(logTag, logLine)
+}
+
+func LogRecursionInfo(recursionLogger logger.Logger, handler dns.Handler, logTag string, duration int64, request *dns.Msg, response *dns.Msg, customMessage string) {
+	logLine := getLogLine(handler, logTag, duration, request, response, customMessage)
+
+	recursionLogger.Info(logTag, logLine)
+}
+
+func LogReceivedRequest(logger logger.Logger, handler dns.Handler, logTag string, request *dns.Msg) {
+	types, domains := readQuestions(request)
+	logLine := fmt.Sprintf("%T Received request id=%d qtype=[%s] qname=[%s]",
+		handler,
+		request.Id,
+		strings.Join(types, ","),
+		strings.Join(domains, ","),
+	)
+
+	logger.Debug(logTag, logLine)
+}
+
+func readQuestions(request *dns.Msg) ([]string, []string) {
+	types := make([]string, len(request.Question))
+	domains := make([]string, len(request.Question))
+
+	for i, q := range request.Question {
+		types[i] = dns.Type(q.Qtype).String()
+		domains[i] = q.Name
+	}
+	return types, domains
+}
+
+func getLogLine(handler dns.Handler, logTag string, duration int64, request *dns.Msg, response *dns.Msg, customMessage string) string {
 	types, domains := readQuestions(request)
 
 	if customMessage != "" {
@@ -32,28 +67,5 @@ func LogRequest(logger logger.Logger, handler dns.Handler, logTag string, durati
 		duration,
 	)
 
-	logger.Debug(logTag, logLine)
-}
-
-func LogReceivedRequest(logger logger.Logger, handler dns.Handler, logTag string, request *dns.Msg) {
-	types, domains := readQuestions(request)
-	logLine := fmt.Sprintf("%T Received request id=%d qtype=[%s] qname=[%s]",
-		handler,
-		request.Id,
-		strings.Join(types, ","),
-		strings.Join(domains, ","),
-	)
-
-	logger.Debug(logTag, logLine)
-}
-
-func readQuestions(request *dns.Msg) ([]string, []string) {
-	types := make([]string, len(request.Question))
-	domains := make([]string, len(request.Question))
-
-	for i, q := range request.Question {
-		types[i] = dns.Type(q.Qtype).String()
-		domains[i] = q.Name
-	}
-	return types, domains
+	return logLine
 }

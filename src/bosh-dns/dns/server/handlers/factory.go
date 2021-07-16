@@ -12,22 +12,26 @@ import (
 )
 
 type Factory struct {
-	exchangerFactory   ExchangerFactory
-	clock              clock.Clock
-	shuffler           shuffle.StringShuffle
-	recursorRetryCount int
-	logger             boshlog.Logger
-	truncater          dnsresolver.ResponseTruncater
+	exchangerFactory       ExchangerFactory
+	clock                  clock.Clock
+	shuffler               shuffle.StringShuffle
+	recursorRetryCount     int
+	logger                 boshlog.Logger
+	recursionLogger        boshlog.Logger
+	enableRecursionLogging bool
+	truncater              dnsresolver.ResponseTruncater
 }
 
-func NewFactory(exchangerFactory ExchangerFactory, clock clock.Clock, shuffler shuffle.StringShuffle, recursorRetryCount int, logger boshlog.Logger, truncater dnsresolver.ResponseTruncater) *Factory {
+func NewFactory(exchangerFactory ExchangerFactory, clock clock.Clock, shuffler shuffle.StringShuffle, recursorRetryCount int, logger boshlog.Logger, recursionLogger boshlog.Logger, enableRecursionLogging bool, truncater dnsresolver.ResponseTruncater) *Factory {
 	return &Factory{
-		exchangerFactory:   exchangerFactory,
-		clock:              clock,
-		shuffler:           shuffler,
-		recursorRetryCount: recursorRetryCount,
-		logger:             logger,
-		truncater:          truncater,
+		exchangerFactory:       exchangerFactory,
+		clock:                  clock,
+		shuffler:               shuffler,
+		recursorRetryCount:     recursorRetryCount,
+		logger:                 logger,
+		recursionLogger:        recursionLogger,
+		enableRecursionLogging: enableRecursionLogging,
+		truncater:              truncater,
 	}
 }
 
@@ -52,7 +56,7 @@ func (f *Factory) CreateForwardHandler(recursors []string, cache bool) dns.Handl
 	// The default behavior defined by DNS spec is to use
 	// "smart" recursor selection.
 	pool := NewFailoverRecursorPool(f.shuffler.Shuffle(recursors), config.SmartRecursorSelection, f.recursorRetryCount, f.logger)
-	handler = NewForwardHandler(pool, f.exchangerFactory, f.clock, f.logger, f.truncater)
+	handler = NewForwardHandler(pool, f.exchangerFactory, f.clock, f.logger, f.recursionLogger, f.enableRecursionLogging, f.truncater)
 
 	if cache {
 		handler = NewCachingDNSHandler(handler, f.truncater, f.clock, f.logger)

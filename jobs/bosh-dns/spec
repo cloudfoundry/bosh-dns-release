@@ -48,6 +48,9 @@ properties:
   log_level:
     description: Logging level (DEBUG, INFO, WARN, ERROR, NONE)
     default: INFO
+  enable_recursion_logging:
+    description: Enable dedicated recursion logging to stdout
+    default: false
 
   api.port:
     description: "Port that the DNS servers debug API will listen on"

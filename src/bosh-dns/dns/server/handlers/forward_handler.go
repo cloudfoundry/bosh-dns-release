@@ -14,12 +14,14 @@ import (
 )
 
 type ForwardHandler struct {
-	clock            clock.Clock
-	recursors        RecursorPool
-	exchangerFactory ExchangerFactory
-	logger           logger.Logger
-	logTag           string
-	truncater        dnsresolver.ResponseTruncater
+	clock                  clock.Clock
+	recursors              RecursorPool
+	exchangerFactory       ExchangerFactory
+	logger                 logger.Logger
+	recursionLogger        logger.Logger
+	enableRecursionLogging bool
+	logTag                 string
+	truncater              dnsresolver.ResponseTruncater
 }
 
 //go:generate counterfeiter . Exchanger
@@ -34,14 +36,16 @@ type Cache interface {
 	GetExpired(*dns.Msg) *dns.Msg
 }
 
-func NewForwardHandler(recursors RecursorPool, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger, truncater dnsresolver.ResponseTruncater) ForwardHandler {
+func NewForwardHandler(recursors RecursorPool, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger, recursionLogger logger.Logger, enableRecursionLogging bool, truncater dnsresolver.ResponseTruncater) ForwardHandler {
 	return ForwardHandler{
-		recursors:        recursors,
-		exchangerFactory: exchangerFactory,
-		clock:            clock,
-		logger:           logger,
-		logTag:           "ForwardHandler",
-		truncater:        truncater,
+		recursors:              recursors,
+		exchangerFactory:       exchangerFactory,
+		clock:                  clock,
+		logger:                 logger,
+		recursionLogger:        recursionLogger,
+		enableRecursionLogging: enableRecursionLogging,
+		logTag:                 "ForwardHandler",
+		truncater:              truncater,
 	}
 }
 
@@ -98,6 +102,11 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 func (r ForwardHandler) logRecursor(before time.Time, request *dns.Msg, response *dns.Msg, recursor string) {
 	duration := r.clock.Now().Sub(before).Nanoseconds()
 	internal.LogRequest(r.logger, r, r.logTag, duration, request, response, recursor)
+
+  // write recursion log to stdout on "INFO" level when "DEBUG" level is not an option in production.
+  if r.enableRecursionLogging {
+    internal.LogRecursionInfo(r.recursionLogger, r, r.logTag, duration, request, response, recursor)
+  }
 }
 
 func (ForwardHandler) network(responseWriter dns.ResponseWriter) string {
