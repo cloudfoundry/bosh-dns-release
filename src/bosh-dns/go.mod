@@ -8,6 +8,7 @@ require (
 	code.cloudfoundry.org/workpool v0.0.0-20200131000409-2ac56b354115
 	github.com/cloudfoundry/bosh-utils v0.0.264
 	github.com/cloudfoundry/gosigar v1.1.0
+	github.com/cloudfoundry/socks5-proxy v0.2.13 // indirect
 	github.com/coredns/caddy v1.1.1 // indirect
 	github.com/coredns/coredns v1.8.4
 	github.com/miekg/dns v1.1.43
@@ -18,8 +19,8 @@ require (
 	github.com/prometheus/common v0.29.0 // indirect
 	github.com/prometheus/procfs v0.7.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+	golang.org/x/net v0.0.0-20210716203947-853a461950ff
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
-	google.golang.org/genproto v0.0.0-20210708141623-e76da96a951f // indirect
+	google.golang.org/genproto v0.0.0-20210716133855-ce7ef5c701ea // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
