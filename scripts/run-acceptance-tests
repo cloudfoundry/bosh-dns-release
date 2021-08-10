@@ -11,7 +11,7 @@ export NO_RECURSORS_OPS_FILE="no-recursors-configured"
 export LOCAL_RECURSOR_OPS_FILE="add-test-dns-nameservers"
 export TEST_TARGET_OS="linux"
 export GOPATH=$PWD
-BASE_STEMCELL=${BASE_STEMCELL:-ubuntu-xenial}
+BASE_STEMCELL=${BASE_STEMCELL:-ubuntu-bionic}
 export BASE_STEMCELL
 export PATH="${GOPATH}/bin":$PATH
 
