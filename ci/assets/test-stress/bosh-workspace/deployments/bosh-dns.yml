@@ -1,7 +1,7 @@
 name: ((deployment_name))
 stemcells:
 - alias: default
-  os: ubuntu-xenial
+  os: ubuntu-bonic
   version: latest
 update:
   canaries: 0
