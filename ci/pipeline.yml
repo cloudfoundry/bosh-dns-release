@@ -64,6 +64,7 @@ jobs:
     - task: test-unit-windows
       timeout: 1h
       file: bosh-dns-release/ci/tasks/windows/test-unit-windows.yml
+      tags: ["windows-nimbus"]
 
 - name: test-unit-release
   public: true
@@ -244,7 +245,6 @@ jobs:
       - get: bosh-release
     - task: test-brats # contain base manifest
       file: brats-src/ci/tasks/test-brats.yml
-      tags: ["worker-brats"]
       privileged: true
       input_mapping:
         dns-release: bosh-dns-release-src
