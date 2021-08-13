@@ -55,15 +55,6 @@ jobs:
     - task: test-unit
       file: bosh-dns-release/ci/tasks/test-unit.yml
 
-- name: test-coredns-cache
-  public: true
-  plan:
-    - get: coredns
-      trigger: true
-    - get: bosh-dns-release
-    - task: test-cache
-      file: bosh-dns-release/ci/tasks/test-cache.yml
-
 - name: test-unit-windows
   public: true
   serial: true
@@ -339,12 +330,6 @@ resources:
     private_key: {{github_deployment_key}}
     ignore_paths:
     - ci/docker
-
-- name: coredns
-  type: git
-  source:
-    uri: https://github.com/bosh-dep-forks/coredns.git
-    branch: bosh-develop
 
 - name: golang-release
   type: git
