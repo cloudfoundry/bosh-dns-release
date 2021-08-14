@@ -26,7 +26,7 @@ github.com/cloudfoundry/bosh-cli/ui
 github.com/cloudfoundry/bosh-cli/ui/fakes
 github.com/cloudfoundry/bosh-cli/ui/fmt
 github.com/cloudfoundry/bosh-cli/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.266
+# github.com/cloudfoundry/bosh-utils v0.0.267
 ## explicit
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -36,7 +36,7 @@ github.com/cloudfoundry/bosh-utils/system
 github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.15
+# github.com/cloudfoundry/socks5-proxy v0.2.16
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
 ## explicit
@@ -129,7 +129,7 @@ github.com/rivo/uniseg
 ## explicit
 github.com/vito/go-interact/interact
 github.com/vito/go-interact/interact/terminal
-# golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
+# golang.org/x/crypto v0.0.0-20210813211128-0a44fdfbc16e
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
@@ -141,7 +141,7 @@ golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
+# golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
 golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/html
@@ -153,7 +153,7 @@ golang.org/x/net/internal/socks
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
-# golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069
+# golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
@@ -162,7 +162,7 @@ golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
 ## explicit
 golang.org/x/term
-# golang.org/x/text v0.3.6
+# golang.org/x/text v0.3.7
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
