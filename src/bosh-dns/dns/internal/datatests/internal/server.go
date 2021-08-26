@@ -77,7 +77,7 @@ func StartSampleServer() Server {
 func StopSampleServer(server Server) {
 	defer gexec.CleanupBuildArtifacts()
 
-	if server.cmd.Process == nil {
+	if server.cmd == nil || server.cmd.Process == nil {
 		return
 	}
 
