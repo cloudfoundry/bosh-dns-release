@@ -1139,7 +1139,9 @@ var _ = Describe("main", func() {
 						m := &dns.Msg{}
 						SetQuestion(m, nil, "massachusetts.nebraska.", dns.TypeA)
 						response, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-						Expect(err).NotTo(HaveOccurred())
+						if err != nil {
+							return ""
+						}
 
 						if len(response.Answer) == 0 {
 							return ""
