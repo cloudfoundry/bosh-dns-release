@@ -26,7 +26,7 @@ github.com/cloudfoundry/bosh-cli/ui
 github.com/cloudfoundry/bosh-cli/ui/fakes
 github.com/cloudfoundry/bosh-cli/ui/fmt
 github.com/cloudfoundry/bosh-cli/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.273
+# github.com/cloudfoundry/bosh-utils v0.0.275
 ## explicit
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -36,14 +36,14 @@ github.com/cloudfoundry/bosh-utils/system
 github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.20
+# github.com/cloudfoundry/socks5-proxy v0.2.21
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
 ## explicit
 github.com/cppforlife/go-semi-semantic/version
 # github.com/dustin/go-humanize v1.0.0
 github.com/dustin/go-humanize
-# github.com/fatih/color v1.12.0
+# github.com/fatih/color v1.13.0
 ## explicit
 github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.5.1
@@ -59,10 +59,9 @@ github.com/jessevdk/go-flags
 github.com/jpillora/backoff
 # github.com/kr/pty v1.1.8
 ## explicit
-# github.com/mattn/go-colorable v0.1.8
+# github.com/mattn/go-colorable v0.1.9
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.14
-## explicit
 github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.13
 ## explicit
@@ -129,19 +128,19 @@ github.com/rivo/uniseg
 ## explicit
 github.com/vito/go-interact/interact
 github.com/vito/go-interact/interact/terminal
-# golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+# golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
+golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/internal/subtle
-golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20210908191846-a5e095526f91
+# golang.org/x/net v0.0.0-20210924151903-3ad01bbaa167
 golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/html
@@ -153,13 +152,13 @@ golang.org/x/net/internal/socks
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
-# golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
+# golang.org/x/sys v0.0.0-20210923061019-b8560ed6a9b7
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
+# golang.org/x/term v0.0.0-20210916214954-140adaaadfaf
 ## explicit
 golang.org/x/term
 # golang.org/x/text v0.3.7

@@ -26,7 +26,14 @@ func (m *Metrics) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	rw := dnstest.NewRecorder(w)
 	status, err := plugin.NextOrFailure(m.Name(), m.Next, ctx, rw, r)
 
-	vars.Report(WithServer(ctx), state, zone, rcode.ToString(rw.Rcode), rw.Len, rw.Start)
+	rc := rw.Rcode
+	if !plugin.ClientWrite(status) {
+		// when no response was written, fallback to status returned from next plugin as this status
+		// is actually used as rcode of DNS response
+		// see https://github.com/coredns/coredns/blob/master/core/dnsserver/server.go#L318
+		rc = status
+	}
+	vars.Report(WithServer(ctx), state, zone, rcode.ToString(rc), rw.Len, rw.Start)
 
 	return status, err
 }
