@@ -12,7 +12,7 @@ require (
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/kr/pty v1.1.8 // indirect
-	github.com/mattn/go-colorable v0.1.10 // indirect
+	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.16.0

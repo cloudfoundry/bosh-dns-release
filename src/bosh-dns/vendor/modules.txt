@@ -36,7 +36,8 @@ github.com/cloudfoundry/go-socks5
 ## explicit
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.22
+# github.com/cloudfoundry/socks5-proxy v0.2.23
+## explicit
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.1
 github.com/coredns/caddy
@@ -186,7 +187,7 @@ golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/net v0.0.0-20210928044308-7d9f5e0b762b
+# golang.org/x/net v0.0.0-20210929193557-e81a3d93ecf6
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -205,7 +206,7 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/trace
-# golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6
+# golang.org/x/sys v0.0.0-20211001092434-39dca1131b70
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
@@ -235,7 +236,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/tools v0.1.5
 golang.org/x/tools/go/ast/inspector
-# google.golang.org/genproto v0.0.0-20210928142010-c7af6a1a74c9
+# google.golang.org/genproto v0.0.0-20211001223012-bfb93cce50d9
 ## explicit
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.41.0
