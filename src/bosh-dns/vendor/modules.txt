@@ -17,9 +17,10 @@ github.com/bmatcuk/doublestar
 # github.com/cespare/xxhash/v2 v2.1.2
 ## explicit
 github.com/cespare/xxhash/v2
-# github.com/charlievieth/fs v0.0.1
+# github.com/charlievieth/fs v0.0.2
+## explicit
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.276
+# github.com/cloudfoundry/bosh-utils v0.0.277
 ## explicit
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -36,13 +37,13 @@ github.com/cloudfoundry/go-socks5
 ## explicit
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.23
+# github.com/cloudfoundry/socks5-proxy v0.2.24
 ## explicit
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.1
 github.com/coredns/caddy
 github.com/coredns/caddy/caddyfile
-# github.com/coredns/coredns v1.8.5
+# github.com/coredns/coredns v1.8.6
 ## explicit
 github.com/coredns/coredns/core/dnsserver
 github.com/coredns/coredns/coremain
@@ -164,7 +165,6 @@ github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.2.0
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.31.1
-## explicit
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
@@ -187,7 +187,7 @@ golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/net v0.0.0-20210929193557-e81a3d93ecf6
+# golang.org/x/net v0.0.0-20211008194852-3b03d305991f
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -206,7 +206,7 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/trace
-# golang.org/x/sys v0.0.0-20211001092434-39dca1131b70
+# golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
@@ -236,11 +236,10 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/tools v0.1.5
 golang.org/x/tools/go/ast/inspector
-# google.golang.org/genproto v0.0.0-20211001223012-bfb93cce50d9
+# google.golang.org/genproto v0.0.0-20211008145708-270636b82663
 ## explicit
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.41.0
-## explicit
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
