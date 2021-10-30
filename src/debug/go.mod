@@ -7,7 +7,7 @@ require (
 	code.cloudfoundry.org/tlsconfig v0.0.0-20210615191307-5d92ef3894a7
 	github.com/cheggaaa/pb v1.0.29 // indirect
 	github.com/cloudfoundry/bosh-cli v6.4.1+incompatible
-	github.com/cloudfoundry/bosh-utils v0.0.282
+	github.com/cloudfoundry/bosh-utils v0.0.287
 	github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/jessevdk/go-flags v1.5.0
