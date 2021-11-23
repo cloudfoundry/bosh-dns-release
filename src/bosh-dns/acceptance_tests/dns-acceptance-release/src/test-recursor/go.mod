@@ -1,12 +1,13 @@
 module test-recursor
 
-go 1.15
+go 1.17
 
 require (
-	github.com/miekg/dns v1.1.4
-	golang.org/x/crypto v0.0.0-20190219172222-a4c6cb3142f2 // indirect
-	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd // indirect
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20190219092855-153ac476189d // indirect
-	gopkg.in/yaml.v2 v2.2.2
+	github.com/miekg/dns v1.1.43
+	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
+	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9 // indirect
+	golang.org/x/sys v0.0.0-20211123173158-ef496fb156ab // indirect
 )
