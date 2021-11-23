@@ -17,13 +17,23 @@ jobs:
         input_repo: bosh-dns-release
       output_mapping:
         output_repo: bumped-bosh-dns-release
+    - task: bump-deps-test-acceptance-release
+      file: golang-release/ci/tasks/shared/bump-deps.yml
+      params:
+        GIT_USER_NAME: CI Bot
+        GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
+        SOURCE_PATH: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
+      input_mapping:
+        input_repo: bumped-bosh-dns-release
+      output_mapping:
+        output_repo: double-bumped-bosh-dns-release
     - task: test-unit
       input_mapping:
-        bosh-dns-release: bumped-bosh-dns-release
+        bosh-dns-release: double-bumped-bosh-dns-release
       file: bosh-dns-release/ci/tasks/test-unit.yml
     - put: bosh-dns-release
       params:
-        repository: bumped-bosh-dns-release
+        repository: double-bumped-bosh-dns-release
         rebase: true
 
 - name: bump-golang-package
@@ -47,6 +57,24 @@ jobs:
       GIT_USER_NAME: CI Bot
       GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
       PACKAGES: [golang-1.16-linux, golang-1.16-windows]
+      PRIVATE_YML: |
+        ---
+        blobstore:
+          provider: s3
+          options:
+            access_key_id: {{release_blobs_access_key_id}}
+            secret_access_key: {{release_blobs_secret_access_key}}
+  - task: bump-golang-package-test-acceptance-release
+    file: golang-release/ci/tasks/shared/bump-golang-package.yml
+    input_mapping:
+      input_repo: bosh-dns-release
+    output_mapping:
+      output_repo: bosh-dns-release
+    params:
+      RELEASE_DIR: src/bosh-dns/acceptance_tests/dns-acceptance-release
+      GIT_USER_NAME: CI Bot
+      GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
+      PACKAGES: [golang-1.16-linux]
       PRIVATE_YML: |
         ---
         blobstore:
