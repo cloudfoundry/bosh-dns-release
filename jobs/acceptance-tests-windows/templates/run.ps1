@@ -1,4 +1,4 @@
-﻿. C:\var\vcap\packages\golang-1-windows\bosh\runtime.ps1
+﻿. C:\var\vcap\packages\golang-1.16-windows\bosh\runtime.ps1
 
 $ErrorActionPreference = "Stop"
 

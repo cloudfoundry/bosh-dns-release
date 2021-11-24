@@ -2,7 +2,7 @@
 name: bosh-dns-windows
 
 dependencies:
-- golang-1-windows
+- golang-1.16-windows
 
 files:
 - bosh-dns/dns/**/*
