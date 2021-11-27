@@ -112,8 +112,9 @@ github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e h1:FQdRViao
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e/go.mod h1:PXmcacyJB/pJjSxEl15IU6rEIKXrhZQRzsr0UTkgNNs=
 github.com/cloudfoundry/gosigar v1.1.0 h1:V/dVCzhKOdIU3WRB5inQU20s4yIgL9Dxx/Mhi0SF8eM=
 github.com/cloudfoundry/gosigar v1.1.0/go.mod h1:3qLfc2GlfmwOx2+ZDaRGH3Y9fwQ0sQeaAleo2GV5pH0=
-github.com/cloudfoundry/socks5-proxy v0.2.32 h1:M53YBHEvk/EokDO5jnjJByM3NAwMsuq062mTlrxra3k=
 github.com/cloudfoundry/socks5-proxy v0.2.32/go.mod h1:jp3QYHP8zhRZlMsQAW2EJVBGaZMBSfVcmjgqLZoh4Pg=
+github.com/cloudfoundry/socks5-proxy v0.2.33 h1:WS/HYwbQ45qjXg8jwctw0sc30EIcZeV6AYOw2AtrvrA=
+github.com/cloudfoundry/socks5-proxy v0.2.33/go.mod h1:9TLzUj3mNYlttMSNPuh8QnoFDn6/zOZFBUSDbo6QlQM=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cncf/udpa/go v0.0.0-20200629203442-efcf912fb354/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
 github.com/cncf/udpa/go v0.0.0-20201120205902-5459f2c99403/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
