@@ -6,4 +6,6 @@ source /var/vcap/packages/golang-1.16-linux/bosh/compile.env
 mkdir -p "${GOPATH}/src"
 mv test-recursor "${GOPATH}/src"
 
-go build -o "${BOSH_INSTALL_TARGET}/bin/test-recursor" "test-recursor"
+pushd "${GOPATH}/src/test-recursor"
+  go build -o "${BOSH_INSTALL_TARGET}/bin/test-recursor" "test-recursor"
+popd
