@@ -6,4 +6,6 @@ source /var/vcap/packages/golang-1.16-linux/bosh/compile.env
 mkdir -p "${GOPATH}/src"
 mv test-http-dns-server "${GOPATH}/src"
 
-go build -o "${BOSH_INSTALL_TARGET}/bin/test-http-dns-server" "test-http-dns-server"
+pushd "${GOPATH}/src/test-http-dns-server"
+  go build -o "${BOSH_INSTALL_TARGET}/bin/test-http-dns-server" "test-http-dns-server"
+popd
