@@ -1,18 +1,18 @@
 # github.com/miekg/dns v1.1.43
-## explicit; go 1.14
+## explicit
 github.com/miekg/dns
 # golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
-## explicit; go 1.17
+## explicit
 golang.org/x/net/bpf
 golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 # golang.org/x/sys v0.0.0-20211124211545-fe61309f8881
-## explicit; go 1.17
+## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # gopkg.in/yaml.v2 v2.4.0
-## explicit; go 1.15
+## explicit
 gopkg.in/yaml.v2
