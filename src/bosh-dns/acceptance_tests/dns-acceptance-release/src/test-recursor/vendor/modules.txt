@@ -1,7 +1,7 @@
 # github.com/miekg/dns v1.1.43
 ## explicit
 github.com/miekg/dns
-# golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
+# golang.org/x/net v0.0.0-20211203184738-4852103109b8
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/internal/iana
