@@ -3,7 +3,7 @@
 github.com/miekg/dns
 # golang.org/x/mod v0.5.1
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
+# golang.org/x/net v0.0.0-20220121210141-e204ce36a2ba
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/internal/iana
