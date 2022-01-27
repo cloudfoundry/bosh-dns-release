@@ -12,6 +12,7 @@ jobs:
       params:
         GIT_USER_NAME: CI Bot
         GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
+        GO_PACKAGE: golang-1.16-linux
         SOURCE_PATH: src/bosh-dns
       input_mapping:
         input_repo: bosh-dns-release
@@ -22,6 +23,7 @@ jobs:
       params:
         GIT_USER_NAME: CI Bot
         GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
+        GO_PACKAGE: golang-1.16-linux
         SOURCE_PATH: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
       input_mapping:
         input_repo: bumped-bosh-dns-release
@@ -385,8 +387,6 @@ resources:
   source:
     uri: https://github.com/bosh-packages/golang-release
     branch: master
-    paths:
-    - releases/golang
 
 - name: version
   type: semver
