@@ -416,7 +416,6 @@ resources:
   type: git
   source:
     uri: https://github.com/cloudfoundry/bosh
-    branch: master
 
 - name: bosh-release
   type: bosh-io-release
