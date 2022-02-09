@@ -12,7 +12,7 @@ jobs:
       params:
         GIT_USER_NAME: CI Bot
         GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
-        GO_PACKAGE: golang-1.16-linux
+        GO_PACKAGE: golang-1-linux
         SOURCE_PATH: src/bosh-dns
       input_mapping:
         input_repo: bosh-dns-release
@@ -23,7 +23,7 @@ jobs:
       params:
         GIT_USER_NAME: CI Bot
         GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
-        GO_PACKAGE: golang-1.16-linux
+        GO_PACKAGE: golang-1-linux
         SOURCE_PATH: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
       input_mapping:
         input_repo: bumped-bosh-dns-release
@@ -58,7 +58,7 @@ jobs:
     params:
       GIT_USER_NAME: CI Bot
       GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
-      PACKAGES: [golang-1.16-linux, golang-1.16-windows]
+      PACKAGES: [golang-1-linux, golang-1-windows]
       PRIVATE_YML: |
         ---
         blobstore:
@@ -76,7 +76,7 @@ jobs:
       RELEASE_DIR: src/bosh-dns/acceptance_tests/dns-acceptance-release
       GIT_USER_NAME: CI Bot
       GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
-      PACKAGES: [golang-1.16-linux]
+      PACKAGES: [golang-1-linux]
       PRIVATE_YML: |
         ---
         blobstore:

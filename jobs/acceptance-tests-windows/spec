@@ -7,7 +7,7 @@ templates:
   run.ps1: bin/run.ps1
 
 packages:
-  - golang-1.16-windows
+  - golang-1-windows
   - acceptance-tests-windows
 
 properties:

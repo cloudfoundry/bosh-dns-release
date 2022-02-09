@@ -2,7 +2,7 @@
 name: bosh-dns
 
 dependencies:
-- golang-1.16-linux
+- golang-1-linux
 
 files:
 - bosh-dns/dns/**/*

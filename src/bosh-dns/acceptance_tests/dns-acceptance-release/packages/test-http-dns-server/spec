@@ -2,7 +2,7 @@
 name: test-http-dns-server
 
 dependencies:
-- golang-1.16-linux
+- golang-1-linux
 
 files:
 - test-http-dns-server/**/*
