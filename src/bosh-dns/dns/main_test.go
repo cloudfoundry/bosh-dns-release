@@ -695,7 +695,7 @@ var _ = Describe("main", func() {
 						_, err := http.Get(fmt.Sprintf("http://%s:%d/metrics", listenAddress, 53088+ginkgoconfig.GinkgoConfig.ParallelNode))
 
 						Expect(err).To(HaveOccurred())
-						Expect(err.Error()).To(MatchRegexp("connection refused"))
+						Expect(err.Error()).To(MatchRegexp("connection.*refused"))
 					})
 				})
 			})

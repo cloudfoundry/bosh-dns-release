@@ -15,6 +15,13 @@ go.exe build -o $env:TEST_RECURSOR_BINARY .
 Pop-Location
 
 go.exe run github.com/onsi/ginkgo/ginkgo -p -r -race -keepGoing -randomizeAllSpecs -randomizeSuites dns healthcheck
+
+if ($LastExitCode -ne 0)
+{
+    Write-Error $_
+    exit 1
+}
+
 go.exe run github.com/onsi/ginkgo/ginkgo -r -race -keepGoing -randomizeAllSpecs -randomizeSuites integration-tests
 
 if ($LastExitCode -ne 0)
