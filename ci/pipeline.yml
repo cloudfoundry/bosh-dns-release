@@ -28,14 +28,25 @@ jobs:
       input_mapping:
         input_repo: bumped-bosh-dns-release
       output_mapping:
-        output_repo: double-bumped-bosh-dns-release
+        output_repo: bumped-bosh-dns-release
+    - task: bump-deps-debug
+      file: golang-release/ci/tasks/shared/bump-deps.yml
+      params:
+        GIT_USER_NAME: CI Bot
+        GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
+        GO_PACKAGE: golang-1-linux
+        SOURCE_PATH: src/debug
+      input_mapping:
+        input_repo: bumped-bosh-dns-release
+      output_mapping:
+        output_repo: bumped-bosh-dns-release
     - task: test-unit
       input_mapping:
-        bosh-dns-release: double-bumped-bosh-dns-release
+        bosh-dns-release: bumped-bosh-dns-release
       file: bosh-dns-release/ci/tasks/test-unit.yml
     - put: bosh-dns-release
       params:
-        repository: double-bumped-bosh-dns-release
+        repository: bumped-bosh-dns-release
         rebase: true
 
 - name: bump-golang-package
