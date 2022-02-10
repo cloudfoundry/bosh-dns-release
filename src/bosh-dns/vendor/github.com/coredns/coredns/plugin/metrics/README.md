@@ -8,7 +8,9 @@
 
 With *prometheus* you export metrics from CoreDNS and any plugin that has them.
 The default location for the metrics is `localhost:9153`. The metrics path is fixed to `/metrics`.
-The following metrics are exported:
+
+In addition to the default Go metrics exported by the [Prometheus Go client](https://prometheus.io/docs/guides/go-application/),
+the following metrics are exported:
 
 * `coredns_build_info{version, revision, goversion}` - info about CoreDNS itself.
 * `coredns_panics_total{}` - total number of panics.
@@ -37,6 +39,9 @@ Extra labels used are:
 
 If monitoring is enabled, queries that do not enter the plugin chain are exported under the fake
 name "dropped" (without a closing dot - this is never a valid domain name).
+
+Other plugins may export additional stats when the _prometheus_ plugin is enabled.  Those stats are documented in each
+plugin's README.
 
 This plugin can only be used once per Server Block.
 
