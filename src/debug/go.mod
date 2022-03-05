@@ -18,7 +18,7 @@ require (
 	github.com/charlievieth/fs v0.0.2 // indirect
 	github.com/cheggaaa/pb v1.0.29 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.44 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.45 // indirect
 	github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4 // indirect
 	github.com/creack/pty v1.1.9 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
