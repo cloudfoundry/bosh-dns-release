@@ -60,22 +60,19 @@ resources:
   source:
     repository: bosh/bosh-dns-release
     tag: unit-tests
-    email: {{dockerhub_email}}
-    username: {{dockerhub_username}}
-    password: {{dockerhub_password}}
+    username: ((docker.username))
+    password: ((docker.password))
 - name: acceptance-tests-image
   type: docker-image
   source:
     repository: bosh/bosh-dns-release
     tag: acceptance-tests
-    email: {{dockerhub_email}}
-    username: {{dockerhub_username}}
-    password: {{dockerhub_password}}
+    username: ((docker.username))
+    password: ((docker.password))
 - name: acceptance-tests-windows-image
   type: docker-image
   source:
     repository: bosh/bosh-dns-release
     tag: acceptance-tests-windows
-    email: {{dockerhub_email}}
-    username: {{dockerhub_username}}
-    password: {{dockerhub_password}}
+    username: ((docker.username))
+    password: ((docker.password))

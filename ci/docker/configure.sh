@@ -8,5 +8,4 @@ dir=$(dirname $0)
 
 fly -t ${CONCOURSE_TARGET:-bosh-ecosystem} \
   set-pipeline -p bosh-dns-release-docker \
-  -c $dir/pipeline.yml \
-  --load-vars-from <(lpass show --note "bosh:docker-images concourse secrets")
+  -c $dir/pipeline.yml
