@@ -25,6 +25,7 @@ main() {
 
     bosh -n deploy -d docker deployments/docker.yml \
       -l vars/docker-vars.yml \
+      -v director_ip=$(echo $BOSH_ENVIRONMENT | sed 's#https://##g' | sed 's#:.*##g') \
       -v docker_release=$docker_release \
       --vars-store=${state_dir}/docker-vars-store.yml
   popd

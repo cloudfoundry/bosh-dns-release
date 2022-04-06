@@ -17,6 +17,12 @@ instance_groups:
   stemcell: default
   azs: [z1]
   jobs:
+  - name: pre-start-script
+    release: os-conf
+    properties:
+      script: |-
+        #!/bin/bash
+        iptables -t mangle -D POSTROUTING -d ((director_ip))/32 -p tcp -m tcp --dport 4222 -j DROP || true
   - name: docker
     properties:
       listen_address: 0.0.0.0
@@ -94,6 +100,10 @@ instance_groups:
   vm_extensions: [docker9]
 
 releases:
+- name: os-conf
+  version: "22.1.2"
+  url: "https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=22.1.2"
+  sha1: "386293038ae3d00813eaa475b4acf63f8da226ef"
 - name: docker
   url: file://((docker_release))
   version: latest
