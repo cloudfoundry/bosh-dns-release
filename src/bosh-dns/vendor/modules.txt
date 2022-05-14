@@ -41,14 +41,14 @@ github.com/cloudfoundry/go-socks5
 ## explicit
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.54
+# github.com/cloudfoundry/socks5-proxy v0.2.55
 ## explicit; go 1.18
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.1
 ## explicit; go 1.13
 github.com/coredns/caddy
 github.com/coredns/caddy/caddyfile
-# github.com/coredns/coredns v1.9.1
+# github.com/coredns/coredns v1.9.2
 ## explicit; go 1.17
 github.com/coredns/coredns/core/dnsserver
 github.com/coredns/coredns/coremain
@@ -105,7 +105,7 @@ github.com/jpillora/backoff
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 ## explicit
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/miekg/dns v1.1.48
+# github.com/miekg/dns v1.1.49
 ## explicit; go 1.14
 github.com/miekg/dns
 # github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
@@ -175,7 +175,7 @@ github.com/pivotal-cf/paraphernalia/secure/tlsconfig
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/prometheus/client_golang v1.12.1
+# github.com/prometheus/client_golang v1.12.2
 ## explicit; go 1.13
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
@@ -199,7 +199,7 @@ github.com/prometheus/procfs/internal/util
 github.com/rcrowley/go-metrics
 # github.com/rogpeppe/go-internal v1.6.1
 ## explicit; go 1.11
-# golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
+# golang.org/x/crypto v0.0.0-20220513210258-46612604a0f9
 ## explicit; go 1.17
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -213,7 +213,7 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
 ## explicit; go 1.17
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4
+# golang.org/x/net v0.0.0-20220513224357-95641704303c
 ## explicit; go 1.17
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -232,7 +232,7 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/trace
-# golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6
+# golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -283,7 +283,7 @@ golang.org/x/xerrors/internal
 # google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3
 ## explicit; go 1.15
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.46.0
+# google.golang.org/grpc v1.46.2
 ## explicit; go 1.14
 google.golang.org/grpc
 google.golang.org/grpc/attributes

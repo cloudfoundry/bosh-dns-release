@@ -92,7 +92,7 @@ func requestToMsgGet(req *http.Request) (*dns.Msg, error) {
 }
 
 func toMsg(r io.ReadCloser) (*dns.Msg, error) {
-	buf, err := io.ReadAll(io.LimitReader(r, 65536))
+	buf, err := io.ReadAll(http.MaxBytesReader(nil, r, 65536))
 	if err != nil {
 		return nil, err
 	}
