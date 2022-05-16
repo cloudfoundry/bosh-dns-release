@@ -35,7 +35,8 @@ func main() {
 
 	go func() {
 		for {
-			tc, _ := context.WithTimeout(context.Background(), time.Second)
+			tc, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
 			hosts, err := resolver.LookupHost(tc, *domain)
 			if err == nil {
 				log.Debug("wait", "%+v", hosts)

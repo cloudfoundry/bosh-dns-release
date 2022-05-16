@@ -2,7 +2,7 @@ package performance_test
 
 import (
 	"bosh-dns/dns/config"
-	"bosh-dns/healthcheck/healthserver"
+	"bosh-dns/healthconfig"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -124,7 +124,7 @@ func startHealthServer(addr string) {
 	healthFile, err := ioutil.TempFile("", "health.json")
 	Expect(err).ToNot(HaveOccurred())
 
-	healthConfigContents, err := json.Marshal(healthserver.HealthCheckConfig{
+	healthConfigContents, err := json.Marshal(healthconfig.HealthCheckConfig{
 		Address:                  addr,
 		Port:                     healthPort,
 		CertificateFile:          "../healthcheck/assets/test_certs/test_server.pem",
