@@ -133,19 +133,18 @@ func (c Config) Resolutions(maybeAlias string) []string {
 }
 
 func (c Config) AliasResolutions(domain string) []string {
-   var exactMatchAliases []string
-    for alias, domains := range c.aliases {
-        for _, aliasDomain := range domains {
+	var exactMatchAliases []string
+	for alias, domains := range c.aliases {
+		for _, aliasDomain := range domains {
 			if aliasDomain == domain {
-                  exactMatchAliases = append(exactMatchAliases, alias)
-                  break
-           }
-        }
-    }
+				exactMatchAliases = append(exactMatchAliases, alias)
+				break
+			}
+		}
+	}
 
-    return exactMatchAliases
+	return exactMatchAliases
 }
-
 
 func (c Config) Merge(other Config) Config {
 	for alias, targets := range other.aliases {

@@ -193,7 +193,7 @@ func main() {
 		}
 		msg.Answer = append(msg.Answer, aRec)
 
-		if msg.Id % 2 == 1 {
+		if msg.Id%2 == 1 {
 			time.Sleep(2 * time.Second)
 		}
 		err := resp.WriteMsg(msg)
@@ -208,7 +208,7 @@ func main() {
 		msg.Authoritative = true
 		msg.RecursionAvailable = true
 
-		if msg.Id % 2 == 1 {
+		if msg.Id%2 == 1 {
 			msg.SetRcode(req, dns.RcodeNameError)
 		} else {
 			msg.SetRcode(req, dns.RcodeSuccess)

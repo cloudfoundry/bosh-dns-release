@@ -1,8 +1,9 @@
 package dnsresolver
 
 import (
-	"github.com/miekg/dns"
 	"net"
+
+	"github.com/miekg/dns"
 )
 
 //go:generate counterfeiter . ResponseTruncater

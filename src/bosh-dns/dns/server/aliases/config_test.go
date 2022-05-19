@@ -179,7 +179,7 @@ var _ = Describe("Config", func() {
 	Describe("AliasResolutions", func() {
 		It("resolves a FQDNs to the aliases that match", func() {
 			c := MustNewConfigFromMap(map[string][]string{
-				"something.alias":    {"domain"},
+				"something.alias": {"domain"},
 			})
 
 			Expect(c.AliasResolutions("domain.")).To(Equal([]string{"something.alias."}))
@@ -187,7 +187,7 @@ var _ = Describe("Config", func() {
 
 		It("resolves an ip to aliases that match", func() {
 			c := MustNewConfigFromMap(map[string][]string{
-				"something.alias":    {"1.1.1.1"},
+				"something.alias": {"1.1.1.1"},
 			})
 
 			Expect(c.AliasResolutions("1.1.1.1")).To(Equal([]string{"something.alias."}))
@@ -196,7 +196,7 @@ var _ = Describe("Config", func() {
 		It("does not resolve underscored or wildcard domains", func() {
 			c := MustNewConfigFromMap(map[string][]string{
 				"alias-wildcard":     {"*.domain"},
-				"query-alias":     {"q-s0.domain"},
+				"query-alias":        {"q-s0.domain"},
 				"_.alias-underscore": {"_.domain"},
 			})
 

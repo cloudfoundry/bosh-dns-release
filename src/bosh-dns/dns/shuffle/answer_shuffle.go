@@ -34,6 +34,6 @@ func (s AnswerShuffle) Shuffle(src []dns.RR) []dns.RR {
 
 func (s AnswerShuffle) remove(index int, recs []dns.RR) []dns.RR {
 	copy(recs[index:], recs[index+1:]) // left shift
-	recs = recs[:len(recs)-1] // truncate
+	recs = recs[:len(recs)-1]          // truncate
 	return recs
 }

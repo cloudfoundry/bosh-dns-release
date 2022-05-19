@@ -3,6 +3,7 @@ package monitoring
 import (
 	"context"
 	"errors"
+
 	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -12,7 +13,7 @@ import (
 type DNSRequestType string
 type key int
 
-const(
+const (
 	// DNSRequestTypeInternal is used for internal dns requests
 	DNSRequestTypeInternal DNSRequestType = "internal"
 	// DNSRequestTypeExternal is used for external dns requests
@@ -34,10 +35,10 @@ func NewPluginHandlerAdapter(internalHandler dns.Handler, externalHandler dns.Ha
 type pluginHandlerAdapter struct {
 	internalHandler dns.Handler
 	externalHandler dns.Handler
-	requestManager RequestCounter
+	requestManager  RequestCounter
 }
 
-func(p pluginHandlerAdapter) Name() string {
+func (p pluginHandlerAdapter) Name() string {
 	return "pluginHandlerAdapter"
 }
 
@@ -69,15 +70,15 @@ func NewRequestManager() RequestManager {
 	return RequestManager{externalRequestsCounter: extReqs, internalRequestsCounter: intReqs}
 }
 
-func(m RequestManager) IncrementExternalCounter() {
+func (m RequestManager) IncrementExternalCounter() {
 	m.externalRequestsCounter.Inc()
 }
 
-func(m RequestManager) IncrementInternalCounter() {
+func (m RequestManager) IncrementInternalCounter() {
 	m.internalRequestsCounter.Inc()
 }
 
-func(p pluginHandlerAdapter) ServeDNS(ctx context.Context, writer dns.ResponseWriter, m *dns.Msg) (int, error) {
+func (p pluginHandlerAdapter) ServeDNS(ctx context.Context, writer dns.ResponseWriter, m *dns.Msg) (int, error) {
 	v := ctx.Value(dnsRequestContext)
 
 	if v == nil {
@@ -93,4 +94,3 @@ func(p pluginHandlerAdapter) ServeDNS(ctx context.Context, writer dns.ResponseWr
 	}
 	return 0, nil
 }
-

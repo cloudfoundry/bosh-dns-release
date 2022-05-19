@@ -167,7 +167,7 @@ func setupSecureGet() *httpclient.HTTPClient {
 	Expect(err).NotTo(HaveOccurred())
 
 	logger := logger.NewAsyncWriterLogger(logger.LevelDebug, ioutil.Discard)
-	client, err := tlsclient.New("health.bosh-dns", []byte(caCert), cert, 5 * time.Second, logger)
+	client, err := tlsclient.New("health.bosh-dns", []byte(caCert), cert, 5*time.Second, logger)
 	Expect(err).NotTo(HaveOccurred())
 	return client
 }

@@ -226,7 +226,7 @@ var _ = Describe("Integration", func() {
 				Context("slow recursor", func() {
 					It("does not negative cache", func() {
 
-						dnsResponse := helpers.DigWithOptions("alternating-slow-recursor.com.", environment.ServerAddress(), helpers.DigOpts{Id: 1, Timeout: 5*time.Second, Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true})
+						dnsResponse := helpers.DigWithOptions("alternating-slow-recursor.com.", environment.ServerAddress(), helpers.DigOpts{Id: 1, Timeout: 5 * time.Second, Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true})
 
 						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeNameError))
 						Expect(dnsResponse.Answer).To(HaveLen(0))
@@ -466,7 +466,7 @@ var _ = Describe("Integration", func() {
 						secondTestRecursor.stop()
 
 						helpers.DigWithOptions(testQuestion, environment.ServerAddress(),
-						helpers.DigOpts{Port: environment.Port(), SkipErrCheck: true, SkipRcodeCheck: true})
+							helpers.DigOpts{Port: environment.Port(), SkipErrCheck: true, SkipRcodeCheck: true})
 						Eventually(environment.Output(), 5*time.Second, 500*time.Millisecond).Should(gbytes.Say(`no response from recursors`))
 					})
 				})

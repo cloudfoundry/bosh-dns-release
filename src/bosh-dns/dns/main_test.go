@@ -1148,7 +1148,7 @@ var _ = Describe("main", func() {
 						}
 
 						return response.Answer[0].(*dns.A).A.String()
-					}, 5 * time.Second).Should(Equal("127.0.0.3"))
+					}, 5*time.Second).Should(Equal("127.0.0.3"))
 				})
 			})
 

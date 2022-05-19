@@ -2,9 +2,10 @@ package internal
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
-	"strings"
 )
 
 func LogRequest(logger logger.Logger, handler dns.Handler, logTag string, duration int64, request *dns.Msg, response *dns.Msg, customMessage string) {

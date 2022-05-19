@@ -15,14 +15,14 @@ import (
 )
 
 type healthFilter struct {
-	nextFilter     Reducer
-	health         chan<- record.Host
-	w              healthWatcher
-	wg             *sync.WaitGroup
-	shouldTrack    bool
-	domain         string
-	filterWorkPool *workpool.WorkPool
-	clock          clock.Clock
+	nextFilter              Reducer
+	health                  chan<- record.Host
+	w                       healthWatcher
+	wg                      *sync.WaitGroup
+	shouldTrack             bool
+	domain                  string
+	filterWorkPool          *workpool.WorkPool
+	clock                   clock.Clock
 	synchronousCheckTimeout time.Duration
 }
 
@@ -39,13 +39,13 @@ type healthWatcher interface {
 func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool, clock clock.Clock, synchronousCheckTimeout time.Duration, wg *sync.WaitGroup) healthFilter {
 	wp, _ := workpool.NewWorkPool(1000)
 	return healthFilter{
-		nextFilter:     nextFilter,
-		health:         health,
-		w:              w,
-		wg:             wg,
-		shouldTrack:    shouldTrack,
-		filterWorkPool: wp,
-		clock:          clock,
+		nextFilter:              nextFilter,
+		health:                  health,
+		w:                       w,
+		wg:                      wg,
+		shouldTrack:             shouldTrack,
+		filterWorkPool:          wp,
+		clock:                   clock,
 		synchronousCheckTimeout: synchronousCheckTimeout,
 	}
 }

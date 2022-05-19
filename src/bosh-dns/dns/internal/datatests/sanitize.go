@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/nu7hatch/gouuid"
+	uuid "github.com/nu7hatch/gouuid"
 )
 
 var valueSanitizer = valueSanitizer_{}

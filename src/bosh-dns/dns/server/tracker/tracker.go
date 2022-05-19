@@ -3,8 +3,9 @@ package tracker
 import (
 	"bosh-dns/dns/server/criteria"
 	"bosh-dns/dns/server/record"
-	"github.com/cloudfoundry/bosh-utils/logger"
 	"sync"
+
+	"github.com/cloudfoundry/bosh-utils/logger"
 )
 
 type Tracker struct {
@@ -13,7 +14,7 @@ type Tracker struct {
 	trackedIPs      map[string]map[string]struct{}
 	trackedIPsMutex *sync.Mutex
 	qf              query
-	logger logger.Logger
+	logger          logger.Logger
 }
 
 //go:generate counterfeiter -o ./fakes/limited_transcript.go --fake-name LimitedTranscript . limitedTranscript
@@ -40,7 +41,7 @@ func Start(shutdown chan struct{}, subscription <-chan []record.Record, healthMo
 		qf:              qf,
 		trackedIPs:      map[string]map[string]struct{}{},
 		trackedIPsMutex: &sync.Mutex{},
-		logger: logger,
+		logger:          logger,
 	}
 	go func() {
 		for {

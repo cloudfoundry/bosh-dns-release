@@ -4,9 +4,10 @@ import (
 	"bosh-dns/dns/config"
 	"errors"
 	"fmt"
-	"github.com/miekg/dns"
 	"net"
 	"sync/atomic"
+
+	"github.com/miekg/dns"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
 )

@@ -137,7 +137,7 @@ func (s Server) shutdown() error {
 
 	for _, server := range s.servers {
 		go func(server DNSServer) {
-			shutdownContext, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+			shutdownContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			err <- server.ShutdownContext(shutdownContext)
 			wg.Done()
