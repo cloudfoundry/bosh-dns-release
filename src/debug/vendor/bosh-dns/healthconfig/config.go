@@ -18,6 +18,6 @@ type HealthCheckConfig struct {
 
 	RequestTimeout config.DurationJSON `json:"request_timeout"`
 
-	LogLevel string `json:"log_level"`
+	LogLevel  string `json:"log_level"`
 	LogFormat string `json:"log_format"`
 }

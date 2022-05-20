@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bosh-dns/dns/server/handlers/internal"
+
 	"code.cloudfoundry.org/clock"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
@@ -28,7 +29,7 @@ func (h RequestLoggerHandler) ServeDNS(responseWriter dns.ResponseWriter, req *d
 	internal.LogReceivedRequest(h.logger, h.Handler, h.logTag, req)
 	var dnsMsg *dns.Msg
 	respWriter := internal.WrapWriterWithIntercept(responseWriter, func(msg *dns.Msg) {
-		dnsMsg=msg
+		dnsMsg = msg
 	})
 
 	before := h.clock.Now()

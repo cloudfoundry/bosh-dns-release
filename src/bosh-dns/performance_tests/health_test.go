@@ -92,7 +92,7 @@ func setupSecureGet() *httpclient.HTTPClient {
 
 	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
 
-	client, err := tlsclient.New("health.bosh-dns", caCert, cert, 5 * time.Second, logger)
+	client, err := tlsclient.New("health.bosh-dns", caCert, cert, 5*time.Second, logger)
 	Expect(err).NotTo(HaveOccurred())
 	return client
 }

@@ -104,7 +104,7 @@ func (t *testEnvironment) writeConfig() error {
 		Cache: config.Cache{
 			Enabled: t.caching,
 		},
-		RequestTimeout: config.DurationJSON(time.Second),
+		RequestTimeout:  config.DurationJSON(time.Second),
 		RecursorTimeout: config.DurationJSON(time.Second),
 	}
 

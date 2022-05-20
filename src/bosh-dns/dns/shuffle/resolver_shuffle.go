@@ -32,6 +32,6 @@ func (s StringShuffle) Shuffle(src []string) []string {
 
 func (s StringShuffle) remove(index int, strs []string) []string {
 	copy(strs[index:], strs[index+1:]) // left shift
-	strs = strs[:len(strs)-1] // truncate
+	strs = strs[:len(strs)-1]          // truncate
 	return strs
 }

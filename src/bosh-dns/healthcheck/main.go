@@ -46,9 +46,9 @@ func mainExitCode() int {
 	}
 
 	logger := boshlog.NewAsyncWriterLogger(logLevel, os.Stdout)
-    if config.LogFormat == "rfc3339" {
-        logger.UseRFC3339Timestamps()
-    }
+	if config.LogFormat == "rfc3339" {
+		logger.UseRFC3339Timestamps()
+	}
 	defer logger.FlushTimeout(5 * time.Second)
 	logger.Info(logTag, "Initializing")
 

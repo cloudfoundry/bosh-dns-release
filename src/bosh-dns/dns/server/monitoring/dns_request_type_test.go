@@ -3,8 +3,8 @@ package monitoring_test
 import (
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
-	"bosh-dns/dns/server/monitoring/monitoringfakes"
 	"bosh-dns/dns/server/monitoring"
+	"bosh-dns/dns/server/monitoring/monitoringfakes"
 
 	"context"
 
@@ -17,7 +17,7 @@ var _ = Describe("DNSRequestType", func() {
 	var (
 		fakeInternalDnsHandler handlersfakes.FakeDNSHandler
 		fakeExternalDnsHandler handlersfakes.FakeDNSHandler
-		fakeReqCounter monitoringfakes.FakeRequestCounter
+		fakeReqCounter         monitoringfakes.FakeRequestCounter
 
 		fakeWriter internalfakes.FakeResponseWriter
 		request    dns.Msg

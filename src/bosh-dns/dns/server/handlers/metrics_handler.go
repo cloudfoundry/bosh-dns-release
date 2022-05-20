@@ -14,7 +14,7 @@ type MetricsDNSHandler struct {
 func NewMetricsDNSHandler(metricsReporter monitoring.MetricsReporter, requestType monitoring.DNSRequestType) MetricsDNSHandler {
 	return MetricsDNSHandler{
 		metricsReporter: metricsReporter,
-		requestType: requestType,
+		requestType:     requestType,
 	}
 }
 

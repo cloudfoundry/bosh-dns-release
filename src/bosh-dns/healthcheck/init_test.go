@@ -43,7 +43,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	serverPath, err := gexec.Build("bosh-dns/healthcheck")
 	Expect(err).NotTo(HaveOccurred())
 	SetDefaultEventuallyTimeout(2 * time.Second)
-	SetDefaultEventuallyPollingInterval(500*time.Millisecond)
+	SetDefaultEventuallyPollingInterval(500 * time.Millisecond)
 
 	return []byte(serverPath)
 }, func(data []byte) {

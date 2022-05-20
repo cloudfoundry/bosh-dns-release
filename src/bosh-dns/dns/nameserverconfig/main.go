@@ -28,9 +28,9 @@ func main() {
 	}
 
 	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, os.Stdout)
-    if logFormat == "rfc3339" {
-        logger.UseRFC3339Timestamps()
-    }
+	if logFormat == "rfc3339" {
+		logger.UseRFC3339Timestamps()
+	}
 	defer logger.FlushTimeout(5 * time.Second)
 
 	shutdown := make(chan struct{})

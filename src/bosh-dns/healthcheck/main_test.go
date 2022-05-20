@@ -56,7 +56,7 @@ var _ = Describe("HealthCheck server", func() {
 				"assets/test_certs/test_ca.pem",
 				"assets/test_certs/test_client.pem",
 				"assets/test_certs/test_client.key",
-				5 * time.Second,
+				5*time.Second,
 				logger,
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -153,7 +153,7 @@ var _ = Describe("HealthCheck server", func() {
 				"assets/test_certs/test_fake_ca.pem",
 				"assets/test_certs/test_fake_client.pem",
 				"assets/test_certs/test_client.key",
-				5 * time.Second,
+				5*time.Second,
 				logger,
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -169,7 +169,7 @@ var _ = Describe("HealthCheck server", func() {
 				"assets/test_certs/test_ca.pem",
 				"assets/test_certs/test_wrong_cn_client.pem",
 				"assets/test_certs/test_client.key",
-				5 * time.Second,
+				5*time.Second,
 				logger,
 			)
 			Expect(err).NotTo(HaveOccurred())

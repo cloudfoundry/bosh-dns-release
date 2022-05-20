@@ -2,9 +2,10 @@ package handlers_test
 
 import (
 	"bosh-dns/dns/server/handlers"
-	"bosh-dns/dns/server/monitoring"
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
+	"bosh-dns/dns/server/monitoring"
+
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 
 	"github.com/miekg/dns"
@@ -14,9 +15,9 @@ import (
 
 var _ bool = Describe("metricsHandler", func() {
 	var (
-		metricsHandler      handlers.MetricsDNSHandler
-		metricsReporter     monitoring.MetricsReporter
-		metricsServer       monitoring.CoreDNSMetricsServer
+		metricsHandler  handlers.MetricsDNSHandler
+		metricsReporter monitoring.MetricsReporter
+		metricsServer   monitoring.CoreDNSMetricsServer
 
 		fakeWriter             *internalfakes.FakeResponseWriter
 		fakeDnsHandlerInternal *handlersfakes.FakeDNSHandler

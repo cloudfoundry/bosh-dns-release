@@ -3,10 +3,11 @@ package internal_test
 import (
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/internal"
-	"code.cloudfoundry.org/clock/fakeclock"
 	"fmt"
-	"github.com/miekg/dns"
 	"net"
+
+	"code.cloudfoundry.org/clock/fakeclock"
+	"github.com/miekg/dns"
 
 	"time"
 
@@ -17,11 +18,11 @@ import (
 
 var _ = Describe("RequestLoggerHandler", func() {
 	var (
-		fakeLogger *loggerfakes.FakeLogger
-		handler    handlers.RequestLoggerHandler
-		child      dns.Handler
-		fakeClock  *fakeclock.FakeClock
-		dnsRequest *dns.Msg
+		fakeLogger  *loggerfakes.FakeLogger
+		handler     handlers.RequestLoggerHandler
+		child       dns.Handler
+		fakeClock   *fakeclock.FakeClock
+		dnsRequest  *dns.Msg
 		dnsResponse *dns.Msg
 
 		makeHandler func() dns.Handler

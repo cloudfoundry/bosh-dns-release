@@ -119,7 +119,7 @@ var _ = Describe("Integration", func() {
 						fmt.Sprintf("q-g0s0.bosh-dns.default.bosh-dns.bosh."), e.ServerAddress(),
 						helpers.DigOpts{Port: e.Port(), SkipRcodeCheck: true})
 					return dnsResponse.Answer
-				}, 5 *time.Second, 500*time.Millisecond).Should(ConsistOf(
+				}, 5*time.Second, 500*time.Millisecond).Should(ConsistOf(
 					gomegadns.MatchResponse(gomegadns.Response{
 						"ip":  "127.0.0.2",
 						"ttl": 0,

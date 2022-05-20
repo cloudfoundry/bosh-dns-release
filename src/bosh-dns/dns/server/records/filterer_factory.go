@@ -22,7 +22,7 @@ type FiltererFactory interface {
 }
 
 type healthFiltererFactory struct {
-	healthWatcher healthiness.HealthWatcher
+	healthWatcher           healthiness.HealthWatcher
 	synchronousCheckTimeout time.Duration
 }
 
@@ -37,7 +37,7 @@ func (hff *healthFiltererFactory) NewQueryFilterer() Filterer {
 
 func NewHealthFiltererFactory(healthWatcher healthiness.HealthWatcher, synchronousCheckTimeout time.Duration) FiltererFactory {
 	return &healthFiltererFactory{
-		healthWatcher: healthWatcher,
+		healthWatcher:           healthWatcher,
 		synchronousCheckTimeout: synchronousCheckTimeout,
 	}
 }

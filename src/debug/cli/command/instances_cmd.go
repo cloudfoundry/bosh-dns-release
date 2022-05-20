@@ -35,7 +35,7 @@ func (o *InstancesCmd) Execute(args []string) error {
 		o.UI = confUI
 	}
 
-	client, err := tlsclient.NewFromFiles("api.bosh-dns", o.TLSCACertPath, o.TLSCertificatePath, o.TLSPrivateKeyPath, 5 * time.Second, logger)
+	client, err := tlsclient.NewFromFiles("api.bosh-dns", o.TLSCACertPath, o.TLSCertificatePath, o.TLSPrivateKeyPath, 5*time.Second, logger)
 	if err != nil {
 		return err
 	}

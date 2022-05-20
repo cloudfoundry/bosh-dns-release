@@ -27,8 +27,8 @@ type HealthExecutable interface {
 type concreteHealthServer struct {
 	logger           boshlog.Logger
 	healthExecutable HealthExecutable
-	shutdown chan struct{}
-	timeout time.Duration
+	shutdown         chan struct{}
+	timeout          time.Duration
 }
 
 const logTag = "healthServer"
@@ -37,8 +37,8 @@ func NewHealthServer(logger boshlog.Logger, healthFileName string, healthExecuta
 	return &concreteHealthServer{
 		logger:           logger,
 		healthExecutable: healthExecutable,
-		shutdown: shutdown,
-		timeout: timeout,
+		shutdown:         shutdown,
+		timeout:          timeout,
 	}
 }
 
@@ -58,16 +58,16 @@ func (c *concreteHealthServer) Serve(config *healthconfig.HealthCheckConfig) {
 	tlsConfig.BuildNameToCertificate()
 
 	server := &http.Server{
-		Addr:      fmt.Sprintf("%s:%d", config.Address, config.Port),
-		TLSConfig: tlsConfig,
-		ReadTimeout: c.timeout,
+		Addr:         fmt.Sprintf("%s:%d", config.Address, config.Port),
+		TLSConfig:    tlsConfig,
+		ReadTimeout:  c.timeout,
 		WriteTimeout: c.timeout,
 	}
 
 	go func() {
-		<- c.shutdown
+		<-c.shutdown
 		server.SetKeepAlivesEnabled(false)
-		ctx, _ := context.WithTimeout(context.Background(), 5 * time.Second)
+		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		err = server.Shutdown(ctx)
 		if err != nil {
 			c.logger.Error(logTag, "http healthcheck error during shutdown %s", err)

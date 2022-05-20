@@ -20,7 +20,7 @@ var _ = Describe("Tracker", func() {
 		shutdown       chan struct{}
 		hw             *fakes.Healther
 		qf             *fakes.Query
-		fakeLogger            *logfake.FakeLogger
+		fakeLogger     *logfake.FakeLogger
 	)
 
 	BeforeEach(func() {

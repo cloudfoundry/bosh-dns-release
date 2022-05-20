@@ -34,7 +34,7 @@ var _ = Describe("Integration", func() {
 			}}
 			hosts = []record.Host{
 				{
-					IP: "234.234.234.234",
+					IP:   "234.234.234.234",
 					FQDN: "abcdabcd.group.network.deployment.domain",
 				},
 			}

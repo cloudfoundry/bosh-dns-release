@@ -224,7 +224,7 @@ func (t *testHealthServer) Start() error {
 		t.CAFile,
 		"../healthcheck/assets/test_certs/test_client.pem",
 		"../healthcheck/assets/test_certs/test_client.key",
-		5 * time.Second,
+		5*time.Second,
 		logger,
 	)
 	Expect(err).NotTo(HaveOccurred())

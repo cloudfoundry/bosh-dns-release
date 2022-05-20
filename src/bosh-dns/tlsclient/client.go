@@ -7,8 +7,9 @@ import (
 
 	"net/http"
 
-	"code.cloudfoundry.org/tlsconfig"
 	"crypto/x509"
+
+	"code.cloudfoundry.org/tlsconfig"
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"

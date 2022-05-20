@@ -4,9 +4,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/cloudfoundry/bosh-utils/logger"
 	"os"
 	"time"
+
+	"github.com/cloudfoundry/bosh-utils/logger"
 
 	"net"
 )
@@ -25,9 +26,9 @@ func main() {
 	success := make(chan bool)
 
 	log := logger.NewAsyncWriterLogger(logger.LevelDebug, os.Stdout)
-    if *logFormat == "rfc3339" {
-        log.UseRFC3339Timestamps()
-    }
+	if *logFormat == "rfc3339" {
+		log.UseRFC3339Timestamps()
+	}
 
 	resolver := getResolver(log, *address, *port)
 	log.Info("wait", "resolving %s", *domain)
@@ -49,11 +50,11 @@ func main() {
 	select {
 	case <-bomb.C:
 		log.Error("wait", "timeout")
-		log.FlushTimeout(5*time.Second)
+		log.FlushTimeout(5 * time.Second)
 		os.Exit(1)
 	case <-success:
 		log.Info("wait", "success")
-		log.FlushTimeout(5*time.Second)
+		log.FlushTimeout(5 * time.Second)
 		os.Exit(0)
 	}
 }

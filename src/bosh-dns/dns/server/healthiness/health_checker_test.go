@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"io/ioutil"
+
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/healthiness/healthinessfakes"

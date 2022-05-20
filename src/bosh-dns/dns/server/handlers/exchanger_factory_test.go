@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"bosh-dns/dns/server/handlers"
+
 	"github.com/miekg/dns"
 )
 

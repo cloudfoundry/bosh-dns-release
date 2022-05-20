@@ -64,8 +64,8 @@ var _ = Describe("MetricsServerWrapper", func() {
 	Describe("Report", func() {
 		var (
 			metricsReporter monitoring.MetricsReporter
-			metricsServer    monitoring.CoreDNSMetricsServer
-			fakeWriter       *internalfakes.FakeResponseWriter
+			metricsServer   monitoring.CoreDNSMetricsServer
+			fakeWriter      *internalfakes.FakeResponseWriter
 		)
 
 		BeforeEach(func() {

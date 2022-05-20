@@ -6,8 +6,10 @@
 
 package dns
 
-import "sync"
-import "time"
+import (
+	"sync"
+	"time"
+)
 
 // call is an in-flight or completed singleflight.Do call
 type call struct {
