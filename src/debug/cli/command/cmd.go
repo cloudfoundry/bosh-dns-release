@@ -1,7 +1,7 @@
 package command
 
 import (
-	"github.com/cloudfoundry/bosh-cli/ui"
+	"github.com/cloudfoundry/bosh-cli/v7/ui"
 )
 
 type Commands struct {

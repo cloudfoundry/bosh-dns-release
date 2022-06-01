@@ -4,8 +4,8 @@ import (
 	"debug/cli/command"
 	"net/http"
 
-	uifakes "github.com/cloudfoundry/bosh-cli/ui/fakes"
-	boshtbl "github.com/cloudfoundry/bosh-cli/ui/table"
+	uifakes "github.com/cloudfoundry/bosh-cli/v7/ui/fakes"
+	boshtbl "github.com/cloudfoundry/bosh-cli/v7/ui/table"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"

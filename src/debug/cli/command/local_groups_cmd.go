@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cloudfoundry/bosh-cli/ui"
-	boshtbl "github.com/cloudfoundry/bosh-cli/ui/table"
+	"github.com/cloudfoundry/bosh-cli/v7/ui"
+	boshtbl "github.com/cloudfoundry/bosh-cli/v7/ui/table"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
