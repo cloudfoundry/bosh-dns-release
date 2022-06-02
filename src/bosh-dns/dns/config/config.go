@@ -92,7 +92,7 @@ type InternalUpcheckDomain struct {
 }
 
 type LoggingConfig struct {
-	Format FormatConfig `json"format,omitempty"`
+	Format FormatConfig `json:"format,omitempty"`
 }
 
 type FormatConfig struct {
