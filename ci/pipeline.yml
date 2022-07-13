@@ -305,8 +305,10 @@ jobs:
       - get: stemcell
         resource: warden-bionic-stemcell
       - get: bosh-release
+      - get: docker-cpi-image
     - task: test-brats # contain base manifest
       file: brats-src/ci/tasks/test-brats.yml
+      image: docker-cpi-image
       privileged: true
       input_mapping:
         dns-release: bosh-dns-release-src
@@ -488,6 +490,14 @@ resources:
     start: 3:00 -0700
     stop: 4:30 -0700
     days: [Saturday]
+- name: docker-cpi-image
+  type: docker-image
+  source:
+    tag: main
+    repository: bosh/docker-cpi
+    username: ((docker.username))
+    password: ((docker.password))
+
 
 - name: tracker-output
   type: tracker
