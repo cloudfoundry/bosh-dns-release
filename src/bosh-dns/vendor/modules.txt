@@ -23,7 +23,7 @@ github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.2
 ## explicit; go 1.15
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.321
+# github.com/cloudfoundry/bosh-utils v0.0.322
 ## explicit; go 1.18
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -41,7 +41,7 @@ github.com/cloudfoundry/go-socks5
 ## explicit
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.62
+# github.com/cloudfoundry/socks5-proxy v0.2.63
 ## explicit; go 1.18
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.1
@@ -184,7 +184,7 @@ github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.2.0
 ## explicit; go 1.9
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.35.0
+# github.com/prometheus/common v0.36.0
 ## explicit; go 1.16
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
@@ -213,7 +213,7 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 ## explicit; go 1.17
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20220706163947-c90051bbdb60
+# golang.org/x/net v0.0.0-20220708220712-1185a9018129
 ## explicit; go 1.17
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -232,7 +232,7 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/trace
-# golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e
+# golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -276,10 +276,10 @@ golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/packagesinternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
-# google.golang.org/genproto v0.0.0-20220706132729-d86698d07c53
+# google.golang.org/genproto v0.0.0-20220712132514-bdd2acd4974d
 ## explicit; go 1.15
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.47.0
+# google.golang.org/grpc v1.48.0
 ## explicit; go 1.14
 google.golang.org/grpc
 google.golang.org/grpc/attributes
