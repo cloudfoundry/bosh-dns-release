@@ -389,6 +389,7 @@ jobs:
         passed:
         - test-stress
         - test-acceptance-ubuntu-bionic
+        - test-acceptance-ubuntu-jammy
         - test-acceptance-windows2019
         - brats-ubuntu
       - get: bosh-dns-release
@@ -397,6 +398,7 @@ jobs:
         passed:
         - test-stress
         - test-acceptance-ubuntu-bionic
+        - test-acceptance-ubuntu-jammy
         - test-acceptance-windows2019
         - brats-ubuntu
     - put: tracker-output
