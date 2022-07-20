@@ -40,5 +40,5 @@ releases:
 
 stemcells:
 - alias: default
-  os: ubuntu-bionic
+  os: ((base_stemcell))
   version: latest

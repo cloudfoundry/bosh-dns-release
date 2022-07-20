@@ -3,6 +3,7 @@
 set -exu
 
 # Target the director
+exporrt STEMCELL_OS=$BASE_STEMCELL
 source start-bosh \
     -o /usr/local/bosh-deployment/local-bosh-release-tarball.yml \
     -o /usr/local/bosh-deployment/local-dns.yml \

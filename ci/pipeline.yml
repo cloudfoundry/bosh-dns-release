@@ -150,6 +150,25 @@ jobs:
       params:
         file: "release/bosh-dns-dev-release.tgz"
 
+- name: test-acceptance-ubuntu-jammy
+  public: true
+  serial: true
+  plan:
+    - in_parallel:
+      - get: bosh-dns-release
+        passed: [create-release]
+      - get: bosh-stemcell
+        resource: warden-jammy-stemcell
+      - get: bosh-candidate-release
+      - get: candidate-release
+        trigger: true
+        passed: [create-release]
+    - task: test-acceptance
+      privileged: true
+      file: bosh-dns-release/ci/tasks/test-acceptance.yml
+      params:
+        BASE_STEMCELL: ubuntu-jammy
+
 - name: test-acceptance-ubuntu-bionic
   public: true
   serial: true
@@ -451,15 +470,16 @@ resources:
   source:
     repository: cppforlife/bosh-docker-cpi-release
 
-- name: warden-bionic-stemcell
-  type: bosh-io-stemcell
-  source:
-    name: bosh-warden-boshlite-ubuntu-bionic-go_agent
 
 - name: gcp-windows-2019-stemcell
   type: bosh-io-stemcell
   source:
     name: bosh-google-kvm-windows2019-go_agent
+
+- name: warden-bionic-stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-warden-boshlite-ubuntu-bionic-go_agent
 
 - name: gcp-bionic-stemcell
   type: bosh-io-stemcell
@@ -470,6 +490,11 @@ resources:
   type: bosh-io-stemcell
   source:
     name: bosh-aws-xen-hvm-ubuntu-bionic-go_agent
+
+- name: warden-jammy-stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-warden-boshlite-ubuntu-jammy-go_agent
 
 - name: bosh-candidate-release
   type: s3
