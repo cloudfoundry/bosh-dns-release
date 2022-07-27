@@ -5,6 +5,7 @@ import (
 	"bosh-dns/dns/server/records/dnsresolver"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"code.cloudfoundry.org/clock"
@@ -116,7 +117,11 @@ func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter
 	case net.Error:
 		responseMessage.SetRcode(req, dns.RcodeServerFailure)
 	default:
-		responseMessage.SetRcode(req, dns.RcodeNameError)
+		if strings.Contains(err.Error(), "received SERVFAIL") {
+			responseMessage.SetRcode(req, dns.RcodeServerFailure)
+		} else {
+			responseMessage.SetRcode(req, dns.RcodeNameError)
+		}
 		break
 	}
 
