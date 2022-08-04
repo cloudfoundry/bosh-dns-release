@@ -1,534 +1,649 @@
 ---
-jobs:
-- name: bump-deps
-  public: true
-  plan:
-    - get: weekly
-      trigger: true
-    - get: golang-release
-    - get: bosh-dns-release
-    - task: bump-deps
-      file: golang-release/ci/tasks/shared/bump-deps.yml
-      params:
-        GIT_USER_NAME: CI Bot
-        GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
-        GO_PACKAGE: golang-1-linux
-        SOURCE_PATH: src/bosh-dns
-      input_mapping:
-        input_repo: bosh-dns-release
-      output_mapping:
-        output_repo: bumped-bosh-dns-release
-    - task: bump-deps-test-acceptance-release
-      file: golang-release/ci/tasks/shared/bump-deps.yml
-      params:
-        GIT_USER_NAME: CI Bot
-        GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
-        GO_PACKAGE: golang-1-linux
-        SOURCE_PATH: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
-      input_mapping:
-        input_repo: bumped-bosh-dns-release
-      output_mapping:
-        output_repo: bumped-bosh-dns-release
-    - task: bump-deps-debug
-      file: golang-release/ci/tasks/shared/bump-deps.yml
-      params:
-        GIT_USER_NAME: CI Bot
-        GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
-        GO_PACKAGE: golang-1-linux
-        SOURCE_PATH: src/debug
-      input_mapping:
-        input_repo: bumped-bosh-dns-release
-      output_mapping:
-        output_repo: bumped-bosh-dns-release
-    - task: test-unit
-      input_mapping:
-        bosh-dns-release: bumped-bosh-dns-release
-      file: bosh-dns-release/ci/tasks/test-unit.yml
-    - put: bosh-dns-release
-      params:
-        repository: bumped-bosh-dns-release
-        rebase: true
-
-- name: bump-golang-package
-  public: true
-  serial: true
-  plan:
-  - in_parallel:
-    - get: bosh-dns-release
-    - get: golang-release
-      trigger: true
-    - get: bosh-stemcell
-      resource: warden-bionic-stemcell
-    - get: bosh-candidate-release
-  - task: bump-golang-package
-    file: golang-release/ci/tasks/shared/bump-golang-package.yml
-    input_mapping:
-      input_repo: bosh-dns-release
-    output_mapping:
-      output_repo: bosh-dns-release
-    params:
-      GIT_USER_NAME: CI Bot
-      GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
-      PACKAGES: [golang-1-linux, golang-1-windows]
-      PRIVATE_YML: |
-        ---
-        blobstore:
-          provider: s3
-          options:
-            access_key_id: {{release_blobs_access_key_id}}
-            secret_access_key: {{release_blobs_secret_access_key}}
-  - task: bump-golang-package-test-acceptance-release
-    file: golang-release/ci/tasks/shared/bump-golang-package.yml
-    input_mapping:
-      input_repo: bosh-dns-release
-    output_mapping:
-      output_repo: bosh-dns-release
-    params:
-      RELEASE_DIR: src/bosh-dns/acceptance_tests/dns-acceptance-release
-      GIT_USER_NAME: CI Bot
-      GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
-      PACKAGES: [golang-1-linux]
-      PRIVATE_YML: |
-        ---
-        blobstore:
-          provider: s3
-          options:
-            access_key_id: {{release_blobs_access_key_id}}
-            secret_access_key: {{release_blobs_secret_access_key}}
-  - task: create
-    file: bosh-dns-release/ci/tasks/create-candidate.yml
-    output_mapping:
-      release: bumped-release
-  - task: test-acceptance
-    privileged: true
-    file: bosh-dns-release/ci/tasks/test-acceptance.yml
-    input_mapping:
-      candidate-release: bumped-release
-  - put: bosh-dns-release
-    params:
-      repository: bosh-dns-release
-      rebase: true
-
-- name: test-unit
-  public: true
-  plan:
-    - get: bosh-dns-release
-      trigger: true
-    - task: test-unit
-      file: bosh-dns-release/ci/tasks/test-unit.yml
-
-- name: test-unit-windows
-  public: true
-  serial: true
-  plan:
-    - get: bosh-dns-release
-      trigger: true
-    - task: test-unit-windows
-      timeout: 1h
-      file: bosh-dns-release/ci/tasks/windows/test-unit-windows.yml
-      tags: ["windows-nimbus"]
-
-- name: test-unit-release
-  public: true
-  plan:
-    - get: bosh-dns-release
-      trigger: true
-    - task: test-unit-release
-      file: bosh-dns-release/ci/tasks/test-unit-release.yml
-
-- name: create-release
-  plan:
-    - get: bosh-dns-release
-      trigger: true
-      passed:
+groups:
+  - name: bosh-dns-release
+    jobs:
+      - bump-deps
+      - bump-golang-package
       - test-unit
       - test-unit-windows
       - test-unit-release
-    - task: create
-      file: bosh-dns-release/ci/tasks/create-candidate.yml
-    - put: candidate-release
-      params:
-        file: "release/bosh-dns-dev-release.tgz"
+      - create-release
+      - test-acceptance-ubuntu-jammy
+      - test-acceptance-ubuntu-bionic
+      - test-acceptance-windows2019
+      - test-stress
+      - brats-ubuntu
+      - upload-staging-release
+      - finalize-release
+      - bump-major
+      - delivery
 
-- name: test-acceptance-ubuntu-jammy
-  public: true
-  serial: true
-  plan:
-    - in_parallel:
-      - get: bosh-dns-release
-        passed: [create-release]
-      - get: bosh-stemcell
-        resource: warden-jammy-stemcell
-      - get: bosh-candidate-release
-      - get: candidate-release
-        trigger: true
-        passed: [create-release]
-    - task: test-acceptance
-      privileged: true
-      file: bosh-dns-release/ci/tasks/test-acceptance.yml
-      params:
-        BASE_STEMCELL: ubuntu-jammy
+  - name: bosh-dns-release-images
+    jobs:
+      - build-unit-tests-image
+      - build-acceptance-tests-windows-image
+      - build-acceptance-tests-image
 
-- name: test-acceptance-ubuntu-bionic
-  public: true
-  serial: true
-  plan:
-    - in_parallel:
+jobs:
+  - name: bump-deps
+    public: true
+    plan:
+      - get: weekly
+        trigger: true
+      - get: golang-release
       - get: bosh-dns-release
-        passed: [create-release]
-      - get: bosh-stemcell
-        resource: warden-bionic-stemcell
-      - get: bosh-candidate-release
-      - get: candidate-release
-        trigger: true
-        passed: [create-release]
-    - task: test-acceptance
-      privileged: true
-      file: bosh-dns-release/ci/tasks/test-acceptance.yml
-      params:
-        BASE_STEMCELL: ubuntu-bionic
-
-- name: test-acceptance-windows2019
-  public: true
-  serial: true
-  plan:
-  - do:
-    - in_parallel:
-      - get: bosh-dns-release
-        passed:
-        - create-release
-        trigger: true
-      - get: envs
-      - get: bosh-deployment
-      - get: gcp-linux-stemcell
-        resource: gcp-bionic-stemcell
-      - get: bosh-stemcell-windows
-        resource: gcp-windows-2019-stemcell
-      - get: bosh-candidate-release
-      - get: candidate-release
-        passed:
-        - create-release
-        trigger: true
-    - do:
-      - task: bbl-up
-        file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
+      - task: bump-deps
+        file: golang-release/ci/tasks/shared/bump-deps.yml
         params:
-          BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
-          ENV_NAME: windows2019
-        ensure:
-          put: envs
-          params:
-            repository: envs
-            rebase: true
-      - task: setup-deploy
-        file: bosh-dns-release/ci/tasks/windows/setup-deploy.yml
+          GIT_USER_NAME: CI Bot
+          GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
+          GO_PACKAGE: golang-1-linux
+          SOURCE_PATH: src/bosh-dns
+        input_mapping:
+          input_repo: bosh-dns-release
+        output_mapping:
+          output_repo: bumped-bosh-dns-release
+      - task: bump-deps-test-acceptance-release
+        file: golang-release/ci/tasks/shared/bump-deps.yml
         params:
-          ENV_NAME: windows2019
+          GIT_USER_NAME: CI Bot
+          GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
+          GO_PACKAGE: golang-1-linux
+          SOURCE_PATH: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
+        input_mapping:
+          input_repo: bumped-bosh-dns-release
+        output_mapping:
+          output_repo: bumped-bosh-dns-release
+      - task: bump-deps-debug
+        file: golang-release/ci/tasks/shared/bump-deps.yml
+        params:
+          GIT_USER_NAME: CI Bot
+          GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
+          GO_PACKAGE: golang-1-linux
+          SOURCE_PATH: src/debug
+        input_mapping:
+          input_repo: bumped-bosh-dns-release
+        output_mapping:
+          output_repo: bumped-bosh-dns-release
+      - task: test-unit
+        input_mapping:
+          bosh-dns-release: bumped-bosh-dns-release
+        file: bosh-dns-release/ci/tasks/test-unit.yml
+      - put: bosh-dns-release
+        params:
+          repository: bumped-bosh-dns-release
+          rebase: true
+
+  - name: bump-golang-package
+    public: true
+    serial: true
+    plan:
       - in_parallel:
-        - task: windows
-          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
-          params:
-            WINDOWS_OS_VERSION: windows2019
-            ENV_NAME: windows2019
-          timeout: 1h
-        - task: windows-nameserver-disabled
-          file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
-          params:
-            WINDOWS_OS_VERSION: windows2019
-            ENV_NAME: windows2019
-          timeout: 1h
-      ensure:
-        task: bbl-destroy
-        file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
+          - get: bosh-dns-release
+          - get: golang-release
+            trigger: true
+          - get: bosh-stemcell
+            resource: warden-bionic-stemcell
+          - get: bosh-candidate-release
+      - task: bump-golang-package
+        file: golang-release/ci/tasks/shared/bump-golang-package.yml
+        input_mapping:
+          input_repo: bosh-dns-release
+        output_mapping:
+          output_repo: bosh-dns-release
         params:
-          BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
-          ENV_NAME: windows2019
-        ensure:
-          put: envs
-          params:
-            repository: envs
-            rebase: true
+          GIT_USER_NAME: CI Bot
+          GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
+          PACKAGES: [ golang-1-linux, golang-1-windows ]
+          PRIVATE_YML: |
+            ---
+            blobstore:
+              provider: s3
+              options:
+                access_key_id: {{release_blobs_access_key_id}}
+                secret_access_key: {{release_blobs_secret_access_key}}
+      - task: bump-golang-package-test-acceptance-release
+        file: golang-release/ci/tasks/shared/bump-golang-package.yml
+        input_mapping:
+          input_repo: bosh-dns-release
+        output_mapping:
+          output_repo: bosh-dns-release
+        params:
+          RELEASE_DIR: src/bosh-dns/acceptance_tests/dns-acceptance-release
+          GIT_USER_NAME: CI Bot
+          GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
+          PACKAGES: [ golang-1-linux ]
+          PRIVATE_YML: |
+            ---
+            blobstore:
+              provider: s3
+              options:
+                access_key_id: {{release_blobs_access_key_id}}
+                secret_access_key: {{release_blobs_secret_access_key}}
+      - task: create
+        file: bosh-dns-release/ci/tasks/create-candidate.yml
+        output_mapping:
+          release: bumped-release
+      - task: test-acceptance
+        privileged: true
+        file: bosh-dns-release/ci/tasks/test-acceptance.yml
+        input_mapping:
+          candidate-release: bumped-release
+      - put: bosh-dns-release
+        params:
+          repository: bosh-dns-release
+          rebase: true
 
-- name: test-stress
-  public: false
-  serial: true
-  plan:
-    - in_parallel:
+  - name: test-unit
+    public: true
+    plan:
       - get: bosh-dns-release
         trigger: true
-        passed: [create-release]
-      - get: bbl-state
-        resource: envs
-      - get: bosh-deployment
-      - get: docker-release
-      - get: aws-bionic-stemcell
-      - get: warden-bionic-stemcell
-      - get: bosh-docker-cpi-release
-      - get: candidate-release
-        passed: [create-release]
-    - do:
-      - task: setup-env
-        file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
-        params:
-          BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
-          BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
-          BBL_AWS_REGION: us-west-1
-          BBL_IAAS: aws
-          BBL_STATE_DIR: test-stress/bbl-state
-        ensure:
-          put: envs
-          params:
-            repository: updated-bbl-state
-            rebase: true
-      - task: deploy-docker-vms
-        file: bosh-dns-release/ci/tasks/test-stress/deploy-docker.yml
-        input_mapping:
-          bbl-state: updated-bbl-state
-          stemcell: aws-bionic-stemcell
-      - task: deploy-containers
-        file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
-        input_mapping:
-          stemcell: warden-bionic-stemcell
-          bbl-state: updated-bbl-state
-      - task: stress-containers
-        file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
-        input_mapping:
-          bbl-state: updated-bbl-state
-      ensure:
-        task: destroy-env
-        file: bosh-dns-release/ci/tasks/test-stress/destroy-env.yml
-        input_mapping:
-          bbl-state: updated-bbl-state
-        params:
-          BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
-          BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
-          BBL_STATE_DIR: test-stress/bbl-state
-        ensure:
-          put: envs
-          params:
-            repository: cleanup-bbl-state
-            rebase: true
+      - task: test-unit
+        file: bosh-dns-release/ci/tasks/test-unit.yml
 
-- name: brats-ubuntu
-  serial: true
-  plan:
-  - do:
-    - in_parallel:
-      - get: bosh-dns-src
-        resource: bosh-dns-release
-      - get: brats-src
+  - name: test-unit-windows
+    public: true
+    serial: true
+    plan:
       - get: bosh-dns-release
-        resource: candidate-release
         trigger: true
-        passed: [create-release]
-      - get: stemcell
-        resource: warden-bionic-stemcell
-      - get: bosh-release
-      - get: docker-cpi-image
-    - task: test-brats # contain base manifest
-      file: brats-src/ci/tasks/test-brats.yml
-      image: docker-cpi-image
-      privileged: true
-      input_mapping:
-        dns-release: bosh-dns-release-src
-        bosh-src: brats-src
-      params:
-        BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
-        BOSH_DIRECTOR_RELEASE_VERSION: "latest"
-        DNS_RELEASE_FILE_PATH: "dns-release"
-        DNS_RELEASE_VERSION: "create"
-        FOCUS_SPEC: "BoshDns"
-        STEMCELL_OS: "ubuntu-bionic"
+      - task: test-unit-windows
+        timeout: 1h
+        file: bosh-dns-release/ci/tasks/windows/test-unit-windows.yml
+        tags: [ "windows-nimbus" ]
 
-- name: upload-staging-release
-  serial: true
-  plan:
-    - get: candidate-release
-      passed: [delivery]
-      trigger: true
-    - put: staging-release
-      params:
-        file: "candidate-release/bosh-dns-dev-release.tgz"
-        acl: public-read
-
-- name: finalize-release
-  serial_groups:
-    - version
-  plan:
-    - in_parallel:
+  - name: test-unit-release
+    public: true
+    plan:
       - get: bosh-dns-release
-        passed: [delivery]
-      - get: candidate-release
-        passed: [delivery]
-      - get: version
-    - task: finalize-release
-      file: bosh-dns-release/ci/tasks/finalize-release.yml
-      params:
-        BLOBSTORE_ACCESS_KEY_ID: {{release_blobs_access_key_id}}
-        BLOBSTORE_SECRET_ACCESS_KEY: {{release_blobs_secret_access_key}}
-    - put: version
-      params:
-        bump: minor
-    - put: bosh-dns-release
-      params:
-        rebase: true
-        repository: final-bosh-dns-release
+        trigger: true
+      - task: test-unit-release
+        file: bosh-dns-release/ci/tasks/test-unit-release.yml
 
-- name: bump-major
-  serial_groups:
-    - version
-  plan:
-    - put: version
-      params:
-        bump: major
-
-- name: delivery
-  plan:
-    - in_parallel:
-      - get: candidate-release
-        passed:
-        - test-stress
-        - test-acceptance-ubuntu-bionic
-        - test-acceptance-ubuntu-jammy
-        - test-acceptance-windows2019
-        - brats-ubuntu
+  - name: create-release
+    plan:
       - get: bosh-dns-release
-        version: every
         trigger: true
         passed:
-        - test-stress
-        - test-acceptance-ubuntu-bionic
-        - test-acceptance-ubuntu-jammy
-        - test-acceptance-windows2019
-        - brats-ubuntu
-    - put: tracker-output
-      params:
-        repos:
-        - bosh-dns-release
+          - test-unit
+          - test-unit-windows
+          - test-unit-release
+      - task: create
+        file: bosh-dns-release/ci/tasks/create-candidate.yml
+      - put: candidate-release
+        params:
+          file: "release/bosh-dns-dev-release.tgz"
+
+  - name: test-acceptance-ubuntu-jammy
+    public: true
+    serial: true
+    plan:
+      - in_parallel:
+          - get: bosh-dns-release
+            passed: [ create-release ]
+          - get: bosh-stemcell
+            resource: warden-jammy-stemcell
+          - get: bosh-candidate-release
+          - get: candidate-release
+            trigger: true
+            passed: [ create-release ]
+      - task: test-acceptance
+        privileged: true
+        file: bosh-dns-release/ci/tasks/test-acceptance.yml
+        params:
+          BASE_STEMCELL: ubuntu-jammy
+
+  - name: test-acceptance-ubuntu-bionic
+    public: true
+    serial: true
+    plan:
+      - in_parallel:
+          - get: bosh-dns-release
+            passed: [ create-release ]
+          - get: bosh-stemcell
+            resource: warden-bionic-stemcell
+          - get: bosh-candidate-release
+          - get: candidate-release
+            trigger: true
+            passed: [ create-release ]
+      - task: test-acceptance
+        privileged: true
+        file: bosh-dns-release/ci/tasks/test-acceptance.yml
+        params:
+          BASE_STEMCELL: ubuntu-bionic
+
+  - name: test-acceptance-windows2019
+    public: true
+    serial: true
+    plan:
+      - do:
+          - in_parallel:
+              - get: bosh-dns-release
+                passed:
+                  - create-release
+                trigger: true
+              - get: envs
+              - get: bosh-deployment
+              - get: gcp-linux-stemcell
+                resource: gcp-bionic-stemcell
+              - get: bosh-stemcell-windows
+                resource: gcp-windows-2019-stemcell
+              - get: bosh-candidate-release
+              - get: candidate-release
+                passed:
+                  - create-release
+                trigger: true
+          - do:
+              - task: bbl-up
+                file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
+                params:
+                  BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
+                  ENV_NAME: windows2019
+                ensure:
+                  put: envs
+                  params:
+                    repository: envs
+                    rebase: true
+              - task: setup-deploy
+                file: bosh-dns-release/ci/tasks/windows/setup-deploy.yml
+                params:
+                  ENV_NAME: windows2019
+              - in_parallel:
+                  - task: windows
+                    file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
+                    params:
+                      WINDOWS_OS_VERSION: windows2019
+                      ENV_NAME: windows2019
+                    timeout: 1h
+                  - task: windows-nameserver-disabled
+                    file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
+                    params:
+                      WINDOWS_OS_VERSION: windows2019
+                      ENV_NAME: windows2019
+                    timeout: 1h
+            ensure:
+              task: bbl-destroy
+              file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
+              params:
+                BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
+                ENV_NAME: windows2019
+              ensure:
+                put: envs
+                params:
+                  repository: envs
+                  rebase: true
+
+  - name: test-stress
+    public: false
+    serial: true
+    plan:
+      - in_parallel:
+          - get: bosh-dns-release
+            trigger: true
+            passed: [ create-release ]
+          - get: bbl-state
+            resource: envs
+          - get: bosh-deployment
+          - get: docker-release
+          - get: aws-bionic-stemcell
+          - get: warden-bionic-stemcell
+          - get: bosh-docker-cpi-release
+          - get: candidate-release
+            passed: [ create-release ]
+      - do:
+          - task: setup-env
+            file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
+            params:
+              BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
+              BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+              BBL_AWS_REGION: us-west-1
+              BBL_IAAS: aws
+              BBL_STATE_DIR: test-stress/bbl-state
+            ensure:
+              put: envs
+              params:
+                repository: updated-bbl-state
+                rebase: true
+          - task: deploy-docker-vms
+            file: bosh-dns-release/ci/tasks/test-stress/deploy-docker.yml
+            input_mapping:
+              bbl-state: updated-bbl-state
+              stemcell: aws-bionic-stemcell
+          - task: deploy-containers
+            file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
+            input_mapping:
+              stemcell: warden-bionic-stemcell
+              bbl-state: updated-bbl-state
+          - task: stress-containers
+            file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
+            input_mapping:
+              bbl-state: updated-bbl-state
+        ensure:
+          task: destroy-env
+          file: bosh-dns-release/ci/tasks/test-stress/destroy-env.yml
+          input_mapping:
+            bbl-state: updated-bbl-state
+          params:
+            BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
+            BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+            BBL_STATE_DIR: test-stress/bbl-state
+          ensure:
+            put: envs
+            params:
+              repository: cleanup-bbl-state
+              rebase: true
+
+  - name: brats-ubuntu
+    serial: true
+    plan:
+      - do:
+          - in_parallel:
+              - get: bosh-dns-src
+                resource: bosh-dns-release
+              - get: brats-src
+              - get: bosh-dns-release
+                resource: candidate-release
+                trigger: true
+                passed: [ create-release ]
+              - get: stemcell
+                resource: warden-bionic-stemcell
+              - get: bosh-release
+              - get: docker-cpi-image
+          - task: test-brats # contain base manifest
+            file: brats-src/ci/tasks/test-brats.yml
+            image: docker-cpi-image
+            privileged: true
+            input_mapping:
+              dns-release: bosh-dns-release-src
+              bosh-src: brats-src
+            params:
+              BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
+              BOSH_DIRECTOR_RELEASE_VERSION: "latest"
+              DNS_RELEASE_FILE_PATH: "dns-release"
+              DNS_RELEASE_VERSION: "create"
+              FOCUS_SPEC: "BoshDns"
+              STEMCELL_OS: "ubuntu-bionic"
+
+  - name: upload-staging-release
+    serial: true
+    plan:
+      - get: candidate-release
+        passed: [ delivery ]
+        trigger: true
+      - put: staging-release
+        params:
+          file: "candidate-release/bosh-dns-dev-release.tgz"
+          acl: public-read
+
+  - name: finalize-release
+    serial_groups:
+      - version
+    plan:
+      - in_parallel:
+          - get: bosh-dns-release
+            passed: [ delivery ]
+          - get: candidate-release
+            passed: [ delivery ]
+          - get: version
+      - task: finalize-release
+        file: bosh-dns-release/ci/tasks/finalize-release.yml
+        params:
+          BLOBSTORE_ACCESS_KEY_ID: {{release_blobs_access_key_id}}
+          BLOBSTORE_SECRET_ACCESS_KEY: {{release_blobs_secret_access_key}}
+      - put: version
+        params:
+          bump: minor
+      - put: bosh-dns-release
+        params:
+          rebase: true
+          repository: final-bosh-dns-release
+
+  - name: bump-major
+    serial_groups:
+      - version
+    plan:
+      - put: version
+        params:
+          bump: major
+
+  - name: delivery
+    plan:
+      - in_parallel:
+          - get: candidate-release
+            passed:
+              - test-stress
+              - test-acceptance-ubuntu-bionic
+              - test-acceptance-ubuntu-jammy
+              - test-acceptance-windows2019
+              - brats-ubuntu
+          - get: bosh-dns-release
+            version: every
+            trigger: true
+            passed:
+              - test-stress
+              - test-acceptance-ubuntu-bionic
+              - test-acceptance-ubuntu-jammy
+              - test-acceptance-windows2019
+              - brats-ubuntu
+      - put: tracker-output
+        params:
+          repos:
+            - bosh-dns-release
+
+  - name: build-acceptance-tests-image
+    public: true
+    serial: true
+    plan:
+      - in_parallel:
+          - get: midnight
+            trigger: true
+          - get: bosh-dns-release-ci-docker-path
+            trigger: true
+          - get: main-bosh-docker-image
+            trigger: true
+      - put: acceptance-tests-image
+        params:
+          build: "bosh-dns-release-ci-docker-path/ci/docker/acceptance-tests"
+        get_params:
+          skip_download: true
+
+  - name: build-acceptance-tests-windows-image
+    public: true
+    serial: true
+    plan:
+      - in_parallel:
+          - get: midnight
+            trigger: true
+          - get: bosh-dns-release-ci-docker-path
+            trigger: true
+      - put: acceptance-tests-windows-image
+        params:
+          build: "bosh-dns-release-ci-docker-path/ci/docker/acceptance-tests-windows"
+        get_params:
+          skip_download: true
+
+  - name: build-unit-tests-image
+    public: true
+    serial: true
+    plan:
+      - in_parallel:
+          - get: midnight
+            trigger: true
+          - get: bosh-dns-release-ci-docker-path
+            trigger: true
+      - put: unit-tests-image
+        params:
+          build: "bosh-dns-release-ci-docker-path/ci/docker/unit-tests"
+        get_params:
+          skip_download: true
 
 resources:
-- name: bosh-dns-release
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/bosh-dns-release
-    branch: master
-    private_key: {{github_deployment_key}}
-    ignore_paths:
-    - ci/docker
+  - name: bosh-dns-release
+    type: git
+    source:
+      uri: git@github.com:cloudfoundry/bosh-dns-release
+      branch: master
+      private_key: {{github_deployment_key}}
+      ignore_paths:
+        - ci/docker
 
-- name: golang-release
-  type: git
-  source:
-    uri: https://github.com/bosh-packages/golang-release
-    branch: master
+  - name: bosh-dns-release-ci-docker-path
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry/bosh-dns-release.git
+      branch: master
+      paths:
+        - ci/docker
 
-- name: version
-  type: semver
-  source:
-    bucket: {{candidate_release_bucket}}
-    key: version
-    access_key_id: {{candidate_release_access_key_id}}
-    secret_access_key: {{candidate_release_secret_access_key}}
+  - name: golang-release
+    type: git
+    source:
+      uri: https://github.com/bosh-packages/golang-release
+      branch: master
 
-- name: candidate-release
-  type: s3
-  source:
-    bucket: {{candidate_release_bucket}}
-    access_key_id: {{candidate_release_access_key_id}}
-    secret_access_key: {{candidate_release_secret_access_key}}
-    versioned_file: "bosh-dns-dev-release.tgz"
+  - name: version
+    type: semver
+    source:
+      bucket: {{candidate_release_bucket}}
+      key: version
+      access_key_id: {{candidate_release_access_key_id}}
+      secret_access_key: {{candidate_release_secret_access_key}}
 
-- name: staging-release
-  type: s3
-  source:
-    bucket: {{candidate_release_bucket}}
-    access_key_id: {{candidate_release_access_key_id}}
-    secret_access_key: {{candidate_release_secret_access_key}}
-    versioned_file: "bosh-dns-staging-release.tgz"
+  - name: candidate-release
+    type: s3
+    source:
+      bucket: {{candidate_release_bucket}}
+      access_key_id: {{candidate_release_access_key_id}}
+      secret_access_key: {{candidate_release_secret_access_key}}
+      versioned_file: "bosh-dns-dev-release.tgz"
 
-- name: brats-src
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/bosh
+  - name: staging-release
+    type: s3
+    source:
+      bucket: {{candidate_release_bucket}}
+      access_key_id: {{candidate_release_access_key_id}}
+      secret_access_key: {{candidate_release_secret_access_key}}
+      versioned_file: "bosh-dns-staging-release.tgz"
 
-- name: bosh-release
-  type: bosh-io-release
-  source:
-    repository: cloudfoundry/bosh
+  - name: brats-src
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry/bosh
 
-- name: bosh-deployment
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/bosh-deployment
-    branch: master
+  - name: bosh-release
+    type: bosh-io-release
+    source:
+      repository: cloudfoundry/bosh
 
-- name: docker-release
-  type: bosh-io-release
-  source:
-    repository: cppforlife/docker-release
+  - name: bosh-deployment
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry/bosh-deployment
+      branch: master
 
-- name: bosh-docker-cpi-release
-  type: bosh-io-release
-  source:
-    repository: cppforlife/bosh-docker-cpi-release
+  - name: docker-release
+    type: bosh-io-release
+    source:
+      repository: cppforlife/docker-release
 
+  - name: bosh-docker-cpi-release
+    type: bosh-io-release
+    source:
+      repository: cppforlife/bosh-docker-cpi-release
 
-- name: gcp-windows-2019-stemcell
-  type: bosh-io-stemcell
-  source:
-    name: bosh-google-kvm-windows2019-go_agent
+  - name: gcp-windows-2019-stemcell
+    type: bosh-io-stemcell
+    source:
+      name: bosh-google-kvm-windows2019-go_agent
 
-- name: warden-bionic-stemcell
-  type: bosh-io-stemcell
-  source:
-    name: bosh-warden-boshlite-ubuntu-bionic-go_agent
+  - name: warden-bionic-stemcell
+    type: bosh-io-stemcell
+    source:
+      name: bosh-warden-boshlite-ubuntu-bionic-go_agent
 
-- name: gcp-bionic-stemcell
-  type: bosh-io-stemcell
-  source:
-    name: bosh-google-kvm-ubuntu-bionic-go_agent
+  - name: gcp-bionic-stemcell
+    type: bosh-io-stemcell
+    source:
+      name: bosh-google-kvm-ubuntu-bionic-go_agent
 
-- name: aws-bionic-stemcell
-  type: bosh-io-stemcell
-  source:
-    name: bosh-aws-xen-hvm-ubuntu-bionic-go_agent
+  - name: aws-bionic-stemcell
+    type: bosh-io-stemcell
+    source:
+      name: bosh-aws-xen-hvm-ubuntu-bionic-go_agent
 
-- name: warden-jammy-stemcell
-  type: bosh-io-stemcell
-  source:
-    name: bosh-warden-boshlite-ubuntu-jammy-go_agent
+  - name: warden-jammy-stemcell
+    type: bosh-io-stemcell
+    source:
+      name: bosh-warden-boshlite-ubuntu-jammy-go_agent
 
-- name: bosh-candidate-release
-  type: s3
-  source:
-    bucket: bosh-candidate-release-tarballs
-    versioned_file: bosh-dev-release.tgz
+  - name: bosh-candidate-release
+    type: s3
+    source:
+      bucket: bosh-candidate-release-tarballs
+      versioned_file: bosh-dev-release.tgz
 
-- name: envs
-  type: git
-  source:
-    branch: master
-    uri: git@github.com:cloudfoundry/bosh-bbl-ci-envs.git
-    private_key: {{envs_private_key}}
+  - name: envs
+    type: git
+    source:
+      branch: master
+      uri: git@github.com:cloudfoundry/bosh-bbl-ci-envs.git
+      private_key: {{envs_private_key}}
 
-- name: weekly
-  type: time
-  source:
-    start: 3:00 -0700
-    stop: 4:30 -0700
-    days: [Saturday]
-- name: docker-cpi-image
-  type: docker-image
-  source:
-    tag: main
-    repository: bosh/docker-cpi
-    username: ((docker.username))
-    password: ((docker.password))
+  - name: docker-cpi-image
+    type: docker-image
+    source:
+      tag: main
+      repository: bosh/docker-cpi
+      username: ((docker.username))
+      password: ((docker.password))
 
+  - name: main-bosh-docker-image
+    type: registry-image
+    source:
+      repository: bosh/main-bosh-docker
 
-- name: tracker-output
-  type: tracker
-  source:
-    token: ((tracker_api_token))
-    project_id: "((tracker_project_id))"
-    tracker_url: https://www.pivotaltracker.com
+  - name: unit-tests-image
+    type: docker-image
+    source:
+      repository: bosh/bosh-dns-release
+      tag: unit-tests
+      username: ((docker.username))
+      password: ((docker.password))
+
+  - name: acceptance-tests-image
+    type: docker-image
+    source:
+      repository: bosh/bosh-dns-release
+      tag: acceptance-tests
+      username: ((docker.username))
+      password: ((docker.password))
+
+  - name: acceptance-tests-windows-image
+    type: docker-image
+    source:
+      repository: bosh/bosh-dns-release
+      tag: acceptance-tests-windows
+      username: ((docker.username))
+      password: ((docker.password))
+
+  - name: tracker-output
+    type: tracker
+    source:
+      token: ((tracker_api_token))
+      project_id: "((tracker_project_id))"
+      tracker_url: https://www.pivotaltracker.com
+
+  - name: midnight
+    type: time
+    source:
+      location: America/Los_Angeles
+      start: 12 AM
+      stop: 1 AM
+
+  - name: weekly
+    type: time
+    source:
+      start: 3:00 -0700
+      stop: 4:30 -0700
+      days: [ Saturday ]
