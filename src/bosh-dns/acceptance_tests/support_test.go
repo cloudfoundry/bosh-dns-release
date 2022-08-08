@@ -1,20 +1,20 @@
 package acceptance
 
 import (
-	"bosh-dns/acceptance_tests/helpers"
-	"bosh-dns/tlsclient"
+	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	. "github.com/onsi/gomega"
 
-	"crypto/tls"
-	"encoding/json"
-	"fmt"
-	"io/ioutil" //nolint:staticcheck
-	"net/http"
-	"path/filepath"
+	"bosh-dns/acceptance_tests/helpers"
+	"bosh-dns/tlsclient"
 )
 
 var (
@@ -166,7 +166,7 @@ func setupSecureGet() *httpclient.HTTPClient {
 	cert, err := tls.X509KeyPair([]byte(clientCertificate), []byte(clientPrivateKey))
 	Expect(err).NotTo(HaveOccurred())
 
-	logger := logger.NewAsyncWriterLogger(logger.LevelDebug, ioutil.Discard)
+	logger := logger.NewAsyncWriterLogger(logger.LevelDebug, io.Discard)
 	client, err := tlsclient.New("health.bosh-dns", []byte(caCert), cert, 5*time.Second, logger)
 	Expect(err).NotTo(HaveOccurred())
 	return client
@@ -184,7 +184,7 @@ func secureGetRespBody(client *httpclient.HTTPClient, hostname string, port int)
 
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	Expect(err).NotTo(HaveOccurred())
 
 	var respJson healthResponse

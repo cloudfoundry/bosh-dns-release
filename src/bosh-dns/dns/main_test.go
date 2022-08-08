@@ -3,7 +3,7 @@ package main_test
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -57,7 +57,7 @@ var _ = Describe("main", func() {
 		listenAPIPort, err = testhelpers.GetFreePort()
 		Expect(err).NotTo(HaveOccurred())
 
-		jobsDir, err = ioutil.TempDir("", "jobs")
+		jobsDir, err = os.MkdirTemp("", "jobs")
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -90,7 +90,7 @@ var _ = Describe("main", func() {
 		})
 
 		It("exits 1 if the config file is busted", func() {
-			configFile, err := ioutil.TempFile("", "")
+			configFile, err := os.CreateTemp("", "")
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = configFile.Write([]byte("{"))
@@ -181,7 +181,7 @@ var _ = Describe("main", func() {
 		JustBeforeEach(func() {
 			var err error
 
-			recordsFile, err := ioutil.TempFile("", "recordsjson")
+			recordsFile, err := os.CreateTemp("", "recordsjson")
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = recordsFile.Write([]byte(recordsJSONContent))
@@ -189,7 +189,7 @@ var _ = Describe("main", func() {
 
 			recordsFilePath = recordsFile.Name()
 
-			addressesDir, err = ioutil.TempDir("", "addresses")
+			addressesDir, err = os.MkdirTemp("", "addresses")
 			Expect(err).NotTo(HaveOccurred())
 
 			listenAddress2, err = localIP()
@@ -198,22 +198,22 @@ var _ = Describe("main", func() {
 			listenPort2, err = testhelpers.GetFreePort()
 			Expect(err).NotTo(HaveOccurred())
 
-			addressesFile, err := ioutil.TempFile(addressesDir, "addresses")
+			addressesFile, err := os.CreateTemp(addressesDir, "addresses")
 			Expect(err).NotTo(HaveOccurred())
 			defer addressesFile.Close()
 			_, err = addressesFile.Write([]byte(fmt.Sprintf(`[{"address": "%s", "port": %d }]`, listenAddress2, listenPort2)))
 			Expect(err).NotTo(HaveOccurred())
 
-			aliasesDir, err = ioutil.TempDir("", "aliases")
+			aliasesDir, err = os.MkdirTemp("", "aliases")
 			Expect(err).NotTo(HaveOccurred())
 
-			aliasesFile1, err := ioutil.TempFile(aliasesDir, "aliasesjson1")
+			aliasesFile1, err := os.CreateTemp(aliasesDir, "aliasesjson1")
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile1.Close()
 			_, err = aliasesFile1.Write([]byte(aliases1JSONContent))
 			Expect(err).NotTo(HaveOccurred())
 
-			aliasesFile2, err := ioutil.TempFile(aliasesDir, "aliasesjson2")
+			aliasesFile2, err := os.CreateTemp(aliasesDir, "aliasesjson2")
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile2.Close()
 			_, err = aliasesFile2.Write([]byte(aliases2JSONContent))
@@ -224,7 +224,7 @@ var _ = Describe("main", func() {
 				handlersFilesGlob = path.Join(handlersDir, "*")
 			}
 
-			logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
+			logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, io.Discard)
 			apiClient, err = tlsclient.NewFromFiles(
 				"api.bosh-dns",
 				"api/assets/test_certs/test_ca.pem",
@@ -521,7 +521,7 @@ var _ = Describe("main", func() {
 					err = os.MkdirAll(job2Dir, 0755)
 					Expect(err).NotTo(HaveOccurred())
 
-					ioutil.WriteFile(path.Join(job1Dir, "links.json"), //nolint:errcheck
+					os.WriteFile(path.Join(job1Dir, "links.json"), //nolint:errcheck
 						[]byte(`[
 						{
 						  "type": "appetizer",
@@ -535,7 +535,7 @@ var _ = Describe("main", func() {
 						}
 					]`), 0644)
 
-					ioutil.WriteFile(path.Join(job2Dir, "links.json"), //nolint:errcheck
+					os.WriteFile(path.Join(job2Dir, "links.json"), //nolint:errcheck
 						[]byte(`[
 						{
 						  "type": "entree",
@@ -682,7 +682,7 @@ var _ = Describe("main", func() {
 						resp, err := http.Get(fmt.Sprintf("http://%s:%d/metrics", listenAddress, 53088+ginkgoconfig.GinkgoConfig.ParallelNode))
 						Expect(err).NotTo(HaveOccurred())
 
-						metrics, err := ioutil.ReadAll(resp.Body)
+						metrics, err := io.ReadAll(resp.Body)
 						defer resp.Body.Close()
 						Expect(err).NotTo(HaveOccurred())
 
@@ -1095,7 +1095,7 @@ var _ = Describe("main", func() {
 
 			Context("changing records.json", func() {
 				JustBeforeEach(func() {
-					err := ioutil.WriteFile(recordsFilePath, []byte(`{
+					err := os.WriteFile(recordsFilePath, []byte(`{
 						"record_keys": ["id", "num_id", "group_ids", "instance_group", "az", "network", "deployment", "ip", "domain"],
 						"record_infos": [
 							["my-instance", "12", ["19"], "my-group", "az1", "my-network", "my-deployment", "127.0.0.3", "bosh"]
@@ -1540,7 +1540,7 @@ var _ = Describe("main", func() {
 					ips = []string{r.Answer[0].(*dns.A).A.String()}
 					Expect(ips).To(ConsistOf("127.0.0.1"))
 
-					err = ioutil.WriteFile(recordsFilePath, []byte(`{
+					err = os.WriteFile(recordsFilePath, []byte(`{
 						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
 						"record_infos": [
 							["my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1", "bosh"]
@@ -1668,10 +1668,10 @@ var _ = Describe("main", func() {
 
 		BeforeEach(func() {
 			var err error
-			aliasesDir, err = ioutil.TempDir("", "aliases")
+			aliasesDir, err = os.MkdirTemp("", "aliases")
 			Expect(err).NotTo(HaveOccurred())
 
-			addressesDir, err = ioutil.TempDir("", "addresses")
+			addressesDir, err = os.MkdirTemp("", "addresses")
 			Expect(err).NotTo(HaveOccurred())
 
 			cfg := config.NewDefaultConfig()
@@ -1760,7 +1760,7 @@ var _ = Describe("main", func() {
 			var handlersDir string
 			BeforeEach(func() {
 				var err error
-				handlersDir, err = ioutil.TempDir("", "handlers")
+				handlersDir, err = os.MkdirTemp("", "handlers")
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -1819,7 +1819,7 @@ var _ = Describe("main", func() {
 		})
 
 		It("exits 1 and logs a message when the globbed config files contain a broken alias config", func() {
-			aliasesFile1, err := ioutil.TempFile(aliasesDir, "aliasesjson1")
+			aliasesFile1, err := os.CreateTemp(aliasesDir, "aliasesjson1")
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile1.Close()
 			_, err = aliasesFile1.Write([]byte(`{
@@ -1827,7 +1827,7 @@ var _ = Describe("main", func() {
 			}`))
 			Expect(err).NotTo(HaveOccurred())
 
-			aliasesFile2, err := ioutil.TempFile(aliasesDir, "aliasesjson2")
+			aliasesFile2, err := os.CreateTemp(aliasesDir, "aliasesjson2")
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile2.Close()
 			_, err = aliasesFile2.Write([]byte(`{"malformed":"aliasfile"}`))
@@ -1842,13 +1842,13 @@ var _ = Describe("main", func() {
 		})
 
 		It("exits 1 and logs a message when the globbed config files contain a broken address config", func() {
-			addressesFile1, err := ioutil.TempFile(addressesDir, "addressesjson1")
+			addressesFile1, err := os.CreateTemp(addressesDir, "addressesjson1")
 			Expect(err).NotTo(HaveOccurred())
 			defer addressesFile1.Close()
 			_, err = addressesFile1.Write([]byte(`[{"address": "1.2.3.4", "port": 32 }]`))
 			Expect(err).NotTo(HaveOccurred())
 
-			addressesFile2, err := ioutil.TempFile(addressesDir, "addressesjson2")
+			addressesFile2, err := os.CreateTemp(addressesDir, "addressesjson2")
 			Expect(err).NotTo(HaveOccurred())
 			defer addressesFile2.Close()
 			_, err = addressesFile2.Write([]byte(`{"malformed":"addressesfile"}`))
@@ -1868,7 +1868,7 @@ func newCommandWithConfig(c config.Config) *exec.Cmd {
 	configContents, err := json.Marshal(c)
 	Expect(err).NotTo(HaveOccurred())
 
-	configFile, err := ioutil.TempFile("", "")
+	configFile, err := os.CreateTemp("", "")
 	Expect(err).NotTo(HaveOccurred())
 
 	_, err = configFile.Write([]byte(configContents))
@@ -1914,7 +1914,7 @@ func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Serv
 }
 
 func setupHttpServer(qname string, handlerCachingEnabled bool, recursorList []string) (*ghttp.Server, string) {
-	handlersDir, err := ioutil.TempDir("", "handlers")
+	handlersDir, err := os.MkdirTemp("", "handlers")
 	Expect(err).NotTo(HaveOccurred())
 
 	httpJSONServer := ghttp.NewUnstartedServer()
@@ -1977,7 +1977,7 @@ func writeHandlersConfig(dir string, handlersConfiguration handlersconfig.Handle
 	handlerConfigContents, err := json.Marshal(handlersConfiguration)
 	Expect(err).NotTo(HaveOccurred())
 
-	handlersFile, err := ioutil.TempFile(dir, "handlersjson")
+	handlersFile, err := os.CreateTemp(dir, "handlersjson")
 	Expect(err).NotTo(HaveOccurred())
 	defer handlersFile.Close()
 

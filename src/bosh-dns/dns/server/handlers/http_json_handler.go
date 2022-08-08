@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
+	"io"
 	"net"
 
 	"net/url"
@@ -90,7 +90,7 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	}
 
 	defer func() {
-		ioutil.ReadAll(httpResponse.Body) //nolint:errcheck
+		io.ReadAll(httpResponse.Body) //nolint:errcheck
 		httpResponse.Body.Close()
 	}()
 
@@ -101,7 +101,7 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	}
 
 	httpDNSMessage := &httpDNSMessage{}
-	bytes, err := ioutil.ReadAll(httpResponse.Body)
+	bytes, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
 		h.logger.Error(h.logTag, "failed to read response message '%s': %v", string(bytes), err)
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)

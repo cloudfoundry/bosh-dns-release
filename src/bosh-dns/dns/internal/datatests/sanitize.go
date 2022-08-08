@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
 	"os"
 	"strings"
 
@@ -117,7 +116,7 @@ func (s ipSanitizer_) sanitize(ip string) string {
 }
 
 func sanitize(file string, sanitizer func([]byte) ([]byte, error)) error {
-	unsanitized, err := ioutil.ReadFile(file)
+	unsanitized, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}
@@ -127,7 +126,7 @@ func sanitize(file string, sanitizer func([]byte) ([]byte, error)) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(file, sanitized, os.ModePerm)
+	err = os.WriteFile(file, sanitized, os.ModePerm)
 	if err != nil {
 		return err
 	}

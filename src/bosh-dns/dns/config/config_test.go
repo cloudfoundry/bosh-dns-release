@@ -3,7 +3,6 @@ package config_test
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
 	"math/rand"
 	"time"
 
@@ -415,7 +414,7 @@ var _ = Describe("Config", func() {
 })
 
 func writeConfigFile(json string) string {
-	configFile, err := ioutil.TempFile("", "")
+	configFile, err := os.CreateTemp("", "")
 	Expect(err).NotTo(HaveOccurred())
 
 	_, err = configFile.Write([]byte(json))

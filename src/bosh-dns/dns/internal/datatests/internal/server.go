@@ -4,7 +4,7 @@ import (
 	"bosh-dns/dns/config"
 	"encoding/json"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
+	"os"
 	"os/exec"
 	"time"
 
@@ -34,7 +34,7 @@ func StartSampleServer() Server {
 	listenAPIPort, err := testhelpers.GetFreePort()
 	Expect(err).NotTo(HaveOccurred())
 
-	jobsDir, err := ioutil.TempDir("", "jobs")
+	jobsDir, err := os.MkdirTemp("", "jobs")
 	Expect(err).NotTo(HaveOccurred())
 
 	cfg := config.NewDefaultConfig()
@@ -54,7 +54,7 @@ func StartSampleServer() Server {
 	configContents, err := json.Marshal(cfg)
 	Expect(err).NotTo(HaveOccurred())
 
-	configFile, err := ioutil.TempFile("", "")
+	configFile, err := os.CreateTemp("", "")
 	Expect(err).NotTo(HaveOccurred())
 
 	_, err = configFile.Write([]byte(configContents))

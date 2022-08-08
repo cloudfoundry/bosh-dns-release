@@ -3,7 +3,6 @@ package integration_tests
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil" //nolint:staticcheck
 	"net"
 	"os"
 	"os/exec"
@@ -78,7 +77,7 @@ func (t *testEnvironment) writeConfig() error {
 	t.port = int(port)
 	t.serverAddress = "127.0.0.1"
 
-	jobsDir, err := ioutil.TempDir("", "bosh-dns-integration-jobs")
+	jobsDir, err := os.MkdirTemp("", "bosh-dns-integration-jobs")
 	if err != nil {
 		return err
 	}
@@ -122,7 +121,7 @@ func (t *testEnvironment) writeConfig() error {
 	if err != nil {
 		return err
 	}
-	configTempfile, err := ioutil.TempFile("", "bosh-dns")
+	configTempfile, err := os.CreateTemp("", "bosh-dns")
 	t.configFile = configTempfile.Name()
 
 	if err != nil {
@@ -188,7 +187,7 @@ func (t *testEnvironment) writeRecords() error {
 		return err
 	}
 
-	recordsTempfile, err := ioutil.TempFile("", "bosh-dns")
+	recordsTempfile, err := os.CreateTemp("", "bosh-dns")
 	t.recordsFile = recordsTempfile.Name()
 
 	if err != nil {

@@ -1,9 +1,9 @@
 package config
 
 import (
-	"io/ioutil" //nolint:staticcheck
+	"os"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -16,7 +16,7 @@ func NewConfig() *Config {
 }
 
 func (c *Config) LoadFromFile(filename string) error {
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}

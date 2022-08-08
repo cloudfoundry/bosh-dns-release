@@ -6,7 +6,7 @@ import (
 	"bosh-dns/dns/server/record"
 	"encoding/json"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
+	"io"
 	"net/http"
 	"net/http/httptest"
 
@@ -195,7 +195,7 @@ var _ = Describe("InstancesHandler", func() {
 			handler.ServeHTTP(w, r)
 			resp := w.Result()
 			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			Expect(resp.StatusCode).To(Equal(http.StatusUnprocessableEntity))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(body)).To(Equal("yo!"))

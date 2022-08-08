@@ -1,20 +1,18 @@
 package healthexecutable_test
 
 import (
-	"io/ioutil" //nolint:staticcheck
+	"errors"
+	"fmt"
 	"os"
 	"runtime"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"time"
 
 	"bosh-dns/healthcheck/api"
 	"bosh-dns/healthcheck/healthexecutable"
 	"bosh-dns/healthconfig"
-	"time"
 
-	"errors"
-	"fmt"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"code.cloudfoundry.org/clock/fakeclock"
 	loggerfakes "github.com/cloudfoundry/bosh-utils/logger/fakes"
@@ -51,7 +49,7 @@ var _ = Describe("Monitor", func() {
 		cmdRunner = sysfakes.NewFakeCmdRunner()
 		interval = time.Millisecond
 
-		healthFile, err = ioutil.TempFile("", "health-executable-state")
+		healthFile, err = os.CreateTemp("", "health-executable-state")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(healthFile.Close()).To(Succeed())
 

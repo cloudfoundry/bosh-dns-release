@@ -4,7 +4,7 @@ import (
 	"bosh-dns/healthcheck/api"
 	"encoding/json"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
+	"io"
 	"net"
 	"net/http"
 
@@ -49,7 +49,7 @@ func (hc *healthChecker) GetStatus(ip string) api.HealthResult {
 		return api.HealthResult{State: StateUnknown}
 	}
 
-	responseBytes, err := ioutil.ReadAll(response.Body)
+	responseBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		hc.logger.Warn(hc.logTag, "error reading response body from %s: %v", ip, err)
 		return api.HealthResult{State: StateUnknown} // untested

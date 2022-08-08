@@ -3,7 +3,6 @@ package main_test
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
 	"net"
 	"os"
 	"os/exec"
@@ -53,16 +52,16 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 var _ = BeforeEach(func() {
 	var err error
 
-	tmpDir, err = ioutil.TempDir("", "bosh-dns")
+	tmpDir, err = os.MkdirTemp("", "bosh-dns")
 	Expect(err).ToNot(HaveOccurred())
 
-	configFile, err = ioutil.TempFile(tmpDir, "config.json")
+	configFile, err = os.CreateTemp(tmpDir, "config.json")
 	Expect(err).ToNot(HaveOccurred())
 
-	healthFile, err = ioutil.TempFile(tmpDir, "health.json")
+	healthFile, err = os.CreateTemp(tmpDir, "health.json")
 	Expect(err).ToNot(HaveOccurred())
 
-	jobsDir, err = ioutil.TempDir(tmpDir, "job-metadata")
+	jobsDir, err = os.MkdirTemp(tmpDir, "job-metadata")
 	Expect(err).ToNot(HaveOccurred())
 
 	configPort = 1234 + config.GinkgoConfig.ParallelNode
@@ -84,7 +83,7 @@ var _ = BeforeEach(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	err = ioutil.WriteFile(configFile.Name(), []byte(configContents), 0666)
+	err = os.WriteFile(configFile.Name(), []byte(configContents), 0666)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(configFile.Close()).To(Succeed())
 })

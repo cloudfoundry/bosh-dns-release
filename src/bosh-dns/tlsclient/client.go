@@ -2,12 +2,10 @@ package tlsclient
 
 import (
 	"crypto/tls"
-	"io/ioutil" //nolint:staticcheck
-	"time"
-
-	"net/http"
-
 	"crypto/x509"
+	"net/http"
+	"os"
+	"time"
 
 	"code.cloudfoundry.org/tlsconfig"
 
@@ -23,7 +21,7 @@ func NewFromFiles(dnsName string, caFile, clientCertFile, clientKeyFile string, 
 	}
 
 	// Load CA cert
-	caCert, err := ioutil.ReadFile(caFile)
+	caCert, err := os.ReadFile(caFile)
 	if err != nil {
 		return nil, err
 	}

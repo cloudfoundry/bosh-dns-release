@@ -3,11 +3,9 @@ package integration_tests
 import (
 	"bosh-dns/dns/server/handlers"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
 	"net"
 	"os"
 	"os/exec"
-
 	"time"
 
 	"bosh-dns/acceptance_tests/helpers"
@@ -21,7 +19,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 type testRecursor struct {
@@ -58,7 +56,7 @@ func (t *testRecursor) start() error {
 		return err
 	}
 
-	configTempfile, err := ioutil.TempFile("", "test-recursor")
+	configTempfile, err := os.CreateTemp("", "test-recursor")
 	if err != nil {
 		return err
 	}

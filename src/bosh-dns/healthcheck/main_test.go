@@ -4,7 +4,7 @@ import (
 	"bosh-dns/tlsclient"
 	"encoding/json"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -32,7 +32,7 @@ var _ = Describe("HealthCheck server", func() {
 
 	BeforeEach(func() {
 		status = "running"
-		logger = boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
+		logger = boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, io.Discard)
 
 		jobADir = filepath.Join(jobsDir, "job-a")
 		err := os.MkdirAll(jobADir, 0777)
@@ -46,7 +46,7 @@ var _ = Describe("HealthCheck server", func() {
 			healthRaw, err := json.Marshal(Health{State: status})
 			Expect(err).ToNot(HaveOccurred())
 
-			err = ioutil.WriteFile(healthFile.Name(), healthRaw, 0777)
+			err = os.WriteFile(healthFile.Name(), healthRaw, 0777)
 			Expect(err).ToNot(HaveOccurred())
 
 			startServer()
@@ -81,20 +81,20 @@ var _ = Describe("HealthCheck server", func() {
 				err := os.MkdirAll(filepath.Join(jobADir, ".bosh"), 0777)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(jobADir, ".bosh", "links.json"), []byte(`[{"link":"service","group":"1"},{"group":"i-am-a-group"}]`), 0700)
+				err = os.WriteFile(filepath.Join(jobADir, ".bosh", "links.json"), []byte(`[{"link":"service","group":"1"},{"group":"i-am-a-group"}]`), 0700)
 				Expect(err).ToNot(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(jobADir, healthExecutablePath), []byte("#!/bin/bash\nexit 0"), 0700)
+				err = os.WriteFile(filepath.Join(jobADir, healthExecutablePath), []byte("#!/bin/bash\nexit 0"), 0700)
 				Expect(err).ToNot(HaveOccurred())
 
 				jobBDir := filepath.Join(jobsDir, "job-b")
 				err = os.MkdirAll(filepath.Join(jobBDir, ".bosh"), 0777)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(jobBDir, ".bosh", "links.json"), []byte(`[{"link":"service","group":"2"}]`), 0700)
+				err = os.WriteFile(filepath.Join(jobBDir, ".bosh", "links.json"), []byte(`[{"link":"service","group":"2"}]`), 0700)
 				Expect(err).ToNot(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(jobBDir, healthExecutablePath), []byte("#!/bin/bash\nexit 1"), 0700)
+				err = os.WriteFile(filepath.Join(jobBDir, healthExecutablePath), []byte("#!/bin/bash\nexit 1"), 0700)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -112,7 +112,7 @@ var _ = Describe("HealthCheck server", func() {
 		Context("when a health executable exists", func() {
 			Describe("when the vm is healthy and the job health executable reports healthy", func() {
 				BeforeEach(func() {
-					err := ioutil.WriteFile(filepath.Join(jobADir, healthExecutablePath), []byte("#!/bin/bash\nexit 0"), 0700)
+					err := os.WriteFile(filepath.Join(jobADir, healthExecutablePath), []byte("#!/bin/bash\nexit 0"), 0700)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -124,7 +124,7 @@ var _ = Describe("HealthCheck server", func() {
 
 			Describe("when the vm is healthy, but the job health executable reports unhealthy", func() {
 				BeforeEach(func() {
-					err := ioutil.WriteFile(filepath.Join(jobADir, healthExecutablePath), []byte("#!/bin/bash\nexit 1"), 0700)
+					err := os.WriteFile(filepath.Join(jobADir, healthExecutablePath), []byte("#!/bin/bash\nexit 1"), 0700)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -180,7 +180,7 @@ var _ = Describe("HealthCheck server", func() {
 			Expect(resp.StatusCode).To(BeNumerically(">=", 400))
 			Expect(resp.StatusCode).To(BeNumerically("<", 500))
 
-			respBody, err := ioutil.ReadAll(resp.Body)
+			respBody, err := io.ReadAll(resp.Body)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(respBody).To(Equal([]byte("TLS certificate common name does not match")))
@@ -195,7 +195,7 @@ func secureGetRespBody(client *httpclient.HTTPClient, port int) Health {
 
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	Expect(err).NotTo(HaveOccurred())
 
 	var healthResp Health

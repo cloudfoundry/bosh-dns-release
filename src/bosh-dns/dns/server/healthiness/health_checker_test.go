@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
+	"io"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 
@@ -42,7 +42,7 @@ var _ = Describe("HealthChecker", func() {
 	JustBeforeEach(func() {
 		response = &http.Response{
 			StatusCode: responseCode,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(responseBody)),
+			Body:       io.NopCloser(bytes.NewBufferString(responseBody)),
 		}
 		fakeClient.GetReturns(response, nil)
 	})

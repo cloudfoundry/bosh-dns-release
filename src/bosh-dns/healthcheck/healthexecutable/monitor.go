@@ -4,7 +4,7 @@ import (
 	"bosh-dns/healthcheck/api"
 	"bosh-dns/healthconfig"
 	"encoding/json"
-	"io/ioutil" //nolint:staticcheck
+	"os"
 	"time"
 
 	"sync"
@@ -146,7 +146,7 @@ func (m *Monitor) executableStatus(executablePath string) api.HealthStatus {
 }
 
 func (m *Monitor) readAgentHealth() api.HealthStatus {
-	data, err := ioutil.ReadFile(m.healthFilePath)
+	data, err := os.ReadFile(m.healthFilePath)
 	if err != nil {
 		m.logger.Error("Monitor", "Error reading health file: %s", err.Error())
 		return api.StatusFailing

@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -54,7 +54,7 @@ func NewTestHealthServer(address string) *testHealthServer {
 }
 
 func (t *testHealthServer) Bootstrap() error {
-	rootDir, err := ioutil.TempDir("", "root-dir")
+	rootDir, err := os.MkdirTemp("", "root-dir")
 	if err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func (t *testHealthServer) GetResponseBody() (api.HealthResult, error) {
 	}
 	defer resp.Body.Close()
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return api.HealthResult{}, err
 	}
@@ -218,7 +218,7 @@ func (t *testHealthServer) Start() error {
 		return err
 	}
 
-	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
+	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, io.Discard)
 	t.client, err = tlsclient.NewFromFiles(
 		"health.bosh-dns",
 		t.CAFile,
@@ -258,7 +258,7 @@ func (t *testHealthServer) updateAgentHealthFile() error {
 		return err
 	}
 
-	err = ioutil.WriteFile(t.agentHealthFileName, healthRaw, 0640)
+	err = os.WriteFile(t.agentHealthFileName, healthRaw, 0640)
 	if err != nil {
 		return err
 	}

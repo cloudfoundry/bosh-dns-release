@@ -2,7 +2,6 @@ package healthconfig_test
 
 import (
 	"bosh-dns/healthconfig"
-	"io/ioutil" //nolint:staticcheck
 	"os"
 	"path/filepath"
 
@@ -15,7 +14,7 @@ var _ = Describe("ParseJobs", func() {
 
 	BeforeEach(func() {
 		var err error
-		jobsDir, err = ioutil.TempDir("", "health-config")
+		jobsDir, err = os.MkdirTemp("", "health-config")
 		Expect(err).NotTo(HaveOccurred())
 
 		jobADir := filepath.Join(jobsDir, "job-a")
