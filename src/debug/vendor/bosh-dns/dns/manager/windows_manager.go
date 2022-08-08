@@ -81,7 +81,7 @@ func (manager *windowsManager) SetPrimary() error {
 	if err != nil {
 		return bosherr.WrapError(err, "Creating prepend-dns-server.ps1")
 	}
-	defer manager.fs.RemoveAll(filepath.Dir(scriptName))
+	defer manager.fs.RemoveAll(filepath.Dir(scriptName)) //nolint:errcheck
 
 	_, _, _, err = manager.runner.RunCommand("powershell.exe", scriptName, manager.address, fmt.Sprintf(`"%s"`, primaryAdapter.FriendlyName))
 	if err != nil {

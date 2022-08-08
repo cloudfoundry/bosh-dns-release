@@ -12,7 +12,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-const hexDigit = "0123456789abcdef"
+const hexDigit = "0123456789abcdef" //nolint:deadcode,unused,varcheck
 
 type WindowsAdapterFetcher struct {
 }

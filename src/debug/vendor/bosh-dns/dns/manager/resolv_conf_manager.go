@@ -36,7 +36,7 @@ func NewResolvConfManager(address string, clock clock.Clock, fs boshsys.FileSyst
 }
 
 func (r *resolvConfManager) Read() ([]string, error) {
-	nameserverRegexp, err := regexp.Compile("^\\s*nameserver\\s+(\\S+)$")
+	nameserverRegexp, err := regexp.Compile("^\\s*nameserver\\s+(\\S+)$") //nolint:gosimple
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (r *resolvConfManager) isCorrect(address string) (bool, error) {
 			return true, nil
 		}
 
-		return false, nil
+		return false, nil //nolint:staticcheck
 	}
 
 	return false, nil

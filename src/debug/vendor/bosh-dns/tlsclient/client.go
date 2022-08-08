@@ -2,7 +2,7 @@ package tlsclient
 
 import (
 	"crypto/tls"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"time"
 
 	"net/http"
@@ -45,7 +45,7 @@ func New(dnsName string, caCert []byte, cert tls.Certificate, timeout time.Durat
 	if err != nil {
 		return nil, err
 	}
-	tlsConfig.BuildNameToCertificate()
+	tlsConfig.BuildNameToCertificate() //nolint:staticcheck
 	tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(10000)
 
 	transport := &http.Transport{
