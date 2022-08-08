@@ -54,7 +54,7 @@ func (s Server) Run() error {
 
 	s.monitorUpchecks()
 
-	select {
+	select { //nolint:gosimple
 	case <-s.shutdownChan:
 		return s.shutdown()
 	}

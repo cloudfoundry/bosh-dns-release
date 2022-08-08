@@ -50,7 +50,7 @@ func udpServerStub(bindAddress string, timeout time.Duration, stop chan struct{}
 			Expect(err).NotTo(HaveOccurred())
 		}()
 
-		listener.SetDeadline(time.Now().Add(timeout + (1 * time.Second)))
+		listener.SetDeadline(time.Now().Add(timeout + (1 * time.Second))) //nolint:errcheck
 
 		buf := make([]byte, 1)
 		for {
@@ -72,7 +72,7 @@ func udpServerStub(bindAddress string, timeout time.Duration, stop chan struct{}
 
 func notListeningStub(stop chan struct{}) func() error {
 	return func() error {
-		select {
+		select { //nolint:gosimple
 		case <-stop:
 		}
 
@@ -104,7 +104,7 @@ func downCheck() *serverfakes.FakeUpcheck {
 	}
 }
 
-func shutdownStub(err error) func() error {
+func shutdownStub(err error) func() error { //nolint:deadcode,unused
 	return func() error {
 		return err
 	}

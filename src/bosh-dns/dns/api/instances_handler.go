@@ -46,14 +46,14 @@ func (h *InstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		rs, err = h.recordManager.ResolveRecords(expandedAliases, false)
 		if err != nil {
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(err.Error())) //nolint:errcheck
 			return
 		}
 
 	}
 	encoder := json.NewEncoder(w)
 	for _, record := range rs {
-		encoder.Encode(InstanceRecord{
+		encoder.Encode(InstanceRecord{ //nolint:errcheck
 			ID:          record.ID,
 			Group:       record.Group,
 			Network:     record.Network,

@@ -51,11 +51,11 @@ func main() {
 	select {
 	case <-bomb.C:
 		log.Error("wait", "timeout")
-		log.FlushTimeout(5 * time.Second)
+		log.FlushTimeout(5 * time.Second) //nolint:errcheck
 		os.Exit(1)
 	case <-success:
 		log.Info("wait", "success")
-		log.FlushTimeout(5 * time.Second)
+		log.FlushTimeout(5 * time.Second) //nolint:errcheck
 		os.Exit(0)
 	}
 }

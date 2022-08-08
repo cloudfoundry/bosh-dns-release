@@ -1,24 +1,22 @@
 package performance_test
 
 import (
+	"fmt"
 	"time"
-
-	zp "bosh-dns/performance_tests/zone_pickers"
 
 	"bosh-dns/dns/server/aliases"
 	"bosh-dns/dns/server/healthiness/healthinessfakes"
 	"bosh-dns/dns/server/records"
+	zp "bosh-dns/performance_tests/zone_pickers"
 
 	"code.cloudfoundry.org/clock"
-	"github.com/miekg/dns"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	metrics "github.com/rcrowley/go-metrics"
-
-	"fmt"
-
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
+	"github.com/miekg/dns"
+	"github.com/rcrowley/go-metrics"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("DNS", func() {
@@ -72,11 +70,11 @@ var _ = Describe("DNS", func() {
 
 			cpuSample := metrics.NewExpDecaySample(numberOfMeasurements, 0.015)
 			cpuHistogram := metrics.NewHistogram(cpuSample)
-			metrics.Register("CPU Usage", cpuHistogram)
+			metrics.Register("CPU Usage", cpuHistogram) //nolint:errcheck
 
 			memSample := metrics.NewExpDecaySample(numberOfMeasurements, 0.015)
 			memHistogram := metrics.NewHistogram(memSample)
-			metrics.Register("Mem Usage", memHistogram)
+			metrics.Register("Mem Usage", memHistogram) //nolint:errcheck
 
 			benchmarkTime := generateTimeHistogram(
 				PerformanceTest{

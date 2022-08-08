@@ -20,5 +20,5 @@ func NewMetricsDNSHandler(metricsReporter monitoring.MetricsReporter, requestTyp
 
 func (m MetricsDNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	requestContext := monitoring.NewRequestContext(m.requestType)
-	m.metricsReporter.Report(requestContext, w, r)
+	m.metricsReporter.Report(requestContext, w, r) //nolint:errcheck
 }

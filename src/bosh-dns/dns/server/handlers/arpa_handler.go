@@ -49,7 +49,7 @@ func (a ArpaHandler) convertToRecordIP(q string) (string, error) {
 	a.logger.Debug("ArpaHandler", "query lower-cased from '%s' to '%s'", q, query)
 
 	if strings.HasSuffix(query, ".ip6.arpa.") {
-		segments := strings.Split(strings.TrimRight(query, ".ip6.arpa."), ".")
+		segments := strings.Split(strings.TrimRight(query, ".ip6.arpa."), ".") //nolint:staticcheck
 		reversedSegments := reverse(segments)
 		for len(reversedSegments) < 32 {
 			reversedSegments = append(reversedSegments, "0")
@@ -63,7 +63,7 @@ func (a ArpaHandler) convertToRecordIP(q string) (string, error) {
 		}
 		return response, nil
 	} else if strings.HasSuffix(query, ".in-addr.arpa.") {
-		segments := strings.Split(strings.TrimRight(query, ".in-addr.arpa."), ".")
+		segments := strings.Split(strings.TrimRight(query, ".in-addr.arpa."), ".") //nolint:staticcheck
 		return strings.Join(reverse(segments), "."), nil
 	}
 	return "", fmt.Errorf("Error converting record '%s' to IP", query)
@@ -90,7 +90,7 @@ func (a ArpaHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	}
 
 	fqdns := a.ipProvider.GetFQDNs(ip)
-	if fqdns != nil && len(fqdns) > 0 {
+	if len(fqdns) > 0 {
 		m.SetRcode(req, dns.RcodeSuccess)
 		for _, fqdn := range fqdns {
 			m.Answer = append(m.Answer, &dns.PTR{

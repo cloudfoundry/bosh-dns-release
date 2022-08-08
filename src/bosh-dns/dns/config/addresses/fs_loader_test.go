@@ -21,7 +21,8 @@ var _ = Describe("FSLoader", func() {
 	Describe("Load", func() {
 		Context("valid file", func() {
 			It("parses the file", func() {
-				fs.WriteFileString("/test/addresses.json", `[
+				fs.WriteFileString("/test/addresses.json", //nolint:errcheck
+					`[
 					{
 						"address": "10.0.14.4",
 						"port": 53
@@ -52,7 +53,8 @@ var _ = Describe("FSLoader", func() {
 
 		Context("missing port", func() {
 			It("errors", func() {
-				fs.WriteFileString("/test/addresses.json", `[
+				fs.WriteFileString("/test/addresses.json", //nolint:errcheck
+					`[
 					{
 						"address": "10.0.14.4",
 						"port": 53

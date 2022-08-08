@@ -88,7 +88,7 @@ func (c *Config) setAlias(rawAlias string, domains []string) error {
 
 func (c Config) IsReduced() bool {
 	for _, domains := range c.aliases {
-		for alias, _ := range c.aliases {
+		for alias := range c.aliases {
 			for _, domain := range domains {
 				if alias == domain {
 					return false
@@ -170,7 +170,7 @@ func (c Config) Merge(other Config) Config {
 
 func (c Config) ReducedForm() (Config, error) {
 	aliases := []string{}
-	for alias, _ := range c.aliases {
+	for alias := range c.aliases {
 		aliases = append(aliases, alias)
 	}
 

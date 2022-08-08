@@ -6,6 +6,6 @@ import "github.com/miekg/dns"
 
 //go:generate counterfeiter . responseWriter
 
-type responseWriter interface {
+type responseWriter interface { //nolint:deadcode,unused
 	dns.ResponseWriter
 }

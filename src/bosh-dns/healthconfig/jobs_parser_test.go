@@ -2,7 +2,7 @@ package healthconfig_test
 
 import (
 	"bosh-dns/healthconfig"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"os"
 	"path/filepath"
 

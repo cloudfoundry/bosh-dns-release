@@ -73,7 +73,7 @@ func getInstanceInfos(boshBinary string) []instanceInfo {
 
 	out := []instanceInfo{}
 
-	json.Unmarshal(session.Out.Contents(), &response)
+	json.Unmarshal(session.Out.Contents(), &response) //nolint:errcheck
 
 	for _, row := range response.Tables[0].Rows {
 		instanceStrings := strings.Split(row["instance"], "/")

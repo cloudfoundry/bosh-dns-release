@@ -27,7 +27,7 @@ type AliasDefinition struct {
 	InitialHealthCheck string `json:"initial_health_check"`
 }
 
-type recordGroup map[*record.Record]struct{}
+type recordGroup map[*record.Record]struct{} //nolint:deadcode,unused
 
 var (
 	CriteriaError = errors.New("error parsing query criteria")
@@ -264,7 +264,7 @@ func (r *RecordSet) GetFQDNs(ip string) []string {
 		}
 	}
 	fqdns := []string{}
-	for domain, _ := range uniqueFqnds {
+	for domain := range uniqueFqnds {
 		fqdns = append(fqdns, domain)
 	}
 	r.logger.Debug("RecordSet", "Domains for %s: %v", ip, fqdns)

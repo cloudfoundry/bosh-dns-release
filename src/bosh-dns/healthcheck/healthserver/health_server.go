@@ -55,7 +55,7 @@ func (c *concreteHealthServer) Serve(config *healthconfig.HealthCheckConfig) {
 		log.Fatal(err)
 		return
 	}
-	tlsConfig.BuildNameToCertificate()
+	tlsConfig.BuildNameToCertificate() //nolint:staticcheck
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", config.Address, config.Port),

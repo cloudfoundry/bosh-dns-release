@@ -326,7 +326,7 @@ var _ = Describe("ForwardHandler", func() {
 								return
 							default:
 								//ignore sent information, simply timeout
-								listen.ReadFrom(readBytes1)
+								listen.ReadFrom(readBytes1) //nolint:errcheck
 								atomic.AddInt32(&retryCalled, 1)
 							}
 						}
@@ -346,7 +346,7 @@ var _ = Describe("ForwardHandler", func() {
 							default:
 								//ignore sent information, just respond
 								bl, addr, _ := fineListener.ReadFrom(readBytes2)
-								fineListener.WriteTo(readBytes2[:bl], addr)
+								fineListener.WriteTo(readBytes2[:bl], addr) //nolint:errcheck
 							}
 						}
 					}()
@@ -378,7 +378,7 @@ var _ = Describe("ForwardHandler", func() {
 								return
 							default:
 								//ignore sent information, simply timeout
-								listen.ReadFrom(readBytes1)
+								listen.ReadFrom(readBytes1) //nolint:errcheck
 								atomic.AddInt32(&retryCalled, 1)
 							}
 						}
@@ -388,7 +388,7 @@ var _ = Describe("ForwardHandler", func() {
 					Expect(err).ToNot(HaveOccurred())
 					defer fineListener.Close()
 
-					fineListener.SetReadDeadline(time.Time{})
+					fineListener.SetReadDeadline(time.Time{}) //nolint:errcheck
 					readBytes2 := make([]byte, 1024)
 
 					go func() {
@@ -399,7 +399,7 @@ var _ = Describe("ForwardHandler", func() {
 							default:
 								//ignore sent information, just respond
 								bl, addr, _ := fineListener.ReadFrom(readBytes2)
-								fineListener.WriteTo(readBytes2[:bl], addr)
+								fineListener.WriteTo(readBytes2[:bl], addr) //nolint:errcheck
 							}
 						}
 					}()

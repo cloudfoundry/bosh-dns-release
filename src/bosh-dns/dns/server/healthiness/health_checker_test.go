@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 

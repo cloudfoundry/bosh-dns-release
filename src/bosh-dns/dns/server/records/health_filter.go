@@ -20,13 +20,13 @@ type healthFilter struct {
 	w                       healthWatcher
 	wg                      *sync.WaitGroup
 	shouldTrack             bool
-	domain                  string
+	domain                  string //nolint:deadcode,unused
 	filterWorkPool          *workpool.WorkPool
 	clock                   clock.Clock
 	synchronousCheckTimeout time.Duration
 }
 
-type healthTracker interface {
+type healthTracker interface { //nolint:deadcode,unused
 	MonitorRecordHealth(ip, fqdn string)
 }
 
@@ -140,7 +140,7 @@ func (q *healthFilter) sortRecords(records []record.Record, queriedGroupIDs []st
 		case api.StatusFailing:
 			unhealthyRecords = append(unhealthyRecords, r)
 		case healthiness.StateUnknown:
-			unknownRecords = append(unknownRecords, r)
+			unknownRecords = append(unknownRecords, r) //nolint:staticcheck
 		case healthiness.StateUnchecked:
 			uncheckedRecords = append(uncheckedRecords, r)
 		}

@@ -165,7 +165,7 @@ var _ = Describe("RecursorPool", func() {
 
 			It("will tolerate a few sparse failures and failover without changing preference", func() {
 				for time := 0; time < 30; time++ {
-					pool.PerformStrategically(work)
+					pool.PerformStrategically(work) //nolint:errcheck
 				}
 
 				Expect(recursorAttempts[0]).To(Equal(30))
@@ -181,7 +181,7 @@ var _ = Describe("RecursorPool", func() {
 
 			It("begins to prefer the N+1st recursor", func() {
 				for time := 0; time < 1000; time++ {
-					pool.PerformStrategically(work)
+					pool.PerformStrategically(work) //nolint:errcheck
 				}
 
 				Expect(fakeLogger.InfoCallCount()).To(Equal(3))
@@ -205,7 +205,7 @@ var _ = Describe("RecursorPool", func() {
 
 			It("settles on the second (health) recursor and does not fail over to the third", func() {
 				for time := 0; time < 1000; time++ {
-					pool.PerformStrategically(work)
+					pool.PerformStrategically(work) //nolint:errcheck
 				}
 
 				Expect(fakeLogger.InfoCallCount()).To(Equal(2))
@@ -223,7 +223,7 @@ var _ = Describe("RecursorPool", func() {
 			smash := func(done chan struct{}) {
 				defer func() { done <- struct{}{} }()
 				for i := 0; i < 15; i++ {
-					pool.PerformStrategically(func(n string) error {
+					pool.PerformStrategically(func(n string) error { //nolint:errcheck
 						if n == "one" {
 							return errors.New("yikes")
 						}

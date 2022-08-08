@@ -58,7 +58,7 @@ func BoshInstances(deploymentName string) []InstanceInfo {
 
 	out := []InstanceInfo{}
 
-	json.Unmarshal([]byte(output), &response)
+	json.Unmarshal([]byte(output), &response) //nolint:errcheck
 
 	for _, row := range response.Tables[0].Rows {
 		instanceStrings := strings.Split(row["instance"], "/")

@@ -1,7 +1,7 @@
 package healthexecutable_test
 
 import (
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"os"
 	"runtime"
 

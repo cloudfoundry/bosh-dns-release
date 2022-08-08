@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"net"
 
 	"net/url"
@@ -90,7 +90,7 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	}
 
 	defer func() {
-		ioutil.ReadAll(httpResponse.Body)
+		ioutil.ReadAll(httpResponse.Body) //nolint:errcheck
 		httpResponse.Body.Close()
 	}()
 

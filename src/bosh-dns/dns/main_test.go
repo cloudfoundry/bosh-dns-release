@@ -3,7 +3,7 @@ package main_test
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"net"
 	"net/http"
 	"os"
@@ -521,7 +521,8 @@ var _ = Describe("main", func() {
 					err = os.MkdirAll(job2Dir, 0755)
 					Expect(err).NotTo(HaveOccurred())
 
-					ioutil.WriteFile(path.Join(job1Dir, "links.json"), []byte(`[
+					ioutil.WriteFile(path.Join(job1Dir, "links.json"), //nolint:errcheck
+						[]byte(`[
 						{
 						  "type": "appetizer",
 							"name": "edamame",
@@ -534,7 +535,8 @@ var _ = Describe("main", func() {
 						}
 					]`), 0644)
 
-					ioutil.WriteFile(path.Join(job2Dir, "links.json"), []byte(`[
+					ioutil.WriteFile(path.Join(job2Dir, "links.json"), //nolint:errcheck
+						[]byte(`[
 						{
 						  "type": "entree",
 							"name": "yakisoba",
@@ -1093,8 +1095,7 @@ var _ = Describe("main", func() {
 
 			Context("changing records.json", func() {
 				JustBeforeEach(func() {
-					var err error
-					err = ioutil.WriteFile(recordsFilePath, []byte(fmt.Sprint(`{
+					err := ioutil.WriteFile(recordsFilePath, []byte(`{
 						"record_keys": ["id", "num_id", "group_ids", "instance_group", "az", "network", "deployment", "ip", "domain"],
 						"record_infos": [
 							["my-instance", "12", ["19"], "my-group", "az1", "my-network", "my-deployment", "127.0.0.3", "bosh"]
@@ -1105,7 +1106,7 @@ var _ = Describe("main", func() {
 								"root_domain": "bosh"
 							}]
 						}
-					}`)), 0644)
+					}`), 0644)
 					Expect(err).NotTo(HaveOccurred())
 				})
 
@@ -1306,12 +1307,12 @@ var _ = Describe("main", func() {
 						}
 					})
 
-					go server.ListenAndServe()
+					go server.ListenAndServe() //nolint:errcheck
 					Expect(testhelpers.WaitForListeningTCP(recursorPort)).To(Succeed())
 				})
 
 				AfterEach(func() {
-					server.Shutdown()
+					server.Shutdown() //nolint:errcheck
 				})
 
 				It("serves local recursor", func() {
@@ -1352,7 +1353,7 @@ var _ = Describe("main", func() {
 						Expect(answer0.A.String()).To(Equal("192.0.2.100"))
 
 						// make sure the server is really shut down
-						server.Shutdown()
+						server.Shutdown() //nolint:errcheck
 						Eventually(func() error {
 							m = &dns.Msg{}
 							SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
@@ -1393,7 +1394,7 @@ var _ = Describe("main", func() {
 						Expect(answer0.A.String()).To(Equal("192.0.2.100"))
 
 						// make sure the server is really shut down
-						server.Shutdown()
+						server.Shutdown() //nolint:errcheck
 						Eventually(func() error {
 							m = &dns.Msg{}
 							SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
@@ -1539,12 +1540,12 @@ var _ = Describe("main", func() {
 					ips = []string{r.Answer[0].(*dns.A).A.String()}
 					Expect(ips).To(ConsistOf("127.0.0.1"))
 
-					err = ioutil.WriteFile(recordsFilePath, []byte(fmt.Sprint(`{
+					err = ioutil.WriteFile(recordsFilePath, []byte(`{
 						"record_keys": ["id", "instance_group", "az", "network", "deployment", "ip", "domain"],
 						"record_infos": [
 							["my-instance", "my-group", "az1", "my-network", "my-deployment", "127.0.0.1", "bosh"]
 						]
-					}`)), 0644)
+					}`), 0644)
 					Expect(err).NotTo(HaveOccurred())
 
 					Eventually(func() bool {
@@ -1608,7 +1609,7 @@ var _ = Describe("main", func() {
 
 			startTime := time.Now()
 			r, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-			Expect(time.Now().Sub(startTime)).Should(BeNumerically(">", 999*time.Millisecond))
+			Expect(time.Since(startTime)).Should(BeNumerically(">", 999*time.Millisecond))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeNameError))
 
@@ -1821,9 +1822,9 @@ var _ = Describe("main", func() {
 			aliasesFile1, err := ioutil.TempFile(aliasesDir, "aliasesjson1")
 			Expect(err).NotTo(HaveOccurred())
 			defer aliasesFile1.Close()
-			_, err = aliasesFile1.Write([]byte(fmt.Sprint(`{
+			_, err = aliasesFile1.Write([]byte(`{
 				"uc.alias.": ["upcheck.bosh-dns."]
-			}`)))
+			}`))
 			Expect(err).NotTo(HaveOccurred())
 
 			aliasesFile2, err := ioutil.TempFile(aliasesDir, "aliasesjson2")
@@ -1884,7 +1885,7 @@ func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Serv
 		tlsconfig.WithClientAuthenticationFromFile("../healthcheck/assets/test_certs/test_ca.pem"),
 	)
 	Expect(err).ToNot(HaveOccurred())
-	tlsConfig.BuildNameToCertificate()
+	tlsConfig.BuildNameToCertificate() //nolint:staticcheck
 
 	server := ghttp.NewUnstartedServer()
 	err = server.HTTPTestServer.Listener.Close()

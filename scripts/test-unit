@@ -3,31 +3,32 @@
 main() {
     set -eu -o pipefail -x
 
-    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-    export GOPATH="$(cd "$DIR/.." && pwd)"
-    export PATH=$GOPATH/bin:$PATH
+    TEST_RECURSOR_BINARY="$(mktemp -d)/test_recursor"
+    export TEST_RECURSOR_BINARY
 
-    [[ -n "$(grep --exclude-dir vendor \
+    grep -ri panic src/bosh-dns \
+      --exclude-dir vendor \
       --exclude-dir test_yml_assets \
       --exclude-dir performance_tests \
       --exclude-dir acceptance_tests \
       --exclude-dir integration-tests \
-      --exclude-dir gomega-dns \
-      -ri panic src/bosh-dns)" \
-    ]] && echo "panics detected in the code -- remove them" && exit 1
+      --exclude-dir gomega-dns && echo "panics detected in the code -- remove them" && exit 1
 
-    export TEST_RECURSOR_BINARY="$(mktemp -d)/test_recursor"
     pushd src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
-      go build -o ${TEST_RECURSOR_BINARY} .
+      "${ROOT_DIR}/scripts/lint"
+      go build -o "${TEST_RECURSOR_BINARY}" .
     popd
 
     pushd src/bosh-dns
+      "${ROOT_DIR}/scripts/lint"
       go run github.com/onsi/ginkgo/ginkgo -p -r -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=acceptance_tests,integration-tests,performance_tests,test_yml_assets,vendor .
       go run github.com/onsi/ginkgo/ginkgo -r -randomizeAllSpecs -randomizeSuites -keepGoing -race integration-tests
     popd
 
     pushd src/debug
+      "${ROOT_DIR}/scripts/lint"
       go run github.com/onsi/ginkgo/ginkgo -p -r -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=vendor .
     popd
 }

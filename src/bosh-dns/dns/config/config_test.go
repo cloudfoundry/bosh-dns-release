@@ -3,7 +3,7 @@ package config_test
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"math/rand"
 	"time"
 
@@ -75,7 +75,7 @@ var _ = Describe("Config", func() {
 	})
 
 	It("returns config from a config file", func() {
-		configContents, err := json.Marshal(map[string]interface{}{
+		configContents, err := json.Marshal(map[string]interface{}{ //nolint:ineffassign,staticcheck
 			"address":              listenAddress,
 			"addresses_files_glob": addressesFileGlob,
 			"alias_files_glob":     aliasesFileGlob,

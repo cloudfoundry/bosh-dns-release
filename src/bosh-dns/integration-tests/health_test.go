@@ -116,7 +116,7 @@ var _ = Describe("Integration", func() {
 			It("respects health status according to job providing link querying via DNS", func() {
 				Eventually(func() []dns.RR {
 					dnsResponse := helpers.DigWithOptions(
-						fmt.Sprintf("q-g0s0.bosh-dns.default.bosh-dns.bosh."), e.ServerAddress(),
+						"q-g0s0.bosh-dns.default.bosh-dns.bosh.", e.ServerAddress(),
 						helpers.DigOpts{Port: e.Port(), SkipRcodeCheck: true})
 					return dnsResponse.Answer
 				}, 5*time.Second, 500*time.Millisecond).Should(ConsistOf(
@@ -132,7 +132,7 @@ var _ = Describe("Integration", func() {
 
 				Eventually(func() []dns.RR {
 					dnsResponse := helpers.DigWithPort(
-						fmt.Sprintf("q-g0s0.bosh-dns.default.bosh-dns.bosh."),
+						"q-g0s0.bosh-dns.default.bosh-dns.bosh.",
 						e.ServerAddress(), e.Port())
 					return dnsResponse.Answer
 				}, 5*time.Second, 500*time.Millisecond).Should(ConsistOf(
@@ -151,7 +151,7 @@ var _ = Describe("Integration", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Eventually(func() []dns.RR {
 					dnsResponse := helpers.DigWithPort(
-						fmt.Sprintf("q-g0s0.bosh-dns.default.bosh-dns.bosh."),
+						"q-g0s0.bosh-dns.default.bosh-dns.bosh.",
 						e.ServerAddress(), e.Port())
 					return dnsResponse.Answer
 				}, 5*time.Second, 500*time.Millisecond).Should(ConsistOf(

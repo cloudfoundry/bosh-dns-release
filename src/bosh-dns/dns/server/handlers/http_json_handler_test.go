@@ -132,8 +132,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 		Context("successful requests", func() {
 			BeforeEach(func() {
-				var casedName string
-				casedName = MixCase("app-id.internal-domain.")
+				casedName := MixCase("app-id.internal-domain.")
 				fakeServerResponse = ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/", "name="+casedName+"&type=28"),
 					ghttp.RespondWith(http.StatusOK, `{
@@ -330,8 +329,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 		Context("when the https server message is truncated", func() {
 			BeforeEach(func() {
-				var casedName string
-				casedName = MixCase("app-id.internal-domain.")
+				casedName := MixCase("app-id.internal-domain.")
 
 				fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
 				fakeServerResponse = ghttp.CombineHandlers(
@@ -380,8 +378,7 @@ var _ = Describe("HttpJsonHandler", func() {
 
 		Context("when the non truncated http server response message is too large to fit in dns message", func() {
 			BeforeEach(func() {
-				var casedName string
-				casedName = MixCase("app-id.internal-domain.")
+				casedName := MixCase("app-id.internal-domain.")
 
 				fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
 				fakeServerResponse = ghttp.CombineHandlers(

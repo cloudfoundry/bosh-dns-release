@@ -117,7 +117,7 @@ func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter
 		responseMessage.SetRcode(req, dns.RcodeServerFailure)
 	default:
 		responseMessage.SetRcode(req, dns.RcodeNameError)
-		break
+		break //nolint:gosimple
 	}
 
 	r.logRecursor(before, req, responseMessage, recursor)

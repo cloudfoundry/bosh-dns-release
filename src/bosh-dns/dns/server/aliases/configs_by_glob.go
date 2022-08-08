@@ -24,14 +24,12 @@ func ConfigFromGlob(nameFinder ConfigGlobber, loader NamedConfigLoader, glob str
 
 	aliasConfig := NewConfig()
 
-	if files != nil {
-		for _, aliasFile := range files {
-			nextConfig, err := loader.Load(aliasFile)
-			if err != nil {
-				return Config{}, bosherr.WrapError(err, "could not load config")
-			}
-			aliasConfig = aliasConfig.Merge(nextConfig)
+	for _, aliasFile := range files {
+		nextConfig, err := loader.Load(aliasFile)
+		if err != nil {
+			return Config{}, bosherr.WrapError(err, "could not load config")
 		}
+		aliasConfig = aliasConfig.Merge(nextConfig)
 	}
 
 	canonicalAliases, err := aliasConfig.ReducedForm()

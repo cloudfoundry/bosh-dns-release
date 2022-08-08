@@ -201,7 +201,7 @@ func (p *PerformanceTest) processDatadogResults(
 	chunkedResults := make(chan []Result)
 	go func() {
 		for chunk := range chunkedResults {
-			p.postDatadog(chunk...)
+			p.postDatadog(chunk...) //nolint:errcheck
 		}
 		close(dataDogDoneChan)
 	}()
@@ -284,18 +284,18 @@ func (p *PerformanceTest) MakeParallelRequests(duration, resourcesInterval time.
 }
 
 func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
-	p.postDatadogEvent("Starting performance test", "")
+	p.postDatadogEvent("Starting performance test", "") //nolint:errcheck
 
 	duration := time.Duration(durationInSeconds) * time.Second
 	resourcesInterval := time.Second / 2
 
 	cpuSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
 	cpuHistogram := metrics.NewHistogram(cpuSample)
-	metrics.Register("CPU Usage", cpuHistogram)
+	metrics.Register("CPU Usage", cpuHistogram) //nolint:errcheck
 
 	memSample := metrics.NewExpDecaySample(int(duration/resourcesInterval), 0.015)
 	memHistogram := metrics.NewHistogram(memSample)
-	metrics.Register("Mem Usage", memHistogram)
+	metrics.Register("Mem Usage", memHistogram) //nolint:errcheck
 
 	results := p.MakeParallelRequests(duration, resourcesInterval, cpuHistogram, memHistogram)
 
@@ -370,7 +370,7 @@ func (p *PerformanceTest) TestPerformance(durationInSeconds int, label string) {
 			fmt.Errorf("Max server memory usage of %.2fMB was greater than %.2fMB ceiling", memMax, p.VitalsThresholds.MemMax))
 	}
 
-	p.postDatadogEvent("Finishing performance test", "")
+	p.postDatadogEvent("Finishing performance test", "") //nolint:errcheck
 	Expect(testFailures).To(BeEmpty())
 }
 

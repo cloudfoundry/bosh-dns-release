@@ -3,7 +3,7 @@ package integration_tests
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"net"
 	"os"
 	"os/exec"

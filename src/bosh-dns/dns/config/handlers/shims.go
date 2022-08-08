@@ -4,6 +4,6 @@ import "github.com/miekg/dns"
 
 //go:generate counterfeiter . dnsHandler
 
-type dnsHandler interface {
+type dnsHandler interface { //nolint:deadcode,unused
 	dns.Handler
 }

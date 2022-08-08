@@ -1,7 +1,7 @@
 package config
 
 import (
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 
 	yaml "gopkg.in/yaml.v2"
 )

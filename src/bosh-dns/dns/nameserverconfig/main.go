@@ -31,7 +31,7 @@ func main() {
 	if logFormat == "rfc3339" {
 		logger.UseRFC3339Timestamps()
 	}
-	defer logger.FlushTimeout(5 * time.Second)
+	defer logger.FlushTimeout(5 * time.Second) //nolint:errcheck
 
 	shutdown := make(chan struct{})
 	sigterm := make(chan os.Signal, 1)
@@ -43,12 +43,12 @@ func main() {
 
 	dnsManager := newDNSManager(bindAddress, logger, realClock, fs)
 
-	monitor := monitor.NewMonitor(
+	nsConfigMonitor := monitor.NewMonitor(
 		logger,
 		dnsManager,
 		ticker,
 	)
-	go monitor.Run(shutdown)
+	go nsConfigMonitor.Run(shutdown)
 
 	<-sigterm
 	shutdown <- struct{}{}

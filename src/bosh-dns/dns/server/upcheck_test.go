@@ -166,7 +166,7 @@ var _ = Describe("Upcheck", func() {
 		BeforeEach(func() {
 			dnsHandler = dns.HandlerFunc(func(r dns.ResponseWriter, m *dns.Msg) {
 				m.Rcode = dns.RcodeSuccess
-				r.WriteMsg(m)
+				r.WriteMsg(m) //nolint:errcheck
 			})
 		})
 
@@ -194,7 +194,7 @@ var _ = Describe("Upcheck", func() {
 		BeforeEach(func() {
 			dnsHandler = dns.HandlerFunc(func(r dns.ResponseWriter, m *dns.Msg) {
 				m.Rcode = dns.RcodeServerFailure
-				r.WriteMsg(m)
+				r.WriteMsg(m) //nolint:errcheck
 			})
 		})
 
@@ -230,7 +230,7 @@ var _ = Describe("Upcheck", func() {
 					},
 					Ptr: "bosh-dns.arpa6.com.",
 				})
-				r.WriteMsg(m)
+				r.WriteMsg(m) //nolint:errcheck
 			})
 		})
 

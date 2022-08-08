@@ -1,0 +1,9 @@
+# https://golangci-lint.run/usage/configuration/
+run:
+  timeout: 3m # 1m default times out on github-action runners
+  skip-dirs: # TODO: remove once the `performance_tests` module compiles
+    - performance_tests/*
+
+output:
+  # Sort results by: filepath, line and column.
+  sort-results: true

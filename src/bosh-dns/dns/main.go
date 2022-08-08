@@ -60,7 +60,7 @@ func main() {
 func mainExitCode() int {
 	configPath, err := parseFlags()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintln(os.Stderr, err.Error()) //nolint:errcheck
 		return 1
 	}
 
@@ -82,7 +82,7 @@ func mainExitCode() int {
 	}
 	logTag := "main"
 	logger.Info(logTag, "bosh-dns starting")
-	defer logger.FlushTimeout(5 * time.Second)
+	defer logger.FlushTimeout(5 * time.Second) //nolint:errcheck
 
 	fs := boshsys.NewOsFileSystem(logger)
 
@@ -153,7 +153,8 @@ func mainExitCode() int {
 
 	fileReader := records.NewFileReader(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
 	filtererFactory := records.NewHealthFiltererFactory(healthWatcher, time.Duration(config.Health.SynchronousCheckTimeout))
-	recordSet, err := records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger, filtererFactory, records.NewAliasEncoder())
+	recordSet, err := //nolint:staticcheck
+		records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger, filtererFactory, records.NewAliasEncoder())
 
 	truncater := dnsresolver.NewResponseTruncater()
 	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, shuffle.New(), truncater)
@@ -281,15 +282,15 @@ func mainExitCode() int {
 			log.Fatal(err)
 			return
 		}
-		tlsConfig.BuildNameToCertificate()
+		tlsConfig.BuildNameToCertificate() //nolint:staticcheck
 
-		server := &http.Server{
+		httpServer := &http.Server{
 			Addr:      fmt.Sprintf("127.0.0.1:%d", config.Port),
 			TLSConfig: tlsConfig,
 		}
-		server.SetKeepAlivesEnabled(false)
+		httpServer.SetKeepAlivesEnabled(false)
 
-		server.ListenAndServeTLS("", "")
+		httpServer.ListenAndServeTLS("", "") //nolint:errcheck
 	}(config.API)
 
 	if err := dnsServer.Run(); err != nil {

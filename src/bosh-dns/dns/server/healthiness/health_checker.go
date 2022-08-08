@@ -4,7 +4,7 @@ import (
 	"bosh-dns/healthcheck/api"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"net"
 	"net/http"
 
@@ -33,7 +33,7 @@ func NewHealthChecker(client HTTPClientGetter, port int, logger boshlog.Logger) 
 	}
 }
 
-type healthStatus struct {
+type healthStatus struct { //nolint:deadcode,unused
 	State api.HealthStatus
 }
 

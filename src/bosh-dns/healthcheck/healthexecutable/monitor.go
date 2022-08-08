@@ -4,7 +4,7 @@ import (
 	"bosh-dns/healthcheck/api"
 	"bosh-dns/healthconfig"
 	"encoding/json"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"time"
 
 	"sync"

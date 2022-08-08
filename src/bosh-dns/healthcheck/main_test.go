@@ -4,7 +4,7 @@ import (
 	"bosh-dns/tlsclient"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"net/http"
 	"os"
 	"time"

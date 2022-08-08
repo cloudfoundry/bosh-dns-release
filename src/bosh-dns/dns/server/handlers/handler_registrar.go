@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bosh-dns/dns/server/criteria"
-	"fmt"
 	"time"
 
 	"code.cloudfoundry.org/clock"
@@ -46,7 +45,7 @@ func NewHandlerRegistrar(logger logger.Logger, clock clock.Clock, domainProvider
 }
 
 func (h *HandlerRegistrar) RegisterAgentTLD() {
-	h.mux.Handle(fmt.Sprintf("%s", criteria.BoshAgentTLD), NewRequestLoggerHandler(h.handler, h.clock, h.logger))
+	h.mux.Handle(criteria.BoshAgentTLD, NewRequestLoggerHandler(h.handler, h.clock, h.logger))
 }
 
 // not threadsafe - only call externally before Run is called

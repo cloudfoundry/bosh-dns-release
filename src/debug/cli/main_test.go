@@ -164,7 +164,7 @@ func newFakeAPIServer() *ghttp.Server {
 		tlsconfig.WithClientAuthenticationFromFile("../../bosh-dns/dns/api/assets/test_certs/test_ca.pem"),
 	)
 	Expect(err).ToNot(HaveOccurred())
-	tlsConfig.BuildNameToCertificate()
+	tlsConfig.BuildNameToCertificate() //nolint:staticcheck
 
 	server := ghttp.NewUnstartedServer()
 	err = server.HTTPTestServer.Listener.Close()

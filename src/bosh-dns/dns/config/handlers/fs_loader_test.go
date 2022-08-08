@@ -22,7 +22,8 @@ var _ = Describe("FSLoader", func() {
 	Describe("Load", func() {
 		Context("valid file", func() {
 			It("parses the file", func() {
-				fs.WriteFileString("/test/handlers.json", `[
+				fs.WriteFileString("/test/handlers.json", //nolint:errcheck
+					`[
 					{
 						"domain": "local.internal.",
 						"cache": { "enabled": true },
@@ -55,7 +56,8 @@ var _ = Describe("FSLoader", func() {
 			})
 
 			It("it rewrites source recursors to include default ports", func() {
-				fs.WriteFileString("/test/handlers.json", `[
+				fs.WriteFileString("/test/handlers.json", //nolint:errcheck
+					`[
 					{
 						"domain": "local.internal2.",
 						"cache": { "enabled": false },

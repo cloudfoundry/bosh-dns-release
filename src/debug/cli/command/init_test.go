@@ -27,7 +27,7 @@ func newFakeAPIServer() *ghttp.Server {
 	)
 	Expect(err).NotTo(HaveOccurred())
 
-	tlsConfig.BuildNameToCertificate()
+	tlsConfig.BuildNameToCertificate() //nolint:staticcheck
 	server := ghttp.NewUnstartedServer()
 	err = server.HTTPTestServer.Listener.Close()
 	Expect(err).NotTo(HaveOccurred())

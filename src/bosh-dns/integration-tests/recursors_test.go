@@ -3,7 +3,7 @@ package integration_tests
 import (
 	"bosh-dns/dns/server/handlers"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil" //nolint:staticcheck
 	"net"
 	"os"
 	"os/exec"
@@ -214,7 +214,7 @@ var _ = Describe("Integration", func() {
 						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeNameError))
 						Expect(dnsResponse.Answer).To(HaveLen(0))
 
-						recursorEnv.start()
+						recursorEnv.start() //nolint:errcheck
 
 						dnsResponse = helpers.DigWithOptions("recursor-small.com.", environment.ServerAddress(), helpers.DigOpts{Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true})
 

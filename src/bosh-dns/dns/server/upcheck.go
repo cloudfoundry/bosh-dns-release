@@ -72,17 +72,17 @@ func (uc DNSAnswerValidatingUpcheck) IsUp() error {
 		return uc.wrapError(err)
 	}
 	if msg.Rcode != dns.RcodeSuccess {
-		return uc.wrapError(errors.New(fmt.Sprintf("DNS resolve failed for upcheck domain %s", uc.upCheckDomain)))
+		return uc.wrapError(fmt.Errorf("DNS resolve failed for upcheck domain %s", uc.upCheckDomain))
 	}
 
 	if len(msg.Answer) == 0 {
-		return uc.wrapError(errors.New(fmt.Sprintf("DNS upcheck found no answers for upcheck domain %s", uc.upCheckDomain)))
+		return uc.wrapError(fmt.Errorf("DNS upcheck found no answers for upcheck domain %s", uc.upCheckDomain))
 	}
 
 	if uc.checkAnswerRecord {
 		aRecord, ok := msg.Answer[0].(*dns.A)
 		if !ok {
-			return uc.wrapError(errors.New(fmt.Sprintf("upcheck for domain %s must return A record", uc.upCheckDomain)))
+			return uc.wrapError(fmt.Errorf("upcheck for domain %s must return A record", uc.upCheckDomain))
 		}
 
 		if !aRecord.A.Equal(net.ParseIP("127.0.0.1")) {

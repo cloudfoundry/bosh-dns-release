@@ -21,7 +21,8 @@ var _ = Describe("FSLoader", func() {
 	Describe("Load", func() {
 		Context("valid file", func() {
 			It("parses the file", func() {
-				fs.WriteFileString("/test/aliases.json", `
+				fs.WriteFileString("/test/aliases.json", //nolint:errcheck
+					`
 				{
 					"test.tld": [
 						"othertest.tld"

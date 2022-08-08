@@ -20,7 +20,7 @@ import (
 
 var healthServer healthserver.HealthServer
 
-type LinkJson struct {
+type LinkJson struct { //nolint:deadcode,unused
 	Group string `json:"group"`
 }
 
@@ -49,7 +49,7 @@ func mainExitCode() int {
 	if config.LogFormat == "rfc3339" {
 		logger.UseRFC3339Timestamps()
 	}
-	defer logger.FlushTimeout(5 * time.Second)
+	defer logger.FlushTimeout(5 * time.Second) //nolint:errcheck
 	logger.Info(logTag, "Initializing")
 
 	shutdown := make(chan struct{})

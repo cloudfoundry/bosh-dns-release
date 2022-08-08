@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -eu -o pipefail
+
+ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+
+src_dirs=(src/bosh-dns src/debug src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor)
+
+for src_dir in ${src_dirs[*]}; do
+  echo -e "\n lint-ing in '${src_dir}' ..."
+  (
+    cd "${ROOT_DIR}/${src_dir}"
+    "${ROOT_DIR}/scripts/lint" ./...
+  )
+done
