@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil" //nolint:staticcheck
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -144,7 +144,7 @@ func NewDefaultConfig() Config {
 }
 
 func LoadFromFile(configFilePath string) (Config, error) {
-	configFileContents, err := ioutil.ReadFile(configFilePath)
+	configFileContents, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return Config{}, err
 	}
