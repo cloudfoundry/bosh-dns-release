@@ -5,7 +5,6 @@ import (
 	"bosh-dns/dns/server/records/dnsresolver"
 	"fmt"
 	"net"
-	"strings"
 	"time"
 
 	"code.cloudfoundry.org/clock"
@@ -33,6 +32,16 @@ type Cache interface {
 	Get(req *dns.Msg) *dns.Msg
 	Write(req, answer *dns.Msg)
 	GetExpired(*dns.Msg) *dns.Msg
+}
+
+type DnsError struct {
+  Rcode int
+  Question string
+  Recursor string
+}
+
+func (e DnsError) Error() string { 
+	return fmt.Sprintf("received %s for %s from upstream (recursor: %s)", dns.RcodeToString[e.Rcode], e.Question, e.Recursor)
 }
 
 func NewForwardHandler(recursors RecursorPool, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger, truncater dnsresolver.ResponseTruncater) ForwardHandler {
@@ -66,11 +75,10 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 			question := request.Question[0].Name
 			r.logger.Error(r.logTag, "error recursing for %s to %q: %s", question, recursor, err.Error())
 		}
-
 		if exchangeAnswer != nil && exchangeAnswer.MsgHdr.Rcode != dns.RcodeSuccess {
 			question := request.Question[0].Name
-			err = fmt.Errorf("received %s for %s from upstream (recursor: %s)", dns.RcodeToString[exchangeAnswer.MsgHdr.Rcode], question, recursor)
-			if exchangeAnswer.MsgHdr.Rcode == dns.RcodeNameError {
+      err = DnsError{Rcode: exchangeAnswer.MsgHdr.Rcode, Question: question, Recursor: recursor}
+      if exchangeAnswer.MsgHdr.Rcode == dns.RcodeNameError {
 				r.logger.Debug(r.logTag, "error recursing to %q: %s", recursor, err.Error())
 			} else {
 				r.logger.Error(r.logTag, "error recursing to %q: %s", recursor, err.Error())
@@ -116,12 +124,15 @@ func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter
 	switch err.(type) {
 	case net.Error:
 		responseMessage.SetRcode(req, dns.RcodeServerFailure)
+  case DnsError:
+    if err.(DnsError).Rcode == dns.RcodeServerFailure {
+      responseMessage.SetRcode(req, dns.RcodeServerFailure)
+    } else {
+      responseMessage.SetRcode(req, dns.RcodeNameError)
+    }
+    break //nolint:gosimple
 	default:
-		if strings.Contains(err.Error(), "received SERVFAIL") {
-			responseMessage.SetRcode(req, dns.RcodeServerFailure)
-		} else {
-			responseMessage.SetRcode(req, dns.RcodeNameError)
-		}
+		responseMessage.SetRcode(req, dns.RcodeNameError)
 		break //nolint:gosimple
 	}
 
