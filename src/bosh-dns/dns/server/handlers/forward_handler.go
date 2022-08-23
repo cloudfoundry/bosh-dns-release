@@ -40,7 +40,7 @@ type DnsError struct {
 	Recursor string
 }
 
-func (e DnsError) Error() string {
+func (e *DnsError) Error() string {
 	return fmt.Sprintf("received %s for %s from upstream (recursor: %s)", dns.RcodeToString[e.Rcode], e.Question, e.Recursor)
 }
 
@@ -77,7 +77,7 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 		}
 		if exchangeAnswer != nil && exchangeAnswer.MsgHdr.Rcode != dns.RcodeSuccess {
 			question := request.Question[0].Name
-			err = DnsError{Rcode: exchangeAnswer.MsgHdr.Rcode, Question: question, Recursor: recursor}
+			err = &DnsError{Rcode: exchangeAnswer.MsgHdr.Rcode, Question: question, Recursor: recursor}
 			if exchangeAnswer.MsgHdr.Rcode == dns.RcodeNameError {
 				r.logger.Debug(r.logTag, "error recursing to %q: %s", recursor, err.Error())
 			} else {
@@ -124,7 +124,7 @@ func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter
 	switch err := err.(type) {
 	case net.Error:
 		responseMessage.SetRcode(req, dns.RcodeServerFailure)
-	case DnsError:
+	case *DnsError:
 		if err.Rcode == dns.RcodeServerFailure {
 			responseMessage.SetRcode(req, dns.RcodeServerFailure)
 		} else {
