@@ -1,16 +1,16 @@
 package handlers
 
 import (
-	"bosh-dns/dns/server/handlers/internal"
-	"bosh-dns/dns/server/records/dnsresolver"
-	"fmt"
 	"net"
 	"time"
 
 	"code.cloudfoundry.org/clock"
-
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/server"
+	"bosh-dns/dns/server/handlers/internal"
+	"bosh-dns/dns/server/records/dnsresolver"
 )
 
 type ForwardHandler struct {
@@ -32,21 +32,6 @@ type Cache interface {
 	Get(req *dns.Msg) *dns.Msg
 	Write(req, answer *dns.Msg)
 	GetExpired(*dns.Msg) *dns.Msg
-}
-
-type DnsError struct {
-	Rcode    int
-	Question string
-	Recursor string
-}
-
-func (e *DnsError) Error() string {
-	return fmt.Sprintf(
-		"received %s for %s from upstream (recursor: %s)",
-		dns.RcodeToString[e.Rcode],
-		e.Question,
-		e.Recursor,
-	)
 }
 
 func NewForwardHandler(
@@ -88,7 +73,7 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 		}
 		if exchangeAnswer != nil && exchangeAnswer.MsgHdr.Rcode != dns.RcodeSuccess {
 			question := request.Question[0].Name
-			err = &DnsError{Rcode: exchangeAnswer.MsgHdr.Rcode, Question: question, Recursor: recursor}
+			err = server.NewDnsError(exchangeAnswer.MsgHdr.Rcode, question, recursor)
 			if exchangeAnswer.MsgHdr.Rcode == dns.RcodeNameError {
 				r.logger.Debug(r.logTag, "error recursing to %q: %s", recursor, err.Error())
 			} else {
@@ -139,8 +124,8 @@ func (r ForwardHandler) createResponseFromError(req *dns.Msg, err error) *dns.Ms
 	switch err := err.(type) {
 	case net.Error:
 		responseMessage.SetRcode(req, dns.RcodeServerFailure)
-	case *DnsError:
-		if err.Rcode == dns.RcodeServerFailure {
+	case server.DnsError:
+		if err.Rcode() == dns.RcodeServerFailure {
 			responseMessage.SetRcode(req, dns.RcodeServerFailure)
 		} else {
 			responseMessage.SetRcode(req, dns.RcodeNameError)
