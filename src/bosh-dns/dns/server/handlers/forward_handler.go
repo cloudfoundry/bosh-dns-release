@@ -111,7 +111,11 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 	})
 
 	if err != nil {
-		r.writeNoResponseMessage(responseWriter, request, before, "error=["+err.Error()+"]", err)
+		responseMessage := r.createResponseFromError(request, err)
+		r.logRecursor(before, request, responseMessage, "error=["+err.Error()+"]")
+		if err := responseWriter.WriteMsg(responseMessage); err != nil {
+			r.logger.Error(r.logTag, "error writing response: %s", err.Error())
+		}
 	}
 }
 
@@ -128,7 +132,7 @@ func (ForwardHandler) network(responseWriter dns.ResponseWriter) string {
 	return network
 }
 
-func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter, req *dns.Msg, before time.Time, recursor string, err error) {
+func (r ForwardHandler) createResponseFromError(req *dns.Msg, err error) *dns.Msg {
 	responseMessage := &dns.Msg{}
 	responseMessage.SetReply(req)
 
@@ -147,10 +151,7 @@ func (r ForwardHandler) writeNoResponseMessage(responseWriter dns.ResponseWriter
 		break //nolint:gosimple
 	}
 
-	r.logRecursor(before, req, responseMessage, recursor)
-	if err := responseWriter.WriteMsg(responseMessage); err != nil {
-		r.logger.Error(r.logTag, "error writing response: %s", err.Error())
-	}
+	return responseMessage
 }
 
 func (r ForwardHandler) writeEmptyMessage(responseWriter dns.ResponseWriter, req *dns.Msg) {
