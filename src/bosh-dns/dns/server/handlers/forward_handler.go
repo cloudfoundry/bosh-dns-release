@@ -41,10 +41,21 @@ type DnsError struct {
 }
 
 func (e *DnsError) Error() string {
-	return fmt.Sprintf("received %s for %s from upstream (recursor: %s)", dns.RcodeToString[e.Rcode], e.Question, e.Recursor)
+	return fmt.Sprintf(
+		"received %s for %s from upstream (recursor: %s)",
+		dns.RcodeToString[e.Rcode],
+		e.Question,
+		e.Recursor,
+	)
 }
 
-func NewForwardHandler(recursors RecursorPool, exchangerFactory ExchangerFactory, clock clock.Clock, logger logger.Logger, truncater dnsresolver.ResponseTruncater) ForwardHandler {
+func NewForwardHandler(
+	recursors RecursorPool,
+	exchangerFactory ExchangerFactory,
+	clock clock.Clock,
+	logger logger.Logger,
+	truncater dnsresolver.ResponseTruncater,
+) ForwardHandler {
 	return ForwardHandler{
 		recursors:        recursors,
 		exchangerFactory: exchangerFactory,
