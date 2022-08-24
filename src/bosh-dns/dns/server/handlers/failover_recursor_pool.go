@@ -19,7 +19,7 @@ const (
 
 var ErrNoRecursorResponse = errors.New("no response from recursors")
 
-//go:generate counterfeiter . RecursorPool
+//counterfeiter:generate . RecursorPool
 
 type RecursorPool interface {
 	PerformStrategically(func(string) error) error

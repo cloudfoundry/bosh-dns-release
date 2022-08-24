@@ -5,7 +5,7 @@ import (
 	"bosh-dns/dns/server/record"
 )
 
-//go:generate counterfeiter . Reducer
+//counterfeiter:generate . Reducer
 type Reducer interface {
 	Filter(criteria.MatchMaker, []record.Record) []record.Record
 }

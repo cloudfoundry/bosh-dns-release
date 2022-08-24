@@ -1,6 +1,8 @@
 package manager
 
-//go:generate counterfeiter . DNSManager
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . DNSManager
 
 type DNSManager interface {
 	SetPrimary() error

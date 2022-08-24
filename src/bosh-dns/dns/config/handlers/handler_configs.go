@@ -1,5 +1,7 @@
 package handlers
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import (
 	"bosh-dns/dns/config"
 	"fmt"
@@ -7,7 +9,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-//go:generate counterfeiter . HandlerFactory
+//counterfeiter:generate . HandlerFactory
 type HandlerFactory interface {
 	CreateHTTPJSONHandler(string, bool) dns.Handler
 	CreateForwardHandler([]string, bool) dns.Handler

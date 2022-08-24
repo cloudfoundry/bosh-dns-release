@@ -11,13 +11,13 @@ import (
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
-//go:generate counterfeiter . HealthChecker
+//counterfeiter:generate . HealthChecker
 
 type HealthChecker interface {
 	GetStatus(ip string) api.HealthResult
 }
 
-//go:generate counterfeiter . HealthWatcher
+//counterfeiter:generate . HealthWatcher
 
 type HealthWatcher interface {
 	HealthState(ip string) api.HealthResult

@@ -17,7 +17,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-//go:generate counterfeiter . HTTPClient
+//counterfeiter:generate . HTTPClient
 
 type HTTPClient interface {
 	Get(endpoint string) (*http.Response, error)

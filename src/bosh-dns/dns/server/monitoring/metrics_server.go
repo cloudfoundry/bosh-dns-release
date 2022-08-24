@@ -1,5 +1,7 @@
 package monitoring
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import (
 	"context"
 
@@ -9,8 +11,8 @@ import (
 	"github.com/miekg/dns"
 )
 
-//go:generate counterfeiter . MetricsReporter
-//go:generate counterfeiter . CoreDNSMetricsServer
+//counterfeiter:generate . MetricsReporter
+//counterfeiter:generate . CoreDNSMetricsServer
 
 type MetricsReporter interface {
 	Report(context.Context, dns.ResponseWriter, *dns.Msg) (int, error)

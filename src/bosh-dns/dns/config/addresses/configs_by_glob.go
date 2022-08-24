@@ -1,16 +1,18 @@
 package addresses
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import (
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
-//go:generate counterfeiter . ConfigGlobber
+//counterfeiter:generate . ConfigGlobber
 
 type ConfigGlobber interface {
 	Glob(string) ([]string, error)
 }
 
-//go:generate counterfeiter . NamedConfigLoader
+//counterfeiter:generate . NamedConfigLoader
 
 type NamedConfigLoader interface {
 	Load(string) (AddressConfigs, error)

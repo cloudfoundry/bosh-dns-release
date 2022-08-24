@@ -13,7 +13,7 @@ import (
 
 type Dialer func(string, string) (net.Conn, error)
 
-//go:generate counterfeiter . Upcheck
+//counterfeiter:generate . Upcheck
 
 type Upcheck interface {
 	IsUp() error

@@ -6,7 +6,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-//go:generate counterfeiter . ResponseTruncater
+//counterfeiter:generate . ResponseTruncater
 type ResponseTruncater interface {
 	TruncateIfNeeded(responseWriter dns.ResponseWriter, req, resp *dns.Msg)
 }

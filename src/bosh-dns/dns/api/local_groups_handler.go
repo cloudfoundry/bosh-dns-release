@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-//go:generate counterfeiter . HealthChecker
+//counterfeiter:generate . HealthChecker
 
 type HealthChecker interface {
 	GetStatus(ip string) api.HealthResult

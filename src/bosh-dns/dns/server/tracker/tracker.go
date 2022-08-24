@@ -1,5 +1,7 @@
 package tracker
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import (
 	"bosh-dns/dns/server/criteria"
 	"bosh-dns/dns/server/record"
@@ -17,19 +19,19 @@ type Tracker struct {
 	logger          logger.Logger
 }
 
-//go:generate counterfeiter -o ./fakes/limited_transcript.go --fake-name LimitedTranscript . limitedTranscript
+//counterfeiter:generate -o ./fakes/limited_transcript.go --fake-name LimitedTranscript . limitedTranscript
 type limitedTranscript interface {
 	Touch(string) string
 	Registry() []string
 }
 
-//go:generate counterfeiter -o ./fakes/healther.go --fake-name Healther . healther
+//counterfeiter:generate -o ./fakes/healther.go --fake-name Healther . healther
 type healther interface {
 	Track(ip string)
 	Untrack(ip string)
 }
 
-//go:generate counterfeiter -o ./fakes/query.go --fake-name Query . query
+//counterfeiter:generate -o ./fakes/query.go --fake-name Query . query
 type query interface {
 	Filter(criteria.MatchMaker, []record.Record) []record.Record
 }

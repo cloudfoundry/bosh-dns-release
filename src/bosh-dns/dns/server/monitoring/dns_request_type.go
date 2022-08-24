@@ -42,7 +42,7 @@ func (p pluginHandlerAdapter) Name() string {
 	return "pluginHandlerAdapter"
 }
 
-//go:generate counterfeiter . RequestCounter
+//counterfeiter:generate . RequestCounter
 
 type RequestCounter interface {
 	IncrementExternalCounter()

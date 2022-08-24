@@ -1,5 +1,7 @@
 package server
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import (
 	"context"
 	"errors"
@@ -9,7 +11,7 @@ import (
 	"github.com/cloudfoundry/bosh-utils/logger"
 )
 
-//go:generate counterfeiter . DNSServer
+//counterfeiter:generate . DNSServer
 
 type DNSServer interface {
 	ListenAndServe() error

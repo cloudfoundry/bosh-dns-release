@@ -1,5 +1,7 @@
 package records
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import (
 	"encoding/json"
 	"errors"
@@ -315,7 +317,7 @@ func (r *RecordSet) update() {
 	}
 }
 
-//go:generate counterfeiter . AliasQueryEncoder
+//counterfeiter:generate . AliasQueryEncoder
 type AliasQueryEncoder interface {
 	EncodeAliasesIntoQueries([]record.Record, map[string][]AliasDefinition) map[string][]string
 }

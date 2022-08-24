@@ -1,5 +1,7 @@
 package handlers
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import (
 	"bosh-dns/dns/server/criteria"
 	"time"
@@ -11,14 +13,14 @@ import (
 
 const RegisterInterval = time.Millisecond * 250
 
-//go:generate counterfeiter . ServerMux
+//counterfeiter:generate . ServerMux
 
 type ServerMux interface {
 	Handle(pattern string, handler dns.Handler)
 	HandleRemove(pattern string)
 }
 
-//go:generate counterfeiter . DomainProvider
+//counterfeiter:generate . DomainProvider
 
 type DomainProvider interface {
 	Domains() []string

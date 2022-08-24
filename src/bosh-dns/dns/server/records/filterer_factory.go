@@ -10,12 +10,12 @@ import (
 	"code.cloudfoundry.org/clock"
 )
 
-//go:generate counterfeiter . Filterer
+//counterfeiter:generate . Filterer
 type Filterer interface {
 	Filter(crit criteria.MatchMaker, recs []record.Record) []record.Record
 }
 
-//go:generate counterfeiter . FiltererFactory
+//counterfeiter:generate . FiltererFactory
 type FiltererFactory interface {
 	NewHealthFilterer(healthChan chan record.Host, shouldTrack bool) Filterer
 	NewQueryFilterer() Filterer

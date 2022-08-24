@@ -18,13 +18,13 @@ type LocalDomain struct {
 	truncater ResponseTruncater
 }
 
-//go:generate counterfeiter . AnswerShuffler
+//counterfeiter:generate . AnswerShuffler
 
 type AnswerShuffler interface {
 	Shuffle(src []dns.RR) []dns.RR
 }
 
-//go:generate counterfeiter . RecordSet
+//counterfeiter:generate . RecordSet
 
 type RecordSet interface {
 	Resolve(domain string) ([]string, error)

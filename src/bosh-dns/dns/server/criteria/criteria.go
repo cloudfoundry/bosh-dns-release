@@ -1,5 +1,7 @@
 package criteria
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import (
 	"bosh-dns/dns/server/record"
 	"errors"
@@ -38,12 +40,12 @@ func (c Criteria) Matcher() Matcher {
 	return matcher
 }
 
-//go:generate counterfeiter . MatchMaker
+//counterfeiter:generate . MatchMaker
 type MatchMaker interface {
 	Matcher() Matcher
 }
 
-//go:generate counterfeiter . Matcher
+//counterfeiter:generate . Matcher
 type Matcher interface {
 	Match(r *record.Record) bool
 }

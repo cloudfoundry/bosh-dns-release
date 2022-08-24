@@ -1,10 +1,12 @@
 package internal
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import "github.com/miekg/dns"
 
-//go:generate counterfeiter net.Conn
+//counterfeiter:generate net.Conn
 
-//go:generate counterfeiter . responseWriter
+//counterfeiter:generate . responseWriter
 
 type responseWriter interface { //nolint:deadcode,unused
 	dns.ResponseWriter

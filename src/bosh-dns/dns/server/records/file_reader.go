@@ -18,7 +18,7 @@ import (
 
 const logTag string = "RecordsRepo"
 
-//go:generate counterfeiter . FileReader
+//counterfeiter:generate . FileReader
 
 type FileReader interface {
 	Get() ([]byte, error)

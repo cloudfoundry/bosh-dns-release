@@ -1,5 +1,7 @@
 package healthiness
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import (
 	"bosh-dns/healthcheck/api"
 	"encoding/json"
@@ -11,7 +13,7 @@ import (
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
-//go:generate counterfeiter . HTTPClientGetter
+//counterfeiter:generate . HTTPClientGetter
 
 type HTTPClientGetter interface {
 	Get(endpoint string) (*http.Response, error)

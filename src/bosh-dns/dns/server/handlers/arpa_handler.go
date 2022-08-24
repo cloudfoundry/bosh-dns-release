@@ -8,8 +8,8 @@ import (
 	"github.com/miekg/dns"
 )
 
-//go:generate counterfeiter . IPProvider
-//go:generate counterfeiter . DNSHandler
+//counterfeiter:generate . IPProvider
+//counterfeiter:generate . DNSHandler
 
 type DNSHandler interface {
 	dns.Handler

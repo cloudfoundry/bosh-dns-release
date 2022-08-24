@@ -22,7 +22,7 @@ type ForwardHandler struct {
 	truncater        dnsresolver.ResponseTruncater
 }
 
-//go:generate counterfeiter . Exchanger
+//counterfeiter:generate . Exchanger
 
 type Exchanger interface {
 	Exchange(*dns.Msg, string) (*dns.Msg, time.Duration, error)
