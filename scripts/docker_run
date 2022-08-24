@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_DIR="$( cd "$( dirname "${0}" )" && cd .. && pwd )"
+
+IMAGE="${IMAGE:-"bosh/bosh-dns-release:unit-tests"}"
+MOUNT_POINT="/tmp/$(basename "${REPO_DIR}")"
+COMMAND=( "${@:-"/bin/bash"}" )
+
+echo
+echo "Launching '${IMAGE}'"
+echo " mounting '${REPO_DIR}' at '${MOUNT_POINT}'"
+echo " running  '${COMMAND[*]}'"
+echo
+
+docker run \
+  --volume "${REPO_DIR}:${MOUNT_POINT}" \
+  --workdir "${MOUNT_POINT}" \
+  -it "${IMAGE}" \
+  "${COMMAND[@]}"
