@@ -9,8 +9,9 @@ import (
 type FakeUpcheck struct {
 	IsUpStub        func() error
 	isUpMutex       sync.RWMutex
-	isUpArgsForCall []struct{}
-	isUpReturns     struct {
+	isUpArgsForCall []struct {
+	}
+	isUpReturns struct {
 		result1 error
 	}
 	isUpReturnsOnCall map[int]struct {
@@ -23,16 +24,19 @@ type FakeUpcheck struct {
 func (fake *FakeUpcheck) IsUp() error {
 	fake.isUpMutex.Lock()
 	ret, specificReturn := fake.isUpReturnsOnCall[len(fake.isUpArgsForCall)]
-	fake.isUpArgsForCall = append(fake.isUpArgsForCall, struct{}{})
+	fake.isUpArgsForCall = append(fake.isUpArgsForCall, struct {
+	}{})
+	stub := fake.IsUpStub
+	fakeReturns := fake.isUpReturns
 	fake.recordInvocation("IsUp", []interface{}{})
 	fake.isUpMutex.Unlock()
-	if fake.IsUpStub != nil {
-		return fake.IsUpStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.isUpReturns.result1
+	return fakeReturns.result1
 }
 
 func (fake *FakeUpcheck) IsUpCallCount() int {
@@ -41,7 +45,15 @@ func (fake *FakeUpcheck) IsUpCallCount() int {
 	return len(fake.isUpArgsForCall)
 }
 
+func (fake *FakeUpcheck) IsUpCalls(stub func() error) {
+	fake.isUpMutex.Lock()
+	defer fake.isUpMutex.Unlock()
+	fake.IsUpStub = stub
+}
+
 func (fake *FakeUpcheck) IsUpReturns(result1 error) {
+	fake.isUpMutex.Lock()
+	defer fake.isUpMutex.Unlock()
 	fake.IsUpStub = nil
 	fake.isUpReturns = struct {
 		result1 error
@@ -49,6 +61,8 @@ func (fake *FakeUpcheck) IsUpReturns(result1 error) {
 }
 
 func (fake *FakeUpcheck) IsUpReturnsOnCall(i int, result1 error) {
+	fake.isUpMutex.Lock()
+	defer fake.isUpMutex.Unlock()
 	fake.IsUpStub = nil
 	if fake.isUpReturnsOnCall == nil {
 		fake.isUpReturnsOnCall = make(map[int]struct {
@@ -65,7 +79,11 @@ func (fake *FakeUpcheck) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.isUpMutex.RLock()
 	defer fake.isUpMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeUpcheck) recordInvocation(key string, args []interface{}) {

@@ -9,31 +9,32 @@ import (
 )
 
 type FakeServerMux struct {
-	HandleStub        func(pattern string, handler dns.Handler)
+	HandleStub        func(string, dns.Handler)
 	handleMutex       sync.RWMutex
 	handleArgsForCall []struct {
-		pattern string
-		handler dns.Handler
+		arg1 string
+		arg2 dns.Handler
 	}
-	HandleRemoveStub        func(pattern string)
+	HandleRemoveStub        func(string)
 	handleRemoveMutex       sync.RWMutex
 	handleRemoveArgsForCall []struct {
-		pattern string
+		arg1 string
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeServerMux) Handle(pattern string, handler dns.Handler) {
+func (fake *FakeServerMux) Handle(arg1 string, arg2 dns.Handler) {
 	fake.handleMutex.Lock()
 	fake.handleArgsForCall = append(fake.handleArgsForCall, struct {
-		pattern string
-		handler dns.Handler
-	}{pattern, handler})
-	fake.recordInvocation("Handle", []interface{}{pattern, handler})
+		arg1 string
+		arg2 dns.Handler
+	}{arg1, arg2})
+	stub := fake.HandleStub
+	fake.recordInvocation("Handle", []interface{}{arg1, arg2})
 	fake.handleMutex.Unlock()
-	if fake.HandleStub != nil {
-		fake.HandleStub(pattern, handler)
+	if stub != nil {
+		fake.HandleStub(arg1, arg2)
 	}
 }
 
@@ -43,21 +44,29 @@ func (fake *FakeServerMux) HandleCallCount() int {
 	return len(fake.handleArgsForCall)
 }
 
+func (fake *FakeServerMux) HandleCalls(stub func(string, dns.Handler)) {
+	fake.handleMutex.Lock()
+	defer fake.handleMutex.Unlock()
+	fake.HandleStub = stub
+}
+
 func (fake *FakeServerMux) HandleArgsForCall(i int) (string, dns.Handler) {
 	fake.handleMutex.RLock()
 	defer fake.handleMutex.RUnlock()
-	return fake.handleArgsForCall[i].pattern, fake.handleArgsForCall[i].handler
+	argsForCall := fake.handleArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeServerMux) HandleRemove(pattern string) {
+func (fake *FakeServerMux) HandleRemove(arg1 string) {
 	fake.handleRemoveMutex.Lock()
 	fake.handleRemoveArgsForCall = append(fake.handleRemoveArgsForCall, struct {
-		pattern string
-	}{pattern})
-	fake.recordInvocation("HandleRemove", []interface{}{pattern})
+		arg1 string
+	}{arg1})
+	stub := fake.HandleRemoveStub
+	fake.recordInvocation("HandleRemove", []interface{}{arg1})
 	fake.handleRemoveMutex.Unlock()
-	if fake.HandleRemoveStub != nil {
-		fake.HandleRemoveStub(pattern)
+	if stub != nil {
+		fake.HandleRemoveStub(arg1)
 	}
 }
 
@@ -67,10 +76,17 @@ func (fake *FakeServerMux) HandleRemoveCallCount() int {
 	return len(fake.handleRemoveArgsForCall)
 }
 
+func (fake *FakeServerMux) HandleRemoveCalls(stub func(string)) {
+	fake.handleRemoveMutex.Lock()
+	defer fake.handleRemoveMutex.Unlock()
+	fake.HandleRemoveStub = stub
+}
+
 func (fake *FakeServerMux) HandleRemoveArgsForCall(i int) string {
 	fake.handleRemoveMutex.RLock()
 	defer fake.handleRemoveMutex.RUnlock()
-	return fake.handleRemoveArgsForCall[i].pattern
+	argsForCall := fake.handleRemoveArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeServerMux) Invocations() map[string][][]interface{} {
@@ -80,7 +96,11 @@ func (fake *FakeServerMux) Invocations() map[string][][]interface{} {
 	defer fake.handleMutex.RUnlock()
 	fake.handleRemoveMutex.RLock()
 	defer fake.handleRemoveMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeServerMux) recordInvocation(key string, args []interface{}) {

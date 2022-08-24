@@ -28,15 +28,17 @@ func (fake *FakeRecursorPool) PerformStrategically(arg1 func(string) error) erro
 	fake.performStrategicallyArgsForCall = append(fake.performStrategicallyArgsForCall, struct {
 		arg1 func(string) error
 	}{arg1})
+	stub := fake.PerformStrategicallyStub
+	fakeReturns := fake.performStrategicallyReturns
 	fake.recordInvocation("PerformStrategically", []interface{}{arg1})
 	fake.performStrategicallyMutex.Unlock()
-	if fake.PerformStrategicallyStub != nil {
-		return fake.PerformStrategicallyStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.performStrategicallyReturns.result1
+	return fakeReturns.result1
 }
 
 func (fake *FakeRecursorPool) PerformStrategicallyCallCount() int {
@@ -45,13 +47,22 @@ func (fake *FakeRecursorPool) PerformStrategicallyCallCount() int {
 	return len(fake.performStrategicallyArgsForCall)
 }
 
+func (fake *FakeRecursorPool) PerformStrategicallyCalls(stub func(func(string) error) error) {
+	fake.performStrategicallyMutex.Lock()
+	defer fake.performStrategicallyMutex.Unlock()
+	fake.PerformStrategicallyStub = stub
+}
+
 func (fake *FakeRecursorPool) PerformStrategicallyArgsForCall(i int) func(string) error {
 	fake.performStrategicallyMutex.RLock()
 	defer fake.performStrategicallyMutex.RUnlock()
-	return fake.performStrategicallyArgsForCall[i].arg1
+	argsForCall := fake.performStrategicallyArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeRecursorPool) PerformStrategicallyReturns(result1 error) {
+	fake.performStrategicallyMutex.Lock()
+	defer fake.performStrategicallyMutex.Unlock()
 	fake.PerformStrategicallyStub = nil
 	fake.performStrategicallyReturns = struct {
 		result1 error
@@ -59,6 +70,8 @@ func (fake *FakeRecursorPool) PerformStrategicallyReturns(result1 error) {
 }
 
 func (fake *FakeRecursorPool) PerformStrategicallyReturnsOnCall(i int, result1 error) {
+	fake.performStrategicallyMutex.Lock()
+	defer fake.performStrategicallyMutex.Unlock()
 	fake.PerformStrategicallyStub = nil
 	if fake.performStrategicallyReturnsOnCall == nil {
 		fake.performStrategicallyReturnsOnCall = make(map[int]struct {
@@ -75,7 +88,11 @@ func (fake *FakeRecursorPool) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.performStrategicallyMutex.RLock()
 	defer fake.performStrategicallyMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeRecursorPool) recordInvocation(key string, args []interface{}) {

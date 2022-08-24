@@ -37,15 +37,16 @@ func (fake *FakeReducer) Filter(arg1 criteria.MatchMaker, arg2 []record.Record) 
 		arg1 criteria.MatchMaker
 		arg2 []record.Record
 	}{arg1, arg2Copy})
+	stub := fake.FilterStub
+	fakeReturns := fake.filterReturns
 	fake.recordInvocation("Filter", []interface{}{arg1, arg2Copy})
 	fake.filterMutex.Unlock()
-	if fake.FilterStub != nil {
-		return fake.FilterStub(arg1, arg2)
+	if stub != nil {
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.filterReturns
 	return fakeReturns.result1
 }
 

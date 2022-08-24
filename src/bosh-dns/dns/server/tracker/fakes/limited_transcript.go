@@ -6,6 +6,16 @@ import (
 )
 
 type LimitedTranscript struct {
+	RegistryStub        func() []string
+	registryMutex       sync.RWMutex
+	registryArgsForCall []struct {
+	}
+	registryReturns struct {
+		result1 []string
+	}
+	registryReturnsOnCall map[int]struct {
+		result1 []string
+	}
 	TouchStub        func(string) string
 	touchMutex       sync.RWMutex
 	touchArgsForCall []struct {
@@ -17,80 +27,26 @@ type LimitedTranscript struct {
 	touchReturnsOnCall map[int]struct {
 		result1 string
 	}
-	RegistryStub        func() []string
-	registryMutex       sync.RWMutex
-	registryArgsForCall []struct{}
-	registryReturns     struct {
-		result1 []string
-	}
-	registryReturnsOnCall map[int]struct {
-		result1 []string
-	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
-}
-
-func (fake *LimitedTranscript) Touch(arg1 string) string {
-	fake.touchMutex.Lock()
-	ret, specificReturn := fake.touchReturnsOnCall[len(fake.touchArgsForCall)]
-	fake.touchArgsForCall = append(fake.touchArgsForCall, struct {
-		arg1 string
-	}{arg1})
-	fake.recordInvocation("Touch", []interface{}{arg1})
-	fake.touchMutex.Unlock()
-	if fake.TouchStub != nil {
-		return fake.TouchStub(arg1)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.touchReturns.result1
-}
-
-func (fake *LimitedTranscript) TouchCallCount() int {
-	fake.touchMutex.RLock()
-	defer fake.touchMutex.RUnlock()
-	return len(fake.touchArgsForCall)
-}
-
-func (fake *LimitedTranscript) TouchArgsForCall(i int) string {
-	fake.touchMutex.RLock()
-	defer fake.touchMutex.RUnlock()
-	return fake.touchArgsForCall[i].arg1
-}
-
-func (fake *LimitedTranscript) TouchReturns(result1 string) {
-	fake.TouchStub = nil
-	fake.touchReturns = struct {
-		result1 string
-	}{result1}
-}
-
-func (fake *LimitedTranscript) TouchReturnsOnCall(i int, result1 string) {
-	fake.TouchStub = nil
-	if fake.touchReturnsOnCall == nil {
-		fake.touchReturnsOnCall = make(map[int]struct {
-			result1 string
-		})
-	}
-	fake.touchReturnsOnCall[i] = struct {
-		result1 string
-	}{result1}
 }
 
 func (fake *LimitedTranscript) Registry() []string {
 	fake.registryMutex.Lock()
 	ret, specificReturn := fake.registryReturnsOnCall[len(fake.registryArgsForCall)]
-	fake.registryArgsForCall = append(fake.registryArgsForCall, struct{}{})
+	fake.registryArgsForCall = append(fake.registryArgsForCall, struct {
+	}{})
+	stub := fake.RegistryStub
+	fakeReturns := fake.registryReturns
 	fake.recordInvocation("Registry", []interface{}{})
 	fake.registryMutex.Unlock()
-	if fake.RegistryStub != nil {
-		return fake.RegistryStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.registryReturns.result1
+	return fakeReturns.result1
 }
 
 func (fake *LimitedTranscript) RegistryCallCount() int {
@@ -99,7 +55,15 @@ func (fake *LimitedTranscript) RegistryCallCount() int {
 	return len(fake.registryArgsForCall)
 }
 
+func (fake *LimitedTranscript) RegistryCalls(stub func() []string) {
+	fake.registryMutex.Lock()
+	defer fake.registryMutex.Unlock()
+	fake.RegistryStub = stub
+}
+
 func (fake *LimitedTranscript) RegistryReturns(result1 []string) {
+	fake.registryMutex.Lock()
+	defer fake.registryMutex.Unlock()
 	fake.RegistryStub = nil
 	fake.registryReturns = struct {
 		result1 []string
@@ -107,6 +71,8 @@ func (fake *LimitedTranscript) RegistryReturns(result1 []string) {
 }
 
 func (fake *LimitedTranscript) RegistryReturnsOnCall(i int, result1 []string) {
+	fake.registryMutex.Lock()
+	defer fake.registryMutex.Unlock()
 	fake.RegistryStub = nil
 	if fake.registryReturnsOnCall == nil {
 		fake.registryReturnsOnCall = make(map[int]struct {
@@ -118,13 +84,74 @@ func (fake *LimitedTranscript) RegistryReturnsOnCall(i int, result1 []string) {
 	}{result1}
 }
 
+func (fake *LimitedTranscript) Touch(arg1 string) string {
+	fake.touchMutex.Lock()
+	ret, specificReturn := fake.touchReturnsOnCall[len(fake.touchArgsForCall)]
+	fake.touchArgsForCall = append(fake.touchArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	stub := fake.TouchStub
+	fakeReturns := fake.touchReturns
+	fake.recordInvocation("Touch", []interface{}{arg1})
+	fake.touchMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *LimitedTranscript) TouchCallCount() int {
+	fake.touchMutex.RLock()
+	defer fake.touchMutex.RUnlock()
+	return len(fake.touchArgsForCall)
+}
+
+func (fake *LimitedTranscript) TouchCalls(stub func(string) string) {
+	fake.touchMutex.Lock()
+	defer fake.touchMutex.Unlock()
+	fake.TouchStub = stub
+}
+
+func (fake *LimitedTranscript) TouchArgsForCall(i int) string {
+	fake.touchMutex.RLock()
+	defer fake.touchMutex.RUnlock()
+	argsForCall := fake.touchArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *LimitedTranscript) TouchReturns(result1 string) {
+	fake.touchMutex.Lock()
+	defer fake.touchMutex.Unlock()
+	fake.TouchStub = nil
+	fake.touchReturns = struct {
+		result1 string
+	}{result1}
+}
+
+func (fake *LimitedTranscript) TouchReturnsOnCall(i int, result1 string) {
+	fake.touchMutex.Lock()
+	defer fake.touchMutex.Unlock()
+	fake.TouchStub = nil
+	if fake.touchReturnsOnCall == nil {
+		fake.touchReturnsOnCall = make(map[int]struct {
+			result1 string
+		})
+	}
+	fake.touchReturnsOnCall[i] = struct {
+		result1 string
+	}{result1}
+}
+
 func (fake *LimitedTranscript) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.touchMutex.RLock()
-	defer fake.touchMutex.RUnlock()
 	fake.registryMutex.RLock()
 	defer fake.registryMutex.RUnlock()
+	fake.touchMutex.RLock()
+	defer fake.touchMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

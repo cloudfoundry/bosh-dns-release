@@ -6,29 +6,30 @@ import (
 )
 
 type Healther struct {
-	TrackStub        func(ip string)
+	TrackStub        func(string)
 	trackMutex       sync.RWMutex
 	trackArgsForCall []struct {
-		ip string
+		arg1 string
 	}
-	UntrackStub        func(ip string)
+	UntrackStub        func(string)
 	untrackMutex       sync.RWMutex
 	untrackArgsForCall []struct {
-		ip string
+		arg1 string
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *Healther) Track(ip string) {
+func (fake *Healther) Track(arg1 string) {
 	fake.trackMutex.Lock()
 	fake.trackArgsForCall = append(fake.trackArgsForCall, struct {
-		ip string
-	}{ip})
-	fake.recordInvocation("Track", []interface{}{ip})
+		arg1 string
+	}{arg1})
+	stub := fake.TrackStub
+	fake.recordInvocation("Track", []interface{}{arg1})
 	fake.trackMutex.Unlock()
-	if fake.TrackStub != nil {
-		fake.TrackStub(ip)
+	if stub != nil {
+		fake.TrackStub(arg1)
 	}
 }
 
@@ -38,21 +39,29 @@ func (fake *Healther) TrackCallCount() int {
 	return len(fake.trackArgsForCall)
 }
 
+func (fake *Healther) TrackCalls(stub func(string)) {
+	fake.trackMutex.Lock()
+	defer fake.trackMutex.Unlock()
+	fake.TrackStub = stub
+}
+
 func (fake *Healther) TrackArgsForCall(i int) string {
 	fake.trackMutex.RLock()
 	defer fake.trackMutex.RUnlock()
-	return fake.trackArgsForCall[i].ip
+	argsForCall := fake.trackArgsForCall[i]
+	return argsForCall.arg1
 }
 
-func (fake *Healther) Untrack(ip string) {
+func (fake *Healther) Untrack(arg1 string) {
 	fake.untrackMutex.Lock()
 	fake.untrackArgsForCall = append(fake.untrackArgsForCall, struct {
-		ip string
-	}{ip})
-	fake.recordInvocation("Untrack", []interface{}{ip})
+		arg1 string
+	}{arg1})
+	stub := fake.UntrackStub
+	fake.recordInvocation("Untrack", []interface{}{arg1})
 	fake.untrackMutex.Unlock()
-	if fake.UntrackStub != nil {
-		fake.UntrackStub(ip)
+	if stub != nil {
+		fake.UntrackStub(arg1)
 	}
 }
 
@@ -62,10 +71,17 @@ func (fake *Healther) UntrackCallCount() int {
 	return len(fake.untrackArgsForCall)
 }
 
+func (fake *Healther) UntrackCalls(stub func(string)) {
+	fake.untrackMutex.Lock()
+	defer fake.untrackMutex.Unlock()
+	fake.UntrackStub = stub
+}
+
 func (fake *Healther) UntrackArgsForCall(i int) string {
 	fake.untrackMutex.RLock()
 	defer fake.untrackMutex.RUnlock()
-	return fake.untrackArgsForCall[i].ip
+	argsForCall := fake.untrackArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *Healther) Invocations() map[string][][]interface{} {

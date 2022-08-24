@@ -8,10 +8,10 @@ import (
 )
 
 type FakeMatcher struct {
-	MatchStub        func(r *record.Record) bool
+	MatchStub        func(*record.Record) bool
 	matchMutex       sync.RWMutex
 	matchArgsForCall []struct {
-		r *record.Record
+		arg1 *record.Record
 	}
 	matchReturns struct {
 		result1 bool
@@ -23,21 +23,23 @@ type FakeMatcher struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeMatcher) Match(r *record.Record) bool {
+func (fake *FakeMatcher) Match(arg1 *record.Record) bool {
 	fake.matchMutex.Lock()
 	ret, specificReturn := fake.matchReturnsOnCall[len(fake.matchArgsForCall)]
 	fake.matchArgsForCall = append(fake.matchArgsForCall, struct {
-		r *record.Record
-	}{r})
-	fake.recordInvocation("Match", []interface{}{r})
+		arg1 *record.Record
+	}{arg1})
+	stub := fake.MatchStub
+	fakeReturns := fake.matchReturns
+	fake.recordInvocation("Match", []interface{}{arg1})
 	fake.matchMutex.Unlock()
-	if fake.MatchStub != nil {
-		return fake.MatchStub(r)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.matchReturns.result1
+	return fakeReturns.result1
 }
 
 func (fake *FakeMatcher) MatchCallCount() int {
@@ -46,13 +48,22 @@ func (fake *FakeMatcher) MatchCallCount() int {
 	return len(fake.matchArgsForCall)
 }
 
+func (fake *FakeMatcher) MatchCalls(stub func(*record.Record) bool) {
+	fake.matchMutex.Lock()
+	defer fake.matchMutex.Unlock()
+	fake.MatchStub = stub
+}
+
 func (fake *FakeMatcher) MatchArgsForCall(i int) *record.Record {
 	fake.matchMutex.RLock()
 	defer fake.matchMutex.RUnlock()
-	return fake.matchArgsForCall[i].r
+	argsForCall := fake.matchArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeMatcher) MatchReturns(result1 bool) {
+	fake.matchMutex.Lock()
+	defer fake.matchMutex.Unlock()
 	fake.MatchStub = nil
 	fake.matchReturns = struct {
 		result1 bool
@@ -60,6 +71,8 @@ func (fake *FakeMatcher) MatchReturns(result1 bool) {
 }
 
 func (fake *FakeMatcher) MatchReturnsOnCall(i int, result1 bool) {
+	fake.matchMutex.Lock()
+	defer fake.matchMutex.Unlock()
 	fake.MatchStub = nil
 	if fake.matchReturnsOnCall == nil {
 		fake.matchReturnsOnCall = make(map[int]struct {

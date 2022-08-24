@@ -9,26 +9,27 @@ import (
 )
 
 type FakeDNSHandler struct {
-	ServeDNSStub        func(w dns.ResponseWriter, r *dns.Msg)
+	ServeDNSStub        func(dns.ResponseWriter, *dns.Msg)
 	serveDNSMutex       sync.RWMutex
 	serveDNSArgsForCall []struct {
-		w dns.ResponseWriter
-		r *dns.Msg
+		arg1 dns.ResponseWriter
+		arg2 *dns.Msg
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeDNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+func (fake *FakeDNSHandler) ServeDNS(arg1 dns.ResponseWriter, arg2 *dns.Msg) {
 	fake.serveDNSMutex.Lock()
 	fake.serveDNSArgsForCall = append(fake.serveDNSArgsForCall, struct {
-		w dns.ResponseWriter
-		r *dns.Msg
-	}{w, r})
-	fake.recordInvocation("ServeDNS", []interface{}{w, r})
+		arg1 dns.ResponseWriter
+		arg2 *dns.Msg
+	}{arg1, arg2})
+	stub := fake.ServeDNSStub
+	fake.recordInvocation("ServeDNS", []interface{}{arg1, arg2})
 	fake.serveDNSMutex.Unlock()
-	if fake.ServeDNSStub != nil {
-		fake.ServeDNSStub(w, r)
+	if stub != nil {
+		fake.ServeDNSStub(arg1, arg2)
 	}
 }
 
@@ -38,10 +39,17 @@ func (fake *FakeDNSHandler) ServeDNSCallCount() int {
 	return len(fake.serveDNSArgsForCall)
 }
 
+func (fake *FakeDNSHandler) ServeDNSCalls(stub func(dns.ResponseWriter, *dns.Msg)) {
+	fake.serveDNSMutex.Lock()
+	defer fake.serveDNSMutex.Unlock()
+	fake.ServeDNSStub = stub
+}
+
 func (fake *FakeDNSHandler) ServeDNSArgsForCall(i int) (dns.ResponseWriter, *dns.Msg) {
 	fake.serveDNSMutex.RLock()
 	defer fake.serveDNSMutex.RUnlock()
-	return fake.serveDNSArgsForCall[i].w, fake.serveDNSArgsForCall[i].r
+	argsForCall := fake.serveDNSArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeDNSHandler) Invocations() map[string][][]interface{} {
@@ -49,7 +57,11 @@ func (fake *FakeDNSHandler) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.serveDNSMutex.RLock()
 	defer fake.serveDNSMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeDNSHandler) recordInvocation(key string, args []interface{}) {

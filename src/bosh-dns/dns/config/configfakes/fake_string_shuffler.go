@@ -7,10 +7,10 @@ import (
 )
 
 type FakeStringShuffler struct {
-	ShuffleStub        func(src []string) []string
+	ShuffleStub        func([]string) []string
 	shuffleMutex       sync.RWMutex
 	shuffleArgsForCall []struct {
-		src []string
+		arg1 []string
 	}
 	shuffleReturns struct {
 		result1 []string
@@ -22,26 +22,28 @@ type FakeStringShuffler struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeStringShuffler) Shuffle(src []string) []string {
-	var srcCopy []string
-	if src != nil {
-		srcCopy = make([]string, len(src))
-		copy(srcCopy, src)
+func (fake *FakeStringShuffler) Shuffle(arg1 []string) []string {
+	var arg1Copy []string
+	if arg1 != nil {
+		arg1Copy = make([]string, len(arg1))
+		copy(arg1Copy, arg1)
 	}
 	fake.shuffleMutex.Lock()
 	ret, specificReturn := fake.shuffleReturnsOnCall[len(fake.shuffleArgsForCall)]
 	fake.shuffleArgsForCall = append(fake.shuffleArgsForCall, struct {
-		src []string
-	}{srcCopy})
-	fake.recordInvocation("Shuffle", []interface{}{srcCopy})
+		arg1 []string
+	}{arg1Copy})
+	stub := fake.ShuffleStub
+	fakeReturns := fake.shuffleReturns
+	fake.recordInvocation("Shuffle", []interface{}{arg1Copy})
 	fake.shuffleMutex.Unlock()
-	if fake.ShuffleStub != nil {
-		return fake.ShuffleStub(src)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.shuffleReturns.result1
+	return fakeReturns.result1
 }
 
 func (fake *FakeStringShuffler) ShuffleCallCount() int {
@@ -50,13 +52,22 @@ func (fake *FakeStringShuffler) ShuffleCallCount() int {
 	return len(fake.shuffleArgsForCall)
 }
 
+func (fake *FakeStringShuffler) ShuffleCalls(stub func([]string) []string) {
+	fake.shuffleMutex.Lock()
+	defer fake.shuffleMutex.Unlock()
+	fake.ShuffleStub = stub
+}
+
 func (fake *FakeStringShuffler) ShuffleArgsForCall(i int) []string {
 	fake.shuffleMutex.RLock()
 	defer fake.shuffleMutex.RUnlock()
-	return fake.shuffleArgsForCall[i].src
+	argsForCall := fake.shuffleArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeStringShuffler) ShuffleReturns(result1 []string) {
+	fake.shuffleMutex.Lock()
+	defer fake.shuffleMutex.Unlock()
 	fake.ShuffleStub = nil
 	fake.shuffleReturns = struct {
 		result1 []string
@@ -64,6 +75,8 @@ func (fake *FakeStringShuffler) ShuffleReturns(result1 []string) {
 }
 
 func (fake *FakeStringShuffler) ShuffleReturnsOnCall(i int, result1 []string) {
+	fake.shuffleMutex.Lock()
+	defer fake.shuffleMutex.Unlock()
 	fake.ShuffleStub = nil
 	if fake.shuffleReturnsOnCall == nil {
 		fake.shuffleReturnsOnCall = make(map[int]struct {
@@ -80,7 +93,11 @@ func (fake *FakeStringShuffler) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.shuffleMutex.RLock()
 	defer fake.shuffleMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeStringShuffler) recordInvocation(key string, args []interface{}) {

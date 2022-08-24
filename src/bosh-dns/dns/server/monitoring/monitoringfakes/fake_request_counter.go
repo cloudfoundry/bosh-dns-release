@@ -23,9 +23,10 @@ func (fake *FakeRequestCounter) IncrementExternalCounter() {
 	fake.incrementExternalCounterMutex.Lock()
 	fake.incrementExternalCounterArgsForCall = append(fake.incrementExternalCounterArgsForCall, struct {
 	}{})
+	stub := fake.IncrementExternalCounterStub
 	fake.recordInvocation("IncrementExternalCounter", []interface{}{})
 	fake.incrementExternalCounterMutex.Unlock()
-	if fake.IncrementExternalCounterStub != nil {
+	if stub != nil {
 		fake.IncrementExternalCounterStub()
 	}
 }
@@ -46,9 +47,10 @@ func (fake *FakeRequestCounter) IncrementInternalCounter() {
 	fake.incrementInternalCounterMutex.Lock()
 	fake.incrementInternalCounterArgsForCall = append(fake.incrementInternalCounterArgsForCall, struct {
 	}{})
+	stub := fake.IncrementInternalCounterStub
 	fake.recordInvocation("IncrementInternalCounter", []interface{}{})
 	fake.incrementInternalCounterMutex.Unlock()
-	if fake.IncrementInternalCounterStub != nil {
+	if stub != nil {
 		fake.IncrementInternalCounterStub()
 	}
 }

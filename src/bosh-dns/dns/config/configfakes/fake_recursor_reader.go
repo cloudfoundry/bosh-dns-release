@@ -9,8 +9,9 @@ import (
 type FakeRecursorReader struct {
 	GetStub        func() ([]string, error)
 	getMutex       sync.RWMutex
-	getArgsForCall []struct{}
-	getReturns     struct {
+	getArgsForCall []struct {
+	}
+	getReturns struct {
 		result1 []string
 		result2 error
 	}
@@ -25,16 +26,19 @@ type FakeRecursorReader struct {
 func (fake *FakeRecursorReader) Get() ([]string, error) {
 	fake.getMutex.Lock()
 	ret, specificReturn := fake.getReturnsOnCall[len(fake.getArgsForCall)]
-	fake.getArgsForCall = append(fake.getArgsForCall, struct{}{})
+	fake.getArgsForCall = append(fake.getArgsForCall, struct {
+	}{})
+	stub := fake.GetStub
+	fakeReturns := fake.getReturns
 	fake.recordInvocation("Get", []interface{}{})
 	fake.getMutex.Unlock()
-	if fake.GetStub != nil {
-		return fake.GetStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.getReturns.result1, fake.getReturns.result2
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeRecursorReader) GetCallCount() int {
@@ -43,7 +47,15 @@ func (fake *FakeRecursorReader) GetCallCount() int {
 	return len(fake.getArgsForCall)
 }
 
+func (fake *FakeRecursorReader) GetCalls(stub func() ([]string, error)) {
+	fake.getMutex.Lock()
+	defer fake.getMutex.Unlock()
+	fake.GetStub = stub
+}
+
 func (fake *FakeRecursorReader) GetReturns(result1 []string, result2 error) {
+	fake.getMutex.Lock()
+	defer fake.getMutex.Unlock()
 	fake.GetStub = nil
 	fake.getReturns = struct {
 		result1 []string
@@ -52,6 +64,8 @@ func (fake *FakeRecursorReader) GetReturns(result1 []string, result2 error) {
 }
 
 func (fake *FakeRecursorReader) GetReturnsOnCall(i int, result1 []string, result2 error) {
+	fake.getMutex.Lock()
+	defer fake.getMutex.Unlock()
 	fake.GetStub = nil
 	if fake.getReturnsOnCall == nil {
 		fake.getReturnsOnCall = make(map[int]struct {
@@ -70,7 +84,11 @@ func (fake *FakeRecursorReader) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.getMutex.RLock()
 	defer fake.getMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeRecursorReader) recordInvocation(key string, args []interface{}) {

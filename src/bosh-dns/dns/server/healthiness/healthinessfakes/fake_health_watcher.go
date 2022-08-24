@@ -66,15 +66,16 @@ func (fake *FakeHealthWatcher) HealthState(arg1 string) api.HealthResult {
 	fake.healthStateArgsForCall = append(fake.healthStateArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.HealthStateStub
+	fakeReturns := fake.healthStateReturns
 	fake.recordInvocation("HealthState", []interface{}{arg1})
 	fake.healthStateMutex.Unlock()
-	if fake.HealthStateStub != nil {
-		return fake.HealthStateStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.healthStateReturns
 	return fakeReturns.result1
 }
 
@@ -126,15 +127,16 @@ func (fake *FakeHealthWatcher) HealthStateString(arg1 string) string {
 	fake.healthStateStringArgsForCall = append(fake.healthStateStringArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.HealthStateStringStub
+	fakeReturns := fake.healthStateStringReturns
 	fake.recordInvocation("HealthStateString", []interface{}{arg1})
 	fake.healthStateStringMutex.Unlock()
-	if fake.HealthStateStringStub != nil {
-		return fake.HealthStateStringStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.healthStateStringReturns
 	return fakeReturns.result1
 }
 
@@ -185,9 +187,10 @@ func (fake *FakeHealthWatcher) Run(arg1 <-chan struct{}) {
 	fake.runArgsForCall = append(fake.runArgsForCall, struct {
 		arg1 <-chan struct{}
 	}{arg1})
+	stub := fake.RunStub
 	fake.recordInvocation("Run", []interface{}{arg1})
 	fake.runMutex.Unlock()
-	if fake.RunStub != nil {
+	if stub != nil {
 		fake.RunStub(arg1)
 	}
 }
@@ -217,15 +220,16 @@ func (fake *FakeHealthWatcher) RunCheck(arg1 string) api.HealthResult {
 	fake.runCheckArgsForCall = append(fake.runCheckArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.RunCheckStub
+	fakeReturns := fake.runCheckReturns
 	fake.recordInvocation("RunCheck", []interface{}{arg1})
 	fake.runCheckMutex.Unlock()
-	if fake.RunCheckStub != nil {
-		return fake.RunCheckStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.runCheckReturns
 	return fakeReturns.result1
 }
 
@@ -276,9 +280,10 @@ func (fake *FakeHealthWatcher) Track(arg1 string) {
 	fake.trackArgsForCall = append(fake.trackArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.TrackStub
 	fake.recordInvocation("Track", []interface{}{arg1})
 	fake.trackMutex.Unlock()
-	if fake.TrackStub != nil {
+	if stub != nil {
 		fake.TrackStub(arg1)
 	}
 }
@@ -307,9 +312,10 @@ func (fake *FakeHealthWatcher) Untrack(arg1 string) {
 	fake.untrackArgsForCall = append(fake.untrackArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.UntrackStub
 	fake.recordInvocation("Untrack", []interface{}{arg1})
 	fake.untrackMutex.Unlock()
-	if fake.UntrackStub != nil {
+	if stub != nil {
 		fake.UntrackStub(arg1)
 	}
 }

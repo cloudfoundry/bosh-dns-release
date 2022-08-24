@@ -37,15 +37,16 @@ func (fake *FakeMetricsReporter) Report(arg1 context.Context, arg2 dns.ResponseW
 		arg2 dns.ResponseWriter
 		arg3 *dns.Msg
 	}{arg1, arg2, arg3})
+	stub := fake.ReportStub
+	fakeReturns := fake.reportReturns
 	fake.recordInvocation("Report", []interface{}{arg1, arg2, arg3})
 	fake.reportMutex.Unlock()
-	if fake.ReportStub != nil {
-		return fake.ReportStub(arg1, arg2, arg3)
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.reportReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 

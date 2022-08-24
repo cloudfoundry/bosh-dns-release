@@ -30,15 +30,17 @@ func (fake *FakeNamedConfigLoader) Load(arg1 string) (addresses.AddressConfigs, 
 	fake.loadArgsForCall = append(fake.loadArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.LoadStub
+	fakeReturns := fake.loadReturns
 	fake.recordInvocation("Load", []interface{}{arg1})
 	fake.loadMutex.Unlock()
-	if fake.LoadStub != nil {
-		return fake.LoadStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.loadReturns.result1, fake.loadReturns.result2
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeNamedConfigLoader) LoadCallCount() int {
@@ -47,13 +49,22 @@ func (fake *FakeNamedConfigLoader) LoadCallCount() int {
 	return len(fake.loadArgsForCall)
 }
 
+func (fake *FakeNamedConfigLoader) LoadCalls(stub func(string) (addresses.AddressConfigs, error)) {
+	fake.loadMutex.Lock()
+	defer fake.loadMutex.Unlock()
+	fake.LoadStub = stub
+}
+
 func (fake *FakeNamedConfigLoader) LoadArgsForCall(i int) string {
 	fake.loadMutex.RLock()
 	defer fake.loadMutex.RUnlock()
-	return fake.loadArgsForCall[i].arg1
+	argsForCall := fake.loadArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeNamedConfigLoader) LoadReturns(result1 addresses.AddressConfigs, result2 error) {
+	fake.loadMutex.Lock()
+	defer fake.loadMutex.Unlock()
 	fake.LoadStub = nil
 	fake.loadReturns = struct {
 		result1 addresses.AddressConfigs
@@ -62,6 +73,8 @@ func (fake *FakeNamedConfigLoader) LoadReturns(result1 addresses.AddressConfigs,
 }
 
 func (fake *FakeNamedConfigLoader) LoadReturnsOnCall(i int, result1 addresses.AddressConfigs, result2 error) {
+	fake.loadMutex.Lock()
+	defer fake.loadMutex.Unlock()
 	fake.LoadStub = nil
 	if fake.loadReturnsOnCall == nil {
 		fake.loadReturnsOnCall = make(map[int]struct {
@@ -80,7 +93,11 @@ func (fake *FakeNamedConfigLoader) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.loadMutex.RLock()
 	defer fake.loadMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeNamedConfigLoader) recordInvocation(key string, args []interface{}) {

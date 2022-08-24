@@ -9,8 +9,9 @@ import (
 type FakeDomainProvider struct {
 	DomainsStub        func() []string
 	domainsMutex       sync.RWMutex
-	domainsArgsForCall []struct{}
-	domainsReturns     struct {
+	domainsArgsForCall []struct {
+	}
+	domainsReturns struct {
 		result1 []string
 	}
 	domainsReturnsOnCall map[int]struct {
@@ -23,16 +24,19 @@ type FakeDomainProvider struct {
 func (fake *FakeDomainProvider) Domains() []string {
 	fake.domainsMutex.Lock()
 	ret, specificReturn := fake.domainsReturnsOnCall[len(fake.domainsArgsForCall)]
-	fake.domainsArgsForCall = append(fake.domainsArgsForCall, struct{}{})
+	fake.domainsArgsForCall = append(fake.domainsArgsForCall, struct {
+	}{})
+	stub := fake.DomainsStub
+	fakeReturns := fake.domainsReturns
 	fake.recordInvocation("Domains", []interface{}{})
 	fake.domainsMutex.Unlock()
-	if fake.DomainsStub != nil {
-		return fake.DomainsStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.domainsReturns.result1
+	return fakeReturns.result1
 }
 
 func (fake *FakeDomainProvider) DomainsCallCount() int {
@@ -41,7 +45,15 @@ func (fake *FakeDomainProvider) DomainsCallCount() int {
 	return len(fake.domainsArgsForCall)
 }
 
+func (fake *FakeDomainProvider) DomainsCalls(stub func() []string) {
+	fake.domainsMutex.Lock()
+	defer fake.domainsMutex.Unlock()
+	fake.DomainsStub = stub
+}
+
 func (fake *FakeDomainProvider) DomainsReturns(result1 []string) {
+	fake.domainsMutex.Lock()
+	defer fake.domainsMutex.Unlock()
 	fake.DomainsStub = nil
 	fake.domainsReturns = struct {
 		result1 []string
@@ -49,6 +61,8 @@ func (fake *FakeDomainProvider) DomainsReturns(result1 []string) {
 }
 
 func (fake *FakeDomainProvider) DomainsReturnsOnCall(i int, result1 []string) {
+	fake.domainsMutex.Lock()
+	defer fake.domainsMutex.Unlock()
 	fake.DomainsStub = nil
 	if fake.domainsReturnsOnCall == nil {
 		fake.domainsReturnsOnCall = make(map[int]struct {
@@ -65,7 +79,11 @@ func (fake *FakeDomainProvider) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.domainsMutex.RLock()
 	defer fake.domainsMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeDomainProvider) recordInvocation(key string, args []interface{}) {

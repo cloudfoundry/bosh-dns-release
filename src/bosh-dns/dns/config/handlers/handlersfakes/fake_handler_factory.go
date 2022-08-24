@@ -49,15 +49,16 @@ func (fake *FakeHandlerFactory) CreateForwardHandler(arg1 []string, arg2 bool) d
 		arg1 []string
 		arg2 bool
 	}{arg1Copy, arg2})
+	stub := fake.CreateForwardHandlerStub
+	fakeReturns := fake.createForwardHandlerReturns
 	fake.recordInvocation("CreateForwardHandler", []interface{}{arg1Copy, arg2})
 	fake.createForwardHandlerMutex.Unlock()
-	if fake.CreateForwardHandlerStub != nil {
-		return fake.CreateForwardHandlerStub(arg1, arg2)
+	if stub != nil {
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.createForwardHandlerReturns
 	return fakeReturns.result1
 }
 
@@ -110,15 +111,16 @@ func (fake *FakeHandlerFactory) CreateHTTPJSONHandler(arg1 string, arg2 bool) dn
 		arg1 string
 		arg2 bool
 	}{arg1, arg2})
+	stub := fake.CreateHTTPJSONHandlerStub
+	fakeReturns := fake.createHTTPJSONHandlerReturns
 	fake.recordInvocation("CreateHTTPJSONHandler", []interface{}{arg1, arg2})
 	fake.createHTTPJSONHandlerMutex.Unlock()
-	if fake.CreateHTTPJSONHandlerStub != nil {
-		return fake.CreateHTTPJSONHandlerStub(arg1, arg2)
+	if stub != nil {
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.createHTTPJSONHandlerReturns
 	return fakeReturns.result1
 }
 

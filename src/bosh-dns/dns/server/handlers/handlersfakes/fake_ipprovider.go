@@ -39,15 +39,16 @@ func (fake *FakeIPProvider) GetFQDNs(arg1 string) []string {
 	fake.getFQDNsArgsForCall = append(fake.getFQDNsArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.GetFQDNsStub
+	fakeReturns := fake.getFQDNsReturns
 	fake.recordInvocation("GetFQDNs", []interface{}{arg1})
 	fake.getFQDNsMutex.Unlock()
-	if fake.GetFQDNsStub != nil {
-		return fake.GetFQDNsStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.getFQDNsReturns
 	return fakeReturns.result1
 }
 
@@ -99,15 +100,16 @@ func (fake *FakeIPProvider) HasIP(arg1 string) bool {
 	fake.hasIPArgsForCall = append(fake.hasIPArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.HasIPStub
+	fakeReturns := fake.hasIPReturns
 	fake.recordInvocation("HasIP", []interface{}{arg1})
 	fake.hasIPMutex.Unlock()
-	if fake.HasIPStub != nil {
-		return fake.HasIPStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.hasIPReturns
 	return fakeReturns.result1
 }
 

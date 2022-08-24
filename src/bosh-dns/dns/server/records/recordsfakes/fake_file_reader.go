@@ -38,15 +38,16 @@ func (fake *FakeFileReader) Get() ([]byte, error) {
 	ret, specificReturn := fake.getReturnsOnCall[len(fake.getArgsForCall)]
 	fake.getArgsForCall = append(fake.getArgsForCall, struct {
 	}{})
+	stub := fake.GetStub
+	fakeReturns := fake.getReturns
 	fake.recordInvocation("Get", []interface{}{})
 	fake.getMutex.Unlock()
-	if fake.GetStub != nil {
-		return fake.GetStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.getReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 
@@ -93,15 +94,16 @@ func (fake *FakeFileReader) Subscribe() <-chan bool {
 	ret, specificReturn := fake.subscribeReturnsOnCall[len(fake.subscribeArgsForCall)]
 	fake.subscribeArgsForCall = append(fake.subscribeArgsForCall, struct {
 	}{})
+	stub := fake.SubscribeStub
+	fakeReturns := fake.subscribeReturns
 	fake.recordInvocation("Subscribe", []interface{}{})
 	fake.subscribeMutex.Unlock()
-	if fake.SubscribeStub != nil {
-		return fake.SubscribeStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.subscribeReturns
 	return fakeReturns.result1
 }
 

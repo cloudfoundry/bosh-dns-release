@@ -28,15 +28,16 @@ func (fake *FakeHealthStateGetter) HealthStateString(arg1 string) string {
 	fake.healthStateStringArgsForCall = append(fake.healthStateStringArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.HealthStateStringStub
+	fakeReturns := fake.healthStateStringReturns
 	fake.recordInvocation("HealthStateString", []interface{}{arg1})
 	fake.healthStateStringMutex.Unlock()
-	if fake.HealthStateStringStub != nil {
-		return fake.HealthStateStringStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.healthStateStringReturns
 	return fakeReturns.result1
 }
 

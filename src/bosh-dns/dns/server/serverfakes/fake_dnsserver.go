@@ -38,15 +38,16 @@ func (fake *FakeDNSServer) ListenAndServe() error {
 	ret, specificReturn := fake.listenAndServeReturnsOnCall[len(fake.listenAndServeArgsForCall)]
 	fake.listenAndServeArgsForCall = append(fake.listenAndServeArgsForCall, struct {
 	}{})
+	stub := fake.ListenAndServeStub
+	fakeReturns := fake.listenAndServeReturns
 	fake.recordInvocation("ListenAndServe", []interface{}{})
 	fake.listenAndServeMutex.Unlock()
-	if fake.ListenAndServeStub != nil {
-		return fake.ListenAndServeStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.listenAndServeReturns
 	return fakeReturns.result1
 }
 
@@ -91,15 +92,16 @@ func (fake *FakeDNSServer) ShutdownContext(arg1 context.Context) error {
 	fake.shutdownContextArgsForCall = append(fake.shutdownContextArgsForCall, struct {
 		arg1 context.Context
 	}{arg1})
+	stub := fake.ShutdownContextStub
+	fakeReturns := fake.shutdownContextReturns
 	fake.recordInvocation("ShutdownContext", []interface{}{arg1})
 	fake.shutdownContextMutex.Unlock()
-	if fake.ShutdownContextStub != nil {
-		return fake.ShutdownContextStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.shutdownContextReturns
 	return fakeReturns.result1
 }
 

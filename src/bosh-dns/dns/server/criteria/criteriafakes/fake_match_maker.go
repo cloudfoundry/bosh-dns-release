@@ -9,8 +9,9 @@ import (
 type FakeMatchMaker struct {
 	MatcherStub        func() criteria.Matcher
 	matcherMutex       sync.RWMutex
-	matcherArgsForCall []struct{}
-	matcherReturns     struct {
+	matcherArgsForCall []struct {
+	}
+	matcherReturns struct {
 		result1 criteria.Matcher
 	}
 	matcherReturnsOnCall map[int]struct {
@@ -23,16 +24,19 @@ type FakeMatchMaker struct {
 func (fake *FakeMatchMaker) Matcher() criteria.Matcher {
 	fake.matcherMutex.Lock()
 	ret, specificReturn := fake.matcherReturnsOnCall[len(fake.matcherArgsForCall)]
-	fake.matcherArgsForCall = append(fake.matcherArgsForCall, struct{}{})
+	fake.matcherArgsForCall = append(fake.matcherArgsForCall, struct {
+	}{})
+	stub := fake.MatcherStub
+	fakeReturns := fake.matcherReturns
 	fake.recordInvocation("Matcher", []interface{}{})
 	fake.matcherMutex.Unlock()
-	if fake.MatcherStub != nil {
-		return fake.MatcherStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.matcherReturns.result1
+	return fakeReturns.result1
 }
 
 func (fake *FakeMatchMaker) MatcherCallCount() int {
@@ -41,7 +45,15 @@ func (fake *FakeMatchMaker) MatcherCallCount() int {
 	return len(fake.matcherArgsForCall)
 }
 
+func (fake *FakeMatchMaker) MatcherCalls(stub func() criteria.Matcher) {
+	fake.matcherMutex.Lock()
+	defer fake.matcherMutex.Unlock()
+	fake.MatcherStub = stub
+}
+
 func (fake *FakeMatchMaker) MatcherReturns(result1 criteria.Matcher) {
+	fake.matcherMutex.Lock()
+	defer fake.matcherMutex.Unlock()
 	fake.MatcherStub = nil
 	fake.matcherReturns = struct {
 		result1 criteria.Matcher
@@ -49,6 +61,8 @@ func (fake *FakeMatchMaker) MatcherReturns(result1 criteria.Matcher) {
 }
 
 func (fake *FakeMatchMaker) MatcherReturnsOnCall(i int, result1 criteria.Matcher) {
+	fake.matcherMutex.Lock()
+	defer fake.matcherMutex.Unlock()
 	fake.MatcherStub = nil
 	if fake.matcherReturnsOnCall == nil {
 		fake.matcherReturnsOnCall = make(map[int]struct {

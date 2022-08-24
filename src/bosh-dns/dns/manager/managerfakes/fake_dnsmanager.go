@@ -7,19 +7,11 @@ import (
 )
 
 type FakeDNSManager struct {
-	SetPrimaryStub        func() error
-	setPrimaryMutex       sync.RWMutex
-	setPrimaryArgsForCall []struct{}
-	setPrimaryReturns     struct {
-		result1 error
-	}
-	setPrimaryReturnsOnCall map[int]struct {
-		result1 error
-	}
 	ReadStub        func() ([]string, error)
 	readMutex       sync.RWMutex
-	readArgsForCall []struct{}
-	readReturns     struct {
+	readArgsForCall []struct {
+	}
+	readReturns struct {
 		result1 []string
 		result2 error
 	}
@@ -27,63 +19,36 @@ type FakeDNSManager struct {
 		result1 []string
 		result2 error
 	}
+	SetPrimaryStub        func() error
+	setPrimaryMutex       sync.RWMutex
+	setPrimaryArgsForCall []struct {
+	}
+	setPrimaryReturns struct {
+		result1 error
+	}
+	setPrimaryReturnsOnCall map[int]struct {
+		result1 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
-}
-
-func (fake *FakeDNSManager) SetPrimary() error {
-	fake.setPrimaryMutex.Lock()
-	ret, specificReturn := fake.setPrimaryReturnsOnCall[len(fake.setPrimaryArgsForCall)]
-	fake.setPrimaryArgsForCall = append(fake.setPrimaryArgsForCall, struct{}{})
-	fake.recordInvocation("SetPrimary", []interface{}{})
-	fake.setPrimaryMutex.Unlock()
-	if fake.SetPrimaryStub != nil {
-		return fake.SetPrimaryStub()
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.setPrimaryReturns.result1
-}
-
-func (fake *FakeDNSManager) SetPrimaryCallCount() int {
-	fake.setPrimaryMutex.RLock()
-	defer fake.setPrimaryMutex.RUnlock()
-	return len(fake.setPrimaryArgsForCall)
-}
-
-func (fake *FakeDNSManager) SetPrimaryReturns(result1 error) {
-	fake.SetPrimaryStub = nil
-	fake.setPrimaryReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDNSManager) SetPrimaryReturnsOnCall(i int, result1 error) {
-	fake.SetPrimaryStub = nil
-	if fake.setPrimaryReturnsOnCall == nil {
-		fake.setPrimaryReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.setPrimaryReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
 }
 
 func (fake *FakeDNSManager) Read() ([]string, error) {
 	fake.readMutex.Lock()
 	ret, specificReturn := fake.readReturnsOnCall[len(fake.readArgsForCall)]
-	fake.readArgsForCall = append(fake.readArgsForCall, struct{}{})
+	fake.readArgsForCall = append(fake.readArgsForCall, struct {
+	}{})
+	stub := fake.ReadStub
+	fakeReturns := fake.readReturns
 	fake.recordInvocation("Read", []interface{}{})
 	fake.readMutex.Unlock()
-	if fake.ReadStub != nil {
-		return fake.ReadStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.readReturns.result1, fake.readReturns.result2
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeDNSManager) ReadCallCount() int {
@@ -92,7 +57,15 @@ func (fake *FakeDNSManager) ReadCallCount() int {
 	return len(fake.readArgsForCall)
 }
 
+func (fake *FakeDNSManager) ReadCalls(stub func() ([]string, error)) {
+	fake.readMutex.Lock()
+	defer fake.readMutex.Unlock()
+	fake.ReadStub = stub
+}
+
 func (fake *FakeDNSManager) ReadReturns(result1 []string, result2 error) {
+	fake.readMutex.Lock()
+	defer fake.readMutex.Unlock()
 	fake.ReadStub = nil
 	fake.readReturns = struct {
 		result1 []string
@@ -101,6 +74,8 @@ func (fake *FakeDNSManager) ReadReturns(result1 []string, result2 error) {
 }
 
 func (fake *FakeDNSManager) ReadReturnsOnCall(i int, result1 []string, result2 error) {
+	fake.readMutex.Lock()
+	defer fake.readMutex.Unlock()
 	fake.ReadStub = nil
 	if fake.readReturnsOnCall == nil {
 		fake.readReturnsOnCall = make(map[int]struct {
@@ -114,14 +89,71 @@ func (fake *FakeDNSManager) ReadReturnsOnCall(i int, result1 []string, result2 e
 	}{result1, result2}
 }
 
+func (fake *FakeDNSManager) SetPrimary() error {
+	fake.setPrimaryMutex.Lock()
+	ret, specificReturn := fake.setPrimaryReturnsOnCall[len(fake.setPrimaryArgsForCall)]
+	fake.setPrimaryArgsForCall = append(fake.setPrimaryArgsForCall, struct {
+	}{})
+	stub := fake.SetPrimaryStub
+	fakeReturns := fake.setPrimaryReturns
+	fake.recordInvocation("SetPrimary", []interface{}{})
+	fake.setPrimaryMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeDNSManager) SetPrimaryCallCount() int {
+	fake.setPrimaryMutex.RLock()
+	defer fake.setPrimaryMutex.RUnlock()
+	return len(fake.setPrimaryArgsForCall)
+}
+
+func (fake *FakeDNSManager) SetPrimaryCalls(stub func() error) {
+	fake.setPrimaryMutex.Lock()
+	defer fake.setPrimaryMutex.Unlock()
+	fake.SetPrimaryStub = stub
+}
+
+func (fake *FakeDNSManager) SetPrimaryReturns(result1 error) {
+	fake.setPrimaryMutex.Lock()
+	defer fake.setPrimaryMutex.Unlock()
+	fake.SetPrimaryStub = nil
+	fake.setPrimaryReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDNSManager) SetPrimaryReturnsOnCall(i int, result1 error) {
+	fake.setPrimaryMutex.Lock()
+	defer fake.setPrimaryMutex.Unlock()
+	fake.SetPrimaryStub = nil
+	if fake.setPrimaryReturnsOnCall == nil {
+		fake.setPrimaryReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.setPrimaryReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeDNSManager) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.setPrimaryMutex.RLock()
-	defer fake.setPrimaryMutex.RUnlock()
 	fake.readMutex.RLock()
 	defer fake.readMutex.RUnlock()
-	return fake.invocations
+	fake.setPrimaryMutex.RLock()
+	defer fake.setPrimaryMutex.RUnlock()
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeDNSManager) recordInvocation(key string, args []interface{}) {

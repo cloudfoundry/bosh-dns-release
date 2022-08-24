@@ -30,15 +30,17 @@ func (fake *FakeConfigGlobber) Glob(arg1 string) ([]string, error) {
 	fake.globArgsForCall = append(fake.globArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.GlobStub
+	fakeReturns := fake.globReturns
 	fake.recordInvocation("Glob", []interface{}{arg1})
 	fake.globMutex.Unlock()
-	if fake.GlobStub != nil {
-		return fake.GlobStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.globReturns.result1, fake.globReturns.result2
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeConfigGlobber) GlobCallCount() int {
@@ -47,13 +49,22 @@ func (fake *FakeConfigGlobber) GlobCallCount() int {
 	return len(fake.globArgsForCall)
 }
 
+func (fake *FakeConfigGlobber) GlobCalls(stub func(string) ([]string, error)) {
+	fake.globMutex.Lock()
+	defer fake.globMutex.Unlock()
+	fake.GlobStub = stub
+}
+
 func (fake *FakeConfigGlobber) GlobArgsForCall(i int) string {
 	fake.globMutex.RLock()
 	defer fake.globMutex.RUnlock()
-	return fake.globArgsForCall[i].arg1
+	argsForCall := fake.globArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeConfigGlobber) GlobReturns(result1 []string, result2 error) {
+	fake.globMutex.Lock()
+	defer fake.globMutex.Unlock()
 	fake.GlobStub = nil
 	fake.globReturns = struct {
 		result1 []string
@@ -62,6 +73,8 @@ func (fake *FakeConfigGlobber) GlobReturns(result1 []string, result2 error) {
 }
 
 func (fake *FakeConfigGlobber) GlobReturnsOnCall(i int, result1 []string, result2 error) {
+	fake.globMutex.Lock()
+	defer fake.globMutex.Unlock()
 	fake.GlobStub = nil
 	if fake.globReturnsOnCall == nil {
 		fake.globReturnsOnCall = make(map[int]struct {
@@ -80,7 +93,11 @@ func (fake *FakeConfigGlobber) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.globMutex.RLock()
 	defer fake.globMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeConfigGlobber) recordInvocation(key string, args []interface{}) {

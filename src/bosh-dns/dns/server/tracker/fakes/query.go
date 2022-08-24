@@ -36,15 +36,17 @@ func (fake *Query) Filter(arg1 criteria.MatchMaker, arg2 []record.Record) []reco
 		arg1 criteria.MatchMaker
 		arg2 []record.Record
 	}{arg1, arg2Copy})
+	stub := fake.FilterStub
+	fakeReturns := fake.filterReturns
 	fake.recordInvocation("Filter", []interface{}{arg1, arg2Copy})
 	fake.filterMutex.Unlock()
-	if fake.FilterStub != nil {
-		return fake.FilterStub(arg1, arg2)
+	if stub != nil {
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.filterReturns.result1
+	return fakeReturns.result1
 }
 
 func (fake *Query) FilterCallCount() int {
@@ -53,13 +55,22 @@ func (fake *Query) FilterCallCount() int {
 	return len(fake.filterArgsForCall)
 }
 
+func (fake *Query) FilterCalls(stub func(criteria.MatchMaker, []record.Record) []record.Record) {
+	fake.filterMutex.Lock()
+	defer fake.filterMutex.Unlock()
+	fake.FilterStub = stub
+}
+
 func (fake *Query) FilterArgsForCall(i int) (criteria.MatchMaker, []record.Record) {
 	fake.filterMutex.RLock()
 	defer fake.filterMutex.RUnlock()
-	return fake.filterArgsForCall[i].arg1, fake.filterArgsForCall[i].arg2
+	argsForCall := fake.filterArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *Query) FilterReturns(result1 []record.Record) {
+	fake.filterMutex.Lock()
+	defer fake.filterMutex.Unlock()
 	fake.FilterStub = nil
 	fake.filterReturns = struct {
 		result1 []record.Record
@@ -67,6 +78,8 @@ func (fake *Query) FilterReturns(result1 []record.Record) {
 }
 
 func (fake *Query) FilterReturnsOnCall(i int, result1 []record.Record) {
+	fake.filterMutex.Lock()
+	defer fake.filterMutex.Unlock()
 	fake.FilterStub = nil
 	if fake.filterReturnsOnCall == nil {
 		fake.filterReturnsOnCall = make(map[int]struct {

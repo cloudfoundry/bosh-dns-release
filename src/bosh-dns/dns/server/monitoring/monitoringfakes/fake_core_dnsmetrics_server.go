@@ -54,15 +54,16 @@ func (fake *FakeCoreDNSMetricsServer) OnFinalShutdown() error {
 	ret, specificReturn := fake.onFinalShutdownReturnsOnCall[len(fake.onFinalShutdownArgsForCall)]
 	fake.onFinalShutdownArgsForCall = append(fake.onFinalShutdownArgsForCall, struct {
 	}{})
+	stub := fake.OnFinalShutdownStub
+	fakeReturns := fake.onFinalShutdownReturns
 	fake.recordInvocation("OnFinalShutdown", []interface{}{})
 	fake.onFinalShutdownMutex.Unlock()
-	if fake.OnFinalShutdownStub != nil {
-		return fake.OnFinalShutdownStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.onFinalShutdownReturns
 	return fakeReturns.result1
 }
 
@@ -106,15 +107,16 @@ func (fake *FakeCoreDNSMetricsServer) OnStartup() error {
 	ret, specificReturn := fake.onStartupReturnsOnCall[len(fake.onStartupArgsForCall)]
 	fake.onStartupArgsForCall = append(fake.onStartupArgsForCall, struct {
 	}{})
+	stub := fake.OnStartupStub
+	fakeReturns := fake.onStartupReturns
 	fake.recordInvocation("OnStartup", []interface{}{})
 	fake.onStartupMutex.Unlock()
-	if fake.OnStartupStub != nil {
-		return fake.OnStartupStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.onStartupReturns
 	return fakeReturns.result1
 }
 
@@ -161,15 +163,16 @@ func (fake *FakeCoreDNSMetricsServer) ServeDNS(arg1 context.Context, arg2 dns.Re
 		arg2 dns.ResponseWriter
 		arg3 *dns.Msg
 	}{arg1, arg2, arg3})
+	stub := fake.ServeDNSStub
+	fakeReturns := fake.serveDNSReturns
 	fake.recordInvocation("ServeDNS", []interface{}{arg1, arg2, arg3})
 	fake.serveDNSMutex.Unlock()
-	if fake.ServeDNSStub != nil {
-		return fake.ServeDNSStub(arg1, arg2, arg3)
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.serveDNSReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 

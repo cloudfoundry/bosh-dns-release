@@ -29,15 +29,16 @@ func (fake *FakeHealthChecker) GetStatus(arg1 string) api.HealthResult {
 	fake.getStatusArgsForCall = append(fake.getStatusArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.GetStatusStub
+	fakeReturns := fake.getStatusReturns
 	fake.recordInvocation("GetStatus", []interface{}{arg1})
 	fake.getStatusMutex.Unlock()
-	if fake.GetStatusStub != nil {
-		return fake.GetStatusStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.getStatusReturns
 	return fakeReturns.result1
 }
 

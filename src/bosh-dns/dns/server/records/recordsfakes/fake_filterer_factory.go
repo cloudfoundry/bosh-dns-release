@@ -41,15 +41,16 @@ func (fake *FakeFiltererFactory) NewHealthFilterer(arg1 chan record.Host, arg2 b
 		arg1 chan record.Host
 		arg2 bool
 	}{arg1, arg2})
+	stub := fake.NewHealthFiltererStub
+	fakeReturns := fake.newHealthFiltererReturns
 	fake.recordInvocation("NewHealthFilterer", []interface{}{arg1, arg2})
 	fake.newHealthFiltererMutex.Unlock()
-	if fake.NewHealthFiltererStub != nil {
-		return fake.NewHealthFiltererStub(arg1, arg2)
+	if stub != nil {
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.newHealthFiltererReturns
 	return fakeReturns.result1
 }
 
@@ -100,15 +101,16 @@ func (fake *FakeFiltererFactory) NewQueryFilterer() records.Filterer {
 	ret, specificReturn := fake.newQueryFiltererReturnsOnCall[len(fake.newQueryFiltererArgsForCall)]
 	fake.newQueryFiltererArgsForCall = append(fake.newQueryFiltererArgsForCall, struct {
 	}{})
+	stub := fake.NewQueryFiltererStub
+	fakeReturns := fake.newQueryFiltererReturns
 	fake.recordInvocation("NewQueryFilterer", []interface{}{})
 	fake.newQueryFiltererMutex.Unlock()
-	if fake.NewQueryFiltererStub != nil {
-		return fake.NewQueryFiltererStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.newQueryFiltererReturns
 	return fakeReturns.result1
 }
 

@@ -9,8 +9,9 @@ import (
 type FakeAdapterFetcher struct {
 	AdaptersStub        func() ([]manager.Adapter, error)
 	adaptersMutex       sync.RWMutex
-	adaptersArgsForCall []struct{}
-	adaptersReturns     struct {
+	adaptersArgsForCall []struct {
+	}
+	adaptersReturns struct {
 		result1 []manager.Adapter
 		result2 error
 	}
@@ -25,16 +26,19 @@ type FakeAdapterFetcher struct {
 func (fake *FakeAdapterFetcher) Adapters() ([]manager.Adapter, error) {
 	fake.adaptersMutex.Lock()
 	ret, specificReturn := fake.adaptersReturnsOnCall[len(fake.adaptersArgsForCall)]
-	fake.adaptersArgsForCall = append(fake.adaptersArgsForCall, struct{}{})
+	fake.adaptersArgsForCall = append(fake.adaptersArgsForCall, struct {
+	}{})
+	stub := fake.AdaptersStub
+	fakeReturns := fake.adaptersReturns
 	fake.recordInvocation("Adapters", []interface{}{})
 	fake.adaptersMutex.Unlock()
-	if fake.AdaptersStub != nil {
-		return fake.AdaptersStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.adaptersReturns.result1, fake.adaptersReturns.result2
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeAdapterFetcher) AdaptersCallCount() int {
@@ -43,7 +47,15 @@ func (fake *FakeAdapterFetcher) AdaptersCallCount() int {
 	return len(fake.adaptersArgsForCall)
 }
 
+func (fake *FakeAdapterFetcher) AdaptersCalls(stub func() ([]manager.Adapter, error)) {
+	fake.adaptersMutex.Lock()
+	defer fake.adaptersMutex.Unlock()
+	fake.AdaptersStub = stub
+}
+
 func (fake *FakeAdapterFetcher) AdaptersReturns(result1 []manager.Adapter, result2 error) {
+	fake.adaptersMutex.Lock()
+	defer fake.adaptersMutex.Unlock()
 	fake.AdaptersStub = nil
 	fake.adaptersReturns = struct {
 		result1 []manager.Adapter
@@ -52,6 +64,8 @@ func (fake *FakeAdapterFetcher) AdaptersReturns(result1 []manager.Adapter, resul
 }
 
 func (fake *FakeAdapterFetcher) AdaptersReturnsOnCall(i int, result1 []manager.Adapter, result2 error) {
+	fake.adaptersMutex.Lock()
+	defer fake.adaptersMutex.Unlock()
 	fake.AdaptersStub = nil
 	if fake.adaptersReturnsOnCall == nil {
 		fake.adaptersReturnsOnCall = make(map[int]struct {
@@ -70,7 +84,11 @@ func (fake *FakeAdapterFetcher) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.adaptersMutex.RLock()
 	defer fake.adaptersMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeAdapterFetcher) recordInvocation(key string, args []interface{}) {

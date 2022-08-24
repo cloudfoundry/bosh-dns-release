@@ -52,15 +52,16 @@ func (fake *FakeRecordManager) AllRecords() []record.Record {
 	ret, specificReturn := fake.allRecordsReturnsOnCall[len(fake.allRecordsArgsForCall)]
 	fake.allRecordsArgsForCall = append(fake.allRecordsArgsForCall, struct {
 	}{})
+	stub := fake.AllRecordsStub
+	fakeReturns := fake.allRecordsReturns
 	fake.recordInvocation("AllRecords", []interface{}{})
 	fake.allRecordsMutex.Unlock()
-	if fake.AllRecordsStub != nil {
-		return fake.AllRecordsStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.allRecordsReturns
 	return fakeReturns.result1
 }
 
@@ -105,15 +106,16 @@ func (fake *FakeRecordManager) ExpandAliases(arg1 string) []string {
 	fake.expandAliasesArgsForCall = append(fake.expandAliasesArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.ExpandAliasesStub
+	fakeReturns := fake.expandAliasesReturns
 	fake.recordInvocation("ExpandAliases", []interface{}{arg1})
 	fake.expandAliasesMutex.Unlock()
-	if fake.ExpandAliasesStub != nil {
-		return fake.ExpandAliasesStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.expandAliasesReturns
 	return fakeReturns.result1
 }
 
@@ -171,15 +173,16 @@ func (fake *FakeRecordManager) ResolveRecords(arg1 []string, arg2 bool) ([]recor
 		arg1 []string
 		arg2 bool
 	}{arg1Copy, arg2})
+	stub := fake.ResolveRecordsStub
+	fakeReturns := fake.resolveRecordsReturns
 	fake.recordInvocation("ResolveRecords", []interface{}{arg1Copy, arg2})
 	fake.resolveRecordsMutex.Unlock()
-	if fake.ResolveRecordsStub != nil {
-		return fake.ResolveRecordsStub(arg1, arg2)
+	if stub != nil {
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.resolveRecordsReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 

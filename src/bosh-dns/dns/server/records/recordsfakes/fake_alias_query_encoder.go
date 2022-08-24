@@ -36,15 +36,16 @@ func (fake *FakeAliasQueryEncoder) EncodeAliasesIntoQueries(arg1 []record.Record
 		arg1 []record.Record
 		arg2 map[string][]records.AliasDefinition
 	}{arg1Copy, arg2})
+	stub := fake.EncodeAliasesIntoQueriesStub
+	fakeReturns := fake.encodeAliasesIntoQueriesReturns
 	fake.recordInvocation("EncodeAliasesIntoQueries", []interface{}{arg1Copy, arg2})
 	fake.encodeAliasesIntoQueriesMutex.Unlock()
-	if fake.EncodeAliasesIntoQueriesStub != nil {
-		return fake.EncodeAliasesIntoQueriesStub(arg1, arg2)
+	if stub != nil {
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.encodeAliasesIntoQueriesReturns
 	return fakeReturns.result1
 }
 
