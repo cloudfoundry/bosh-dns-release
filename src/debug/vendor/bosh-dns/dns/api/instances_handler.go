@@ -1,5 +1,7 @@
 package api
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import (
 	"bosh-dns/dns/server/record"
 	"encoding/json"
@@ -8,13 +10,13 @@ import (
 	"github.com/miekg/dns"
 )
 
-//go:generate counterfeiter -o ./fakes/health_state_getter.go . HealthStateGetter
+//counterfeiter:generate -o ./fakes/health_state_getter.go . HealthStateGetter
 
 type HealthStateGetter interface {
 	HealthStateString(ip string) string
 }
 
-//go:generate counterfeiter -o ./fakes/record_manager.go . RecordManager
+//counterfeiter:generate -o ./fakes/record_manager.go . RecordManager
 
 type RecordManager interface {
 	ResolveRecords(domains []string, shouldTrack bool) ([]record.Record, error)

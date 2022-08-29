@@ -52,7 +52,7 @@ type windowsManager struct {
 	adapterFetcher AdapterFetcher
 }
 
-//go:generate counterfeiter . AdapterFetcher
+//counterfeiter:generate . AdapterFetcher
 
 type AdapterFetcher interface {
 	Adapters() ([]Adapter, error)

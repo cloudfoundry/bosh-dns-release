@@ -1,14 +1,16 @@
 package config
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
 import "fmt"
 
-//go:generate counterfeiter . RecursorReader
+//counterfeiter:generate . RecursorReader
 
 type RecursorReader interface {
 	Get() ([]string, error)
 }
 
-//go:generate counterfeiter . StringShuffler
+//counterfeiter:generate . StringShuffler
 type StringShuffler interface {
 	Shuffle(src []string) []string
 }
