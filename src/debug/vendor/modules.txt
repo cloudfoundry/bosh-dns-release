@@ -33,8 +33,8 @@ github.com/cloudfoundry/bosh-cli/v7/ui
 github.com/cloudfoundry/bosh-cli/v7/ui/fakes
 github.com/cloudfoundry/bosh-cli/v7/ui/fmt
 github.com/cloudfoundry/bosh-cli/v7/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.331
-## explicit; go 1.18
+# github.com/cloudfoundry/bosh-utils v0.0.332
+## explicit; go 1.19
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
 github.com/cloudfoundry/bosh-utils/logger
@@ -44,7 +44,7 @@ github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e
 ## explicit
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.72
+# github.com/cloudfoundry/socks5-proxy v0.2.73
 ## explicit; go 1.19
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
@@ -150,7 +150,7 @@ github.com/onsi/gomega/types
 # github.com/pivotal-cf/paraphernalia v0.0.0-20180203224945-a64ae2051c20
 ## explicit
 github.com/pivotal-cf/paraphernalia/secure/tlsconfig
-# github.com/rivo/uniseg v0.3.4
+# github.com/rivo/uniseg v0.4.2
 ## explicit; go 1.18
 github.com/rivo/uniseg
 # github.com/vito/go-interact v1.0.1
@@ -183,7 +183,7 @@ golang.org/x/net/internal/socks
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
-# golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2
+# golang.org/x/sys v0.0.0-20220915200043-7b5979e65e41
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
