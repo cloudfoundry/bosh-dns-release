@@ -19,7 +19,7 @@
       host: should-not-use
       tls: { ca: fake-should-not-use, certificate: fake-should-not-use, private_key: fake-should-not-use }
     agent:
-      mbus: nats://nats:((nats_password))@((internal_ip)):4222
+      mbus: nats://((internal_ip)):4222
       blobstore:
         provider: dav
         options:
