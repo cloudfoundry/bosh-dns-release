@@ -8,7 +8,7 @@ require (
 	code.cloudfoundry.org/workpool v0.0.0-20200131000409-2ac56b354115
 	github.com/cloudfoundry/bosh-utils v0.0.332
 	github.com/cloudfoundry/gosigar v1.1.0
-	github.com/coredns/coredns v1.9.4
+	github.com/coredns/coredns v1.10.0
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.5.0
 	github.com/miekg/dns v1.1.50
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
