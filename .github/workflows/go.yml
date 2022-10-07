@@ -1,0 +1,69 @@
+name: go
+on:
+  push:
+  pull_request:
+jobs:
+  lint_bosh_dns:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-2019, ubuntu-latest]
+    name: lint_bosh_dns
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: src/bosh-dns/go.mod
+# TODO: uncomment once golangci-lint on windows-2019 respeects `skip-dirs:`
+#      - uses: golangci/golangci-lint-action@v3
+#       with:
+#          args: --config ../../.golangci.yml
+#          working-directory: src/bosh-dns/
+#        if: ${{ matrix.os == 'windows-2019' }}
+      - uses: golangci/golangci-lint-action@v3
+        if: ${{ matrix.os != 'windows-2019' }}
+        with:
+          args: --config ../../.golangci.yml --enable goimports
+          working-directory: src/bosh-dns/
+  lint_test_recursor:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-2019, ubuntu-latest]
+    name: lint_test_recursor
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor/go.mod
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          args: --config ../../../../../../.golangci.yml
+          working-directory: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
+        if: ${{ matrix.os == 'windows-2019' }}
+      - uses: golangci/golangci-lint-action@v3
+        if: ${{ matrix.os != 'windows-2019' }}
+        with:
+          args: --config ../../../../../../.golangci.yml --enable goimports
+          working-directory: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
+  lint_debug:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-2019, ubuntu-latest]
+    name: lint_debug
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: src/debug/go.mod
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          args: --config ../../.golangci.yml
+          working-directory: src/debug/
+        if: ${{ matrix.os == 'windows-2019' }}
+      - uses: golangci/golangci-lint-action@v3
+        if: ${{ matrix.os != 'windows-2019' }}
+        with:
+          args: --config ../../.golangci.yml --enable goimports
+          working-directory: src/debug/
