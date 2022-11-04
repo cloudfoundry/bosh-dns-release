@@ -1,10 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"os"
-
-	"fmt"
 	"time"
 
 	"github.com/miekg/dns"

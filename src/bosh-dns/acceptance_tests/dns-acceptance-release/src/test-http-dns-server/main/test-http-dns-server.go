@@ -146,7 +146,7 @@ func main() {
 			panic(fmt.Sprintf("Unexpected query '%s'", req.URL.RawQuery))
 		}
 
-		responseWriter.Write([]byte(responseJSON))
+		responseWriter.Write([]byte(responseJSON)) //nolint:errcheck
 	})
 
 	listener, err := net.Listen("tcp", "0.0.0.0:8081")
