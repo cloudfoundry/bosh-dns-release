@@ -7,5 +7,5 @@ mkdir -p "${GOPATH}/src"
 mv test-recursor "${GOPATH}/src"
 
 pushd "${GOPATH}/src/test-recursor"
-  go build -o "${BOSH_INSTALL_TARGET}/bin/test-recursor" "test-recursor"
+  go build -o "${BOSH_INSTALL_TARGET}/bin/test-recursor" "./main"
 popd
