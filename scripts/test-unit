@@ -3,7 +3,7 @@ set -eu -o pipefail
 
 set -x
 
-ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+REPO_DIR="$( cd "$( dirname "${0}" )" && cd .. && pwd )"
 
 grep -ri panic src/bosh-dns \
   --exclude-dir vendor \
@@ -14,16 +14,16 @@ grep -ri panic src/bosh-dns \
   --exclude-dir gomega-dns && echo "panics detected in the code -- remove them" && exit 1
 
 pushd src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
-  "${ROOT_DIR}/scripts/lint"
+  "${REPO_DIR}/scripts/lint"
 popd
 
 pushd src/bosh-dns
-  "${ROOT_DIR}/scripts/lint"
+  "${REPO_DIR}/scripts/lint"
   go run github.com/onsi/ginkgo/ginkgo -r -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=acceptance_tests,integration-tests,performance_tests,test_yml_assets,vendor .
   go run github.com/onsi/ginkgo/ginkgo -r -randomizeAllSpecs -randomizeSuites -keepGoing -race integration-tests
 popd
 
 pushd src/debug
-  "${ROOT_DIR}/scripts/lint"
+  "${REPO_DIR}/scripts/lint"
   go run github.com/onsi/ginkgo/ginkgo -p -r -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=vendor .
 popd

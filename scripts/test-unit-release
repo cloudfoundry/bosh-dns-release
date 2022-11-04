@@ -1,10 +1,7 @@
 #!/bin/bash
+set -eu -o pipefail
 
-main() {
-		set -eu -o pipefail -x
+set -x
 
-		bundle install
-		bundle exec rspec
-}
-
-main "$@"
+bundle install
+bundle exec rspec

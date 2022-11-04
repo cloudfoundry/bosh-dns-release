@@ -11,21 +11,19 @@ export TEST_MANIFEST_NAME="manifest"
 export NO_RECURSORS_OPS_FILE="no-recursors-configured"
 export LOCAL_RECURSOR_OPS_FILE="add-test-dns-nameservers"
 export TEST_TARGET_OS="linux"
-export GOPATH=$PWD
-BASE_STEMCELL=${BASE_STEMCELL:-ubuntu-bionic}
-export BASE_STEMCELL
+export BASE_STEMCELL="${BASE_STEMCELL:-ubuntu-bionic}"
 
 go_bin_path="$(go env GOPATH)/bin" # TODO this should be handled in the docker container
 export PATH=${go_bin_path}:${PATH}
 
 pushd ./src/bosh-dns/acceptance_tests/dns-acceptance-release
-   bosh create-release --force && bosh upload-release --rebase
+  bosh create-release --force && bosh upload-release --rebase
 popd
 
 if [ -z "${TEST_CLOUD_CONFIG_PATH-""}" ]; then
   TEST_CLOUD_CONFIG_PATH="$(mktemp)"
   export TEST_CLOUD_CONFIG_PATH
-  bosh cloud-config > "$TEST_CLOUD_CONFIG_PATH"
+  bosh cloud-config >"${TEST_CLOUD_CONFIG_PATH}"
 fi
 
 pushd ./src/bosh-dns
@@ -45,12 +43,12 @@ popd
 bosh delete-config --type=runtime --name=dns -n
 
 bosh -n deploy ./src/bosh-dns/test_yml_assets/manifests/dns-linux.yml \
-   -v health_server_port=2345 \
-   -o ./src/bosh-dns/test_yml_assets/ops/manifest/use-dns-release-default-bind-and-alias-addresses.yml \
-   -o ./src/bosh-dns/test_yml_assets/ops/manifest/enable-health-manifest-linux.yml \
-   -o ./src/bosh-dns/test_yml_assets/ops/manifest/enable-require-dns-in-pre-start-ops.yml \
-   -v base_stemcell="${BASE_STEMCELL}" \
-   --vars-store dns-creds.yml
+  -v health_server_port=2345 \
+  -o ./src/bosh-dns/test_yml_assets/ops/manifest/use-dns-release-default-bind-and-alias-addresses.yml \
+  -o ./src/bosh-dns/test_yml_assets/ops/manifest/enable-health-manifest-linux.yml \
+  -o ./src/bosh-dns/test_yml_assets/ops/manifest/enable-require-dns-in-pre-start-ops.yml \
+  -v base_stemcell="${BASE_STEMCELL}" \
+  --vars-store dns-creds.yml
 
 pushd ./src/bosh-dns
   go run github.com/onsi/ginkgo/ginkgo -randomizeAllSpecs -randomizeSuites -race -r acceptance_tests/linux

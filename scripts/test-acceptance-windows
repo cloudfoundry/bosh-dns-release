@@ -1,18 +1,17 @@
 #!/bin/bash
-
-set -e -o pipefail
+set -eu -o pipefail
 
 setup_env() {
-  mkdir -p "$PWD/envs"
-  pushd "$PWD/envs"
+  mkdir -p "${PWD}/envs"
+  pushd "${PWD}/envs"
     git init
   popd
 
   echo "### bbl-uping environment ${env_name}"
 
   local bosh_candidate_release_flag=
-  if [[ ! -z "$BOSH_RELEASE_TARBALL_LOCATION" ]]; then
-    bosh_candidate_release_flag="--input=bosh-candidate-release=$BOSH_RELEASE_TARBALL_LOCATION"
+  if [[ -n "${BOSH_RELEASE_TARBALL_LOCATION}" ]]; then
+    bosh_candidate_release_flag="--input=bosh-candidate-release=${BOSH_RELEASE_TARBALL_LOCATION}"
   fi
 
   ENV_NAME="${env_name}" \
@@ -21,9 +20,9 @@ setup_env() {
     --config="${task_dir}/bbl-up.yml" \
     --input=bosh-dns-release="${release_dir}" \
     --inputs-from=bosh-dns-release/test-acceptance-windows2019 \
-    --input=envs="$PWD/envs" \
-    $bosh_candidate_release_flag \
-    --output=envs="$PWD/envs"
+    --input=envs="${PWD}/envs" \
+    "${bosh_candidate_release_flag}" \
+    --output=envs="${PWD}/envs"
 }
 
 upload_dependencies() {
@@ -31,14 +30,14 @@ upload_dependencies() {
 
   windows_stemcell_job="bosh-dns-release/test-acceptance-windows2019"
 
-  # windows specfic
+  # windows specific
   ENV_NAME="${env_name}" \
   fly -t production execute --privileged --include-ignored \
     --config="${task_dir}/setup-deploy.yml" \
     --inputs-from="${windows_stemcell_job}" \
     --input=gcp-linux-stemcell="${linux_stemcell_dir}" \
     --input=candidate-release="${tarball_dir}" \
-    --input=envs="$PWD/envs"
+    --input=envs="${PWD}/envs"
 }
 
 destroy_env() {
@@ -47,8 +46,8 @@ destroy_env() {
   fly -t production execute --privileged --include-ignored \
     --config="${task_dir}/bbl-destroy.yml" \
     --input=bosh-dns-release="${release_dir}" \
-    --input=envs="$PWD/envs" \
-    --output=envs="$PWD/envs"
+    --input=envs="${PWD}/envs" \
+    --output=envs="${PWD}/envs"
 }
 
 run_tests() {
@@ -59,7 +58,7 @@ run_tests() {
     --config="${task_dir}/test-acceptance-windows.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows2019 \
     --input=bosh-dns-release="${release_dir}" \
-    --input=envs="$PWD/envs"
+    --input=envs="${PWD}/envs"
 
   # nameserver-disabled
   echo "### tests: nameserver-disabled"
@@ -68,7 +67,7 @@ run_tests() {
     --config="${task_dir}/test-acceptance-windows-nameserver-disabled.yml" \
     --inputs-from=bosh-dns-release/test-acceptance-windows2019 \
     --input=bosh-dns-release="${release_dir}" \
-    --input=envs="$PWD/envs"
+    --input=envs="${PWD}/envs"
 
 }
 
@@ -120,7 +119,7 @@ main() {
   lpass status
 
   env_name=$(hostname -s|tr '[:upper:]' '[:lower:]')-local
-  mkdir -p "$PWD/envs"
+  mkdir -p "${PWD}/envs"
 
   DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -133,26 +132,27 @@ main() {
   linux_stemcell_dir=$(mktemp -d)
   curl -Lo "${linux_stemcell_dir}/stemcell.tgz"  https://bosh.io/d/stemcells/bosh-google-kvm-ubuntu-bionic-go_agent
 
-  if [[ ! -z "$bosh_repo" ]]; then
-    export BOSH_RELEASE_TARBALL_LOCATION=$(mktemp -d)
-    pushd "$bosh_repo"
+  if [[ -n "${bosh_repo}" ]]; then
+    BOSH_RELEASE_TARBALL_LOCATION=$(mktemp -d)
+    export BOSH_RELEASE_TARBALL_LOCATION
+    pushd "${bosh_repo}"
       bosh create-release --force --tarball="${BOSH_RELEASE_TARBALL_LOCATION}/bosh-release.tgz"
     popd
   fi
 
-  if [[ "$destroy" = "only" ]]; then
+  if [[ "${destroy}" = "only" ]]; then
     destroy_env
     exit
   fi
 
-  if [[ "$skip_bbl" = "false" ]]; then
+  if [[ "${skip_bbl}" = "false" ]]; then
     setup_env
   fi
 
   upload_dependencies
   run_tests
 
-  if [[ "$destroy" = "true" ]]; then
+  if [[ "${destroy}" = "true" ]]; then
     destroy_env
   fi
 }
