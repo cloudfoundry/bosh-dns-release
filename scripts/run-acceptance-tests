@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+set -eu -o pipefail
 
-set -exu
+set -x
 
 BOSH_BINARY_PATH="$(command -v bosh)"
 export BOSH_BINARY_PATH
