@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eu -o pipefail
 
+REPO_DIR="$( cd "$( dirname "${0}" )" && cd .. && pwd )"
+
 (
   go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 )
@@ -11,9 +13,17 @@ golangci-lint version
 
 linted_os_list=(linux windows)
 
-for os in ${linted_os_list[*]}; do
-  echo -e "\n lint-ing with GOOS=${os} ..."
+go_mod_dirs="$(find "${REPO_DIR}" -name go.mod -exec dirname {} \;)"
+
+for go_mod_dir in ${go_mod_dirs[*]}; do
+  echo -e "\n lint-ing in '${go_mod_dir}' ..."
   (
-    GOOS="${os}" golangci-lint run "${1:-./...}"
+    cd "${go_mod_dir}"
+    for os in ${linted_os_list[*]}; do
+      echo -e "          with GOOS=${os} ..."
+      (
+        GOOS="${os}" golangci-lint run "${1:-./...}"
+      )
+    done
   )
 done
