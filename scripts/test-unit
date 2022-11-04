@@ -13,7 +13,7 @@ grep -ri panic src/bosh-dns \
   --exclude-dir integration-tests \
   --exclude-dir gomega-dns && echo "panics detected in the code -- remove them" && exit 1
 
-"${REPO_DIR}/scripts/lint-all"
+"${REPO_DIR}/scripts/lint"
 
 pushd src/bosh-dns
   go run github.com/onsi/ginkgo/ginkgo -r -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=acceptance_tests,integration-tests,performance_tests,test_yml_assets,vendor .
