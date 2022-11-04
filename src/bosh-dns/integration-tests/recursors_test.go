@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"bosh-dns/acceptance_tests/helpers"
@@ -43,10 +44,28 @@ func NewTestRecursor(port int, configurableResponse string) *testRecursor {
 }
 
 func (t *testRecursor) start() error {
-	binaryLocation := os.Getenv("TEST_RECURSOR_BINARY")
-	if binaryLocation == "" {
-		panic("TEST_RECURSOR_BINARY must be set")
-	}
+	originalCwd, err := os.Getwd()
+	Expect(err).NotTo(HaveOccurred())
+
+	testRecursorPath, err :=
+		filepath.Abs(filepath.Join(
+			originalCwd,
+			"..",
+			"acceptance_tests",
+			"dns-acceptance-release",
+			"src",
+			"test-recursor",
+		))
+	Expect(err).NotTo(HaveOccurred())
+
+	err = os.Chdir(testRecursorPath)
+	Expect(err).NotTo(HaveOccurred())
+
+	binaryDir, err := gexec.Build(".")
+	Expect(err).NotTo(HaveOccurred())
+
+	err = os.Chdir(originalCwd)
+	Expect(err).NotTo(HaveOccurred())
 
 	configYAML, err := yaml.Marshal(Config{
 		Port:                 t.port,
@@ -67,7 +86,7 @@ func (t *testRecursor) start() error {
 		return err
 	}
 
-	t.session, err = gexec.Start(exec.Command(binaryLocation, configTempfile.Name()),
+	t.session, err = gexec.Start(exec.Command(filepath.Join(binaryDir, "test-recursor"), configTempfile.Name()),
 		GinkgoWriter, GinkgoWriter)
 	if err != nil {
 		return err

@@ -5,9 +5,6 @@ set -x
 
 ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-TEST_RECURSOR_BINARY="$(mktemp -d)/test_recursor"
-export TEST_RECURSOR_BINARY
-
 grep -ri panic src/bosh-dns \
   --exclude-dir vendor \
   --exclude-dir test_yml_assets \
@@ -18,7 +15,6 @@ grep -ri panic src/bosh-dns \
 
 pushd src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
   "${ROOT_DIR}/scripts/lint"
-  go build -o "${TEST_RECURSOR_BINARY}" .
 popd
 
 pushd src/bosh-dns
