@@ -14,7 +14,9 @@ export TEST_TARGET_OS="linux"
 export GOPATH=$PWD
 BASE_STEMCELL=${BASE_STEMCELL:-ubuntu-bionic}
 export BASE_STEMCELL
-export PATH="${GOPATH}/bin":$PATH
+
+go_bin_path="$(go env GOPATH)/bin" # TODO this should be handled in the docker container
+export PATH=${go_bin_path}:${PATH}
 
 pushd ./src/bosh-dns/acceptance_tests/dns-acceptance-release
    bosh create-release --force && bosh upload-release --rebase
