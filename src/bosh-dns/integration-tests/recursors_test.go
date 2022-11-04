@@ -61,7 +61,7 @@ func (t *testRecursor) start() error {
 	err = os.Chdir(testRecursorPath)
 	Expect(err).NotTo(HaveOccurred())
 
-	binaryDir, err := gexec.Build(".")
+	binaryPath, err := gexec.Build("./main")
 	Expect(err).NotTo(HaveOccurred())
 
 	err = os.Chdir(originalCwd)
@@ -86,7 +86,7 @@ func (t *testRecursor) start() error {
 		return err
 	}
 
-	t.session, err = gexec.Start(exec.Command(filepath.Join(binaryDir, "test-recursor"), configTempfile.Name()),
+	t.session, err = gexec.Start(exec.Command(binaryPath, configTempfile.Name()),
 		GinkgoWriter, GinkgoWriter)
 	if err != nil {
 		return err
