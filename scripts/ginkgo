@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -eu -o pipefail
+
+# shellcheck disable=SC2068
+go run github.com/onsi/ginkgo/ginkgo \
+  -keepGoing \
+  -skipPackage=vendor \
+  -race \
+  -randomizeAllSpecs \
+  -randomizeSuites \
+  -r \
+  ${@}

@@ -16,10 +16,10 @@ grep -ri panic src/bosh-dns \
 "${REPO_DIR}/scripts/lint"
 
 pushd src/bosh-dns
-  go run github.com/onsi/ginkgo/ginkgo -r -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=acceptance_tests,integration-tests,performance_tests,test_yml_assets,vendor .
-  go run github.com/onsi/ginkgo/ginkgo -r -randomizeAllSpecs -randomizeSuites -keepGoing -race integration-tests
+  "${REPO_DIR}/scripts/ginkgo" -skipPackage=acceptance_tests,integration-tests,performance_tests,test_yml_assets .
+  "${REPO_DIR}/scripts/ginkgo" integration-tests
 popd
 
 pushd src/debug
-  go run github.com/onsi/ginkgo/ginkgo -p -r -randomizeAllSpecs -randomizeSuites -keepGoing -race -skipPackage=vendor .
+  "${REPO_DIR}/scripts/ginkgo" -p .
 popd

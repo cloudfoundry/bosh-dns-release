@@ -3,6 +3,8 @@ set -eu -o pipefail
 
 set -x
 
+REPO_DIR="$( cd "$( dirname "${0}" )" && cd .. && pwd )"
+
 BOSH_BINARY_PATH="$(command -v bosh)"
 export BOSH_BINARY_PATH
 
@@ -29,10 +31,10 @@ fi
 pushd ./src/bosh-dns
   set +u
   if [[ -n "${1}" ]]; then
-    go run github.com/onsi/ginkgo/ginkgo -randomizeAllSpecs -randomizeSuites -race -focus="${1}" acceptance_tests
+    "${REPO_DIR}/scripts/ginkgo" -focus="${1}" acceptance_tests
     exit 0
   else
-    go run github.com/onsi/ginkgo/ginkgo -randomizeAllSpecs -randomizeSuites -race acceptance_tests
+    "${REPO_DIR}/scripts/ginkgo" acceptance_tests
   fi
   set -u
 popd
@@ -51,5 +53,5 @@ bosh -n deploy ./src/bosh-dns/test_yml_assets/manifests/dns-linux.yml \
   --vars-store dns-creds.yml
 
 pushd ./src/bosh-dns
-  go run github.com/onsi/ginkgo/ginkgo -randomizeAllSpecs -randomizeSuites -race -r acceptance_tests/linux
+  "${REPO_DIR}/scripts/ginkgo" acceptance_tests/linux
 popd
