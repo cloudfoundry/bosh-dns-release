@@ -8,5 +8,4 @@ go run github.com/onsi/ginkgo/ginkgo \
   -race \
   -randomizeAllSpecs \
   -randomizeSuites \
-  -r \
   ${@}
