@@ -41,7 +41,7 @@ github.com/cloudfoundry/go-socks5
 ## explicit
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.80
+# github.com/cloudfoundry/socks5-proxy v0.2.81
 ## explicit; go 1.19
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.1
@@ -300,7 +300,7 @@ golang.org/x/tools/internal/packagesinternal
 golang.org/x/tools/internal/pkgbits
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
-# google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6
+# google.golang.org/genproto v0.0.0-20221202195650-67e5cbc046fd
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.51.0
