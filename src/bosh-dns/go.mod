@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/clock v1.0.0
 	code.cloudfoundry.org/tlsconfig v0.0.0-20220621140725-0e6fbd869921
 	code.cloudfoundry.org/workpool v0.0.0-20200131000409-2ac56b354115
-	github.com/cloudfoundry/bosh-utils v0.0.345
+	github.com/cloudfoundry/bosh-utils v0.0.346
 	github.com/cloudfoundry/gosigar v1.1.0
 	github.com/coredns/coredns v1.10.0
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.5.0
@@ -45,7 +45,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.39.0 // indirect
-	github.com/prometheus/procfs v0.8.0 // indirect
+	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
