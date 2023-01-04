@@ -13,9 +13,10 @@ export DEV_RELEASE_PATH=$ROOT_PATH/candidate-release/bosh*.tgz
 git config --global user.email "ci@localhost"
 git config --global user.name "CI Bot"
 
-pushd ./bosh-dns-release
-  tag_name="v${VERSION}"
+tag_name="v${VERSION}"
+echo "$tag_name" > final-release-tag/tag
 
+pushd ./bosh-dns-release
   tag_annotation="Final release ${VERSION} tagged via concourse"
 
   git tag -a "${tag_name}" -m "${tag_annotation}"
