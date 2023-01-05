@@ -680,7 +680,7 @@ resources:
     source:
       branch: master
       uri: git@github.com:cloudfoundry/bosh-bbl-ci-envs.git
-      private_key: {{envs_private_key}}
+      private_key: ((github_deploy_key_bosh-bbl-ci-envs.private_key))
 
   - name: release-notes
     type: gcs-resource
