@@ -104,8 +104,8 @@ jobs:
             blobstore:
               provider: s3
               options:
-                access_key_id: {{release_blobs_access_key_id}}
-                secret_access_key: {{release_blobs_secret_access_key}}
+                access_key_id: ((dns-release-blobs-upload_aws_access_key.username))
+                secret_access_key: ((dns-release-blobs-upload_aws_access_key.password))
       - task: bump-golang-package-test-acceptance-release
         file: golang-release/ci/tasks/shared/bump-golang-package.yml
         input_mapping:
@@ -122,8 +122,8 @@ jobs:
             blobstore:
               provider: s3
               options:
-                access_key_id: {{release_blobs_access_key_id}}
-                secret_access_key: {{release_blobs_secret_access_key}}
+                access_key_id: ((dns-release-blobs-upload_aws_access_key.username))
+                secret_access_key: ((dns-release-blobs-upload_aws_access_key.password))
       - task: create
         file: bosh-dns-release/ci/tasks/create-candidate.yml
         output_mapping:
@@ -463,8 +463,8 @@ jobs:
       - task: finalize-release
         file: bosh-dns-release/ci/tasks/finalize-release.yml
         params:
-          BLOBSTORE_ACCESS_KEY_ID: {{release_blobs_access_key_id}}
-          BLOBSTORE_SECRET_ACCESS_KEY: {{release_blobs_secret_access_key}}
+          BLOBSTORE_ACCESS_KEY_ID: ((dns-release-blobs-upload_aws_access_key.username))
+          BLOBSTORE_SECRET_ACCESS_KEY: ((dns-release-blobs-upload_aws_access_key.password))
       - put: version
         params:
           bump: minor
