@@ -242,7 +242,7 @@ jobs:
               - task: bbl-up
                 file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
                 params:
-                  BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
+                  BBL_GCP_SERVICE_ACCOUNT_KEY: ((cf-bosh-core_dns-release-ci_gcp_credentials_json))
                   ENV_NAME: windows2019
                 ensure:
                   put: envs
@@ -270,7 +270,7 @@ jobs:
               task: bbl-destroy
               file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
               params:
-                BBL_GCP_SERVICE_ACCOUNT_KEY: {{bbl_gcp_service_account_key_id}}
+                BBL_GCP_SERVICE_ACCOUNT_KEY: ((cf-bosh-core_dns-release-ci_gcp_credentials_json))
                 ENV_NAME: windows2019
               ensure:
                 put: envs
@@ -299,8 +299,8 @@ jobs:
           - task: setup-env
             file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
             params:
-              BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
-              BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+              BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_aws_access_key.username))
+              BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_aws_access_key.password))
               BBL_AWS_REGION: us-west-1
               BBL_IAAS: aws
               BBL_STATE_DIR: test-stress/bbl-state
@@ -329,8 +329,8 @@ jobs:
           input_mapping:
             bbl-state: updated-bbl-state
           params:
-            BBL_AWS_ACCESS_KEY_ID: {{bbl_test_stress_access_key_id}}
-            BBL_AWS_SECRET_ACCESS_KEY: {{bbl_test_stress_secret_access_key}}
+            BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_aws_access_key.username))
+            BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_aws_access_key.password))
             BBL_STATE_DIR: test-stress/bbl-state
           ensure:
             put: envs
@@ -511,10 +511,6 @@ jobs:
               - test-acceptance-ubuntu-jammy
               - test-acceptance-windows2019
               - brats-ubuntu
-      - put: tracker-output
-        params:
-          repos:
-            - bosh-dns-release
 
   - name: build-acceptance-tests-image
     public: true
@@ -569,7 +565,7 @@ resources:
     source:
       uri: git@github.com:cloudfoundry/bosh-dns-release
       branch: master
-      private_key: {{github_deployment_key}}
+      private_key: ((github_deploy_key_bosh-dns-release.private_key))
       ignore_paths:
         - ci/docker
 
@@ -597,25 +593,25 @@ resources:
   - name: version
     type: semver
     source:
-      bucket: {{candidate_release_bucket}}
+      bucket: bosh-dns-release-candidate-tarballs
       key: version
-      access_key_id: {{candidate_release_access_key_id}}
-      secret_access_key: {{candidate_release_secret_access_key}}
+      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.username))
+      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.password))
 
   - name: candidate-release
     type: s3
     source:
-      bucket: {{candidate_release_bucket}}
-      access_key_id: {{candidate_release_access_key_id}}
-      secret_access_key: {{candidate_release_secret_access_key}}
+      bucket: bosh-dns-release-candidate-tarballs
+      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.username))
+      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.password))
       versioned_file: "bosh-dns-dev-release.tgz"
 
   - name: staging-release
     type: s3
     source:
-      bucket: {{candidate_release_bucket}}
-      access_key_id: {{candidate_release_access_key_id}}
-      secret_access_key: {{candidate_release_secret_access_key}}
+      bucket: bosh-dns-release-candidate-tarballs
+      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.username))
+      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.password))
       versioned_file: "bosh-dns-staging-release.tgz"
 
   - name: brats-src
@@ -726,13 +722,6 @@ resources:
       tag: acceptance-tests-windows
       username: ((docker.username))
       password: ((docker.password))
-
-  - name: tracker-output
-    type: tracker
-    source:
-      token: ((tracker_api_token))
-      project_id: "((tracker_project_id))"
-      tracker_url: https://www.pivotaltracker.com
 
   - name: midnight
     type: time

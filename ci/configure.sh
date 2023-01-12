@@ -8,7 +8,4 @@ dir=$(dirname $0)
 
 fly -t ${CONCOURSE_TARGET:-bosh-ecosystem} \
   sp -p bosh-dns-release \
-  -c $dir/pipeline.yml \
-  -l <(lpass show --notes 'dns-release pipeline vars') \
-  -l <(lpass show --notes 'tracker-bot-story-delivery') \
-  -v "tracker_project_id=956238"
+  -c $dir/pipeline.yml
