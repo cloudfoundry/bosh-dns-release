@@ -465,9 +465,6 @@ jobs:
         params:
           BLOBSTORE_ACCESS_KEY_ID: ((dns-release-blobs-upload_aws_access_key.username))
           BLOBSTORE_SECRET_ACCESS_KEY: ((dns-release-blobs-upload_aws_access_key.password))
-      - put: version
-        params:
-          bump: minor
       - put: bosh-dns-release
         params:
           rebase: true
