@@ -5,8 +5,8 @@ go 1.19
 require (
 	bosh-dns v0.0.0
 	code.cloudfoundry.org/tlsconfig v0.0.0-20220621140725-0e6fbd869921
-	github.com/cloudfoundry/bosh-cli/v7 v7.1.1
-	github.com/cloudfoundry/bosh-utils v0.0.347
+	github.com/cloudfoundry/bosh-cli/v7 v7.1.2
+	github.com/cloudfoundry/bosh-utils v0.0.349
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.24.2
@@ -22,7 +22,7 @@ require (
 	github.com/cloudfoundry/socks5-proxy v0.2.83 // indirect
 	github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4 // indirect
 	github.com/creack/pty v1.1.9 // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
