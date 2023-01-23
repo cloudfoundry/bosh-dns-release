@@ -41,7 +41,7 @@
   handlers_files_glob: p('handlers_files_glob'),
   internal_upcheck_domain: {
     enabled: p('internal_upcheck_domain.enabled'),
-    dns_query: "q-i#{spec.index}.#{spec.name}.*.#{spec.deployment}.bosh."
+    dns_query: "q-i#{spec.index}.#{spec.name.downcase.gsub(/_/, "-")}.*.#{spec.deployment}.bosh."
   },
   logging: {
     format: {
