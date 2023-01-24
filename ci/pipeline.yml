@@ -345,6 +345,7 @@ jobs:
           - in_parallel:
               - get: bosh-dns-src
                 resource: bosh-dns-release
+                passed: [ create-release ]
               - get: brats-src
               - get: bosh-dns-release
                 resource: candidate-release
