@@ -94,7 +94,7 @@ var _ = Describe("Record Set Performance", func() {
 		for count = 0; count < 1000; count++ {
 			startTime := time.Now()
 			ips, err := recordSet.Resolve("q-m0s0.my-group.my-network.my-deployment.domain.")
-			totalTime += time.Since(startTime) / time.Microsecond
+			totalTime += time.Since(startTime)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ips).To(HaveLen(1))
@@ -102,16 +102,17 @@ var _ = Describe("Record Set Performance", func() {
 
 			startTime = time.Now()
 			ips, err = recordSet.Resolve("q-m1999s0.my-group.my-network.my-deployment.domain.")
-			totalTimeLastRecord += time.Since(startTime) / time.Microsecond
+			totalTimeLastRecord += time.Since(startTime)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ips).To(HaveLen(1))
 			Expect(ips).To(ContainElement("123.123.208.207"))
 		}
 
-		averageTime := totalTime / time.Duration(count)
-		averageTimeLastRecord := totalTimeLastRecord / time.Duration(count)
+		averageTime := totalTime.Microseconds() / int64(count)
+		averageTimeLastRecord := totalTimeLastRecord.Microseconds() / int64(count)
 
+		// The average lookup should take less than 2.5 milliseconds
 		Expect(averageTime).To(BeNumerically("<", 2500))
 		Expect(averageTimeLastRecord).To(BeNumerically("<", 2500))
 	})
