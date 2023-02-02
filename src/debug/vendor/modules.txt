@@ -10,8 +10,8 @@ bosh-dns/tlsclient
 # code.cloudfoundry.org/clock v1.0.0
 ## explicit
 code.cloudfoundry.org/clock
-# code.cloudfoundry.org/tlsconfig v0.0.0-20220621140725-0e6fbd869921
-## explicit; go 1.17
+# code.cloudfoundry.org/tlsconfig v0.0.0-20230131191323-96331f8f153d
+## explicit; go 1.19
 code.cloudfoundry.org/tlsconfig
 # github.com/VividCortex/ewma v1.2.0
 ## explicit; go 1.12
@@ -33,7 +33,7 @@ github.com/cloudfoundry/bosh-cli/v7/ui
 github.com/cloudfoundry/bosh-cli/v7/ui/fakes
 github.com/cloudfoundry/bosh-cli/v7/ui/fmt
 github.com/cloudfoundry/bosh-cli/v7/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.350
+# github.com/cloudfoundry/bosh-utils v0.0.351
 ## explicit; go 1.19
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -55,8 +55,8 @@ github.com/cppforlife/go-semi-semantic/version
 # github.com/dustin/go-humanize v1.0.1
 ## explicit; go 1.16
 github.com/dustin/go-humanize
-# github.com/fatih/color v1.14.0
-## explicit; go 1.13
+# github.com/fatih/color v1.14.1
+## explicit; go 1.17
 github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.6.0
 ## explicit; go 1.16
@@ -132,7 +132,7 @@ github.com/onsi/ginkgo/reporters/stenographer
 github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable
 github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
 github.com/onsi/ginkgo/types
-# github.com/onsi/gomega v1.25.0
+# github.com/onsi/gomega v1.26.0
 ## explicit; go 1.18
 github.com/onsi/gomega
 github.com/onsi/gomega/format
