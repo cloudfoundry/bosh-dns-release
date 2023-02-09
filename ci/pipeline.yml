@@ -234,6 +234,7 @@ jobs:
               - get: bosh-stemcell-windows
                 resource: gcp-windows-2019-stemcell
               - get: bosh-candidate-release
+              - get: main-bosh-docker-image
               - get: candidate-release
                 passed:
                   - create-release
@@ -256,12 +257,14 @@ jobs:
               - in_parallel:
                   - task: windows
                     file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
+                    image: main-bosh-docker-image
                     params:
                       WINDOWS_OS_VERSION: windows2019
                       ENV_NAME: windows2019
                     timeout: 1h
                   - task: windows-nameserver-disabled
                     file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
+                    image: main-bosh-docker-image
                     params:
                       WINDOWS_OS_VERSION: windows2019
                       ENV_NAME: windows2019
@@ -685,7 +688,7 @@ resources:
       initial_content_text: ""
 
   - name: docker-cpi-image
-    type: docker-image
+    type: registry-image
     source:
       tag: main
       repository: bosh/docker-cpi
@@ -696,6 +699,8 @@ resources:
     type: registry-image
     source:
       repository: bosh/main-bosh-docker
+      username: ((docker.username))
+      password: ((docker.password))
 
   - name: unit-tests-image
     type: docker-image
