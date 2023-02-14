@@ -269,6 +269,22 @@ var _ = Describe("Integration", func() {
 						Expect(dnsResponse.Answer).To(HaveLen(1))
 					})
 				})
+
+				When("the recursor returns NXDOMAIN for an SOA record", func() {
+					It("is the only query type (SOA) where it'll negative cache the NXDOMAIN result", func() {
+
+						dnsResponse := helpers.DigWithOptions("alternating-soa-nameerror-recursor.com.", environment.ServerAddress(), helpers.DigOpts{Id: 1, Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true, Type: dns.TypeSOA})
+
+						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeNameError))
+						Expect(dnsResponse.Answer).To(HaveLen(0))
+
+						// Note that we set `Id: 2`, which signals the upstream server to return a valid record, but since we're negative caching, we never ask
+						dnsResponse = helpers.DigWithOptions("alternating-soa-nameerror-recursor.com.", environment.ServerAddress(), helpers.DigOpts{Id: 2, Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true, Type: dns.TypeSOA})
+
+						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeNameError))
+						Expect(dnsResponse.Answer).To(HaveLen(0))
+					})
+				})
 			})
 		})
 

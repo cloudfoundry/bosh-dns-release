@@ -214,13 +214,47 @@ func main() {
 			aRec := &dns.A{
 				Hdr: dns.RR_Header{
 					Name:   req.Question[0].Name,
-					Rrtype: dns.TypeA,
+					Rrtype: req.Question[0].Qtype,
 					Class:  dns.ClassINET,
 					Ttl:    5,
 				},
 				A: net.ParseIP("127.0.0.1").To4(),
 			}
 			msg.Answer = append(msg.Answer, aRec)
+		}
+
+		err := resp.WriteMsg(msg)
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+
+	dns.HandleFunc("alternating-soa-nameerror-recursor.com.", func(resp dns.ResponseWriter, req *dns.Msg) {
+		msg := new(dns.Msg)
+		msg.SetReply(req)
+		msg.Authoritative = true
+		msg.RecursionAvailable = true
+
+		if msg.Id%2 == 1 {
+			msg.SetRcode(req, dns.RcodeNameError)
+		} else {
+			msg.SetRcode(req, dns.RcodeSuccess)
+			soaRec := &dns.SOA{
+				Hdr: dns.RR_Header{
+					Name:   req.Question[0].Name,
+					Rrtype: req.Question[0].Qtype,
+					Class:  dns.ClassINET,
+					Ttl:    5,
+				},
+				Ns:      "ns1.pivotal.io",
+				Mbox:    "postmaster.pivotal.io",
+				Serial:  1987,
+				Refresh: 3600,
+				Retry:   600,
+				Expire:  604800,
+				Minttl:  3600,
+			}
+			msg.Answer = append(msg.Answer, soaRec)
 		}
 
 		err := resp.WriteMsg(msg)
