@@ -7,7 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/onsi/ginkgo/config"
+	"github.com/onsi/ginkgo/v2"
+
 	. "github.com/onsi/gomega"
 )
 
@@ -16,12 +17,13 @@ const basePort = 4567
 var portIndex int32 = -1
 
 func GetFreePort() (int, error) {
-	maxPorts := 2000 / config.GinkgoConfig.ParallelTotal
+	suite, _ := ginkgo.GinkgoConfiguration()
+	maxPorts := 2000 / suite.ParallelTotal
 	for {
 		if portIndex > int32(maxPorts-1) {
 			break
 		}
-		unusedport := basePort + int(atomic.AddInt32(&portIndex, 1)) + maxPorts*config.GinkgoConfig.ParallelNode
+		unusedport := basePort + int(atomic.AddInt32(&portIndex, 1)) + maxPorts*suite.ParallelProcess
 		err := TryListening(unusedport)
 		if err == nil {
 			return unusedport, nil

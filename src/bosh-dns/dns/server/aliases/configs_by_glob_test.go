@@ -6,7 +6,7 @@ import (
 	"bosh-dns/dns/server/aliases/aliasesfakes"
 	"errors"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

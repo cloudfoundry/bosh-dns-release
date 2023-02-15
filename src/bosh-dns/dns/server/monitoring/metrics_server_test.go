@@ -9,7 +9,7 @@ import (
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/coredns/coredns/plugin/metrics"
 	"github.com/miekg/dns"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

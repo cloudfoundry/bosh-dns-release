@@ -3,7 +3,7 @@ package zone_pickers_test
 import (
 	"bosh-dns/performance_tests/zone_pickers"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

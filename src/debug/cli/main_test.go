@@ -8,10 +8,8 @@ import (
 	"os/exec"
 	"strings"
 
-	ginkgoconfig "github.com/onsi/ginkgo/config"
-
 	"code.cloudfoundry.org/tlsconfig"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -170,7 +168,8 @@ func newFakeAPIServer() *ghttp.Server {
 	err = server.HTTPTestServer.Listener.Close()
 	Expect(err).NotTo(HaveOccurred())
 
-	port := 2345 + ginkgoconfig.GinkgoConfig.ParallelNode
+	suiteConfig, _ := GinkgoConfiguration()
+	port := 2345 + suiteConfig.ParallelProcess
 	server.HTTPTestServer.Listener, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	Expect(err).ToNot(HaveOccurred())
 

@@ -16,7 +16,7 @@ grep -ri panic src/bosh-dns \
 "${REPO_DIR}/scripts/lint"
 
 pushd src/bosh-dns
-  "${REPO_DIR}/scripts/ginkgo" -r -skipPackage=acceptance_tests,integration-tests,performance_tests,test_yml_assets .
+  "${REPO_DIR}/scripts/ginkgo" -r --skip-package=acceptance_tests,integration-tests,performance_tests,test_yml_assets .
   "${REPO_DIR}/scripts/ginkgo" -r integration-tests
 popd
 

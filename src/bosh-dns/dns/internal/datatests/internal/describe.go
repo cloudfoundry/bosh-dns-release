@@ -7,7 +7,7 @@ import (
 
 	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
 
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -39,6 +39,6 @@ func DescribeMatchingAnyA(serverFactory func() Server, entries ...TableEntry) bo
 
 			Expect(actual).To(ConsistOf(expected))
 		},
-		entries...,
+		entries,
 	)
 }

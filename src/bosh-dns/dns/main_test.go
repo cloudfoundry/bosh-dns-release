@@ -26,15 +26,13 @@ import (
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
-	ginkgoconfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
 
 	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -48,6 +46,7 @@ var _ = Describe("main", func() {
 		recursorList   []string
 		jobsDir        string
 	)
+	var suiteConfig, _ = GinkgoConfiguration()
 
 	BeforeEach(func() {
 		listenAddress = "127.0.0.1"
@@ -255,7 +254,7 @@ var _ = Describe("main", func() {
 
 			cfg.Health = config.HealthConfig{
 				Enabled:         healthEnabled,
-				Port:            2345 + ginkgoconfig.GinkgoConfig.ParallelNode,
+				Port:            2345 + suiteConfig.ParallelProcess,
 				CAFile:          "../healthcheck/assets/test_certs/test_ca.pem",
 				CertificateFile: "../healthcheck/assets/test_certs/test_client.pem",
 				PrivateKeyFile:  "../healthcheck/assets/test_certs/test_client.key",
@@ -265,7 +264,7 @@ var _ = Describe("main", func() {
 			cfg.Metrics = config.MetricsConfig{
 				Enabled: metricsEnabled,
 				Address: "127.0.0.1",
-				Port:    53088 + ginkgoconfig.GinkgoConfig.ParallelNode,
+				Port:    53088 + suiteConfig.ParallelProcess,
 			}
 
 			cmd = newCommandWithConfig(cfg)
@@ -679,7 +678,7 @@ var _ = Describe("main", func() {
 						_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
 
-						resp, err := http.Get(fmt.Sprintf("http://%s:%d/metrics", listenAddress, 53088+ginkgoconfig.GinkgoConfig.ParallelNode))
+						resp, err := http.Get(fmt.Sprintf("http://%s:%d/metrics", listenAddress, 53088+suiteConfig.ParallelProcess))
 						Expect(err).NotTo(HaveOccurred())
 
 						metrics, err := io.ReadAll(resp.Body)
@@ -694,7 +693,7 @@ var _ = Describe("main", func() {
 				Context("with Metrics disabled", func() {
 
 					It("does not start the metrics server", func() {
-						_, err := http.Get(fmt.Sprintf("http://%s:%d/metrics", listenAddress, 53088+ginkgoconfig.GinkgoConfig.ParallelNode))
+						_, err := http.Get(fmt.Sprintf("http://%s:%d/metrics", listenAddress, 53088+suiteConfig.ParallelProcess))
 
 						Expect(err).To(HaveOccurred())
 						Expect(err.Error()).To(MatchRegexp("connection.*refused"))
@@ -1566,7 +1565,7 @@ var _ = Describe("main", func() {
 		)
 
 		It("will timeout after the recursor_timeout has been reached", func() {
-			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", 9000+ginkgoconfig.GinkgoConfig.ParallelNode))
+			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", 9000+suiteConfig.ParallelProcess))
 			Expect(err).NotTo(HaveOccurred())
 			defer l.Close()
 
@@ -1891,7 +1890,8 @@ func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Serv
 	err = server.HTTPTestServer.Listener.Close()
 	Expect(err).NotTo(HaveOccurred())
 
-	port := 2345 + ginkgoconfig.GinkgoConfig.ParallelNode
+	suiteConfig, _ := GinkgoConfiguration()
+	port := 2345 + suiteConfig.ParallelProcess
 	server.HTTPTestServer.Listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	Expect(err).ToNot(HaveOccurred(),
 		fmt.Sprintf(`

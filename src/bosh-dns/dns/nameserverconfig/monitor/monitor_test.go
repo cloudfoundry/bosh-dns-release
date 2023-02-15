@@ -11,7 +11,7 @@ import (
 	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

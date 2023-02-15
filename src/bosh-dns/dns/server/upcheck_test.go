@@ -10,8 +10,7 @@ import (
 	"bosh-dns/dns/server"
 	"bosh-dns/dns/server/handlers"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

@@ -5,7 +5,7 @@ import (
 	"bosh-dns/dns/config/configfakes"
 	"errors"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

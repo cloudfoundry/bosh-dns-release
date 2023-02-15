@@ -12,10 +12,10 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -1291,7 +1291,7 @@ var _ = Describe("RecordSet", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("does not deadlock", func(done Done) {
+		It("does not deadlock", func(ctx SpecContext) {
 			wg := sync.WaitGroup{}
 
 			for i := 0; i < 100; i++ {
@@ -1374,9 +1374,9 @@ var _ = Describe("RecordSet", func() {
 				}
 				wg.Done()
 			}()
-
 			wg.Wait()
-			done <- true
-		}, 10)
+			// No Expect() block; instead, if this test fails, it generates a Ginkgo error "A running node failed to exit in time"
+			// followed by voluminous output.
+		}, NodeTimeout(10*time.Second))
 	})
 })

@@ -12,7 +12,7 @@ import (
 	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

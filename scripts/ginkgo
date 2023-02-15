@@ -2,10 +2,10 @@
 set -eu -o pipefail
 
 # shellcheck disable=SC2068
-go run github.com/onsi/ginkgo/ginkgo \
-  -keepGoing \
-  -skipPackage=vendor \
-  -race \
-  -randomizeAllSpecs \
-  -randomizeSuites \
+go run github.com/onsi/ginkgo/v2/ginkgo \
+  --keep-going \
+  --skip-package=vendor \
+  --race \
+  --randomize-all \
+  --randomize-suites \
   ${@}

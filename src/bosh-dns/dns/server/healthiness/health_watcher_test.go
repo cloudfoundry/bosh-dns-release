@@ -11,7 +11,7 @@ import (
 	"code.cloudfoundry.org/clock/fakeclock"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -182,7 +182,7 @@ var _ = Describe("HealthWatcher", func() {
 				Eventually(fakeChecker.GetStatusCallCount).Should(Equal(4))
 			})
 
-			It("returns new statuses when they change", func(done Done) {
+			It("returns new statuses when they change", func() {
 				Eventually(func() api.HealthStatus {
 					return healthWatcher.HealthState(ip).State
 				}).Should(Equal(api.StatusRunning))
@@ -191,7 +191,6 @@ var _ = Describe("HealthWatcher", func() {
 				Eventually(func() api.HealthStatus {
 					return healthWatcher.HealthState(ip).State
 				}).Should(Equal(api.StatusFailing))
-				close(done)
 			})
 		})
 	})

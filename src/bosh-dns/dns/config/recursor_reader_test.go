@@ -4,7 +4,7 @@ import (
 	. "bosh-dns/dns/config"
 	"bosh-dns/dns/manager/managerfakes"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"errors"

@@ -3,7 +3,7 @@ package criteria_test
 import (
 	"bosh-dns/dns/server/criteria"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

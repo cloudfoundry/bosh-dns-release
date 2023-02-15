@@ -14,10 +14,9 @@ import (
 	dnsconfig "bosh-dns/dns/config"
 	"bosh-dns/healthconfig"
 
-	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/gomega/gexec"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -64,7 +63,8 @@ var _ = BeforeEach(func() {
 	jobsDir, err = os.MkdirTemp(tmpDir, "job-metadata")
 	Expect(err).ToNot(HaveOccurred())
 
-	configPort = 1234 + config.GinkgoConfig.ParallelNode
+	suiteConfig, _ := GinkgoConfiguration()
+	configPort = 1234 + suiteConfig.ParallelProcess
 
 	healthExecutablePath = "healthy"
 	if runtime.GOOS == "windows" {
