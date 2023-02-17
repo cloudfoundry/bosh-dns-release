@@ -10,7 +10,7 @@ Push-Location "${env:GOPATH}\src\bosh-dns"
 
 $env:LOCAL_IP_ADDRESS = "<%= spec.ip %>"
 
-go.exe run github.com/onsi/ginkgo/ginkgo -randomizeAllSpecs -randomizeSuites acceptance_tests/windows/<%= p('suites') %>
+go.exe run github.com/onsi/ginkgo/v2/ginkgo --randomize-all --randomize-suites acceptance_tests/windows/<%= p('suites') %>
 
 Pop-Location
 

@@ -14,7 +14,7 @@ $env:GIT_SHA = Get-Content ".git\HEAD" -Raw
 
 cd $env:GOPATH/src/bosh-dns
 
-go.exe run github.com/onsi/ginkgo/ginkgo -r -race -keepGoing -randomizeAllSpecs -randomizeSuites performance_tests
+go.exe run github.com/onsi/ginkgo/v2/ginkgo -r --race --keep-going --randomize-all --randomize-suites performance_tests
 
 if ($LastExitCode -ne 0)
 {
