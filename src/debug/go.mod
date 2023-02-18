@@ -5,11 +5,11 @@ go 1.20
 require (
 	bosh-dns v0.0.0
 	code.cloudfoundry.org/tlsconfig v0.0.0-20230131191323-96331f8f153d
-	github.com/cloudfoundry/bosh-cli/v7 v7.1.2
+	github.com/cloudfoundry/bosh-cli/v7 v7.1.3
 	github.com/cloudfoundry/bosh-utils v0.0.354
 	github.com/jessevdk/go-flags v1.5.0
-	github.com/onsi/ginkgo/v2 v2.8.1
-	github.com/onsi/gomega v1.26.0
+	github.com/onsi/ginkgo/v2 v2.8.2
+	github.com/onsi/gomega v1.27.1
 )
 
 require (
@@ -19,7 +19,7 @@ require (
 	github.com/charlievieth/fs v0.0.3 // indirect
 	github.com/cheggaaa/pb/v3 v3.1.0 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.84 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.85 // indirect
 	github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4 // indirect
 	github.com/creack/pty v1.1.9 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
