@@ -13,7 +13,7 @@ golangci-lint version
 
 linted_os_list=(linux windows)
 
-go_mod_dirs="$(find "${REPO_DIR}" -name go.mod -exec dirname {} \;)"
+go_mod_dirs="$(find "${REPO_DIR}" -type d \( -name vendor -o -name pkg \) -prune -o -name go.mod -exec dirname {} \;)"
 
 for go_mod_dir in ${go_mod_dirs[*]}; do
   echo -e "\n lint-ing in '${go_mod_dir}' ..."
