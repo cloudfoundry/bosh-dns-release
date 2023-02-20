@@ -1477,7 +1477,12 @@ var _ = Describe("main", func() {
 							defer GinkgoRecover()
 							defer wg.Done()
 							r, _, err := c.Exchange(&m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
-							Expect(err).NotTo(HaveOccurred())
+							Expect(err).ToNot(HaveOccurred(),
+								fmt.Sprintln(`
+===========================================
+ ATTENTION: on macOS you may need to run
+    sudo sysctl -w kern.ipc.somaxconn=1024 #default is 128
+===========================================`))
 							Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 						}(wg, *m)
 					}
