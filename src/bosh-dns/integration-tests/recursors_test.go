@@ -307,7 +307,7 @@ var _ = Describe("Integration", func() {
 			It("forwards large UDP EDNS messages", func() {
 				dnsResponse := helpers.DigWithOptions("udp-9k-message.com.", environment.ServerAddress(), helpers.DigOpts{BufferSize: 65535, Port: environment.Port()})
 				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
-				Expect(dnsResponse.Answer).To(HaveLen(272))
+				Expect(dnsResponse.Answer).To(HaveLen(270))
 			})
 
 			It("compresses message responses that are larger than requested UDP Size", func() {

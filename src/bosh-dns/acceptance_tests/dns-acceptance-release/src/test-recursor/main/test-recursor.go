@@ -74,7 +74,7 @@ func main() {
 			msg.Answer = append(msg.Answer, aRec)
 		}
 
-		maxUdpSize := 9216
+		maxUdpSize := 9184
 		for len(msg.Answer) > 0 && msg.Len() > maxUdpSize {
 			msg.Answer = msg.Answer[:len(msg.Answer)-1]
 		}
