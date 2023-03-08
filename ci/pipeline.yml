@@ -87,7 +87,7 @@ jobs:
           - get: golang-release
             trigger: true
           - get: bosh-stemcell
-            resource: warden-bionic-stemcell
+            resource: warden-jammy-stemcell
           - get: bosh-candidate-release
       - task: bump-golang-package
         file: golang-release/ci/tasks/shared/bump-golang-package.yml
@@ -230,7 +230,7 @@ jobs:
               - get: envs
               - get: bosh-deployment
               - get: gcp-linux-stemcell
-                resource: gcp-bionic-stemcell
+                resource: gcp-jammy-stemcell
               - get: bosh-stemcell-windows
                 resource: gcp-windows-2019-stemcell
               - get: bosh-candidate-release
@@ -293,8 +293,8 @@ jobs:
             resource: envs
           - get: bosh-deployment
           - get: docker-release
-          - get: aws-bionic-stemcell
-          - get: warden-bionic-stemcell
+          - get: aws-jammy-stemcell
+          - get: warden-jammy-stemcell
           - get: bosh-docker-cpi-release
           - get: candidate-release
             passed: [ create-release ]
@@ -316,11 +316,11 @@ jobs:
             file: bosh-dns-release/ci/tasks/test-stress/deploy-docker.yml
             input_mapping:
               bbl-state: updated-bbl-state
-              stemcell: aws-bionic-stemcell
+              stemcell: aws-jammy-stemcell
           - task: deploy-containers
             file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
             input_mapping:
-              stemcell: warden-bionic-stemcell
+              stemcell: warden-jammy-stemcell
               bbl-state: updated-bbl-state
           - task: stress-containers
             file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
@@ -355,7 +355,7 @@ jobs:
                 trigger: true
                 passed: [ create-release ]
               - get: stemcell
-                resource: warden-bionic-stemcell
+                resource: warden-jammy-stemcell
               - get: bosh-release
               - get: docker-cpi-image
           - task: test-brats # contain base manifest
@@ -371,7 +371,7 @@ jobs:
               DNS_RELEASE_FILE_PATH: "dns-release"
               DNS_RELEASE_VERSION: "create"
               FOCUS_SPEC: "BoshDns"
-              STEMCELL_OS: "ubuntu-bionic"
+              STEMCELL_OS: "ubuntu-jammy"
 
   - name: upload-staging-release
     serial: true
@@ -651,15 +651,15 @@ resources:
     source:
       name: bosh-warden-boshlite-ubuntu-bionic-go_agent
 
-  - name: gcp-bionic-stemcell
+  - name: gcp-jammy-stemcell
     type: bosh-io-stemcell
     source:
-      name: bosh-google-kvm-ubuntu-bionic-go_agent
+      name: bosh-google-kvm-ubuntu-jammy-go_agent
 
-  - name: aws-bionic-stemcell
+  - name: aws-jammy-stemcell
     type: bosh-io-stemcell
     source:
-      name: bosh-aws-xen-hvm-ubuntu-bionic-go_agent
+      name: bosh-aws-xen-hvm-ubuntu-jammy-go_agent
 
   - name: warden-jammy-stemcell
     type: bosh-io-stemcell
