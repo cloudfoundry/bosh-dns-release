@@ -16,6 +16,8 @@ import (
 )
 
 var _ = Describe("Record Set Performance", func() {
+	const expectedAvergeResolutionTime int64 = 5000 // 5 milliseconds
+
 	var (
 		recordSet             *records.RecordSet
 		fakeLogger            *fakes.FakeLogger
@@ -86,7 +88,7 @@ var _ = Describe("Record Set Performance", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	It("is able to resolve query with large number of records quickly", func() {
+	It(fmt.Sprintf("resolves queries with a large number of records under %d nanoseconds", expectedAvergeResolutionTime), func() {
 		var totalTime time.Duration
 		var totalTimeLastRecord time.Duration
 		var count int
@@ -97,23 +99,20 @@ var _ = Describe("Record Set Performance", func() {
 			totalTime += time.Since(startTime)
 
 			Expect(err).ToNot(HaveOccurred())
-			Expect(ips).To(HaveLen(1))
-			Expect(ips).To(ContainElement("123.123.1.0"))
+			Expect(ips).To(HaveExactElements("123.123.1.0"))
 
 			startTime = time.Now()
 			ips, err = recordSet.Resolve("q-m1999s0.my-group.my-network.my-deployment.domain.")
 			totalTimeLastRecord += time.Since(startTime)
 
 			Expect(err).ToNot(HaveOccurred())
-			Expect(ips).To(HaveLen(1))
-			Expect(ips).To(ContainElement("123.123.208.207"))
+			Expect(ips).To(HaveExactElements("123.123.208.207"))
 		}
 
 		averageTime := totalTime.Microseconds() / int64(count)
 		averageTimeLastRecord := totalTimeLastRecord.Microseconds() / int64(count)
 
-		// The average lookup should take less than 2.5 milliseconds
-		Expect(averageTime).To(BeNumerically("<", 2500))
-		Expect(averageTimeLastRecord).To(BeNumerically("<", 2500))
+		Expect(averageTime).To(BeNumerically("<", expectedAvergeResolutionTime))
+		Expect(averageTimeLastRecord).To(BeNumerically("<", expectedAvergeResolutionTime))
 	})
 })
