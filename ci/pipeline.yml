@@ -134,7 +134,7 @@ jobs:
         input_mapping:
           candidate-release: bumped-release
         params:
-          STEMCELL_OS: "ubuntu-jammy"
+          BASE_STEMCELL: "ubuntu-jammy"
       - put: bosh-dns-release
         params:
           repository: bosh-dns-release
