@@ -10,14 +10,14 @@ grep -ri panic src/bosh-dns \
   --exclude-dir test_yml_assets \
   --exclude-dir performance_tests \
   --exclude-dir acceptance_tests \
-  --exclude-dir integration-tests \
+  --exclude-dir integration_tests \
   --exclude-dir gomega-dns && echo "panics detected in the code -- remove them" && exit 1
 
 "${REPO_DIR}/scripts/lint"
 
 pushd src/bosh-dns
-  "${REPO_DIR}/scripts/ginkgo" -r --skip-package=acceptance_tests,integration-tests,performance_tests,test_yml_assets .
-  "${REPO_DIR}/scripts/ginkgo" -r integration-tests
+  "${REPO_DIR}/scripts/ginkgo" -r --skip-package=acceptance_tests,integration_tests,performance_tests,test_yml_assets .
+  "${REPO_DIR}/scripts/ginkgo" -r integration_tests
 popd
 
 pushd src/debug

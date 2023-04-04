@@ -17,7 +17,7 @@ if ($LastExitCode -ne 0)
     exit 1
 }
 
-go.exe run github.com/onsi/ginkgo/v2/ginkgo -r -race -keepGoing -randomizeAllSpecs -randomizeSuites integration-tests
+go.exe run github.com/onsi/ginkgo/v2/ginkgo -r -race -keepGoing -randomizeAllSpecs -randomizeSuites integration_tests
 
 if ($LastExitCode -ne 0)
 {
