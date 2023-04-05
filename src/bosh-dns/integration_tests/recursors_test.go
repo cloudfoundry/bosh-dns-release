@@ -442,7 +442,7 @@ var _ = Describe("Integration", func() {
 							helpers.DigOpts{Port: environment.Port(), Timeout: 3 * time.Second},
 						)
 						Expect(dnsResponse.Answer[0]).ShouldNot(Equal(initialUpstreamResponse))
-						fmt.Printf("Running %d times out of %d total\n", i, handlers.FailHistoryThreshold)
+						By(fmt.Sprintf("Running %d times out of %d total\n", i, handlers.FailHistoryThreshold))
 					}
 
 					By("bringing back the first upstream recursor")
