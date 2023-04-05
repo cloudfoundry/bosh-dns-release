@@ -14,6 +14,7 @@ echo " running  '${COMMAND[*]}'"
 echo
 
 docker run \
+  --platform linux/amd64 \
   --volume "${REPO_DIR}:${MOUNT_POINT}" \
   --workdir "${MOUNT_POINT}" \
   -it "${IMAGE}" \
