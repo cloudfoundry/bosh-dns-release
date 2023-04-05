@@ -1,18 +1,12 @@
 package integration_tests
 
 import (
-	"bosh-dns/dns/server/handlers"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
-
-	"bosh-dns/acceptance_tests/helpers"
-	"bosh-dns/dns/server/record"
-
-	gomegadns "bosh-dns/gomega-dns"
 
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
@@ -21,6 +15,11 @@ import (
 	"github.com/onsi/gomega/gexec"
 
 	"gopkg.in/yaml.v2"
+
+	"bosh-dns/acceptance_tests/helpers"
+	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/server/record"
+	gomegadns "bosh-dns/gomega-dns"
 )
 
 type testRecursor struct {
