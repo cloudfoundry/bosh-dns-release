@@ -26,7 +26,7 @@ github.com/charlievieth/fs
 ## explicit; go 1.17
 github.com/cheggaaa/pb/v3
 github.com/cheggaaa/pb/v3/termutil
-# github.com/cloudfoundry/bosh-cli/v7 v7.2.1
+# github.com/cloudfoundry/bosh-cli/v7 v7.2.2
 ## explicit; go 1.20
 github.com/cloudfoundry/bosh-cli/v7/io
 github.com/cloudfoundry/bosh-cli/v7/ui
@@ -75,7 +75,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20230323073829-e72429f035bd
+# github.com/google/pprof v0.0.0-20230405160723-4a4c7d95572b
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/jessevdk/go-flags v1.5.0
@@ -156,7 +156,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/mod v0.9.0
+# golang.org/x/mod v0.10.0
 ## explicit; go 1.17
 golang.org/x/mod/semver
 # golang.org/x/net v0.8.0
@@ -172,7 +172,7 @@ golang.org/x/net/internal/socks
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
-# golang.org/x/sys v0.6.0
+# golang.org/x/sys v0.7.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -180,7 +180,7 @@ golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.6.0
+# golang.org/x/term v0.7.0
 ## explicit; go 1.17
 golang.org/x/term
 # golang.org/x/text v0.8.0

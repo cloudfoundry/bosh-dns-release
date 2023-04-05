@@ -5,7 +5,7 @@ go 1.20
 require (
 	bosh-dns v0.0.0
 	code.cloudfoundry.org/tlsconfig v0.0.0-20230320190829-8f91c367795b
-	github.com/cloudfoundry/bosh-cli/v7 v7.2.1
+	github.com/cloudfoundry/bosh-cli/v7 v7.2.2
 	github.com/cloudfoundry/bosh-utils v0.0.360
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/onsi/ginkgo/v2 v2.9.2
@@ -28,7 +28,7 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/google/pprof v0.0.0-20230323073829-e72429f035bd // indirect
+	github.com/google/pprof v0.0.0-20230405160723-4a4c7d95572b // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
@@ -39,10 +39,10 @@ require (
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/vito/go-interact v1.0.1 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
-	golang.org/x/mod v0.9.0 // indirect
+	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/term v0.6.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/term v0.7.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
