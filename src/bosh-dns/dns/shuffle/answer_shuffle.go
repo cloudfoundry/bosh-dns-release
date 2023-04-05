@@ -1,14 +1,14 @@
 package shuffle
 
 import (
-	mathrand "math/rand"
+	"math/rand"
 	"time"
 
 	"github.com/miekg/dns"
 )
 
 func init() {
-	mathrand.Seed(time.Now().UTC().UnixNano())
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 type AnswerShuffle struct{}
@@ -23,7 +23,7 @@ func (s AnswerShuffle) Shuffle(src []dns.RR) []dns.RR {
 	dst := make([]dns.RR, len(srccopy))
 
 	for i := 0; i < len(dst); i++ {
-		j := mathrand.Intn(len(srccopy))
+		j := rand.Intn(len(srccopy))
 		answer := srccopy[j]
 		srccopy = s.remove(j, srccopy)
 		dst[i] = answer

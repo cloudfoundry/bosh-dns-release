@@ -1,12 +1,12 @@
 package shuffle
 
 import (
-	mathrand "math/rand"
+	"math/rand"
 	"time"
 )
 
 func init() {
-	mathrand.Seed(time.Now().UTC().UnixNano())
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 type StringShuffle struct{}
@@ -21,7 +21,7 @@ func (s StringShuffle) Shuffle(src []string) []string {
 	dst := make([]string, len(srccopy))
 
 	for i := 0; i < len(dst); i++ {
-		j := mathrand.Intn(len(srccopy))
+		j := rand.Intn(len(srccopy))
 		answer := srccopy[j]
 		srccopy = s.remove(j, srccopy)
 		dst[i] = answer
