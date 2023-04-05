@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	rand.Seed(time.Now().UTC().UnixNano()) //nolint:staticcheck
 }
 
 type AnswerShuffle struct{}
