@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"time"
-
 	"os"
+	"time"
 
 	"bosh-dns/dns/config"
 
@@ -45,8 +44,6 @@ var _ = Describe("Config", func() {
 	)
 
 	BeforeEach(func() {
-		rand.Seed(time.Now().Unix())
-
 		addressesFileGlob = "/addresses/*/glob"
 		aliasesFileGlob = "/aliases/*/glob"
 		apiCAFile = "/api/ca"
