@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -28,18 +27,14 @@ var _ = Describe("Main", func() {
 
 	BeforeEach(func() {
 		server = newFakeAPIServer()
-		os.Setenv("DNS_API_ADDRESS", server.URL())
-		os.Setenv("DNS_API_TLS_CA_CERT_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_ca.pem")
-		os.Setenv("DNS_API_TLS_CERTIFICATE_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_wrong_cn_client.pem")
-		os.Setenv("DNS_API_TLS_PRIVATE_KEY_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_client.key")
+		GinkgoT().Setenv("DNS_API_ADDRESS", server.URL())
+		GinkgoT().Setenv("DNS_API_TLS_CA_CERT_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_ca.pem")
+		GinkgoT().Setenv("DNS_API_TLS_CERTIFICATE_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_wrong_cn_client.pem")
+		GinkgoT().Setenv("DNS_API_TLS_PRIVATE_KEY_PATH", "../../bosh-dns/dns/api/assets/test_certs/test_client.key")
 	})
 
 	AfterEach(func() {
 		server.Close()
-		os.Unsetenv("DNS_API_ADDRESS")
-		os.Unsetenv("DNS_API_TLS_CA_CERT_PATH")
-		os.Unsetenv("DNS_API_TLS_CERTIFICATE_PATH")
-		os.Unsetenv("DNS_API_TLS_PRIVATE_KEY_PATH")
 	})
 
 	Describe("flags", func() {
