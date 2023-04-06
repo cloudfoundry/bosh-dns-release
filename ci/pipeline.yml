@@ -22,12 +22,6 @@ groups:
       - automatically-release-new-patch
       - clear-release-notes
 
-  - name: bosh-dns-release-images
-    jobs:
-      - build-unit-tests-image
-      - build-acceptance-tests-windows-image
-      - build-acceptance-tests-image
-
 jobs:
   - name: bump-deps
     public: true
@@ -236,7 +230,7 @@ jobs:
               - get: bosh-stemcell-windows
                 resource: gcp-windows-2019-stemcell
               - get: bosh-candidate-release
-              - get: main-bosh-docker-image
+              - get: docker-bosh-integration-image
               - get: candidate-release
                 passed:
                   - create-release
@@ -259,14 +253,14 @@ jobs:
               - in_parallel:
                   - task: windows
                     file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
-                    image: main-bosh-docker-image
+                    image: docker-bosh-integration-image
                     params:
                       WINDOWS_OS_VERSION: windows2019
                       ENV_NAME: windows2019
                     timeout: 1h
                   - task: windows-nameserver-disabled
                     file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
-                    image: main-bosh-docker-image
+                    image: docker-bosh-integration-image
                     params:
                       WINDOWS_OS_VERSION: windows2019
                       ENV_NAME: windows2019
@@ -430,7 +424,7 @@ jobs:
         - delivery
       - get: golang-release
       - get: version
-      - get: main-bosh-docker-image
+      - get: docker-bosh-integration-image
     - try:
         task: check-for-patched-cves
         file: golang-release/ci/tasks/shared/check-for-patched-cves.yml
@@ -449,7 +443,7 @@ jobs:
               bump: patch
     - task: ensure-cve-checker-succeeded
       file: golang-release/ci/tasks/shared/ensure-cve-checker-succeeded.yml
-      image: main-bosh-docker-image
+      image: docker-bosh-integration-image
       params:
         description: |
           Since the previous step is wrapped in a "try", this task checks that the previous step fully executed.
@@ -515,53 +509,6 @@ jobs:
               - test-acceptance-windows2019
               - brats-ubuntu
 
-  - name: build-acceptance-tests-image
-    public: true
-    serial: true
-    plan:
-      - in_parallel:
-          - get: midnight
-            trigger: true
-          - get: bosh-dns-release-ci-docker-path
-            trigger: true
-          - get: main-bosh-docker-image
-            trigger: true
-      - put: acceptance-tests-image
-        params:
-          build: "bosh-dns-release-ci-docker-path/ci/docker/acceptance-tests"
-        get_params:
-          skip_download: true
-
-  - name: build-acceptance-tests-windows-image
-    public: true
-    serial: true
-    plan:
-      - in_parallel:
-          - get: midnight
-            trigger: true
-          - get: bosh-dns-release-ci-docker-path
-            trigger: true
-      - put: acceptance-tests-windows-image
-        params:
-          build: "bosh-dns-release-ci-docker-path/ci/docker/acceptance-tests-windows"
-        get_params:
-          skip_download: true
-
-  - name: build-unit-tests-image
-    public: true
-    serial: true
-    plan:
-      - in_parallel:
-          - get: midnight
-            trigger: true
-          - get: bosh-dns-release-ci-docker-path
-            trigger: true
-      - put: unit-tests-image
-        params:
-          build: "bosh-dns-release-ci-docker-path/ci/docker/unit-tests"
-        get_params:
-          skip_download: true
-
 resources:
   - name: bosh-dns-release
     type: git
@@ -578,14 +525,6 @@ resources:
       owner: cloudfoundry
       repository: bosh-dns-release
       access_token: ((github_public_repo_token))
-
-  - name: bosh-dns-release-ci-docker-path
-    type: git
-    source:
-      uri: https://github.com/cloudfoundry/bosh-dns-release.git
-      branch: master
-      paths:
-        - ci/docker
 
   - name: golang-release
     type: git
@@ -697,43 +636,12 @@ resources:
       username: ((docker.username))
       password: ((docker.password))
 
-  - name: main-bosh-docker-image
+  - name: docker-bosh-integration-image
     type: registry-image
     source:
-      repository: bosh/main-bosh-docker
+      repository: bosh/integration
       username: ((docker.username))
       password: ((docker.password))
-
-  - name: unit-tests-image
-    type: docker-image
-    source:
-      repository: bosh/bosh-dns-release
-      tag: unit-tests
-      username: ((docker.username))
-      password: ((docker.password))
-
-  - name: acceptance-tests-image
-    type: docker-image
-    source:
-      repository: bosh/bosh-dns-release
-      tag: acceptance-tests
-      username: ((docker.username))
-      password: ((docker.password))
-
-  - name: acceptance-tests-windows-image
-    type: docker-image
-    source:
-      repository: bosh/bosh-dns-release
-      tag: acceptance-tests-windows
-      username: ((docker.username))
-      password: ((docker.password))
-
-  - name: midnight
-    type: time
-    source:
-      location: America/Los_Angeles
-      start: 12 AM
-      stop: 1 AM
 
   - name: weekly
     type: time

@@ -3,7 +3,7 @@ set -eu -o pipefail
 
 REPO_DIR="$( cd "$( dirname "${0}" )" && cd .. && pwd )"
 
-IMAGE="${IMAGE:-"bosh/bosh-dns-release:unit-tests"}"
+IMAGE="${IMAGE:-"bosh/integration"}" # See ci/pipeline.yml
 MOUNT_POINT="/tmp/$(basename "${REPO_DIR}")"
 COMMAND=( "${@:-"/bin/bash"}" )
 
