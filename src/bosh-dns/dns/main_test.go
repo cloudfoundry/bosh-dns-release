@@ -518,7 +518,7 @@ var _ = Describe("main", func() {
 					err = os.MkdirAll(job2Dir, 0755)
 					Expect(err).NotTo(HaveOccurred())
 
-					os.WriteFile(path.Join(job1Dir, "links.json"), //nolint:errcheck
+					Expect(os.WriteFile(path.Join(job1Dir, "links.json"),
 						[]byte(`[
 						{
 						  "type": "appetizer",
@@ -530,16 +530,16 @@ var _ = Describe("main", func() {
 							"name": "yatsuhashi",
 							"group": "2"
 						}
-					]`), 0644)
+					]`), 0644)).To(Succeed())
 
-					os.WriteFile(path.Join(job2Dir, "links.json"), //nolint:errcheck
+					Expect(os.WriteFile(path.Join(job2Dir, "links.json"),
 						[]byte(`[
 						{
 						  "type": "entree",
 							"name": "yakisoba",
 							"group": "3"
 						}
-					]`), 0644)
+					]`), 0644)).To(Succeed())
 				})
 
 				Context("with Health enabled", func() {
@@ -1304,12 +1304,16 @@ var _ = Describe("main", func() {
 						}
 					})
 
-					go server.ListenAndServe() //nolint:errcheck
+					go func() {
+						defer GinkgoRecover()
+						err := server.ListenAndServe()
+						Expect(err).NotTo(HaveOccurred())
+					}()
 					Expect(testhelpers.WaitForListeningTCP(recursorPort)).To(Succeed())
 				})
 
 				AfterEach(func() {
-					server.Shutdown() //nolint:errcheck
+					_ = server.Shutdown() // ignore error, server may have already been shutdown
 				})
 
 				It("serves local recursor", func() {
@@ -1350,7 +1354,7 @@ var _ = Describe("main", func() {
 						Expect(answer0.A.String()).To(Equal("192.0.2.100"))
 
 						// make sure the server is really shut down
-						server.Shutdown() //nolint:errcheck
+						Expect(server.Shutdown()).To(Succeed())
 						Eventually(func() error {
 							m = &dns.Msg{}
 							SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
@@ -1391,7 +1395,7 @@ var _ = Describe("main", func() {
 						Expect(answer0.A.String()).To(Equal("192.0.2.100"))
 
 						// make sure the server is really shut down
-						server.Shutdown() //nolint:errcheck
+						Expect(server.Shutdown()).To(Succeed())
 						Eventually(func() error {
 							m = &dns.Msg{}
 							SetQuestion(m, nil, "test-target.recursor.internal.", dns.TypeANY)
@@ -1887,7 +1891,6 @@ func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Serv
 		tlsconfig.WithClientAuthenticationFromFile("../healthcheck/assets/test_certs/test_ca.pem"),
 	)
 	Expect(err).ToNot(HaveOccurred())
-	tlsConfig.BuildNameToCertificate() //nolint:staticcheck
 
 	server := ghttp.NewUnstartedServer()
 	err = server.HTTPTestServer.Listener.Close()
