@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/miekg/dns"
+	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 )
@@ -67,6 +68,7 @@ func fetchFlag(m *dns.Msg, flag string) bool {
 	case "cd":
 		return m.CheckingDisabled
 	default:
-		panic("no DNS flag named " + flag)
+		Fail("no DNS flag named " + flag)
+		return false
 	}
 }
