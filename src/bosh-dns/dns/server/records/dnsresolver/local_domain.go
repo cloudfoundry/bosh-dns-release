@@ -1,10 +1,12 @@
 package dnsresolver
 
 import (
-	"bosh-dns/dns/server/records"
 	"errors"
+	"math/rand"
 	"net"
 	"strings"
+
+	"bosh-dns/dns/server/records"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
@@ -14,14 +16,7 @@ type LocalDomain struct {
 	logger    logger.Logger
 	logTag    string
 	recordSet RecordSet
-	shuffler  AnswerShuffler
 	truncater ResponseTruncater
-}
-
-//counterfeiter:generate . AnswerShuffler
-
-type AnswerShuffler interface {
-	Shuffle(src []dns.RR) []dns.RR
 }
 
 //counterfeiter:generate . RecordSet
@@ -30,12 +25,11 @@ type RecordSet interface {
 	Resolve(domain string) ([]string, error)
 }
 
-func NewLocalDomain(logger logger.Logger, recordSet RecordSet, shuffler AnswerShuffler, truncater ResponseTruncater) LocalDomain {
+func NewLocalDomain(logger logger.Logger, recordSet RecordSet, truncater ResponseTruncater) LocalDomain {
 	return LocalDomain{
 		logger:    logger,
 		logTag:    "LocalDomain",
 		recordSet: recordSet,
-		shuffler:  shuffler,
 		truncater: truncater,
 	}
 }
@@ -109,5 +103,9 @@ func (d LocalDomain) resolve(question dns.Question) ([]dns.RR, int) {
 		}
 	}
 
-	return d.shuffler.Shuffle(answers), dns.RcodeSuccess
+	rand.Shuffle(len(answers), func(i, j int) {
+		answers[i], answers[j] = answers[j], answers[i]
+	})
+
+	return answers, dns.RcodeSuccess
 }

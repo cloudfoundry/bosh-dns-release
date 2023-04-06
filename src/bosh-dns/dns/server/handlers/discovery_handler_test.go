@@ -1,22 +1,22 @@
 package handlers_test
 
 import (
-	"bosh-dns/dns/server/records"
 	"errors"
 	"net"
-
-	"bosh-dns/dns/server/handlers"
-	"bosh-dns/dns/server/internal/internalfakes"
-	"bosh-dns/dns/server/records/dnsresolver"
-	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
 
-	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/server/internal/internalfakes"
+	"bosh-dns/dns/server/records"
+	"bosh-dns/dns/server/records/dnsresolver"
+	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
+
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
 )
 
 var _ = Describe("DiscoveryHandler", func() {
@@ -26,7 +26,6 @@ var _ = Describe("DiscoveryHandler", func() {
 			fakeWriter       *internalfakes.FakeResponseWriter
 			fakeLogger       *loggerfakes.FakeLogger
 			fakeRecordSet    *dnsresolverfakes.FakeRecordSet
-			fakeShuffler     *dnsresolverfakes.FakeAnswerShuffler
 			fakeTruncater    *dnsresolverfakes.FakeResponseTruncater
 		)
 
@@ -34,14 +33,10 @@ var _ = Describe("DiscoveryHandler", func() {
 			fakeWriter = &internalfakes.FakeResponseWriter{}
 			fakeLogger = &loggerfakes.FakeLogger{}
 			fakeRecordSet = &dnsresolverfakes.FakeRecordSet{}
-			fakeShuffler = &dnsresolverfakes.FakeAnswerShuffler{}
-			fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
-				return input
-			}
 
 			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
 			fakeTruncater = &dnsresolverfakes.FakeResponseTruncater{}
-			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler, fakeTruncater))
+			discoveryHandler = handlers.NewDiscoveryHandler(fakeLogger, dnsresolver.NewLocalDomain(fakeLogger, fakeRecordSet, fakeTruncater))
 		})
 
 		Context("when there are no questions", func() {

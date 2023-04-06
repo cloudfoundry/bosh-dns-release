@@ -34,7 +34,7 @@ type Config struct {
 	ConfigurableResponse string `yaml:"configurable_response"`
 }
 
-func NewTestRecursor(port int, configurableResponse string) *testRecursor {
+func newTestRecursor(port int, configurableResponse string) *testRecursor {
 	return &testRecursor{
 		address:              "127.0.0.1",
 		port:                 port,
@@ -130,7 +130,7 @@ var _ = Describe("Integration", func() {
 		)
 
 		BeforeEach(func() {
-			responses = []record.Record{record.Record{
+			responses = []record.Record{{
 				ID:            "garbage",
 				IP:            "255.255.255.255",
 				InstanceIndex: "2",
@@ -149,7 +149,7 @@ var _ = Describe("Integration", func() {
 				Fail(fmt.Sprintf("could not start test environment: %s", err))
 			}
 
-			recursorEnv = NewTestRecursor(6364, "1.1.1.1")
+			recursorEnv = newTestRecursor(6364, "1.1.1.1")
 			err = recursorEnv.start()
 			if err != nil {
 				Fail(fmt.Sprintf("could not start test recursor: %s", err))
@@ -230,7 +230,7 @@ var _ = Describe("Integration", func() {
 						Expect(dnsResponse.Rcode).To(Equal(dns.RcodeNameError))
 						Expect(dnsResponse.Answer).To(HaveLen(0))
 
-						recursorEnv.start() //nolint:errcheck
+						Expect(recursorEnv.start()).To(Succeed())
 
 						dnsResponse = helpers.DigWithOptions("recursor-small.com.", environment.ServerAddress(), helpers.DigOpts{Port: environment.Port(), SkipRcodeCheck: true, SkipErrCheck: true})
 
@@ -354,7 +354,7 @@ var _ = Describe("Integration", func() {
 			var secondTestRecursor *testRecursor
 
 			JustBeforeEach(func() {
-				secondTestRecursor = NewTestRecursor(6365, "2.2.2.2")
+				secondTestRecursor = newTestRecursor(6365, "2.2.2.2")
 				err := secondTestRecursor.start()
 				if err != nil {
 					Fail(fmt.Sprintf("could not start test recursor: %s", err))

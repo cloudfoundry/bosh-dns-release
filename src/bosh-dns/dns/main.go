@@ -25,7 +25,6 @@ import (
 	"bosh-dns/dns/server/monitoring"
 	"bosh-dns/dns/server/records"
 	"bosh-dns/dns/server/records/dnsresolver"
-	"bosh-dns/dns/shuffle"
 	"bosh-dns/healthconfig"
 	"bosh-dns/tlsclient"
 
@@ -128,8 +127,7 @@ func mainExitCode() int {
 
 	dnsManager := newDNSManager(config.Address, logger, clock, fs)
 	recursorReader := dnsconfig.NewRecursorReader(dnsManager, listenIPs)
-	stringShuffler := shuffle.NewStringShuffler()
-	err = dnsconfig.ConfigureRecursors(recursorReader, stringShuffler, &config)
+	err = dnsconfig.ConfigureRecursors(recursorReader, &config)
 	if err != nil {
 		logger.Error(logTag, fmt.Sprintf("Unable to configure recursor addresses from os: %s", err.Error()))
 		return 1
@@ -157,7 +155,7 @@ func mainExitCode() int {
 		records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger, filtererFactory, records.NewAliasEncoder())
 
 	truncater := dnsresolver.NewResponseTruncater()
-	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, shuffle.New(), truncater)
+	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, truncater)
 
 	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, config.RecursorMaxRetries, logger)
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
@@ -165,7 +163,7 @@ func mainExitCode() int {
 
 	mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger, recordSet, forwardHandler), clock, logger))
 
-	handlerFactory := handlers.NewFactory(exchangerFactory, clock, stringShuffler, config.RecursorMaxRetries, logger, truncater)
+	handlerFactory := handlers.NewFactory(exchangerFactory, clock, config.RecursorMaxRetries, logger, truncater)
 
 	delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
 	if err != nil {

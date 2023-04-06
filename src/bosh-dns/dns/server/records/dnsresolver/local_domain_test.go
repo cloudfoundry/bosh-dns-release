@@ -1,8 +1,8 @@
 package dnsresolver_test
 
 import (
-	"bosh-dns/dns/server/records"
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
@@ -12,6 +12,7 @@ import (
 
 	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
 	"bosh-dns/dns/server/internal/internalfakes"
+	"bosh-dns/dns/server/records"
 	. "bosh-dns/dns/server/records/dnsresolver"
 	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 )
@@ -23,7 +24,6 @@ var _ = Describe("LocalDomain", func() {
 			fakeWriter    *internalfakes.FakeResponseWriter
 			fakeRecordSet *dnsresolverfakes.FakeRecordSet
 			localDomain   LocalDomain
-			fakeShuffler  *dnsresolverfakes.FakeAnswerShuffler
 			fakeTruncater *dnsresolverfakes.FakeResponseTruncater
 		)
 
@@ -31,21 +31,18 @@ var _ = Describe("LocalDomain", func() {
 			fakeLogger = &loggerfakes.FakeLogger{}
 			fakeWriter = &internalfakes.FakeResponseWriter{}
 			fakeRecordSet = &dnsresolverfakes.FakeRecordSet{}
-			fakeShuffler = &dnsresolverfakes.FakeAnswerShuffler{}
 			fakeTruncater = &dnsresolverfakes.FakeResponseTruncater{}
-			fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
-				return input
-			}
 
 			fakeWriter.RemoteAddrReturns(&net.UDPAddr{})
-			localDomain = NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler, fakeTruncater)
+			localDomain = NewLocalDomain(fakeLogger, fakeRecordSet, fakeTruncater)
 		})
 
 		It("returns responses from the question domain", func() {
+			originalResolutionList := []string{"123.123.123.123", "123.123.123.124"}
 			fakeRecordSet.ResolveStub = func(domain string) ([]string, error) {
 				switch domain {
 				case "*.group-1.network-name.deployment-name.bosh.":
-					return []string{"123.123.123.123", "123.123.123.124"}, nil
+					return originalResolutionList, nil
 				case "instance-2.group-2.network-name.deployment-name.bosh.":
 					return []string{"123.123.123.246"}, nil
 				}
@@ -61,26 +58,18 @@ var _ = Describe("LocalDomain", func() {
 				req,
 			)
 
-			answers := responseMsg.Answer
-			Expect(answers).To(HaveLen(2))
+			var answerStrings []string
 
-			answer := answers[0]
-			header := answer.Header()
-			Expect(header.Name).To(Equal(casedQname))
-			Expect(header.Rrtype).To(Equal(dns.TypeA))
-			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
-			Expect(header.Ttl).To(Equal(uint32(0)))
-			Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
-			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.123"))
-
-			answer = answers[1]
-			header = answer.Header()
-			Expect(header.Name).To(Equal(casedQname))
-			Expect(header.Rrtype).To(Equal(dns.TypeA))
-			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
-			Expect(header.Ttl).To(Equal(uint32(0)))
-			Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
-			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.124"))
+			for _, a := range responseMsg.Answer {
+				answerStrings = append(answerStrings, a.(*dns.A).A.String())
+				Expect(a).To(BeAssignableToTypeOf(&dns.A{}))
+				header := a.Header()
+				Expect(header.Name).To(Equal(casedQname))
+				Expect(header.Rrtype).To(Equal(dns.TypeA))
+				Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+				Expect(header.Ttl).To(Equal(uint32(0)))
+			}
+			Expect(answerStrings).To(ConsistOf(originalResolutionList))
 
 			Expect(responseMsg.RecursionAvailable).To(BeTrue())
 			Expect(responseMsg.Authoritative).To(BeTrue())
@@ -88,10 +77,12 @@ var _ = Describe("LocalDomain", func() {
 		})
 
 		It("shuffles the answers", func() {
+			originalResolutionList := []string{"1.1.1.1", "2.2.2.2", "3.3.3.3", "4.4.4.4", "5.5.5.5"}
+
 			fakeRecordSet.ResolveStub = func(domain string) ([]string, error) {
 				switch domain {
 				case "*.group-1.network-name.deployment-name.bosh.":
-					return []string{"123.123.123.123", "123.123.123.124"}, nil
+					return originalResolutionList, nil
 				case "instance-2.group-2.network-name.deployment-name.bosh.":
 					return []string{"123.123.123.246"}, nil
 				}
@@ -99,10 +90,7 @@ var _ = Describe("LocalDomain", func() {
 				return nil, errors.New("nope")
 			}
 
-			fakeShuffler.ShuffleStub = func(input []dns.RR) []dns.RR {
-				return []dns.RR{input[1], input[0]}
-			}
-			localDomain = NewLocalDomain(fakeLogger, fakeRecordSet, fakeShuffler, fakeTruncater)
+			localDomain = NewLocalDomain(fakeLogger, fakeRecordSet, fakeTruncater)
 
 			req := &dns.Msg{}
 			SetQuestion(req, nil, "*.group-1.network-name.deployment-name.bosh.", dns.TypeA)
@@ -111,9 +99,12 @@ var _ = Describe("LocalDomain", func() {
 				req,
 			)
 
-			answers := responseMsg.Answer
-			Expect(answers[0].(*dns.A).A.String()).To(Equal("123.123.123.124"))
-			Expect(answers[1].(*dns.A).A.String()).To(Equal("123.123.123.123"))
+			var answerStrings []string
+
+			for _, a := range responseMsg.Answer {
+				answerStrings = append(answerStrings, a.(*dns.A).A.String())
+			}
+			Expect(answerStrings).To(ConsistOf(originalResolutionList))
 			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
 		})
 
@@ -147,8 +138,9 @@ var _ = Describe("LocalDomain", func() {
 		})
 
 		It("returns only A records (no AAAA records) when the queried for A records", func() {
-			fakeRecordSet.ResolveReturns([]string{
-				"123.123.123.123", "2601:0646:0102:0095:0000:0000:0000:0025", "123.123.123.246"}, nil)
+			ipv6ResolutionList := []string{"2601:0646:0102:0095:0000:0000:0000:0025"}
+			ipv4ResolutionList := []string{"123.123.123.123", "123.123.123.246"}
+			fakeRecordSet.ResolveReturns(append(ipv6ResolutionList, ipv4ResolutionList...), nil)
 
 			var casedQname string
 			req := &dns.Msg{}
@@ -158,33 +150,31 @@ var _ = Describe("LocalDomain", func() {
 				req,
 			)
 
-			answers := responseMsg.Answer
-			Expect(answers).To(HaveLen(2))
+			var answerStrings []string
 
-			answer := answers[0]
-			header := answer.Header()
-			Expect(header.Name).To(Equal(casedQname))
-			Expect(header.Rrtype).To(Equal(dns.TypeA))
-			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
-			Expect(header.Ttl).To(Equal(uint32(0)))
-			Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
-			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.123"))
+			for _, a := range responseMsg.Answer {
+				answerStrings = append(answerStrings, a.(*dns.A).A.String())
 
-			answer = answers[1]
-			header = answer.Header()
-			Expect(header.Name).To(Equal(casedQname))
-			Expect(header.Rrtype).To(Equal(dns.TypeA))
-			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
-			Expect(header.Ttl).To(Equal(uint32(0)))
-			Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
-			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.246"))
+				Expect(a).To(BeAssignableToTypeOf(&dns.A{}))
+				header := a.Header()
+				Expect(header.Name).To(Equal(casedQname))
+				Expect(header.Rrtype).To(Equal(dns.TypeA))
+				Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+				Expect(header.Ttl).To(Equal(uint32(0)))
+			}
+			Expect(answerStrings).To(ConsistOf(ipv4ResolutionList))
 
 			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
 		})
 
 		It("returns only AAAA records (no A records) when the queried for AAAA records", func() {
-			fakeRecordSet.ResolveReturns([]string{
-				"2601:0646:0102:0095:0000:0000:0000:0026", "123.123.123.246", "2601:0646:0102:0095:0000:0000:0000:0024"}, nil)
+			ipv6ResolutionList := []string{
+				"2601:0646:0102:0095:0000:0000:0000:0026",
+				"2601:0646:0102:0095:0000:0000:0000:0024",
+			}
+			ipv4ResolutionList := []string{"123.123.123.246"}
+
+			fakeRecordSet.ResolveReturns(append(ipv6ResolutionList, ipv4ResolutionList...), nil)
 
 			var casedQname string
 			req := &dns.Msg{}
@@ -194,33 +184,36 @@ var _ = Describe("LocalDomain", func() {
 				req,
 			)
 
-			answers := responseMsg.Answer
-			Expect(answers).To(HaveLen(2))
+			var ipv6AnswerStrings []string
+			for _, a := range responseMsg.Answer {
+				ipv6AnswerStrings = append(ipv6AnswerStrings, a.(*dns.AAAA).AAAA.String())
 
-			answer := answers[0]
-			header := answer.Header()
-			Expect(header.Name).To(Equal(casedQname))
-			Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
-			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
-			Expect(header.Ttl).To(Equal(uint32(0)))
-			Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
-			Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::26"))
+				Expect(a).To(BeAssignableToTypeOf(&dns.AAAA{}))
+				header := a.Header()
+				Expect(header.Name).To(Equal(casedQname))
+				Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
+				Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+				Expect(header.Ttl).To(Equal(uint32(0)))
+			}
+			Expect(len(ipv6AnswerStrings)).To(Equal(len(ipv6ResolutionList)))
 
-			answer = answers[1]
-			header = answer.Header()
-			Expect(header.Name).To(Equal(casedQname))
-			Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
-			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
-			Expect(header.Ttl).To(Equal(uint32(0)))
-			Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
-			Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::24"))
+			var canonicalIPv6ResolutionList []string
+			for _, s := range ipv6AnswerStrings {
+				canonicalIPv6ResolutionList = append(canonicalIPv6ResolutionList, net.ParseIP(s).String())
+			}
+			Expect(ipv6AnswerStrings).To(ConsistOf(canonicalIPv6ResolutionList))
 
 			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
 		})
 
 		It("returns both A and AAAA records when the queried for ANY records", func() {
-			fakeRecordSet.ResolveReturns([]string{
-				"2601:0646:0102:0095:0000:0000:0000:0026", "123.123.123.246", "2601:0646:0102:0095:0000:0000:0000:0024"}, nil)
+			ipv6ResolutionList := []string{
+				"2601:0646:0102:0095:0000:0000:0000:0026",
+				"2601:0646:0102:0095:0000:0000:0000:0024",
+			}
+			ipv4ResolutionList := []string{"123.123.123.246"}
+
+			fakeRecordSet.ResolveReturns(append(ipv6ResolutionList, ipv4ResolutionList...), nil)
 
 			var casedQname string
 			req := &dns.Msg{}
@@ -230,35 +223,49 @@ var _ = Describe("LocalDomain", func() {
 				req,
 			)
 
-			answers := responseMsg.Answer
-			Expect(answers).To(HaveLen(3))
+			var ipv4Responses []dns.RR
+			var ipv6Responses []dns.RR
+			for _, a := range responseMsg.Answer {
+				if a.Header().Rrtype == dns.TypeAAAA {
+					ipv6Responses = append(ipv6Responses, a)
+				} else if a.Header().Rrtype == dns.TypeA {
+					ipv4Responses = append(ipv4Responses, a)
+				} else {
+					Fail(fmt.Sprintf("unexpected response type: %v", a))
+				}
+			}
 
-			answer := answers[0]
-			header := answer.Header()
-			Expect(header.Name).To(Equal(casedQname))
-			Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
-			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
-			Expect(header.Ttl).To(Equal(uint32(0)))
-			Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
-			Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::26"))
+			var ipv6AnswerStrings []string
+			for _, a := range ipv6Responses {
+				ipv6AnswerStrings = append(ipv6AnswerStrings, a.(*dns.AAAA).AAAA.String())
 
-			answer = answers[1]
-			header = answer.Header()
-			Expect(header.Name).To(Equal(casedQname))
-			Expect(header.Rrtype).To(Equal(dns.TypeA))
-			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
-			Expect(header.Ttl).To(Equal(uint32(0)))
-			Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
-			Expect(answer.(*dns.A).A.String()).To(Equal("123.123.123.246"))
+				Expect(a).To(BeAssignableToTypeOf(&dns.AAAA{}))
+				header := a.Header()
+				Expect(header.Name).To(Equal(casedQname))
+				Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
+				Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+				Expect(header.Ttl).To(Equal(uint32(0)))
+			}
+			Expect(len(ipv6AnswerStrings)).To(Equal(len(ipv6ResolutionList)))
 
-			answer = answers[2]
-			header = answer.Header()
-			Expect(header.Name).To(Equal(casedQname))
-			Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
-			Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
-			Expect(header.Ttl).To(Equal(uint32(0)))
-			Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
-			Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::24"))
+			var canonicalIPv6ResolutionList []string
+			for _, s := range ipv6AnswerStrings {
+				canonicalIPv6ResolutionList = append(canonicalIPv6ResolutionList, net.ParseIP(s).String())
+			}
+			Expect(ipv6AnswerStrings).To(ConsistOf(canonicalIPv6ResolutionList))
+
+			var ipv4AnswerStrings []string
+			for _, a := range ipv4Responses {
+				ipv4AnswerStrings = append(ipv4AnswerStrings, a.(*dns.A).A.String())
+
+				Expect(a).To(BeAssignableToTypeOf(&dns.A{}))
+				header := a.Header()
+				Expect(header.Name).To(Equal(casedQname))
+				Expect(header.Rrtype).To(Equal(dns.TypeA))
+				Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
+				Expect(header.Ttl).To(Equal(uint32(0)))
+			}
+			Expect(ipv4AnswerStrings).To(ConsistOf(ipv4ResolutionList))
 
 			Expect(responseMsg.Rcode).To(Equal(dns.RcodeSuccess))
 		})

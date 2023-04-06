@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"math/rand"
+
 	"bosh-dns/dns/config"
 	"bosh-dns/dns/server/records/dnsresolver"
-	"bosh-dns/dns/shuffle"
 
 	"code.cloudfoundry.org/clock"
 	"github.com/cloudfoundry/bosh-utils/httpclient"
@@ -14,17 +15,15 @@ import (
 type Factory struct {
 	exchangerFactory   ExchangerFactory
 	clock              clock.Clock
-	shuffler           shuffle.StringShuffle
 	recursorRetryCount int
 	logger             boshlog.Logger
 	truncater          dnsresolver.ResponseTruncater
 }
 
-func NewFactory(exchangerFactory ExchangerFactory, clock clock.Clock, shuffler shuffle.StringShuffle, recursorRetryCount int, logger boshlog.Logger, truncater dnsresolver.ResponseTruncater) *Factory {
+func NewFactory(exchangerFactory ExchangerFactory, clock clock.Clock, recursorRetryCount int, logger boshlog.Logger, truncater dnsresolver.ResponseTruncater) *Factory {
 	return &Factory{
 		exchangerFactory:   exchangerFactory,
 		clock:              clock,
-		shuffler:           shuffler,
 		recursorRetryCount: recursorRetryCount,
 		logger:             logger,
 		truncater:          truncater,
@@ -51,7 +50,11 @@ func (f *Factory) CreateForwardHandler(recursors []string, cache bool) dns.Handl
 	//
 	// The default behavior defined by DNS spec is to use
 	// "smart" recursor selection.
-	pool := NewFailoverRecursorPool(f.shuffler.Shuffle(recursors), config.SmartRecursorSelection, f.recursorRetryCount, f.logger)
+	rand.Shuffle(len(recursors), func(i, j int) {
+		recursors[i], recursors[j] = recursors[j], recursors[i]
+	})
+
+	pool := NewFailoverRecursorPool(recursors, config.SmartRecursorSelection, f.recursorRetryCount, f.logger)
 	handler = NewForwardHandler(pool, f.exchangerFactory, f.clock, f.logger, f.truncater)
 
 	if cache {
