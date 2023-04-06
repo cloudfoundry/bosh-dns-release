@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
@@ -175,7 +176,10 @@ var _ = Describe("DiscoveryHandler", func() {
 			})
 
 			It("returns both A and AAAA records when the queried for ANY records", func() {
-				fakeRecordSet.ResolveReturns([]string{"2601:0646:0102:0095:0000:0000:0000:0025", "4.2.2.2"}, nil)
+				ipv6ResolutionList := []string{"2601:0646:0102:0095:0000:0000:0000:0025"}
+				ipv4ResolutionList := []string{"4.2.2.2"}
+
+				fakeRecordSet.ResolveReturns(append(ipv6ResolutionList, ipv4ResolutionList...), nil)
 
 				m := &dns.Msg{}
 				SetQuestion(m, nil, "my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
@@ -190,29 +194,47 @@ var _ = Describe("DiscoveryHandler", func() {
 
 				Expect(responseMsg.Answer).To(HaveLen(2))
 
-				{
-					answer := responseMsg.Answer[0]
-					header := answer.Header()
+				var ipv4Responses []dns.RR
+				var ipv6Responses []dns.RR
+				for _, a := range responseMsg.Answer {
+					if a.Header().Rrtype == dns.TypeAAAA {
+						ipv6Responses = append(ipv6Responses, a)
+					} else if a.Header().Rrtype == dns.TypeA {
+						ipv4Responses = append(ipv4Responses, a)
+					} else {
+						Fail(fmt.Sprintf("unexpected response type: %v", a))
+					}
+				}
 
+				var ipv6AnswerStrings []string
+				for _, a := range ipv6Responses {
+					ipv6AnswerStrings = append(ipv6AnswerStrings, a.(*dns.AAAA).AAAA.String())
+
+					Expect(a).To(BeAssignableToTypeOf(&dns.AAAA{}))
+					header := a.Header()
 					Expect(header.Rrtype).To(Equal(dns.TypeAAAA))
 					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
 					Expect(header.Ttl).To(Equal(uint32(0)))
-
-					Expect(answer).To(BeAssignableToTypeOf(&dns.AAAA{}))
-					Expect(answer.(*dns.AAAA).AAAA.String()).To(Equal("2601:646:102:95::25"))
 				}
+				Expect(len(ipv6AnswerStrings)).To(Equal(len(ipv6ResolutionList)))
 
-				{
-					answer := responseMsg.Answer[1]
-					header := answer.Header()
+				var canonicalIPv6ResolutionList []string
+				for _, s := range ipv6AnswerStrings {
+					canonicalIPv6ResolutionList = append(canonicalIPv6ResolutionList, net.ParseIP(s).String())
+				}
+				Expect(ipv6AnswerStrings).To(ConsistOf(canonicalIPv6ResolutionList))
 
+				var ipv4AnswerStrings []string
+				for _, a := range ipv4Responses {
+					ipv4AnswerStrings = append(ipv4AnswerStrings, a.(*dns.A).A.String())
+
+					Expect(a).To(BeAssignableToTypeOf(&dns.A{}))
+					header := a.Header()
 					Expect(header.Rrtype).To(Equal(dns.TypeA))
 					Expect(header.Class).To(Equal(uint16(dns.ClassINET)))
 					Expect(header.Ttl).To(Equal(uint32(0)))
-
-					Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
-					Expect(answer.(*dns.A).A.String()).To(Equal("4.2.2.2"))
 				}
+				Expect(ipv4AnswerStrings).To(ConsistOf(ipv4ResolutionList))
 
 				Expect(fakeLogger.InfoCallCount()).To(Equal(0))
 			})
