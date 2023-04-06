@@ -1,15 +1,14 @@
 package internal_test
 
 import (
+	"net"
+	"time"
+
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/internal"
-	"fmt"
-	"net"
 
 	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/miekg/dns"
-
-	"time"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo/v2"
@@ -69,7 +68,6 @@ var _ = Describe("RequestLoggerHandler", func() {
 				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
-				fmt.Println(message)
 				Expect(message).To(Equal("handlers.RequestLoggerHandler Received request id=123 qtype=[A] qname=[q-what.bosh.]"))
 			})
 		})
@@ -91,7 +89,6 @@ var _ = Describe("RequestLoggerHandler", func() {
 				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
-				fmt.Println(message)
 				Expect(message).To(Equal("handlers.RequestLoggerHandler Request id=123 qtype=[A] qname=[q-what.bosh.] rcode=NOERROR ancount=1 time=1ns"))
 			})
 		})
@@ -104,7 +101,6 @@ var _ = Describe("RequestLoggerHandler", func() {
 				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
-				fmt.Println(message)
 				Expect(message).To(Equal("handlers.RequestLoggerHandler Request id=123 qtype=[A] qname=[q-what.bosh.] rcode=NXDOMAIN ancount=0 time=1ns"))
 			})
 		})
@@ -117,7 +113,6 @@ var _ = Describe("RequestLoggerHandler", func() {
 				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
-				fmt.Println(message)
 				Expect(message).To(Equal("handlers.RequestLoggerHandler Request id=123 qtype=[A] qname=[q-what.bosh.] rcode=NOERROR ancount=0 custom-message time=1ns"))
 			})
 		})
@@ -130,7 +125,6 @@ var _ = Describe("RequestLoggerHandler", func() {
 				Expect(fakeLogger.DebugCallCount()).To(Equal(1))
 				_, message, _ := fakeLogger.DebugArgsForCall(0)
 
-				fmt.Println(message)
 				Expect(message).To(Equal("handlers.RequestLoggerHandler Request id=123 qtype=[A] qname=[q-what.bosh.] rcode=SERVFAIL ancount=0 time=1ns"))
 			})
 		})
