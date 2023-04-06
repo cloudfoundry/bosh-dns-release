@@ -56,9 +56,9 @@ func BoshInstances(deploymentName string) []InstanceInfo {
 		}
 	}
 
-	out := []InstanceInfo{}
+	var out []InstanceInfo
 
-	json.Unmarshal([]byte(output), &response) //nolint:errcheck
+	Expect(json.Unmarshal([]byte(output), &response)).To(Succeed())
 
 	for _, row := range response.Tables[0].Rows {
 		instanceStrings := strings.Split(row["instance"], "/")
@@ -81,7 +81,7 @@ func init() {
 	var found bool
 	boshBinaryPath, found = os.LookupEnv("BOSH_BINARY_PATH")
 	if !found {
-		fmt.Fprintln(ginkgo.GinkgoWriter, "WARNING: No bosh binary path set; This may be ignored if not using helpers.Bosh")
+		ginkgo.GinkgoLogr.Info("WARNING: No bosh binary path set; This may be ignored if not using helpers.Bosh")
 	}
 	cmdRunner = system.NewExecCmdRunner(logger.NewLogger(logger.LevelDebug))
 }

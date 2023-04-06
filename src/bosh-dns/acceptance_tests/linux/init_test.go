@@ -70,9 +70,9 @@ func getInstanceInfos(boshBinary string) []instanceInfo {
 		}
 	}
 
-	out := []instanceInfo{}
+	var out []instanceInfo
 
-	json.Unmarshal(session.Out.Contents(), &response) //nolint:errcheck
+	Expect(json.Unmarshal(session.Out.Contents(), &response)).To(Succeed())
 
 	for _, row := range response.Tables[0].Rows {
 		instanceStrings := strings.Split(row["instance"], "/")
