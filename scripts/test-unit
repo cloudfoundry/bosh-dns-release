@@ -11,7 +11,7 @@ grep -ri panic src/bosh-dns \
   --exclude-dir performance_tests \
   --exclude-dir acceptance_tests \
   --exclude-dir integration_tests \
-  --exclude-dir gomega-dns && echo "panics detected in the code -- remove them" && exit 1
+  && echo "panics detected in the code -- remove them" && exit 1
 
 "${REPO_DIR}/scripts/lint"
 
