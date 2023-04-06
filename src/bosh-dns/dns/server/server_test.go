@@ -99,12 +99,6 @@ func downCheck() *serverfakes.FakeUpcheck {
 	}
 }
 
-func shutdownStub(err error) func() error { //nolint:deadcode,unused
-	return func() error {
-		return err
-	}
-}
-
 var _ = Describe("Server", func() {
 	var (
 		dnsServer       server.Server
