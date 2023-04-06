@@ -11,7 +11,7 @@ files:
 - bosh-dns/go.mod
 - bosh-dns/go.sum
 - bosh-dns/dns/manager/**/*
-- bosh-dns/gomega-dns/*
+- bosh-dns/gomegadns/*
 - exiter.ps1
 
 excluded_files:
