@@ -70,7 +70,7 @@ var _ = Describe("Config", func() {
 	})
 
 	It("returns config from a config file", func() {
-		configContents, err := json.Marshal(map[string]interface{}{ //nolint:ineffassign,staticcheck
+		configContents, err := json.Marshal(map[string]interface{}{
 			"address":              listenAddress,
 			"addresses_files_glob": addressesFileGlob,
 			"alias_files_glob":     aliasesFileGlob,
@@ -127,6 +127,7 @@ var _ = Describe("Config", func() {
 				},
 			},
 		})
+		Expect(err).ToNot(HaveOccurred())
 		configFilePath := writeConfigFile(string(configContents))
 
 		timeoutDuration, err := time.ParseDuration(timeout)

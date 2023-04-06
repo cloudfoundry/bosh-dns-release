@@ -21,7 +21,7 @@ var _ = Describe("FSLoader", func() {
 	Describe("Load", func() {
 		Context("valid file", func() {
 			It("parses the file", func() {
-				fs.WriteFileString("/test/handlers.json", //nolint:errcheck
+				Expect(fs.WriteFileString("/test/handlers.json",
 					`[
 					{
 						"domain": "local.internal.",
@@ -33,7 +33,7 @@ var _ = Describe("FSLoader", func() {
 						"cache": { "enabled": false },
 						"source": { "type": "dns", "recursors": ["127.0.0.1:42"]}
 					}
-				]`)
+				]`)).To(Succeed())
 
 				handlers, err := parser.Load("/test/handlers.json")
 				Expect(err).ToNot(HaveOccurred())
@@ -55,14 +55,14 @@ var _ = Describe("FSLoader", func() {
 			})
 
 			It("it rewrites source recursors to include default ports", func() {
-				fs.WriteFileString("/test/handlers.json", //nolint:errcheck
+				Expect(fs.WriteFileString("/test/handlers.json",
 					`[
 					{
 						"domain": "local.internal2.",
 						"cache": { "enabled": false },
 						"source": { "type": "dns", "recursors": [ "8.8.8.8", "10.244.4.4:9700" ] }
 					}
-				]`)
+				]`)).To(Succeed())
 
 				config, err := parser.Load("/test/handlers.json")
 				Expect(err).ToNot(HaveOccurred())

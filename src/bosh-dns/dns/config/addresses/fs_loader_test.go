@@ -20,7 +20,7 @@ var _ = Describe("FSLoader", func() {
 	Describe("Load", func() {
 		Context("valid file", func() {
 			It("parses the file", func() {
-				fs.WriteFileString("/test/addresses.json", //nolint:errcheck
+				Expect(fs.WriteFileString("/test/addresses.json",
 					`[
 					{
 						"address": "10.0.14.4",
@@ -30,7 +30,7 @@ var _ = Describe("FSLoader", func() {
 						"address": "172.13.3.5",
 						"port": 51
 					}
-				]`)
+				]`)).To(Succeed())
 
 				addresses, err := parser.Load("/test/addresses.json")
 				Expect(err).ToNot(HaveOccurred())
@@ -52,7 +52,7 @@ var _ = Describe("FSLoader", func() {
 
 		Context("missing port", func() {
 			It("errors", func() {
-				fs.WriteFileString("/test/addresses.json", //nolint:errcheck
+				Expect(fs.WriteFileString("/test/addresses.json",
 					`[
 					{
 						"address": "10.0.14.4",
@@ -61,7 +61,7 @@ var _ = Describe("FSLoader", func() {
 					{
 						"address": "172.13.3.5"
 					}
-				]`)
+				]`)).To(Succeed())
 
 				_, err := parser.Load("/test/addresses.json")
 				Expect(err).To(HaveOccurred())
