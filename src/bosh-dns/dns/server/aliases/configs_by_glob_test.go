@@ -22,7 +22,9 @@ var _ = Describe("ConfigFromGlob", func() {
 	})
 
 	It("queries the globber", func() {
-		ConfigFromGlob(fakeGlobber, fakeLoader, "someglob") //nolint:errcheck
+		_, err := ConfigFromGlob(fakeGlobber, fakeLoader, "someglob")
+		Expect(err).ToNot(HaveOccurred())
+
 		Expect(fakeGlobber.GlobCallCount()).To(Equal(1))
 		Expect(fakeGlobber.GlobArgsForCall(0)).To(Equal("someglob"))
 	})
@@ -45,7 +47,9 @@ var _ = Describe("ConfigFromGlob", func() {
 		})
 
 		It("tries to load the configs by name", func() {
-			ConfigFromGlob(fakeGlobber, fakeLoader, "someglob") //nolint:errcheck
+			_, err := ConfigFromGlob(fakeGlobber, fakeLoader, "someglob")
+			Expect(err).ToNot(HaveOccurred())
+
 			Expect(fakeLoader.LoadCallCount()).To(Equal(2))
 			Expect(fakeLoader.LoadArgsForCall(0)).To(Equal("/some/file"))
 			Expect(fakeLoader.LoadArgsForCall(1)).To(Equal("/another/file"))

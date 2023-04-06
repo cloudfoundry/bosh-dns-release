@@ -412,7 +412,7 @@ var _ = Describe("ForwardHandler", func() {
 					Expect(err).ToNot(HaveOccurred())
 					defer fineListener.Close()
 
-					fineListener.SetReadDeadline(time.Time{}) //nolint:errcheck
+					Expect(fineListener.SetReadDeadline(time.Time{})).To(Succeed())
 					readBytes2 := make([]byte, 1024)
 
 					go func() {

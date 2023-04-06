@@ -36,7 +36,8 @@ var _ = Describe("DNSRequestType", func() {
 		pluginHandler := monitoring.NewPluginHandlerAdapter(&fakeInternalDnsHandler, &fakeExternalDnsHandler, &fakeReqCounter)
 
 		internal := monitoring.NewRequestContext(monitoring.DNSRequestTypeInternal)
-		pluginHandler.ServeDNS(internal, &fakeWriter, &request) //nolint:errcheck
+		_, err := pluginHandler.ServeDNS(internal, &fakeWriter, &request)
+		Expect(err).ToNot(HaveOccurred())
 
 		Expect(fakeInternalDnsHandler.ServeDNSCallCount()).To(Equal(1))
 		Expect(fakeExternalDnsHandler.ServeDNSCallCount()).To(Equal(0))
@@ -48,7 +49,8 @@ var _ = Describe("DNSRequestType", func() {
 		pluginHandler := monitoring.NewPluginHandlerAdapter(&fakeInternalDnsHandler, &fakeExternalDnsHandler, &fakeReqCounter)
 
 		external := monitoring.NewRequestContext(monitoring.DNSRequestTypeExternal)
-		pluginHandler.ServeDNS(external, &fakeWriter, &request) //nolint:errcheck
+		_, err := pluginHandler.ServeDNS(external, &fakeWriter, &request)
+		Expect(err).ToNot(HaveOccurred())
 
 		Expect(fakeInternalDnsHandler.ServeDNSCallCount()).To(Equal(0))
 		Expect(fakeExternalDnsHandler.ServeDNSCallCount()).To(Equal(1))
@@ -59,7 +61,8 @@ var _ = Describe("DNSRequestType", func() {
 	It("redirects no dns requests without information in context", func() {
 		pluginHandler := monitoring.NewPluginHandlerAdapter(&fakeInternalDnsHandler, &fakeExternalDnsHandler, &fakeReqCounter)
 
-		pluginHandler.ServeDNS(context.Background(), &fakeWriter, &request) //nolint:errcheck
+		_, err := pluginHandler.ServeDNS(context.Background(), &fakeWriter, &request)
+		Expect(err).To(HaveOccurred())
 
 		Expect(fakeInternalDnsHandler.ServeDNSCallCount()).To(Equal(0))
 		Expect(fakeExternalDnsHandler.ServeDNSCallCount()).To(Equal(0))

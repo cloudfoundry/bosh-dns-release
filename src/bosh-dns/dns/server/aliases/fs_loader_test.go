@@ -20,7 +20,7 @@ var _ = Describe("FSLoader", func() {
 	Describe("Load", func() {
 		Context("valid file", func() {
 			It("parses the file", func() {
-				fs.WriteFileString("/test/aliases.json", //nolint:errcheck
+				Expect(fs.WriteFileString("/test/aliases.json",
 					`
 				{
 					"test.tld": [
@@ -30,7 +30,7 @@ var _ = Describe("FSLoader", func() {
 						"test2.tld",
 						"test3.tld"
 					]
-				}`)
+				}`)).To(Succeed())
 
 				aliases, err := parser.Load("/test/aliases.json")
 				Expect(err).ToNot(HaveOccurred())

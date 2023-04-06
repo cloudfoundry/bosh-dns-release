@@ -42,7 +42,7 @@ var _ bool = Describe("CacheHandler", func() {
 		SetQuestion(response, nil, "my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 		fakeDnsHandler.ServeDNSStub = func(cacheWriter dns.ResponseWriter, r *dns.Msg) {
 			response.SetRcode(r, dns.RcodeSuccess)
-			cacheWriter.WriteMsg(response) //nolint:errcheck
+			Expect(cacheWriter.WriteMsg(response)).To(Succeed())
 		}
 	})
 

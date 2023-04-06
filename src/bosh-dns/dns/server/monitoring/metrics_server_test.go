@@ -78,7 +78,8 @@ var _ = Describe("MetricsServerWrapper", func() {
 		It("collects metrics", func() {
 			m := &dns.Msg{}
 
-			metricsReporter.Report(monitoring.NewRequestContext(monitoring.DNSRequestTypeExternal), fakeWriter, m) //nolint:errcheck
+			_, err := metricsReporter.Report(monitoring.NewRequestContext(monitoring.DNSRequestTypeExternal), fakeWriter, m)
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(findMetric(metricsServer, "coredns_dns_requests_total")).To(Equal(1.0))
 			Expect(findMetric(metricsServer, "coredns_dns_responses_total")).To(Equal(1.0))
