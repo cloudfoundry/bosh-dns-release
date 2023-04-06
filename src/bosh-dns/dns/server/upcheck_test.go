@@ -5,13 +5,12 @@ import (
 
 	boshlogf "github.com/cloudfoundry/bosh-utils/logger/fakes"
 	"github.com/miekg/dns"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"bosh-dns/dns/internal/testhelpers"
 	"bosh-dns/dns/server"
 	"bosh-dns/dns/server/handlers"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 func startServer(network string, address string, handler dns.Handler) *dns.Server {

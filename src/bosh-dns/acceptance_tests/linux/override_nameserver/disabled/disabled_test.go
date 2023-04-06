@@ -4,12 +4,11 @@
 package override_nameserver
 
 import (
+	"os/exec"
+	"time"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"os/exec"
-
-	"time"
 
 	"github.com/onsi/gomega/gexec"
 )

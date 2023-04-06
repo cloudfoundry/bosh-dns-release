@@ -3,12 +3,13 @@ package handlers
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 import (
-	"bosh-dns/dns/server/criteria"
 	"time"
 
 	"code.cloudfoundry.org/clock"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/server/criteria"
 )
 
 const RegisterInterval = time.Millisecond * 250

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/tlsconfig"
-
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )

@@ -1,14 +1,14 @@
 package acceptance
 
 import (
-	"bosh-dns/acceptance_tests/helpers"
 	"fmt"
+	"os"
+	"testing"
+
+	"bosh-dns/acceptance_tests/helpers"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"os"
-	"testing"
 
 	"github.com/onsi/gomega/gexec"
 )

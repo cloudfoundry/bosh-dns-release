@@ -1,13 +1,12 @@
 package handlers_test
 
 import (
-	"bosh-dns/dns/config"
-	. "bosh-dns/dns/config/handlers"
-
 	boshsysfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/config"
+	. "bosh-dns/dns/config/handlers"
 )
 
 var _ = Describe("FSLoader", func() {

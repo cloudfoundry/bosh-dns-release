@@ -1,12 +1,11 @@
 package addresses_test
 
 import (
-	. "bosh-dns/dns/config/addresses"
-
 	boshsysfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	. "bosh-dns/dns/config/addresses"
 )
 
 var _ = Describe("FSLoader", func() {

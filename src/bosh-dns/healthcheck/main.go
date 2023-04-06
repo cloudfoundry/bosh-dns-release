@@ -9,13 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"bosh-dns/healthcheck/healthexecutable"
-	"bosh-dns/healthcheck/healthserver"
-	"bosh-dns/healthconfig"
-
 	"code.cloudfoundry.org/clock"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
+
+	"bosh-dns/healthcheck/healthexecutable"
+	"bosh-dns/healthcheck/healthserver"
+	"bosh-dns/healthconfig"
 )
 
 var healthServer healthserver.HealthServer

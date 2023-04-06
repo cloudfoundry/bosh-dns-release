@@ -1,17 +1,17 @@
 package healthexecutable
 
 import (
-	"bosh-dns/healthcheck/api"
-	"bosh-dns/healthconfig"
 	"encoding/json"
 	"os"
-	"time"
-
 	"sync"
+	"time"
 
 	"code.cloudfoundry.org/clock"
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
+
+	"bosh-dns/healthcheck/api"
+	"bosh-dns/healthconfig"
 )
 
 type agentHealth struct {

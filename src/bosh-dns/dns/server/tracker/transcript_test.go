@@ -1,13 +1,13 @@
 package tracker_test
 
 import (
-	"bosh-dns/dns/server/tracker"
 	"sync"
-
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/tracker"
 )
 
 var _ = Describe("PriorityLimitedTranscript", func() {

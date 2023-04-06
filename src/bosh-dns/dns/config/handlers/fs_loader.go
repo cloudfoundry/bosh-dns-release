@@ -3,10 +3,10 @@ package handlers
 import (
 	"encoding/json"
 
-	"bosh-dns/dns/config"
-
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
+
+	"bosh-dns/dns/config"
 )
 
 type FSLoader struct {

@@ -4,15 +4,14 @@ import (
 	"errors"
 	"time"
 
-	"bosh-dns/dns/manager/managerfakes"
-	"bosh-dns/dns/nameserverconfig/monitor"
-
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/manager/managerfakes"
+	"bosh-dns/dns/nameserverconfig/monitor"
 )
 
 var _ = Describe("Monitor", func() {

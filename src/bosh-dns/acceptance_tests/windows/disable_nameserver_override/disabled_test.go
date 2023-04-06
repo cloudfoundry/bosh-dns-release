@@ -7,15 +7,13 @@ import (
 	"os/exec"
 	"time"
 
-	"bosh-dns/dns/manager"
-
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"
-
-	"github.com/onsi/gomega/gexec"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gexec"
+
+	"bosh-dns/dns/manager"
 )
 
 var _ = Describe("dns job: disable_nameserver_override", func() {

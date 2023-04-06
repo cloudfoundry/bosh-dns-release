@@ -1,28 +1,24 @@
 package handlers_test
 
 import (
-	"bosh-dns/dns/config"
-	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 	"errors"
+	"fmt"
 	"net"
 	"sync/atomic"
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
+	"github.com/miekg/dns"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
+	"bosh-dns/dns/config"
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
-
-	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	"github.com/miekg/dns"
-
-	"fmt"
-
-	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 )
 
 var _ = Describe("ForwardHandler", func() {

@@ -1,19 +1,17 @@
 package handlers_test
 
 import (
-	"bosh-dns/dns/server/handlers"
-	"bosh-dns/dns/server/internal/internalfakes"
-
-	"code.cloudfoundry.org/clock/fakeclock"
-	"github.com/miekg/dns"
-
 	"time"
 
-	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
-
+	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
+	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/server/internal/internalfakes"
 )
 
 var _ = Describe("RequestLoggerHandler", func() {

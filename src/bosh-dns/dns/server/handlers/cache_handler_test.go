@@ -1,11 +1,6 @@
 package handlers_test
 
 import (
-	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
-	"bosh-dns/dns/server/handlers"
-	"bosh-dns/dns/server/handlers/handlersfakes"
-	"bosh-dns/dns/server/internal/internalfakes"
-	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 	"net"
 	"time"
 
@@ -14,6 +9,12 @@ import (
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/server/handlers/handlersfakes"
+	"bosh-dns/dns/server/internal/internalfakes"
+	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 )
 
 var _ bool = Describe("CacheHandler", func() {

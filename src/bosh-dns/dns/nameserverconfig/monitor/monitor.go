@@ -1,11 +1,11 @@
 package monitor
 
 import (
-	"bosh-dns/dns/manager"
-
 	"code.cloudfoundry.org/clock"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+
+	"bosh-dns/dns/manager"
 )
 
 type Monitor struct {

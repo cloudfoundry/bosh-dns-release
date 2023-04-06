@@ -4,14 +4,13 @@ import (
 	"sync"
 	"time"
 
+	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/workpool"
 
 	"bosh-dns/dns/server/criteria"
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/record"
 	"bosh-dns/healthcheck/api"
-
-	"code.cloudfoundry.org/clock"
 )
 
 type healthFilter struct {

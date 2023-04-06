@@ -1,8 +1,6 @@
 package healthserver
 
 import (
-	"bosh-dns/healthcheck/api"
-	"bosh-dns/healthconfig"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,6 +10,9 @@ import (
 
 	"code.cloudfoundry.org/tlsconfig"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+
+	"bosh-dns/healthcheck/api"
+	"bosh-dns/healthconfig"
 )
 
 const CN = "health.bosh-dns"

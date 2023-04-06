@@ -13,6 +13,12 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/tlsconfig"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/system"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
+	"github.com/miekg/dns"
 
 	"bosh-dns/dns/api"
 	dnsconfig "bosh-dns/dns/config"
@@ -27,13 +33,6 @@ import (
 	"bosh-dns/dns/server/records/dnsresolver"
 	"bosh-dns/healthconfig"
 	"bosh-dns/tlsclient"
-
-	"code.cloudfoundry.org/tlsconfig"
-	bosherr "github.com/cloudfoundry/bosh-utils/errors"
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
-	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"github.com/miekg/dns"
 )
 
 func parseFlags() (string, error) {

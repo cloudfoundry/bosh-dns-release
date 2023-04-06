@@ -4,14 +4,13 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
-
-	"bosh-dns/dns/server/handlers"
-	"bosh-dns/dns/server/handlers/handlersfakes"
-
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/server/handlers/handlersfakes"
 )
 
 type HandlerRegistrarTestHandler struct{}

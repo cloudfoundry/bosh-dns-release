@@ -1,17 +1,15 @@
 package handlers_test
 
 import (
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
+	"github.com/miekg/dns"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
-
-	"github.com/miekg/dns"
-
-	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
-
-	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("ArpaHandler", func() {

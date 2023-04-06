@@ -3,15 +3,13 @@ package handlers_test
 import (
 	"fmt"
 	"math/rand"
+	"time"
 
+	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"time"
-
 	"bosh-dns/dns/server/handlers"
-
-	"github.com/miekg/dns"
 )
 
 var _ = Describe("ExchangerFactory", func() {

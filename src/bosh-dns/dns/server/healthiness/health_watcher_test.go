@@ -4,15 +4,14 @@ import (
 	"sync"
 	"time"
 
-	"bosh-dns/dns/server/healthiness"
-	"bosh-dns/dns/server/healthiness/healthinessfakes"
-	"bosh-dns/healthcheck/api"
-
 	"code.cloudfoundry.org/clock/fakeclock"
-
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/healthiness"
+	"bosh-dns/dns/server/healthiness/healthinessfakes"
+	"bosh-dns/healthcheck/api"
 )
 
 var _ = Describe("HealthWatcher", func() {

@@ -7,12 +7,11 @@ import (
 	"os"
 	"time"
 
-	"bosh-dns/dns/config"
-
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/config"
 )
 
 var _ = Describe("Config", func() {

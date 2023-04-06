@@ -3,7 +3,6 @@ package healthiness
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 import (
-	"bosh-dns/healthcheck/api"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +10,8 @@ import (
 	"net/http"
 
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+
+	"bosh-dns/healthcheck/api"
 )
 
 //counterfeiter:generate . HTTPClientGetter

@@ -1,14 +1,13 @@
 package aliases_test
 
 import (
-	"bosh-dns/dns/server/aliases"
-
-	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"testing"
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+	"bosh-dns/dns/server/aliases"
 )
 
 func TestAliases(t *testing.T) {

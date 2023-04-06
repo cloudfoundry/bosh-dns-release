@@ -16,24 +16,22 @@ import (
 	"syscall"
 	"time"
 
-	"bosh-dns/dns/api"
-	"bosh-dns/dns/config"
-	handlersconfig "bosh-dns/dns/config/handlers"
-	"bosh-dns/dns/internal/testhelpers"
-	"bosh-dns/tlsclient"
-
 	"code.cloudfoundry.org/tlsconfig"
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
 
+	"bosh-dns/dns/api"
+	"bosh-dns/dns/config"
+	handlersconfig "bosh-dns/dns/config/handlers"
+	"bosh-dns/dns/internal/testhelpers"
 	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"bosh-dns/tlsclient"
 )
 
 var _ = Describe("main", func() {

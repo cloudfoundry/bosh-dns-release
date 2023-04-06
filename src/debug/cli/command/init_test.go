@@ -3,13 +3,12 @@ package command_test
 import (
 	"fmt"
 	"net"
+	"testing"
 
 	"code.cloudfoundry.org/tlsconfig"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
-
-	"testing"
 )
 
 func TestCommand(t *testing.T) {

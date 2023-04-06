@@ -1,14 +1,15 @@
 package integration_tests
 
 import (
-	"bosh-dns/acceptance_tests/helpers"
-	"bosh-dns/dns/server/record"
-	gomegadns "bosh-dns/gomega-dns"
 	"fmt"
 
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/acceptance_tests/helpers"
+	"bosh-dns/dns/server/record"
+	gomegadns "bosh-dns/gomega-dns"
 )
 
 var _ = Describe("Integration", func() {

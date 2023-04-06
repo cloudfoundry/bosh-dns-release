@@ -1,15 +1,14 @@
 package tracker_test
 
 import (
+	logfake "github.com/cloudfoundry/bosh-utils/logger/fakes"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"bosh-dns/dns/server/criteria"
 	"bosh-dns/dns/server/record"
 	"bosh-dns/dns/server/tracker"
 	"bosh-dns/dns/server/tracker/fakes"
-
-	logfake "github.com/cloudfoundry/bosh-utils/logger/fakes"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Tracker", func() {

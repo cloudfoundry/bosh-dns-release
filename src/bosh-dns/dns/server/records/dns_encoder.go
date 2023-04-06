@@ -1,11 +1,12 @@
 package records
 
 import (
-	"bosh-dns/dns/server/record"
 	"fmt"
 	"strings"
 
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/server/record"
 )
 
 type QueryEncoder struct {

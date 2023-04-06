@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"bosh-dns/dns/server/monitoring"
-
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/server/monitoring"
 )
 
 type MetricsDNSHandler struct {

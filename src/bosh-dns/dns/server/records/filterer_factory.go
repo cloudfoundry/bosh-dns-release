@@ -1,13 +1,14 @@
 package records
 
 import (
-	"bosh-dns/dns/server/criteria"
-	"bosh-dns/dns/server/healthiness"
-	"bosh-dns/dns/server/record"
 	"sync"
 	"time"
 
 	"code.cloudfoundry.org/clock"
+
+	"bosh-dns/dns/server/criteria"
+	"bosh-dns/dns/server/healthiness"
+	"bosh-dns/dns/server/record"
 )
 
 //counterfeiter:generate . Filterer

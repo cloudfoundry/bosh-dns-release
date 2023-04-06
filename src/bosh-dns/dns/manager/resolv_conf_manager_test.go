@@ -5,12 +5,11 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
-
-	"bosh-dns/dns/manager"
-
 	boshsysfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/manager"
 )
 
 var _ = Describe("ResolvConfManager", func() {

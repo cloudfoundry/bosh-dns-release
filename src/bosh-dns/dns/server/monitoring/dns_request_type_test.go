@@ -1,16 +1,16 @@
 package monitoring_test
 
 import (
-	"bosh-dns/dns/server/handlers/handlersfakes"
-	"bosh-dns/dns/server/internal/internalfakes"
-	"bosh-dns/dns/server/monitoring"
-	"bosh-dns/dns/server/monitoring/monitoringfakes"
-
 	"context"
 
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/handlers/handlersfakes"
+	"bosh-dns/dns/server/internal/internalfakes"
+	"bosh-dns/dns/server/monitoring"
+	"bosh-dns/dns/server/monitoring/monitoringfakes"
 )
 
 var _ = Describe("DNSRequestType", func() {

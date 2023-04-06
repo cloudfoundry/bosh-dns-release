@@ -1,12 +1,12 @@
 package records_test
 
 import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"bosh-dns/dns/server/criteria/criteriafakes"
 	"bosh-dns/dns/server/record"
 	"bosh-dns/dns/server/records"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("QueryFilter", func() {

@@ -1,16 +1,16 @@
 package handlers_test
 
 import (
-	"bosh-dns/dns/config"
-	. "bosh-dns/dns/server/handlers"
-	"net"
-
 	"errors"
+	"net"
 	"time"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/config"
+	. "bosh-dns/dns/server/handlers"
 )
 
 type workFunc func(string) error

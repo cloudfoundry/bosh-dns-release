@@ -1,15 +1,15 @@
 package acceptance
 
 import (
-	"bosh-dns/acceptance_tests/helpers"
-	gomegadns "bosh-dns/gomega-dns"
 	"fmt"
+	"time"
 
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"time"
+	"bosh-dns/acceptance_tests/helpers"
+	gomegadns "bosh-dns/gomega-dns"
 )
 
 var _ = Describe("Integration", func() {

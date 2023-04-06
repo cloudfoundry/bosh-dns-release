@@ -1,16 +1,15 @@
 package handlers_test
 
 import (
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
+	"github.com/miekg/dns"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/handlers/handlersfakes"
 	"bosh-dns/dns/server/internal/internalfakes"
 	"bosh-dns/dns/server/monitoring"
-
-	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-
-	"github.com/miekg/dns"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ bool = Describe("metricsHandler", func() {

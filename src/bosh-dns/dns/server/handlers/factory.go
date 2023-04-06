@@ -3,13 +3,13 @@ package handlers
 import (
 	"math/rand"
 
-	"bosh-dns/dns/config"
-	"bosh-dns/dns/server/records/dnsresolver"
-
 	"code.cloudfoundry.org/clock"
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/config"
+	"bosh-dns/dns/server/records/dnsresolver"
 )
 
 type Factory struct {

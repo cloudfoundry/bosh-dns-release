@@ -1,10 +1,6 @@
 package integration_tests
 
 import (
-	"bosh-dns/dns/config"
-	"bosh-dns/healthcheck/api"
-	"bosh-dns/healthconfig"
-	"bosh-dns/tlsclient"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,6 +18,11 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+
+	"bosh-dns/dns/config"
+	"bosh-dns/healthcheck/api"
+	"bosh-dns/healthconfig"
+	"bosh-dns/tlsclient"
 )
 
 type testHealthServer struct {

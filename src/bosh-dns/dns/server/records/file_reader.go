@@ -2,18 +2,15 @@ package records
 
 import (
 	"fmt"
-	"time"
-
-	"code.cloudfoundry.org/clock"
-
-	"github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
-
 	"os"
 	"reflect"
 	"sync"
+	"time"
 
+	"code.cloudfoundry.org/clock"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/cloudfoundry/bosh-utils/system"
 )
 
 const logTag string = "RecordsRepo"

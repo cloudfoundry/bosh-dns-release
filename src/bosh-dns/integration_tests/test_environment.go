@@ -10,19 +10,17 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/miekg/dns"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
+	"github.com/onsi/gomega/gexec"
+
+	"bosh-dns/acceptance_tests/helpers"
 	"bosh-dns/dns/config"
 	"bosh-dns/dns/server/record"
 	"bosh-dns/dns/server/records"
 	gomegadns "bosh-dns/gomega-dns"
-
-	"bosh-dns/acceptance_tests/helpers"
-
-	"github.com/miekg/dns"
-	"github.com/onsi/gomega/gbytes"
-	"github.com/onsi/gomega/gexec"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 type TestEnvironment interface {

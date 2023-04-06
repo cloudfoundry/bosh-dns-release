@@ -1,10 +1,11 @@
 package main
 
 import (
-	"debug/cli/command"
 	"os"
 
-	flags "github.com/jessevdk/go-flags"
+	"github.com/jessevdk/go-flags"
+
+	"debug/cli/command"
 )
 
 func main() {

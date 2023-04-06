@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"io"
 	"net"
-
+	"net/http"
 	"net/url"
 	"strconv"
 
-	"bosh-dns/dns/server/records/dnsresolver"
-
-	"net/http"
-
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/server/records/dnsresolver"
 )
 
 //counterfeiter:generate . HTTPClient

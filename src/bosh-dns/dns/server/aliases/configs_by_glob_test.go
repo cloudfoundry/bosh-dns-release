@@ -1,13 +1,13 @@
 package aliases_test
 
 import (
-	. "bosh-dns/dns/server/aliases"
-
-	"bosh-dns/dns/server/aliases/aliasesfakes"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	. "bosh-dns/dns/server/aliases"
+	"bosh-dns/dns/server/aliases/aliasesfakes"
 )
 
 var _ = Describe("ConfigFromGlob", func() {

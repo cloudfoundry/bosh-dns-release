@@ -4,10 +4,10 @@
 package disable_nameserver_override_test
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
 func TestDisableNameserverOverride(t *testing.T) {

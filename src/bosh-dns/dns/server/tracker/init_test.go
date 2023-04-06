@@ -1,10 +1,10 @@
 package tracker_test
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
 func TestTracker(t *testing.T) {

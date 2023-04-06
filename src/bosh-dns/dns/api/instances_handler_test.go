@@ -1,9 +1,6 @@
 package api_test
 
 import (
-	"bosh-dns/dns/api"
-	"bosh-dns/dns/api/fakes"
-	"bosh-dns/dns/server/record"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,6 +9,10 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/api"
+	"bosh-dns/dns/api/fakes"
+	"bosh-dns/dns/server/record"
 )
 
 var _ = Describe("InstancesHandler", func() {

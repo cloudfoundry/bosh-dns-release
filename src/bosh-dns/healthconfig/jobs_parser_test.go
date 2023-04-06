@@ -1,12 +1,13 @@
 package healthconfig_test
 
 import (
-	"bosh-dns/healthconfig"
 	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/healthconfig"
 )
 
 var _ = Describe("ParseJobs", func() {

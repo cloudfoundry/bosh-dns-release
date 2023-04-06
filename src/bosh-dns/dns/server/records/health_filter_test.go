@@ -1,6 +1,13 @@
 package records_test
 
 import (
+	"sync"
+	"time"
+
+	"code.cloudfoundry.org/clock/fakeclock"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"bosh-dns/dns/server/criteria"
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/healthiness/healthinessfakes"
@@ -8,13 +15,6 @@ import (
 	"bosh-dns/dns/server/records"
 	"bosh-dns/dns/server/records/recordsfakes"
 	"bosh-dns/healthcheck/api"
-	"sync"
-	"time"
-
-	"code.cloudfoundry.org/clock/fakeclock"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 type notRealCriteria struct{}

@@ -3,11 +3,12 @@ package tracker
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 import (
-	"bosh-dns/dns/server/criteria"
-	"bosh-dns/dns/server/record"
 	"sync"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
+
+	"bosh-dns/dns/server/criteria"
+	"bosh-dns/dns/server/record"
 )
 
 type Tracker struct {

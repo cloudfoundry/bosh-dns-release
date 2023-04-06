@@ -4,10 +4,10 @@
 package windows_test
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
 func TestWindows(t *testing.T) {

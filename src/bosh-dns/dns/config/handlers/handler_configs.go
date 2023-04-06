@@ -3,10 +3,11 @@ package handlers
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 import (
-	"bosh-dns/dns/config"
 	"fmt"
 
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/config"
 )
 
 //counterfeiter:generate . HandlerFactory

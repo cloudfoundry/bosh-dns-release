@@ -6,10 +6,10 @@ import (
 	"net"
 	"strings"
 
-	"bosh-dns/dns/server/records"
-
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/server/records"
 )
 
 type LocalDomain struct {

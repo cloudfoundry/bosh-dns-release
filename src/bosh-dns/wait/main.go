@@ -4,12 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"time"
 
 	"github.com/cloudfoundry/bosh-utils/logger"
-
-	"net"
 )
 
 func main() {

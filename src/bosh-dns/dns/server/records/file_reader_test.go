@@ -1,20 +1,17 @@
 package records_test
 
 import (
+	"errors"
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
-
-	"bosh-dns/dns/server/records"
-
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"github.com/cloudfoundry/bosh-utils/system/fakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"errors"
-
-	boshsys "github.com/cloudfoundry/bosh-utils/system"
+	"bosh-dns/dns/server/records"
 )
 
 var _ = Describe("RecordsFileReader", func() {

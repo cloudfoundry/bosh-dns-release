@@ -5,17 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/healthiness/healthinessfakes"
 	"bosh-dns/healthcheck/api"
-
-	"net/http"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("HealthChecker", func() {

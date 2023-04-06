@@ -1,10 +1,11 @@
 package monitoring_test
 
 import (
+	"errors"
+
 	"bosh-dns/dns/server/internal/internalfakes"
 	"bosh-dns/dns/server/monitoring"
 	"bosh-dns/dns/server/monitoring/monitoringfakes"
-	"errors"
 
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/coredns/coredns/plugin/metrics"

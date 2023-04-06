@@ -3,10 +3,11 @@ package criteria
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 import (
-	"bosh-dns/dns/server/record"
 	"errors"
 	"regexp"
 	"strings"
+
+	"bosh-dns/dns/server/record"
 )
 
 var keyValueRegex = regexp.MustCompile("(a|i|s|m|n|y)([0-9]+)")

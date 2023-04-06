@@ -1,13 +1,14 @@
 package handlers_test
 
 import (
-	"bosh-dns/dns/config"
-	. "bosh-dns/dns/config/handlers"
-	"bosh-dns/dns/config/handlers/handlersfakes"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/config"
+	. "bosh-dns/dns/config/handlers"
+	"bosh-dns/dns/config/handlers/handlersfakes"
 )
 
 var _ = Describe("ConfigFromGlob", func() {

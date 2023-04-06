@@ -1,13 +1,6 @@
 package records_test
 
 import (
-	"bosh-dns/dns/server/aliases"
-	"bosh-dns/dns/server/criteria"
-	"bosh-dns/dns/server/healthiness/healthinessfakes"
-	"bosh-dns/dns/server/record"
-	"bosh-dns/dns/server/records"
-	"bosh-dns/dns/server/records/recordsfakes"
-	"bosh-dns/healthcheck/api"
 	"errors"
 	"fmt"
 	"strings"
@@ -17,6 +10,14 @@ import (
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/aliases"
+	"bosh-dns/dns/server/criteria"
+	"bosh-dns/dns/server/healthiness/healthinessfakes"
+	"bosh-dns/dns/server/record"
+	"bosh-dns/dns/server/records"
+	"bosh-dns/dns/server/records/recordsfakes"
+	"bosh-dns/healthcheck/api"
 )
 
 func dereferencer(r []record.Record) []record.Record {

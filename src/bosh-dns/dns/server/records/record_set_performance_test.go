@@ -1,11 +1,6 @@
 package records_test
 
 import (
-	"bosh-dns/dns/server/aliases"
-	"bosh-dns/dns/server/healthiness/healthinessfakes"
-	"bosh-dns/dns/server/records"
-	"bosh-dns/dns/server/records/recordsfakes"
-	"bosh-dns/healthcheck/api"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -13,6 +8,12 @@ import (
 	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/aliases"
+	"bosh-dns/dns/server/healthiness/healthinessfakes"
+	"bosh-dns/dns/server/records"
+	"bosh-dns/dns/server/records/recordsfakes"
+	"bosh-dns/healthcheck/api"
 )
 
 var _ = Describe("Record Set Performance", func() {

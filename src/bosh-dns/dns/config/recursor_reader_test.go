@@ -1,13 +1,13 @@
 package config_test
 
 import (
-	. "bosh-dns/dns/config"
-	"bosh-dns/dns/manager/managerfakes"
+	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"errors"
+	. "bosh-dns/dns/config"
+	"bosh-dns/dns/manager/managerfakes"
 )
 
 var _ = Describe("RecursorReader", func() {

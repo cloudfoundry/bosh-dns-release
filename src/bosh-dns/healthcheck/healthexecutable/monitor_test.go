@@ -7,16 +7,15 @@ import (
 	"runtime"
 	"time"
 
-	"bosh-dns/healthcheck/api"
-	"bosh-dns/healthcheck/healthexecutable"
-	"bosh-dns/healthconfig"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	"code.cloudfoundry.org/clock/fakeclock"
 	loggerfakes "github.com/cloudfoundry/bosh-utils/logger/fakes"
 	sysfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"bosh-dns/healthcheck/api"
+	"bosh-dns/healthcheck/healthexecutable"
+	"bosh-dns/healthconfig"
 )
 
 var _ = Describe("Monitor", func() {

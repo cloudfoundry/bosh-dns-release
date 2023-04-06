@@ -6,19 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 
-	"strconv"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"github.com/miekg/dns"
 
 	"bosh-dns/dns/server/aliases"
 	"bosh-dns/dns/server/criteria"
 	"bosh-dns/dns/server/healthiness"
 	"bosh-dns/dns/server/record"
 	"bosh-dns/dns/server/tracker"
-
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/miekg/dns"
 )
 
 type AliasDefinition struct {

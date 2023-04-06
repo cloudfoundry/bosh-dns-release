@@ -3,11 +3,12 @@ package api
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 import (
-	"bosh-dns/dns/server/record"
 	"encoding/json"
 	"net/http"
 
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/server/record"
 )
 
 //counterfeiter:generate -o ./fakes/health_state_getter.go . HealthStateGetter

@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"bosh-dns/dns/server/records/dnsresolver"
-
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/server/records/dnsresolver"
 )
 
 type DiscoveryHandler struct {

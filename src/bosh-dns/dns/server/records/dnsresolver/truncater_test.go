@@ -4,12 +4,10 @@ import (
 	"net"
 
 	"github.com/miekg/dns"
-
-	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
 	"bosh-dns/dns/server/internal/internalfakes"
 	"bosh-dns/dns/server/records/dnsresolver"
 )

@@ -3,11 +3,11 @@ package config_test
 import (
 	"errors"
 
-	"bosh-dns/dns/config"
-	"bosh-dns/dns/config/configfakes"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/config"
+	"bosh-dns/dns/config/configfakes"
 )
 
 var _ = Describe("Recursor", func() {

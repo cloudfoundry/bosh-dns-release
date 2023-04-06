@@ -1,12 +1,13 @@
 package criteria_test
 
 import (
-	"bosh-dns/dns/server/criteria"
-	"bosh-dns/dns/server/record"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/criteria"
+	"bosh-dns/dns/server/record"
 )
 
 var _ = Describe("Criteria", func() {

@@ -1,27 +1,24 @@
 package handlers_test
 
 import (
-	. "bosh-dns/dns/server/handlers"
-	"bosh-dns/dns/server/handlers/handlersfakes"
-	"bosh-dns/dns/server/internal/internalfakes"
-	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
-
+	"bytes"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
 
-	"bytes"
-
-	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
-
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
+
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+	. "bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/server/handlers/handlersfakes"
+	"bosh-dns/dns/server/internal/internalfakes"
+	"bosh-dns/dns/server/records/dnsresolver/dnsresolverfakes"
 )
 
 type closingBuffer struct {

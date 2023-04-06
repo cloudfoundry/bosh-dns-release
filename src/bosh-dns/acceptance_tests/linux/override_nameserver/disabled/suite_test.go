@@ -4,15 +4,15 @@
 package override_nameserver
 
 import (
-	"bosh-dns/acceptance_tests/helpers"
 	"fmt"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	"os"
 	"path/filepath"
 	"testing"
+
+	"bosh-dns/acceptance_tests/helpers"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/cloudfoundry/bosh-utils/system"

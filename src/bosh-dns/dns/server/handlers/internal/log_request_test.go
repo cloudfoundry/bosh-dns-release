@@ -4,15 +4,14 @@ import (
 	"net"
 	"time"
 
-	"bosh-dns/dns/server/handlers"
-	"bosh-dns/dns/server/handlers/internal"
-
 	"code.cloudfoundry.org/clock/fakeclock"
-	"github.com/miekg/dns"
-
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
+	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/handlers"
+	"bosh-dns/dns/server/handlers/internal"
 )
 
 var _ = Describe("RequestLoggerHandler", func() {

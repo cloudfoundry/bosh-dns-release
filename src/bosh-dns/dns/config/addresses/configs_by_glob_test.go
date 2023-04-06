@@ -1,12 +1,13 @@
 package addresses_test
 
 import (
-	. "bosh-dns/dns/config/addresses"
-	"bosh-dns/dns/config/addresses/addressesfakes"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	. "bosh-dns/dns/config/addresses"
+	"bosh-dns/dns/config/addresses/addressesfakes"
 )
 
 var _ = Describe("ConfigFromGlob", func() {

@@ -1,7 +1,6 @@
 package command_test
 
 import (
-	"debug/cli/command"
 	"net/http"
 
 	uifakes "github.com/cloudfoundry/bosh-cli/v7/ui/fakes"
@@ -9,6 +8,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
+
+	"debug/cli/command"
 )
 
 var _ = Describe("InstancesCmd", func() {

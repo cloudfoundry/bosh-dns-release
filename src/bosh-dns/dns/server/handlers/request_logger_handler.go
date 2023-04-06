@@ -1,12 +1,11 @@
 package handlers
 
 import (
-	"bosh-dns/dns/server/handlers/internal"
-
 	"code.cloudfoundry.org/clock"
-
 	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/server/handlers/internal"
 )
 
 type RequestLoggerHandler struct {

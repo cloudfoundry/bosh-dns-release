@@ -1,16 +1,17 @@
 package api_test
 
 import (
-	"bosh-dns/dns/api"
-	"bosh-dns/dns/api/apifakes"
-	healthapi "bosh-dns/healthcheck/api"
-	"bosh-dns/healthconfig"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/api"
+	"bosh-dns/dns/api/apifakes"
+	healthapi "bosh-dns/healthcheck/api"
+	"bosh-dns/healthconfig"
 )
 
 var _ = Describe("LocalGroupsHandler", func() {

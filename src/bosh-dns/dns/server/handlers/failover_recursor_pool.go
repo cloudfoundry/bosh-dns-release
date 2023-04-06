@@ -1,15 +1,15 @@
 package handlers
 
 import (
-	"bosh-dns/dns/config"
 	"errors"
 	"fmt"
 	"net"
 	"sync/atomic"
 
+	"github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 
-	"github.com/cloudfoundry/bosh-utils/logger"
+	"bosh-dns/dns/config"
 )
 
 const (

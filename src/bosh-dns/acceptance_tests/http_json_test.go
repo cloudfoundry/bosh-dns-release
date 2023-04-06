@@ -1,14 +1,13 @@
 package acceptance
 
 import (
-	"bosh-dns/acceptance_tests/helpers"
-
 	"fmt"
-
-	gomegadns "bosh-dns/gomega-dns"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/acceptance_tests/helpers"
+	gomegadns "bosh-dns/gomega-dns"
 )
 
 var _ = Describe("HTTP JSON Server integration", func() {

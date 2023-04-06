@@ -3,10 +3,10 @@ package sample_test
 import (
 	"testing"
 
-	datatests "bosh-dns/dns/internal/datatests/internal"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	datatests "bosh-dns/dns/internal/datatests/internal"
 )
 
 func TestDatatests(t *testing.T) {

@@ -1,23 +1,18 @@
 package server_test
 
 import (
-	"fmt"
-
-	"bosh-dns/dns/server"
-
-	"github.com/cloudfoundry/bosh-utils/logger/fakes"
-
 	"errors"
-
+	"fmt"
 	"net"
 	"time"
 
-	"bosh-dns/dns/server/serverfakes"
-
-	"bosh-dns/dns/internal/testhelpers"
-
+	"github.com/cloudfoundry/bosh-utils/logger/fakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/internal/testhelpers"
+	"bosh-dns/dns/server"
+	"bosh-dns/dns/server/serverfakes"
 )
 
 func tcpServerStub(bindAddress string, stop chan struct{}) func() error {

@@ -1,8 +1,6 @@
 package command
 
 import (
-	"bosh-dns/dns/api"
-	"bosh-dns/tlsclient"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +9,9 @@ import (
 	"github.com/cloudfoundry/bosh-cli/v7/ui"
 	boshtbl "github.com/cloudfoundry/bosh-cli/v7/ui/table"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+
+	"bosh-dns/dns/api"
+	"bosh-dns/tlsclient"
 )
 
 type LocalGroupsCmd struct {

@@ -1,14 +1,14 @@
 package healthiness
 
 import (
-	"bosh-dns/healthcheck/api"
 	"sync"
 	"time"
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/workpool"
-
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+
+	"bosh-dns/healthcheck/api"
 )
 
 //counterfeiter:generate . HealthChecker

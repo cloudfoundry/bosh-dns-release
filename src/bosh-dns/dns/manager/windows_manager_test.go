@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"bosh-dns/dns/manager"
-	"bosh-dns/dns/manager/managerfakes"
-
 	systemfakes "github.com/cloudfoundry/bosh-utils/system/fakes"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/manager"
+	"bosh-dns/dns/manager/managerfakes"
 )
 
 var _ = Describe("WindowsManager", func() {
