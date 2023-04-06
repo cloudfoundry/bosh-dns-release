@@ -20,7 +20,7 @@ import (
 	"bosh-dns/dns/config"
 	"bosh-dns/dns/server/record"
 	"bosh-dns/dns/server/records"
-	gomegadns "bosh-dns/gomega-dns"
+	"bosh-dns/gomegadns"
 )
 
 type TestEnvironment interface {

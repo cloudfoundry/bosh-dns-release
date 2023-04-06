@@ -10,7 +10,7 @@ import (
 
 	"bosh-dns/acceptance_tests/helpers"
 	"bosh-dns/dns/server/record"
-	gomegadns "bosh-dns/gomega-dns"
+	"bosh-dns/gomegadns"
 	"bosh-dns/healthcheck/api"
 )
 

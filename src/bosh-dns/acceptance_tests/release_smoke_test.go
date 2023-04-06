@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"bosh-dns/acceptance_tests/helpers"
-	gomegadns "bosh-dns/gomega-dns"
+	"bosh-dns/gomegadns"
 )
 
 var _ = Describe("Integration", func() {

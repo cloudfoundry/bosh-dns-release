@@ -18,7 +18,7 @@ import (
 	"bosh-dns/acceptance_tests/helpers"
 	"bosh-dns/dns/server/handlers"
 	"bosh-dns/dns/server/record"
-	gomegadns "bosh-dns/gomega-dns"
+	"bosh-dns/gomegadns"
 )
 
 type testRecursor struct {
