@@ -81,7 +81,7 @@ func init() {
 	var found bool
 	boshBinaryPath, found = os.LookupEnv("BOSH_BINARY_PATH")
 	if !found {
-		ginkgo.GinkgoLogr.Info("WARNING: No bosh binary path set; This may be ignored if not using helpers.Bosh")
+		ginkgo.GinkgoWriter.Print("WARNING: No bosh binary path set; This may be ignored if not using helpers.Bosh")
 	}
 	cmdRunner = system.NewExecCmdRunner(logger.NewLogger(logger.LevelDebug))
 }
