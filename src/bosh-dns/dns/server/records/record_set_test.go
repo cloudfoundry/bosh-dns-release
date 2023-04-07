@@ -785,6 +785,7 @@ var _ = Describe("RecordSet", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				_, err = recordSet.ResolveRecords([]string{"dummy.my-group.my-network.my-deployment.bosh."}, true)
+				Expect(err).ToNot(HaveOccurred())
 				_, recs := fakeHealthFilterer.FilterArgsForCall(0)
 
 				Expect(recs).NotTo(BeEmpty())
