@@ -20,7 +20,7 @@ import (
 
 func TestAcceptance(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "override_nameserver/disabled")
+	RunSpecs(t, "acceptance/linux/override_nameserver/disabled")
 }
 
 var (

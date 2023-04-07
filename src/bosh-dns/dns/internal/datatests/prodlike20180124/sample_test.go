@@ -11,7 +11,7 @@ import (
 
 func TestDatatests(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "dns/internal/datatests/prodlike20180124a")
+	RunSpecs(t, "dns/internal/datatests/prodlike20180124")
 }
 
 var server datatests.Server
