@@ -2,7 +2,10 @@ package config
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+)
 
 //counterfeiter:generate . RecursorReader
 
@@ -10,12 +13,7 @@ type RecursorReader interface {
 	Get() ([]string, error)
 }
 
-//counterfeiter:generate . StringShuffler
-type StringShuffler interface {
-	Shuffle(src []string) []string
-}
-
-func ConfigureRecursors(reader RecursorReader, shuffler StringShuffler, dnsConfig *Config) error {
+func ConfigureRecursors(reader RecursorReader, dnsConfig *Config) error {
 	if dnsConfig == nil {
 		return nil
 	}
@@ -48,7 +46,10 @@ func ConfigureRecursors(reader RecursorReader, shuffler StringShuffler, dnsConfi
 
 	switch dnsConfig.RecursorSelection {
 	case SmartRecursorSelection:
-		dnsConfig.Recursors = shuffler.Shuffle(recursors)
+		rand.Shuffle(len(recursors), func(i, j int) {
+			recursors[i], recursors[j] = recursors[j], recursors[i]
+		})
+		dnsConfig.Recursors = recursors
 	case SerialRecursorSelection:
 		dnsConfig.Recursors = recursors
 	default:

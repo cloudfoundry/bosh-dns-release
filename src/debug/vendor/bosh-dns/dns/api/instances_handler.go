@@ -3,21 +3,20 @@ package api
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 import (
-	"bosh-dns/dns/server/record"
 	"encoding/json"
 	"net/http"
 
 	"github.com/miekg/dns"
+
+	"bosh-dns/dns/server/record"
 )
 
 //counterfeiter:generate -o ./fakes/health_state_getter.go . HealthStateGetter
-
 type HealthStateGetter interface {
 	HealthStateString(ip string) string
 }
 
 //counterfeiter:generate -o ./fakes/record_manager.go . RecordManager
-
 type RecordManager interface {
 	ResolveRecords(domains []string, shouldTrack bool) ([]record.Record, error)
 	AllRecords() []record.Record
@@ -54,17 +53,17 @@ func (h *InstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	}
 	encoder := json.NewEncoder(w)
-	for _, record := range rs {
+	for _, rcd := range rs {
 		encoder.Encode(InstanceRecord{ //nolint:errcheck
-			ID:          record.ID,
-			Group:       record.Group,
-			Network:     record.Network,
-			Deployment:  record.Deployment,
-			IP:          record.IP,
-			Domain:      record.Domain,
-			AZ:          record.AZ,
-			Index:       record.InstanceIndex,
-			HealthState: h.healthStateGetter.HealthStateString(record.IP),
+			ID:          rcd.ID,
+			Group:       rcd.Group,
+			Network:     rcd.Network,
+			Deployment:  rcd.Deployment,
+			IP:          rcd.IP,
+			Domain:      rcd.Domain,
+			AZ:          rcd.AZ,
+			Index:       rcd.InstanceIndex,
+			HealthState: h.healthStateGetter.HealthStateString(rcd.IP),
 		})
 	}
 }

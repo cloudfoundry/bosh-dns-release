@@ -1,10 +1,11 @@
 package api
 
 import (
-	"bosh-dns/healthcheck/api"
-	"bosh-dns/healthconfig"
 	"encoding/json"
 	"net/http"
+
+	"bosh-dns/healthcheck/api"
+	"bosh-dns/healthconfig"
 )
 
 //counterfeiter:generate . HealthChecker
