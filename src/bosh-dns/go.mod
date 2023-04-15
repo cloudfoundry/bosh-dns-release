@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/clock v1.1.0
 	code.cloudfoundry.org/tlsconfig v0.0.0-20230320190829-8f91c367795b
 	code.cloudfoundry.org/workpool v0.0.0-20230406174608-2e26d5d93731
-	github.com/cloudfoundry/bosh-utils v0.0.360
+	github.com/cloudfoundry/bosh-utils v0.0.361
 	github.com/cloudfoundry/gosigar v1.1.0
 	github.com/coredns/coredns v1.10.1
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.6.1
@@ -14,7 +14,7 @@ require (
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/onsi/ginkgo/v2 v2.9.2
 	github.com/onsi/gomega v1.27.6
-	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_golang v1.15.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	golang.org/x/net v0.9.0
 	golang.org/x/sys v0.7.0
@@ -51,7 +51,7 @@ require (
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.8.0 // indirect
-	google.golang.org/genproto v0.0.0-20230403163135-c38d8f061ccd // indirect
+	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/grpc v1.54.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
