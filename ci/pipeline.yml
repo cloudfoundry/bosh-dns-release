@@ -547,16 +547,18 @@ resources:
     type: s3
     source:
       bucket: bosh-dns-release-candidate-tarballs
-      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.username))
-      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.password))
+      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.username))
+      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.password))
+      aws_role_arn: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.role_arn))
       versioned_file: "bosh-dns-dev-release.tgz"
 
   - name: staging-release
     type: s3
     source:
       bucket: bosh-dns-release-candidate-tarballs
-      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.username))
-      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.password))
+      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.username))
+      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.password))
+      aws_role_arn: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.role_arn))
       versioned_file: "bosh-dns-staging-release.tgz"
 
   - name: brats-src
