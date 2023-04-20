@@ -98,8 +98,9 @@ jobs:
             blobstore:
               provider: s3
               options:
-                access_key_id: ((dns-release-blobs-upload_aws_access_key.username))
-                secret_access_key: ((dns-release-blobs-upload_aws_access_key.password))
+                access_key_id: ((dns-release-blobs-upload_assume_aws_access_key.username))
+                secret_access_key: ((dns-release-blobs-upload_assume_aws_access_key.password))
+                assume_role_arn: ((dns-release-blobs-upload_assume_aws_access_key.role_arn))
       - task: bump-golang-package-test-acceptance-release
         file: golang-release/ci/tasks/shared/bump-golang-package.yml
         input_mapping:
@@ -116,8 +117,9 @@ jobs:
             blobstore:
               provider: s3
               options:
-                access_key_id: ((dns-release-blobs-upload_aws_access_key.username))
-                secret_access_key: ((dns-release-blobs-upload_aws_access_key.password))
+                access_key_id: ((dns-release-blobs-upload_assume_aws_access_key.username))
+                secret_access_key: ((dns-release-blobs-upload_assume_aws_access_key.password))
+                assume_role_arn: ((dns-release-blobs-upload_assume_aws_access_key.role_arn))
       - task: create
         file: bosh-dns-release/ci/tasks/create-candidate.yml
         output_mapping:
@@ -463,8 +465,9 @@ jobs:
       - task: finalize-release
         file: bosh-dns-release/ci/tasks/finalize-release.yml
         params:
-          BLOBSTORE_ACCESS_KEY_ID: ((dns-release-blobs-upload_aws_access_key.username))
-          BLOBSTORE_SECRET_ACCESS_KEY: ((dns-release-blobs-upload_aws_access_key.password))
+          BLOBSTORE_ACCESS_KEY_ID: ((dns-release-blobs-upload_assume_aws_access_key.username))
+          BLOBSTORE_SECRET_ACCESS_KEY: ((dns-release-blobs-upload_assume_aws_access_keyy.password))
+          BLOBSTORE_ASSUME_ROLE_ARN: ((dns-release-blobs-upload_assume_aws_access_key.role_arn))
       - put: bosh-dns-release
         params:
           rebase: true

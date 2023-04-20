@@ -20,6 +20,7 @@ outputs:
 params:
   BLOBSTORE_ACCESS_KEY_ID: replace-me
   BLOBSTORE_SECRET_ACCESS_KEY: replace-me
+  BLOBSTORE_ASSUME_ROLE_ARN: replace-me
 
 run:
   path: bosh-dns-release/ci/tasks/finalize-release.sh

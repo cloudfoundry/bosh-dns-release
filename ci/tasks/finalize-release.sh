@@ -37,6 +37,7 @@ blobstore:
   options:
     access_key_id: "$BLOBSTORE_ACCESS_KEY_ID"
     secret_access_key: "$BLOBSTORE_SECRET_ACCESS_KEY"
+    assume_role_arn: "$BLOBSTORE_ASSUME_ROLE_ARN"
 EOF
 
   bosh finalize-release --version $VERSION $DEV_RELEASE_PATH
