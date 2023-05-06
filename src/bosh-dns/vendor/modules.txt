@@ -23,7 +23,7 @@ github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.3
 ## explicit; go 1.18
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.361
+# github.com/cloudfoundry/bosh-utils v0.0.362
 ## explicit; go 1.20
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -41,7 +41,7 @@ github.com/cloudfoundry/go-socks5
 ## explicit
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.88
+# github.com/cloudfoundry/socks5-proxy v0.2.89
 ## explicit; go 1.20
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.1
@@ -103,7 +103,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20230429030804-905365eefe3e
+# github.com/google/pprof v0.0.0-20230502171905-255e3b9b56de
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645
@@ -129,7 +129,7 @@ github.com/miekg/dns
 # github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 ## explicit
 github.com/nu7hatch/gouuid
-# github.com/onsi/ginkgo/v2 v2.9.2
+# github.com/onsi/ginkgo/v2 v2.9.4
 ## explicit; go 1.18
 github.com/onsi/ginkgo/v2
 github.com/onsi/ginkgo/v2/config
@@ -177,16 +177,16 @@ github.com/pivotal-cf/paraphernalia/secure/tlsconfig
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/prometheus/client_golang v1.15.0
+# github.com/prometheus/client_golang v1.15.1
 ## explicit; go 1.17
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promauto
 github.com/prometheus/client_golang/prometheus/promhttp
-# github.com/prometheus/client_model v0.3.0
-## explicit; go 1.9
+# github.com/prometheus/client_model v0.4.0
+## explicit; go 1.18
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.42.0
+# github.com/prometheus/common v0.43.0
 ## explicit; go 1.18
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
@@ -199,8 +199,6 @@ github.com/prometheus/procfs/internal/util
 # github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 ## explicit
 github.com/rcrowley/go-metrics
-# github.com/rogpeppe/go-internal v1.6.1
-## explicit; go 1.11
 # golang.org/x/crypto v0.8.0
 ## explicit; go 1.17
 golang.org/x/crypto/blowfish
@@ -236,7 +234,7 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/trace
-# golang.org/x/sys v0.7.0
+# golang.org/x/sys v0.8.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -292,7 +290,7 @@ golang.org/x/tools/internal/typesinternal
 # google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.54.0
+# google.golang.org/grpc v1.55.0
 ## explicit; go 1.17
 google.golang.org/grpc
 google.golang.org/grpc/attributes
