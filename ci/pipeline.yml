@@ -540,8 +540,9 @@ resources:
     source:
       bucket: bosh-dns-release-candidate-tarballs
       key: version
-      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.username))
-      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_aws_access_key.password))
+      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.username))
+      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.password))
+      assume_role_arn: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.role_arn))
 
   - name: candidate-release
     type: s3
@@ -662,3 +663,9 @@ resource_types:
       repository: frodenas/gcs-resource
       username: ((docker.username))
       password: ((docker.password))
+
+  - name: semver
+    type: docker-image
+    source:
+      repository: concourse/semver-resource
+      tag: 1.6
