@@ -17,7 +17,7 @@ bosh int \
   -l ${TEST_STRESS_ASSETS}/director/vars.yml \
   -v docker_cpi_release=$BOSH_DOCKER_CPI_RELEASE_TARBALL \
   -v project_id="${BBL_GCP_PROJECT_ID}" \
-  -v zone="${BBL_GCP_ZONE}" 
+  -v zone="${BBL_GCP_ZONE}" \
   > ${BBL_STATE_DIR}/director-manifest.yml
 
 bosh create-env ${BBL_STATE_DIR}/director-manifest.yml \
