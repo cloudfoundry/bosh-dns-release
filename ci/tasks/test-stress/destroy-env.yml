@@ -14,8 +14,11 @@ outputs:
   - name: cleanup-bbl-state
 
 params:
-  BBL_AWS_ACCESS_KEY_ID: ""
-  BBL_AWS_SECRET_ACCESS_KEY: ""
+  BBL_GCP_SERVICE_ACCOUNT_KEY:
+  BBL_GCP_PROJECT_ID: cf-bosh-core
+  BBL_GCP_ZONE: us-central1-a
+  BBL_GCP_REGION: us-central1
+  BBL_IAAS: gcp
   BBL_STATE_DIR: test-stress/bbl-state
 
 run:
