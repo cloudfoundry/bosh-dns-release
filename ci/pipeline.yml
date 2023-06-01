@@ -291,7 +291,7 @@ jobs:
             resource: envs
           - get: bosh-deployment
           - get: docker-release
-          - get: aws-jammy-stemcell
+          - get: gcp-jammy-stemcell
           - get: warden-jammy-stemcell
           - get: bosh-docker-cpi-release
           - get: candidate-release
@@ -310,7 +310,7 @@ jobs:
             file: bosh-dns-release/ci/tasks/test-stress/deploy-docker.yml
             input_mapping:
               bbl-state: updated-bbl-state
-              stemcell: aws-jammy-stemcell
+              stemcell: gcp-jammy-stemcell
           - task: deploy-containers
             file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
             input_mapping:
@@ -596,11 +596,6 @@ resources:
     type: bosh-io-stemcell
     source:
       name: bosh-google-kvm-ubuntu-jammy-go_agent
-
-  - name: aws-jammy-stemcell
-    type: bosh-io-stemcell
-    source:
-      name: bosh-aws-xen-hvm-ubuntu-jammy-go_agent
 
   - name: warden-jammy-stemcell
     type: bosh-io-stemcell
