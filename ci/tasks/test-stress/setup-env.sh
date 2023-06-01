@@ -15,7 +15,6 @@ main() {
     bbl plan > bbl_plan.txt
 
     # Customize environment
-    cp $TEST_STRESS_ASSETS/terraform/* terraform/
     cp $TEST_STRESS_ASSETS/director/*.sh .
 
     bbl --debug up
