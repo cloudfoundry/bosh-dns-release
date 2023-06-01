@@ -1,0 +1,3 @@
+- path: /resource_pools/name=vms/cloud_properties/machine_type
+  type: replace
+  value: c3-highcpu-8

@@ -13,7 +13,7 @@ bosh int \
   -o ${TEST_STRESS_ASSETS}/director/ops/configure-workers.yml \
   -o ${TEST_STRESS_ASSETS}/director/ops/configure-pg-max-connections.yml \
   -o ${TEST_STRESS_ASSETS}/director/ops/disable-hm.yml \
-  -o ${TEST_STRESS_ASSETS}/director/ops/use-m6-xlarge.yml \
+  -o ${TEST_STRESS_ASSETS}/director/ops/use-xlarge.yml \
   -l ${TEST_STRESS_ASSETS}/director/vars.yml \
   -v docker_cpi_release=$BOSH_DOCKER_CPI_RELEASE_TARBALL \
   -v project_id="${BBL_GCP_PROJECT_ID}" \

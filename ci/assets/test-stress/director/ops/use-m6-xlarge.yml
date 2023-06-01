@@ -1,3 +1,0 @@
-- path: /resource_pools/name=vms/cloud_properties/instance_type
-  type: replace
-  value: m6i.xlarge
