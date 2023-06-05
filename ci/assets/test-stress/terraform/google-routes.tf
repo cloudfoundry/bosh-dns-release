@@ -15,7 +15,7 @@ resource "google_compute_route" "docker1" {
 resource "google_compute_route" "docker2" {
   name         = "docker2"
   dest_range   = "10.247.0.0/16"
-  network      = google_co8pute_network.bbl-network.name
+  network      = google_compute_network.bbl-network.name
   next_hop_ip  = "10.0.31.192"
   tags         = ["docker2"]
 }
