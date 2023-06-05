@@ -1,6 +1,6 @@
 cpis:
 - name: default
-  type: aws
+  type: google
   properties: {}
   migrated_from:
   - name: ""
