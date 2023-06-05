@@ -4,6 +4,9 @@ resource "google_compute_route" "docker0" {
   network      = google_compute_subnetwork.bbl-subnet.name
   next_hop_ip  = "10.0.31.190"
   tags         = ["docker0"]
+  depends_on = [
+    google_compute_subnetwork.bbl-subnet
+  ]
 }
 resource "google_compute_route" "docker1" {
   name         = "docker1"
@@ -11,6 +14,9 @@ resource "google_compute_route" "docker1" {
   network      = google_compute_subnetwork.bbl-subnet.name
   next_hop_ip  = "10.0.31.191"
   tags         = ["docker1"]
+  depends_on = [
+    google_compute_subnetwork.bbl-subnet
+  ]
 }
 resource "google_compute_route" "docker2" {
   name         = "docker2"
@@ -18,6 +24,9 @@ resource "google_compute_route" "docker2" {
   network      = google_compute_subnetwork.bbl-subnet.name
   next_hop_ip  = "10.0.31.192"
   tags         = ["docker2"]
+  depends_on = [
+    google_compute_subnetwork.bbl-subnet
+  ]
 }
 resource "google_compute_route" "docker3" {
   name         = "docker3"
@@ -25,6 +34,9 @@ resource "google_compute_route" "docker3" {
   network      = google_compute_subnetwork.bbl-subnet.name
   next_hop_ip  = "10.0.31.193"
   tags         = ["docker3"]
+  depends_on = [
+    google_compute_subnetwork.bbl-subnet
+  ]
 }
 resource "google_compute_route" "docker4" {
   name         = "docker4"
@@ -32,6 +44,9 @@ resource "google_compute_route" "docker4" {
   network      = google_compute_subnetwork.bbl-subnet.name
   next_hop_ip  = "10.0.31.194"
   tags         = ["docker4"]
+  depends_on = [
+    google_compute_subnetwork.bbl-subnet
+  ]
 }
 resource "google_compute_route" "docker5" {
   name         = "docker5"
@@ -39,6 +54,9 @@ resource "google_compute_route" "docker5" {
   network      = google_compute_subnetwork.bbl-subnet.name
   next_hop_ip  = "10.0.31.195"
   tags         = ["docker5"]
+  depends_on = [
+    google_compute_subnetwork.bbl-subnet
+  ]
 }
 resource "google_compute_route" "docker6" {
   name         = "docker6"
@@ -46,6 +64,9 @@ resource "google_compute_route" "docker6" {
   network      = google_compute_subnetwork.bbl-subnet.name
   next_hop_ip  = "10.0.31.196"
   tags         = ["docker6"]
+  depends_on = [
+    google_compute_subnetwork.bbl-subnet
+  ]
 }
 resource "google_compute_route" "docker7" {
   name         = "docker7"
@@ -53,6 +74,9 @@ resource "google_compute_route" "docker7" {
   network      = google_compute_subnetwork.bbl-subnet.name
   next_hop_ip  = "10.0.31.197"
   tags         = ["docker7"]
+  depends_on = [
+    google_compute_subnetwork.bbl-subnet
+  ]
 }
 resource "google_compute_route" "docker8" {
   name         = "docker8"
@@ -60,6 +84,9 @@ resource "google_compute_route" "docker8" {
   network      = google_compute_subnetwork.bbl-subnet.name
   next_hop_ip  = "10.0.31.198"
   tags         = ["docker8"]
+  depends_on = [
+    google_compute_subnetwork.bbl-subnet
+  ]
 }
 resource "google_compute_route" "docker9" {
   name         = "docker9"
@@ -67,4 +94,7 @@ resource "google_compute_route" "docker9" {
   network      = google_compute_subnetwork.bbl-subnet.name
   next_hop_ip  = "10.0.31.199"
   tags         = ["docker9"]
+  depends_on = [
+    google_compute_subnetwork.bbl-subnet
+  ]
 }
