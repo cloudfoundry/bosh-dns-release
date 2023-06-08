@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version-file: src/bosh-dns/go.mod
 # TODO: uncomment once golangci-lint on windows-2019 respeects `skip-dirs:`
@@ -33,7 +33,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version-file: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor/go.mod
       - uses: golangci/golangci-lint-action@v3
@@ -54,7 +54,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version-file: src/debug/go.mod
       - uses: golangci/golangci-lint-action@v3
