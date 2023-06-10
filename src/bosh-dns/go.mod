@@ -6,14 +6,14 @@ require (
 	code.cloudfoundry.org/clock v1.1.0
 	code.cloudfoundry.org/tlsconfig v0.0.0-20230320190829-8f91c367795b
 	code.cloudfoundry.org/workpool v0.0.0-20230406174608-2e26d5d93731
-	github.com/cloudfoundry/bosh-utils v0.0.365
+	github.com/cloudfoundry/bosh-utils v0.0.366
 	github.com/cloudfoundry/gosigar v1.1.0
 	github.com/coredns/coredns v1.10.1
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.6.1
 	github.com/miekg/dns v1.1.54
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
-	github.com/onsi/ginkgo/v2 v2.9.7
-	github.com/onsi/gomega v1.27.7
+	github.com/onsi/ginkgo/v2 v2.10.0
+	github.com/onsi/gomega v1.27.8
 	github.com/prometheus/client_golang v1.15.1
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	golang.org/x/net v0.10.0
