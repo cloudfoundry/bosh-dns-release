@@ -460,7 +460,7 @@ jobs:
         file: bosh-dns-release/ci/tasks/finalize-release.yml
         params:
           BLOBSTORE_ACCESS_KEY_ID: ((dns-release-blobs-upload_assume_aws_access_key.username))
-          BLOBSTORE_SECRET_ACCESS_KEY: ((dns-release-blobs-upload_assume_aws_access_keyy.password))
+          BLOBSTORE_SECRET_ACCESS_KEY: ((dns-release-blobs-upload_assume_aws_access_key.password))
           BLOBSTORE_ASSUME_ROLE_ARN: ((dns-release-blobs-upload_assume_aws_access_key.role_arn))
       - put: bosh-dns-release
         params:
