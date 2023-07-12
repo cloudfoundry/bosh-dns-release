@@ -526,8 +526,8 @@ resources:
   - name: golang-release
     type: git
     source:
-      uri: https://github.com/bosh-packages/golang-release
-      branch: master
+      uri: https://github.com/cloudfoundry/bosh-package-golang-release.git
+      branch: main
 
   - name: version
     type: semver
