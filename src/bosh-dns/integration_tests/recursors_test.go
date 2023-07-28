@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"bosh-dns/acceptance_tests/helpers"
 	"bosh-dns/dns/server/handlers"
