@@ -397,7 +397,26 @@ jobs:
         - delivery
       - get: golang-release
       - get: version
+      - get: patched-version
+        resource: version
+        params:
+          bump: patch
       - get: docker-bosh-integration-image
+    - try:
+        task: check-for-updated-golang-package
+        file: golang-release/ci/tasks/shared/check-for-updated-golang-package.yml
+        input_mapping:
+          input_repo: bosh-dns-release
+        params:
+          PACKAGES: [ golang-1-linux, golang-1-windows ]
+        on_success:
+          do:
+            - put: release-notes
+              params:
+                file: release-notes/release-notes.md
+            - put: version
+              params:
+                file: patched-version/version
     - try:
         task: check-for-patched-cves
         file: golang-release/ci/tasks/shared/check-for-patched-cves.yml
@@ -410,10 +429,10 @@ jobs:
           do:
           - put: release-notes
             params:
-              file: patched_cves/release-notes.md
+              file: release-notes/release-notes.md
           - put: version
             params:
-              bump: patch
+              file: patched-version/version
     - task: ensure-cve-checker-succeeded
       file: golang-release/ci/tasks/shared/ensure-cve-checker-succeeded.yml
       image: docker-bosh-integration-image
