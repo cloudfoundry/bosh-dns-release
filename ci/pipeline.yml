@@ -1,27 +1,4 @@
 ---
-groups:
-  - name: bosh-dns-release
-    jobs:
-      - bump-deps
-      - bump-golang-package
-      - test-unit
-      - test-unit-windows
-      - test-unit-release
-      - create-release
-      - test-acceptance-ubuntu-jammy
-      - test-acceptance-ubuntu-bionic
-      - test-acceptance-windows2019
-      - test-stress
-      - brats-ubuntu
-      - upload-staging-release
-      - finalize-release
-      - delivery
-      - release-new-patch
-      - release-new-minor
-      - release-new-major
-      - automatically-release-new-patch
-      - clear-release-notes
-
 jobs:
   - name: bump-deps
     public: true
