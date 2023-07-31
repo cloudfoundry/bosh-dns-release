@@ -433,6 +433,7 @@ jobs:
           - get: version
             trigger: true
           - get: release-notes
+          - get: golang-release
       - task: finalize-release
         file: bosh-dns-release/ci/tasks/finalize-release.yml
         params:
@@ -448,20 +449,11 @@ jobs:
           name: final-release-tag/tag
           tag: final-release-tag/tag
           body: release-notes/release-notes.md
-
-
-  - name: clear-release-notes
-    plan:
-    - get: version
-      passed:
-      - finalize-release
-      trigger: true
-    - get: golang-release
-    - task: clear-release-notes
-      file: golang-release/ci/tasks/shared/clear-release-notes.yml
-    - put: release-notes
-      params:
-        file: release-notes/release-notes.md
+      - task: clear-release-notes
+        file: golang-release/ci/tasks/shared/clear-release-notes.yml
+      - put: release-notes
+        params:
+          file: release-notes/release-notes.md
 
   - name: delivery
     plan:
