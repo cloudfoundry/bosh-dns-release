@@ -396,7 +396,8 @@ jobs:
         passed:
         - delivery
       - get: golang-release
-      - get: version
+      - get: current-version
+        resource: version
       - get: patched-version
         resource: version
         params:
@@ -407,6 +408,7 @@ jobs:
         file: golang-release/ci/tasks/shared/check-for-updated-golang-package.yml
         input_mapping:
           input_repo: bosh-dns-release
+          version: current-version
         params:
           PACKAGES: [ golang-1-linux, golang-1-windows ]
         on_success:
@@ -422,6 +424,7 @@ jobs:
         file: golang-release/ci/tasks/shared/check-for-patched-cves.yml
         input_mapping:
           input_repo: bosh-dns-release
+          version: current-version
         params:
           SEVERITY: CRITICAL,HIGH
           SOURCE_PATH: src/bosh-dns
