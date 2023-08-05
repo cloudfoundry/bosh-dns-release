@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/clock v1.1.0
 	code.cloudfoundry.org/tlsconfig v0.0.0-20230612153104-23c0622de227
 	code.cloudfoundry.org/workpool v0.0.0-20230612151832-b93da105e0e8
-	github.com/cloudfoundry/bosh-utils v0.0.373
+	github.com/cloudfoundry/bosh-utils v0.0.380
 	github.com/cloudfoundry/gosigar v1.3.17
 	github.com/coredns/coredns v1.10.1
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.6.2
@@ -16,8 +16,8 @@ require (
 	github.com/onsi/gomega v1.27.10
 	github.com/prometheus/client_golang v1.16.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
-	golang.org/x/net v0.12.0
-	golang.org/x/sys v0.10.0
+	golang.org/x/net v0.14.0
+	golang.org/x/sys v0.11.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -28,7 +28,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/charlievieth/fs v0.0.3 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.94 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.95 // indirect
 	github.com/coredns/caddy v1.1.1 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
@@ -46,11 +46,11 @@ require (
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
-	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
-	golang.org/x/tools v0.11.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230726155614-23370e0ffb3e // indirect
+	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/tools v0.11.1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/grpc v1.57.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 )
