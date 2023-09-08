@@ -1,6 +1,6 @@
 # https://golangci-lint.run/usage/configuration/
 run:
-  timeout: 3m # 1m default times out on github-action runners
+  timeout: 5m # 1m default times out on github-action runners
   skip-dirs:
     # TODO: remove once the `performance_tests` module compiles
     # TODO: ^^^^^^ also uncomment the windows github lint action for src/bosh-dns
