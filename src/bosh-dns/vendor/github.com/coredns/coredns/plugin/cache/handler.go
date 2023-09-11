@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
@@ -33,6 +34,7 @@ func (c *Cache) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 	// in which upstream doesn't support DNSSEC, the two cache items will effectively be the same. Regardless, any
 	// DNSSEC RRs in the response are written to cache with the response.
 
+	fmt.Printf("In handler::ServeDNS. Going to check the cache for our item.\n")
 	ttl := 0
 	i := c.getIgnoreTTL(now, state, server)
 	if i == nil {
@@ -129,6 +131,7 @@ func (c *Cache) getIgnoreTTL(now time.Time, state request.Request, server string
 		ttl := itm.ttl(now)
 		if itm.matches(state) && (ttl > 0 || (c.staleUpTo > 0 && -ttl < int(c.staleUpTo.Seconds()))) {
 			cacheHits.WithLabelValues(server, Denial, c.zonesMetricLabel, c.viewMetricLabel).Inc()
+			fmt.Printf("Found item in the ncache. Returning it.\n")
 			return i.(*item)
 		}
 	}
@@ -137,10 +140,12 @@ func (c *Cache) getIgnoreTTL(now time.Time, state request.Request, server string
 		ttl := itm.ttl(now)
 		if itm.matches(state) && (ttl > 0 || (c.staleUpTo > 0 && -ttl < int(c.staleUpTo.Seconds()))) {
 			cacheHits.WithLabelValues(server, Success, c.zonesMetricLabel, c.viewMetricLabel).Inc()
+			fmt.Printf("Found item in the pcache. Returning it.\n")
 			return i.(*item)
 		}
 	}
 	cacheMisses.WithLabelValues(server, c.zonesMetricLabel, c.viewMetricLabel).Inc()
+	fmt.Printf("Didn't find the item in the ncache or pcache. Returning nil.\n")
 	return nil
 }
 

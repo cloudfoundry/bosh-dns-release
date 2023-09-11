@@ -2,6 +2,7 @@
 package cache
 
 import (
+	"fmt"
 	"hash/fnv"
 	"net"
 	"time"
@@ -179,22 +180,32 @@ func (w *ResponseWriter) WriteMsg(res *dns.Msg) error {
 	// key returns empty string for anything we don't want to cache.
 	hasKey, key := key(w.state.Name(), res, mt, w.do)
 
+	fmt.Printf("In Cache::WriteMsg\n")
+	fmt.Printf("Response code: '%d'. Response Stringified: '%s'\n", res.Rcode, mt.String())
+	fmt.Printf("Top\n")
 	msgTTL := dnsutil.MinimalTTL(res, mt)
 	var duration time.Duration
 	if mt == response.NameError || mt == response.NoData {
+		fmt.Printf("Handling NameError or NoData\n")
 		duration = computeTTL(msgTTL, w.minnttl, w.nttl)
 	} else if mt == response.ServerError {
+		fmt.Printf("Handling ServerError\n")
 		duration = w.failttl
 	} else {
+		fmt.Printf("Handling our Default Case\n")
 		duration = computeTTL(msgTTL, w.minpttl, w.pttl)
 	}
+	fmt.Printf("Computed TTL is '%s'\n", duration.String())
 
 	if hasKey && duration > 0 {
+		fmt.Printf("Inside our cacher\n")
 		if w.state.Match(res) {
+			fmt.Printf("Request state matched, so I guess we're going to see about caching\n")
 			w.set(res, key, mt, duration)
 			cacheSize.WithLabelValues(w.server, Success, w.zonesMetricLabel, w.viewMetricLabel).Set(float64(w.pcache.Len()))
 			cacheSize.WithLabelValues(w.server, Denial, w.zonesMetricLabel, w.viewMetricLabel).Set(float64(w.ncache.Len()))
 		} else {
+			fmt.Printf("Request state did not match, so I guess we're not caching???\n")
 			// Don't log it, but increment counter
 			cacheDrops.WithLabelValues(w.server, w.zonesMetricLabel, w.viewMetricLabel).Inc()
 		}
@@ -220,42 +231,59 @@ func (w *ResponseWriter) WriteMsg(res *dns.Msg) error {
 }
 
 func (w *ResponseWriter) set(m *dns.Msg, key uint64, mt response.Type, duration time.Duration) {
+	fmt.Printf("Inside Cache::set. Maybe setting cache item. We'll see.\n")
 	// duration is expected > 0
 	// and key is valid
 	switch mt {
 	case response.NoError, response.Delegation:
+		fmt.Printf("Hey, we're in NoError or Delegation.\n")
 		if plugin.Zones(w.pexcept).Matches(m.Question[0].Name) != "" {
+			fmt.Printf("zone is in exception list, do not cache\n")
 			// zone is in exception list, do not cache
 			return
 		}
 		i := newItem(m, w.now(), duration)
+		fmt.Printf("Maybe storing. Name: '%s', RCode: '%d', OrigTTL: '%d'\n", i.Name, i.Rcode, i.origTTL)
 		if w.wildcardFunc != nil {
 			i.wildcard = w.wildcardFunc()
 		}
+		fmt.Printf("Pcache len before addition: %d\n", w.pcache.Len())
 		if w.pcache.Add(key, i) {
 			evictions.WithLabelValues(w.server, Success, w.zonesMetricLabel, w.viewMetricLabel).Inc()
 		}
+		fmt.Printf("Pcache len after addition: %d\n", w.pcache.Len())
 		// when pre-fetching, remove the negative cache entry if it exists
 		if w.prefetch {
+			fmt.Printf("Prefetch is enabled, so removing any related ncache entries.\n")
+			fmt.Printf("Ncache len before removal %d\n", w.ncache.Len())
 			w.ncache.Remove(key)
+			fmt.Printf("Ncache len after removal %d\n", w.ncache.Len())
 		}
 
 	case response.NameError, response.NoData, response.ServerError:
+		fmt.Printf("Hey, we're in NameError, NoData, or ServerError.\n")
 		if plugin.Zones(w.nexcept).Matches(m.Question[0].Name) != "" {
+			fmt.Printf("zone is in exception list, do not cache\n")
 			// zone is in exception list, do not cache
 			return
 		}
 		i := newItem(m, w.now(), duration)
+		fmt.Printf("Maybe storing. Name: '%s', RCode: '%d', OrigTTL: '%d'\n", i.Name, i.Rcode, i.origTTL)
+		fmt.Printf("Ncache len before addition: %d\n", w.ncache.Len())
+
 		if w.wildcardFunc != nil {
 			i.wildcard = w.wildcardFunc()
 		}
 		if w.ncache.Add(key, i) {
 			evictions.WithLabelValues(w.server, Denial, w.zonesMetricLabel, w.viewMetricLabel).Inc()
 		}
+		fmt.Printf("Ncache len after addition: %d\n", w.ncache.Len())
 
 	case response.OtherError:
+		fmt.Printf("Hey, we're in OtherError. We don't cache these!\n")
 		// don't cache these
 	default:
+		fmt.Printf("Hey, we're in the default case! Caching called with unknown classification: %d\n", mt)
 		log.Warningf("Caching called with unknown classification: %d", mt)
 	}
 }

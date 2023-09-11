@@ -55,6 +55,7 @@ func TypeFromString(s string) (Type, error) {
 
 // Typify classifies a message, it returns the Type.
 func Typify(m *dns.Msg, t time.Time) (Type, *dns.OPT) {
+	fmt.Printf("In response::Typify\n")
 	if m == nil {
 		return OtherError, nil
 	}
@@ -92,7 +93,9 @@ func Typify(m *dns.Msg, t time.Time) (Type, *dns.OPT) {
 
 	soa := false
 	ns := 0
+	fmt.Printf("Before NS range\n")
 	for _, r := range m.Ns {
+		fmt.Printf("inside NS range\n")
 		if r.Header().Rrtype == dns.TypeSOA {
 			soa = true
 			continue
@@ -101,6 +104,9 @@ func Typify(m *dns.Msg, t time.Time) (Type, *dns.OPT) {
 			ns++
 		}
 	}
+	fmt.Printf("Done examining NS response records.\n")
+
+	fmt.Printf("Was there an SOA?? %t Message RCODE: %d\n", soa, m.Rcode)
 
 	if soa && m.Rcode == dns.RcodeSuccess {
 		return NoData, opt
