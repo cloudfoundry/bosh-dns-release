@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net"
 	"time"
 
@@ -52,6 +53,7 @@ func NewForwardHandler(
 }
 
 func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns.Msg) {
+	fmt.Printf("Hello! I am in ForwardHandler::ServeDNS. My request is '%s'\n", request.String())
 	internal.LogReceivedRequest(r.logger, r, r.logTag, request)
 	before := r.clock.Now()
 
@@ -66,6 +68,12 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 
 	err := r.recursors.PerformStrategically(func(recursor string) error {
 		exchangeAnswer, _, err := client.Exchange(request, recursor)
+		if err != nil {
+			fmt.Printf("After calling Exchange. The error is '%s'\n", err.Error())
+		}
+		if err == nil {
+			fmt.Printf("After calling Exchange. There is no error.'\n")
+		}
 
 		if err != nil {
 			question := request.Question[0].Name
@@ -82,15 +90,26 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 		}
 
 		if err != nil {
+			fmt.Printf("After the error checking. The error is '%s'\n", err.Error())
+		}
+		if err == nil {
+			fmt.Printf("After the error checking. There is no error!\n")
+		}
+
+		if err != nil {
 			return err
 		}
 
+		fmt.Printf("Before TruncateIfNeeded. ExchangeAnswer: '%s'\n", exchangeAnswer)
 		r.truncater.TruncateIfNeeded(responseWriter, request, exchangeAnswer)
+		fmt.Printf("After TruncateIfNeeded. ExchangeAnswer: '%s'\n", exchangeAnswer)
 
 		r.logRecursor(before, request, exchangeAnswer, "recursor="+recursor)
 		if writeErr := responseWriter.WriteMsg(exchangeAnswer); writeErr != nil {
 			r.logger.Error(r.logTag, "error writing response: %s", writeErr.Error())
 		}
+
+		fmt.Printf("After responseWriter.WriteMsg. ExchangeAnswer: '%s'\n", exchangeAnswer)
 
 		return nil
 	})

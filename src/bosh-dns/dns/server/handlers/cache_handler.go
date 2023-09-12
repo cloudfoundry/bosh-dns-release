@@ -60,6 +60,7 @@ func (c CachingDNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 	before := c.clock.Now()
 	fmt.Printf("********before cache serveDNS\n")
+	fmt.Printf("The question that that are going to ask is '%s'\n", r.String())
 	_, err := c.ca.ServeDNS(requestContext, truncatingWriter, r)
 	fmt.Printf("********after cache serveDNS\n")
 	duration := c.clock.Now().Sub(before).Nanoseconds()

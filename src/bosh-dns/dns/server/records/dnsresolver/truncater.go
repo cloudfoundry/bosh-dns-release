@@ -1,6 +1,7 @@
 package dnsresolver
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/miekg/dns"
@@ -18,6 +19,8 @@ func NewResponseTruncater() ResponseTruncater {
 }
 
 func (t *truncater) TruncateIfNeeded(responseWriter dns.ResponseWriter, req, resp *dns.Msg) {
+	fmt.Printf("Inside dnsresolver.TruncateIfNeeded.\n")
+	fmt.Printf("The resp argument is '%s'\n", resp.String())
 	maxLength := dns.MaxMsgSize
 	_, isUDP := responseWriter.RemoteAddr().(*net.UDPAddr)
 

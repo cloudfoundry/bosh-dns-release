@@ -35,11 +35,14 @@ func (c *Cache) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 	// DNSSEC RRs in the response are written to cache with the response.
 
 	fmt.Printf("In handler::ServeDNS. Going to check the cache for our item.\n")
+	fmt.Printf("As a reminder, this is our item '%s'\n", rc.String())
 	ttl := 0
 	i := c.getIgnoreTTL(now, state, server)
+
 	if i == nil {
 		crr := &ResponseWriter{ResponseWriter: w, Cache: c, state: state, server: server, do: do, ad: ad,
 			nexcept: c.nexcept, pexcept: c.pexcept, wildcardFunc: wildcardFunc(ctx)}
+		fmt.Printf("Calling doRefresh SITE 1\n") //okay, this is where we do the question asking?
 		return c.doRefresh(ctx, state, crr)
 	}
 	ttl = i.ttl(now)
@@ -48,6 +51,7 @@ func (c *Cache) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 		if c.verifyStale {
 			crr := &ResponseWriter{ResponseWriter: w, Cache: c, state: state, server: server, do: do}
 			cw := newVerifyStaleResponseWriter(crr)
+			fmt.Printf("Calling doRefresh SITE 2\n")
 			ret, err := c.doRefresh(ctx, state, cw)
 			if cw.refreshed {
 				return ret, err
@@ -58,15 +62,18 @@ func (c *Cache) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 		now = now.Add(time.Duration(ttl) * time.Second)
 		if !c.verifyStale {
 			cw := newPrefetchResponseWriter(server, state, c)
+			fmt.Printf("Setting up doPrefetch gorouting SITE 1\n")
 			go c.doPrefetch(ctx, state, cw, i, now)
 		}
 		servedStale.WithLabelValues(server, c.zonesMetricLabel, c.viewMetricLabel).Inc()
 	} else if c.shouldPrefetch(i, now) {
 		cw := newPrefetchResponseWriter(server, state, c)
+		fmt.Printf("Setting up doPrefetch gorouting SITE 2\n")
 		go c.doPrefetch(ctx, state, cw, i, now)
 	}
 
 	if i.wildcard != "" {
+		fmt.Printf("Going to call setValueFunc because wildcard is not empty string!\n")
 		// Set wildcard source record name to metadata
 		metadata.SetValueFunc(ctx, "zone/wildcard", func() string {
 			return i.wildcard
@@ -78,8 +85,12 @@ func (c *Cache) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 		// one so that we always get the original TTL
 		now = i.stored
 	}
+	//Okay 'resp' contains the ANSWER.
 	resp := i.toMsg(r, now, do, ad)
+	fmt.Printf("And here we are before the WriteMsg call. this is still our item: '%s'\n", r.String())
+	fmt.Printf("And here is our resp, before the call: '%s'\n", resp.String())
 	w.WriteMsg(resp)
+	fmt.Printf("And here is our resp, and AFTER the call: '%s'\n", resp.String())
 	return dns.RcodeSuccess, nil
 }
 
