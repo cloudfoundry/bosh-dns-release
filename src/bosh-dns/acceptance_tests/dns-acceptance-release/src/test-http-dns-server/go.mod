@@ -1,3 +1,3 @@
 module test-http-dns-server
 
-go 1.19
+go 1.21
