@@ -6,11 +6,11 @@ require (
 	code.cloudfoundry.org/clock v1.1.0
 	code.cloudfoundry.org/tlsconfig v0.0.0-20231017135636-f0e44068c22f
 	code.cloudfoundry.org/workpool v0.0.0-20230612151832-b93da105e0e8
-	github.com/cloudfoundry/bosh-utils v0.0.412
+	github.com/cloudfoundry/bosh-utils v0.0.414
 	github.com/cloudfoundry/gosigar v1.3.17
 	github.com/coredns/coredns v1.11.1
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.7.0
-	github.com/miekg/dns v1.1.56
+	github.com/miekg/dns v1.1.57
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/onsi/ginkgo/v2 v2.13.1
 	github.com/onsi/gomega v1.30.0

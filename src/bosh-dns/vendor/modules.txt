@@ -23,7 +23,7 @@ github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.3
 ## explicit; go 1.18
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.412
+# github.com/cloudfoundry/bosh-utils v0.0.414
 ## explicit; go 1.21
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -125,7 +125,7 @@ github.com/maxbrunsfeld/counterfeiter/v6
 github.com/maxbrunsfeld/counterfeiter/v6/arguments
 github.com/maxbrunsfeld/counterfeiter/v6/command
 github.com/maxbrunsfeld/counterfeiter/v6/generator
-# github.com/miekg/dns v1.1.56
+# github.com/miekg/dns v1.1.57
 ## explicit; go 1.19
 github.com/miekg/dns
 # github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d

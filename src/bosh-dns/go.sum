@@ -16,8 +16,8 @@ github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/charlievieth/fs v0.0.3 h1:3lZQXTj4PbE81CVPwALSn+JoyCNXkZgORHN6h2XHGlg=
 github.com/charlievieth/fs v0.0.3/go.mod h1:hD4sRzto1Hw8zCua76tNVKZxaeZZr1RiKftjAJQRLLo=
-github.com/cloudfoundry/bosh-utils v0.0.412 h1:Z/O57bJZpOH+cBrpABZtnfhROoFHnMOJS9yxrh73cZc=
-github.com/cloudfoundry/bosh-utils v0.0.412/go.mod h1:i3X9IaerQKHdOyk34ex1p0JMO6gab5vu2ZY8aBd5mGk=
+github.com/cloudfoundry/bosh-utils v0.0.414 h1:UuCD4w7jBb5SEAaQ6E6i9bjndieWD6ph7Rvh2Zeu3HY=
+github.com/cloudfoundry/bosh-utils v0.0.414/go.mod h1:NTqY6NfE8ZBdc9LEG6ZZAuThBJmGMjQTvhjAo/rKAiQ=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e h1:FQdRViaoDphGRfgrotl2QGsX1gbloe57dbGBS5CG6KY=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e/go.mod h1:PXmcacyJB/pJjSxEl15IU6rEIKXrhZQRzsr0UTkgNNs=
 github.com/cloudfoundry/gosigar v1.3.17 h1:XfZWonXDGj305p+skyGcDVZHgADZTFC+R/p35ePBGGw=
@@ -64,8 +64,8 @@ github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 h1:jWpvCLoY8Z/e3VKvls
 github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0/go.mod h1:QUyp042oQthUoa9bqDv0ER0wrtXnBruoNd7aNjkbP+k=
 github.com/maxbrunsfeld/counterfeiter/v6 v6.7.0 h1:z0CfPybq3CxaJvrrpf7Gme1psZTqHhJxf83q6apkSpI=
 github.com/maxbrunsfeld/counterfeiter/v6 v6.7.0/go.mod h1:RVP6/F85JyxTrbJxWIdKU2vlSvK48iCMnMXRkSz7xtg=
-github.com/miekg/dns v1.1.56 h1:5imZaSeoRNvpM9SzWNhEcP9QliKiz20/dA2QabIGVnE=
-github.com/miekg/dns v1.1.56/go.mod h1:cRm6Oo2C8TY9ZS/TqsSrseAcncm74lfK5G+ikN2SWWY=
+github.com/miekg/dns v1.1.57 h1:Jzi7ApEIzwEPLHWRcafCN9LZSBbqQpxjt/wpgvg7wcM=
+github.com/miekg/dns v1.1.57/go.mod h1:uqRjCRUuEAA6qsOiJvDd+CFo/vW+y5WR6SNmHE55hZk=
 github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d h1:VhgPp6v9qf9Agr/56bj7Y/xa04UccTW04VP0Qed4vnQ=
 github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d/go.mod h1:YUTz3bUH2ZwIWBy3CJBeOBEugqcmXREj14T+iG/4k4U=
 github.com/nxadm/tail v1.4.11 h1:8feyoE3OzPrcshW5/MJ4sGESc5cqmGkGCWlco4l0bqY=
