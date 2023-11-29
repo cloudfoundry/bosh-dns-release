@@ -174,3 +174,6 @@ properties:
   logging.format.timestamp:
     description: "Format for the timestamp in the component logs.  Valid values are 'rfc3339' and 'deprecated'."
     default: "rfc3339"
+
+  logging.tags:
+      description: "Provide logging configuration for log tags to overwrite the default logger behavior (e.g log_level property)"

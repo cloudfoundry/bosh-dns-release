@@ -54,6 +54,22 @@ func (c Config) GetLogLevel() (boshlog.LogLevel, error) {
 	return level, nil
 }
 
+func (c Config) GetLoggingTags() []boshlog.LogTag {
+	var tags []boshlog.LogTag
+
+	for _, logTag := range c.Logging.Tags {
+		loggerLevelValue, err := boshlog.Levelify(logTag.LogLevel)
+		if err != nil {
+			continue
+		}
+		tags = append(tags, boshlog.LogTag{
+			Name:     logTag.Name,
+			LogLevel: loggerLevelValue,
+		})
+	}
+	return tags
+}
+
 func (c Config) UseRFC3339Formatting() bool {
 	return strings.EqualFold(c.Logging.Format.TimeStamp, RFCFormatting)
 }
@@ -91,8 +107,14 @@ type InternalUpcheckDomain struct {
 	DNSQuery string `json:"dns_query"`
 }
 
+type LogTag struct {
+	Name     string `json:"name"`
+	LogLevel string `json:"log_level"`
+}
+
 type LoggingConfig struct {
 	Format FormatConfig `json:"format,omitempty"`
+	Tags   []LogTag     `json:"tags,omitempty"`
 }
 
 type FormatConfig struct {
