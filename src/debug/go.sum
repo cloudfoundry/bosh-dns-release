@@ -12,10 +12,10 @@ github.com/charlievieth/fs v0.0.3 h1:3lZQXTj4PbE81CVPwALSn+JoyCNXkZgORHN6h2XHGlg
 github.com/charlievieth/fs v0.0.3/go.mod h1:hD4sRzto1Hw8zCua76tNVKZxaeZZr1RiKftjAJQRLLo=
 github.com/cheggaaa/pb/v3 v3.1.4 h1:DN8j4TVVdKu3WxVwcRKu0sG00IIU6FewoABZzXbRQeo=
 github.com/cheggaaa/pb/v3 v3.1.4/go.mod h1:6wVjILNBaXMs8c21qRiaUM8BR82erfgau1DQ4iUXmSA=
-github.com/cloudfoundry/bosh-cli/v7 v7.5.0 h1:pZnEauBvAjiFC9hJB9bY9cmaY4lFUBhDRJKANP9L+yo=
-github.com/cloudfoundry/bosh-cli/v7 v7.5.0/go.mod h1:qGkY9Vg+XWisCv7fZ5zr555geoXrb3LoXCZm7hhQId4=
-github.com/cloudfoundry/bosh-utils v0.0.414 h1:UuCD4w7jBb5SEAaQ6E6i9bjndieWD6ph7Rvh2Zeu3HY=
-github.com/cloudfoundry/bosh-utils v0.0.414/go.mod h1:NTqY6NfE8ZBdc9LEG6ZZAuThBJmGMjQTvhjAo/rKAiQ=
+github.com/cloudfoundry/bosh-cli/v7 v7.5.1 h1:HsQMmbD0s1N0tOHKQHgp9qwoMV05jbS45iNHxg2EWio=
+github.com/cloudfoundry/bosh-cli/v7 v7.5.1/go.mod h1:VEAjFxV/YvgqqRcMEw9IKQmtEx4citNr4WxuHG+hHSU=
+github.com/cloudfoundry/bosh-utils v0.0.417 h1:goXFT4cvCOJaiqAVIDzkjh0pOqiD9iPLDXUJnXKoqDY=
+github.com/cloudfoundry/bosh-utils v0.0.417/go.mod h1:SpvoGp6+Nk0brIEB6oVLwE2BTQedS7SKBhS9dBBIVt0=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e h1:FQdRViaoDphGRfgrotl2QGsX1gbloe57dbGBS5CG6KY=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e/go.mod h1:PXmcacyJB/pJjSxEl15IU6rEIKXrhZQRzsr0UTkgNNs=
 github.com/cloudfoundry/socks5-proxy v0.2.104 h1:Ao3+Kto9Zkic3aS8S11n5wBta6k72325307Oyxy3mGI=
@@ -57,8 +57,8 @@ github.com/google/go-cmp v0.4.0/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/google/pprof v0.0.0-20231127191134-f3a68a39ae15 h1:t2sLhFuGXwoomaKLTuoxFfFqqlG1Gp2DpsupXq3UvZ0=
-github.com/google/pprof v0.0.0-20231127191134-f3a68a39ae15/go.mod h1:czg5+yv1E0ZGTi6S6vVK1mke0fV+FaUhNGcd6VRS9Ik=
+github.com/google/pprof v0.0.0-20231212022811-ec68065c825e h1:bwOy7hAFd0C91URzMIEBfr6BAz29yk7Qj0cy6S7DJlU=
+github.com/google/pprof v0.0.0-20231212022811-ec68065c825e/go.mod h1:czg5+yv1E0ZGTi6S6vVK1mke0fV+FaUhNGcd6VRS9Ik=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/jessevdk/go-flags v1.5.0 h1:1jKYvbxEjfUl0fmqTCOfonvskHHXMjBySTLW4y9LFvc=
 github.com/jessevdk/go-flags v1.5.0/go.mod h1:Fw0T6WPc1dYxT4mKEZRfG5kJhaTDP9pj1c2EWnYs/m4=
