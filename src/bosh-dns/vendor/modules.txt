@@ -23,7 +23,7 @@ github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.3
 ## explicit; go 1.18
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.419
+# github.com/cloudfoundry/bosh-utils v0.0.420
 ## explicit; go 1.21
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -41,7 +41,7 @@ github.com/cloudfoundry/go-socks5
 ## explicit; go 1.20
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.106
+# github.com/cloudfoundry/socks5-proxy v0.2.107
 ## explicit; go 1.21
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.1
@@ -239,7 +239,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/exp v0.0.0-20231226003508-02704c960a9b
+# golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/rand
@@ -268,7 +268,7 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/trace
-# golang.org/x/sys v0.15.0
+# golang.org/x/sys v0.16.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
@@ -320,7 +320,7 @@ golang.org/x/tools/internal/tokeninternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20231212172506-995d672761c0
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20240102182953-50ed04b92917
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.60.1
