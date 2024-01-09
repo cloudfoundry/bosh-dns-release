@@ -121,4 +121,6 @@ builds:
     version: 1.10.0
   f9738ced-c256-47df-5e66-a6ad8344781e:
     version: 1.31.0
+  fad21870-5e13-468f-4398-c58a501a58f4:
+    version: 1.36.12
 format-version: "2"
