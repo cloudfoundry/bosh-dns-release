@@ -400,7 +400,7 @@ var _ = Describe("Config", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(dnsConfig.GetLoggingTags()).To(Equal(
-				[]boshlog.LogTag{{"ForwardHandler", 0}, {"main", 3}}))
+				[]boshlog.LogTag{{Name: "ForwardHandler", LogLevel: 0}, {Name: "main", LogLevel: 3}}))
 		})
 	})
 
