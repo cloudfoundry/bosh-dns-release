@@ -13,7 +13,7 @@ require (
 	github.com/miekg/dns v1.1.58
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/onsi/ginkgo/v2 v2.15.0
-	github.com/onsi/gomega v1.31.0
+	github.com/onsi/gomega v1.31.1
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	golang.org/x/net v0.20.0
