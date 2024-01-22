@@ -390,6 +390,20 @@ var _ = Describe("Config", func() {
 		})
 	})
 
+	Context("LoggingTags", func() {
+		It("returns levelified logging tags", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "logging":{"tags": [
+				{"name": "ForwardHandler", "log_level": "DEBUG"}, {"name": "TEST", "log_level": "INVALID"},
+				{"name": "main", "log_level": "ERROR"}]}}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.GetLoggingTags()).To(Equal(
+				[]boshlog.LogTag{{Name: "ForwardHandler", LogLevel: 0}, {Name: "main", LogLevel: 3}}))
+		})
+	})
+
 	Context("AppendDefaultDNSPortIfMissing", func() {
 		It("allows multiple recursors to be configured with default port of 53", func() {
 			recursors, err := config.AppendDefaultDNSPortIfMissing([]string{"8.8.8.8", "10.244.4.4:9700", "2001:db8::1", "[2001:db8::1]:1234"})

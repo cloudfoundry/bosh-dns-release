@@ -78,6 +78,7 @@ func mainExitCode() int {
 	if config.UseRFC3339Formatting() {
 		logger.UseRFC3339Timestamps()
 	}
+	logger.UseTags(config.GetLoggingTags())
 	logTag := "main"
 	logger.Info(logTag, "bosh-dns starting")
 	defer logger.FlushTimeout(5 * time.Second) //nolint:errcheck
