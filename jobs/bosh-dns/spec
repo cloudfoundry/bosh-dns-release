@@ -176,4 +176,5 @@ properties:
     default: "rfc3339"
 
   logging.tags:
-      description: "Provide logging configuration for log tags to overwrite the default logger behavior (e.g log_level property)"
+    description: "Provide logging configuration for log tags to overwrite the default logger behavior (e.g log_level property)"
+    default: []
