@@ -1,8 +1,6 @@
 module test-recursor
 
-go 1.21
-
-toolchain go1.21.0
+go 1.21.0
 
 require (
 	github.com/miekg/dns v1.1.58
