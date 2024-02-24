@@ -12,10 +12,10 @@ github.com/charlievieth/fs v0.0.3 h1:3lZQXTj4PbE81CVPwALSn+JoyCNXkZgORHN6h2XHGlg
 github.com/charlievieth/fs v0.0.3/go.mod h1:hD4sRzto1Hw8zCua76tNVKZxaeZZr1RiKftjAJQRLLo=
 github.com/cheggaaa/pb/v3 v3.1.5 h1:QuuUzeM2WsAqG2gMqtzaWithDJv0i+i6UlnwSCI4QLk=
 github.com/cheggaaa/pb/v3 v3.1.5/go.mod h1:CrxkeghYTXi1lQBEI7jSn+3svI3cuc19haAj6jM60XI=
-github.com/cloudfoundry/bosh-cli/v7 v7.5.2 h1:U+jqs51jXu9SHdUegF1PSZuqSi0DbQACgXh0uETue6Y=
-github.com/cloudfoundry/bosh-cli/v7 v7.5.2/go.mod h1:1+VpRloR66b8TB7K7DMRuKmBYVbzjpm2KwN/75jJ+IM=
-github.com/cloudfoundry/bosh-utils v0.0.444 h1:0Qyr0tbdj+MG8yE7BSBTlKHC0RB+VTME4ilugYXmegc=
-github.com/cloudfoundry/bosh-utils v0.0.444/go.mod h1:j/uJwygtVStlwJC08Uajx/lz2E/cnxcgYExGwh62r9Y=
+github.com/cloudfoundry/bosh-cli/v7 v7.5.3 h1:LckS4lmbmXebjzR2yzlc1pUnc3q1MdtHROa6WXqy9v8=
+github.com/cloudfoundry/bosh-cli/v7 v7.5.3/go.mod h1:pfGrP3LvSUFOzNEi6j1oqjkbywP5Fy0dwXeyJDpZ0l8=
+github.com/cloudfoundry/bosh-utils v0.0.446 h1:/FzseLBGn79a3NNwfaQwB9Cv+GRv/44pQZQXxTJuLvA=
+github.com/cloudfoundry/bosh-utils v0.0.446/go.mod h1:l6ehmy90nDzz3jOR/phOFmPz/Rpto75izLL0zlFZWIs=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e h1:FQdRViaoDphGRfgrotl2QGsX1gbloe57dbGBS5CG6KY=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e/go.mod h1:PXmcacyJB/pJjSxEl15IU6rEIKXrhZQRzsr0UTkgNNs=
 github.com/cloudfoundry/socks5-proxy v0.2.113 h1:z1DL2e8wucFaGb/z1njaHtGYSiDFaG6ZLAviHkGuU2I=
