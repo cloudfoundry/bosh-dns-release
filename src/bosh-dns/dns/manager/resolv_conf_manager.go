@@ -61,6 +61,64 @@ func (r *resolvConfManager) Read() ([]string, error) {
 }
 
 func (r *resolvConfManager) SetPrimary() error {
+	_, err := r.fs.Stat("/etc/resolvconf/resolv.conf.d/") // only exists for resolveconf
+	if err != nil {
+		return r.SetSystemdResolved()
+	} else {
+		return r.SetResolvconf()
+	}
+}
+
+func (r *resolvConfManager) SetSystemdResolved() error {
+	writeFullString := fmt.Sprintf(`%s
+[Resolve]
+DNS=%s
+`, warningLine, r.address)
+	writeString := fmt.Sprintf(`%s %s`, warningLine, r.address)
+
+	if correct, _ := r.isCorrect(r.address); correct {
+		return nil
+	}
+	// # NOBLE_TODO: systemd-resolved uses /etc/systemd/resolved.conf.d/dns_servers.conf
+	// and use "DNS=IP" insteand of "nameserver IP"
+	if r.fs.FileExists("/etc/systemd/resolved.conf.d/dns_servers.conf") {
+		append, err := r.fs.ReadFileString("/etc/systemd/resolved.conf.d/dns_servers.conf")
+		if err != nil {
+			return bosherr.WrapError(err, "Reading existing head")
+		}
+
+		if !r.isStringCorrect(r.address, append) {
+			writeString = fmt.Sprintf("%s\n%s", writeString, append)
+		}
+	}
+
+	err := r.fs.WriteFileString("/etc/systemd/resolved.conf.d/dns_servers.conf", writeFullString)
+	if err != nil {
+		return bosherr.WrapError(err, "Writing head")
+	}
+
+	_, _, _, err = r.cmdRunner.RunCommand("service", "systemd-resolved", "restart")
+	if err != nil {
+		return bosherr.WrapError(err, "Executing resolvconf")
+	}
+
+	// # NOBLE_TODO: we could use "resolvectl dns" to check if the DNS entry is there
+	//               or we need to set the systemd-resolved to in a diffrent mode for /etc/resolv.conf
+	//               so that /etc/resolv.conf is symlinked to /run/systemd/resolve/resolv.conf instead of stuf-resolv.conf
+	// for i := 0; i < MaxResolvConfRetries; i++ {
+	// 	if correct, _ := r.isCorrect(r.address); correct {
+	// 		return nil
+	// 	}
+
+	// 	// seems like `resolvconf -u` may not immediately update /etc/resolv.conf, so
+	// 	// block here briefly to try and ensure it was successful before we error
+	// 	r.clock.Sleep(2 * time.Second)
+	// }
+
+	return errors.New("Failed to confirm nameserver in /etc/resolv.conf")
+}
+
+func (r *resolvConfManager) SetResolvconf() error {
 	writeString := fmt.Sprintf(`%s
 nameserver %s
 `, warningLine, r.address)
@@ -68,7 +126,8 @@ nameserver %s
 	if correct, _ := r.isCorrect(r.address); correct {
 		return nil
 	}
-
+	// # NOBLE_TODO: systemd-resolved uses /etc/systemd/resolved.conf.d/dns_servers.conf
+	// and use "DNS=IP" insteand of "nameserver IP"
 	if r.fs.FileExists("/etc/resolvconf/resolv.conf.d/head") {
 		append, err := r.fs.ReadFileString("/etc/resolvconf/resolv.conf.d/head")
 		if err != nil {
