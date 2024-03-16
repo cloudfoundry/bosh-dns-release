@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/clock v1.1.0
 	code.cloudfoundry.org/tlsconfig v0.0.0-20240308143921-4b874b341ed6
 	code.cloudfoundry.org/workpool v0.0.0-20230612151832-b93da105e0e8
-	github.com/cloudfoundry/bosh-utils v0.0.449
+	github.com/cloudfoundry/bosh-utils v0.0.452
 	github.com/cloudfoundry/gosigar v1.3.17
 	github.com/coredns/coredns v1.11.2
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.8.1
@@ -49,11 +49,11 @@ require (
 	github.com/quic-go/quic-go v0.41.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
+	golang.org/x/exp v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.19.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240308144416-29370a3891b7 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240314234333-6e1732d8331c // indirect
 	google.golang.org/grpc v1.62.1 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 )
