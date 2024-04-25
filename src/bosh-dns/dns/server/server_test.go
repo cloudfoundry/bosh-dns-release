@@ -404,7 +404,8 @@ var _ = Describe("Server", func() {
 					close(shutdownChannel)
 
 					shutdownChannel = nil
-					Eventually(dnsServerFinished).Should(Receive(nil))
+					var err error
+					Eventually(dnsServerFinished).Should(Receive(&err))
 
 					// context.WithTimeout wraps context.WithDeadline
 					Expect(fakeTCPServer.ShutdownContextCallCount()).To(Equal(1))
