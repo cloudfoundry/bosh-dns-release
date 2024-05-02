@@ -34,10 +34,7 @@ packages:
 
 properties:
   address:
-    description: "Address in which the DNS server will bind"
-    default: 169.254.0.2
-  aliased_address:
-    description: "Address that will be added by default"
+    description: "Address which the DNS server will bind to"
     default: 169.254.0.2
   addresses_files_glob:
     description: "Glob for any files to look for extra addresses to listen on"
@@ -75,6 +72,10 @@ properties:
     description: "Configure ourselves as the system nameserver (e.g. /etc/resolv.conf will be watched and overwritten)"
     default: true
 
+  configure_systemd_resolved:
+    description: "Create a virtual interface so systemd-resolved can use bosh-dns to resolve queries"
+    default: false
+
   handlers:
     description: "Array of handler configurations"
     default: []
@@ -96,6 +97,9 @@ properties:
     description: "Glob for any files to look for DNS handler information"
     default: /var/vcap/jobs/*/dns/handlers.json
 
+  disable_recursors:
+    description: "When set to true, bosh-dns will only resolve bosh-dns queries and will never forward queries to recursors"
+    default: false
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"
     default: []

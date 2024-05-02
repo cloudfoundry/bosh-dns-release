@@ -19,21 +19,23 @@ const (
 )
 
 type Config struct {
-	Address            string       `json:"address"`
-	Port               int          `json:"port"`
-	BindTimeout        DurationJSON `json:"timeout,omitempty"`
-	RecursorMaxRetries int          `json:"recursor_max_retries,omitempty"`
-	RequestTimeout     DurationJSON `json:"request_timeout,omitempty"`
-	RecursorTimeout    DurationJSON `json:"recursor_timeout,omitempty"`
-	Recursors          []string     `json:"recursors,omitempty"`
-	ExcludedRecursors  []string     `json:"excluded_recursors,omitempty"`
-	RecordsFile        string       `json:"records_file,omitempty"`
-	RecursorSelection  string       `json:"recursor_selection"`
-	AliasFilesGlob     string       `json:"alias_files_glob,omitempty"`
-	HandlersFilesGlob  string       `json:"handlers_files_glob,omitempty"`
-	AddressesFilesGlob string       `json:"addresses_files_glob,omitempty"`
-	UpcheckDomains     []string     `json:"upcheck_domains,omitempty"`
-	JobsDir            string       `json:"jobs_dir,omitempty"`
+	Address                  string       `json:"address"`
+	Port                     int          `json:"port"`
+	BindTimeout              DurationJSON `json:"timeout,omitempty"`
+	RecursorMaxRetries       int          `json:"recursor_max_retries,omitempty"`
+	RequestTimeout           DurationJSON `json:"request_timeout,omitempty"`
+	RecursorTimeout          DurationJSON `json:"recursor_timeout,omitempty"`
+	Recursors                []string     `json:"recursors,omitempty"`
+	DisableRecursors         bool         `json:"disable_recursors,omitempty"`
+	ConfigureSystemdResolved bool         `json:"configure_systemd_resolved,omitempty"`
+	ExcludedRecursors        []string     `json:"excluded_recursors,omitempty"`
+	RecordsFile              string       `json:"records_file,omitempty"`
+	RecursorSelection        string       `json:"recursor_selection"`
+	AliasFilesGlob           string       `json:"alias_files_glob,omitempty"`
+	HandlersFilesGlob        string       `json:"handlers_files_glob,omitempty"`
+	AddressesFilesGlob       string       `json:"addresses_files_glob,omitempty"`
+	UpcheckDomains           []string     `json:"upcheck_domains,omitempty"`
+	JobsDir                  string       `json:"jobs_dir,omitempty"`
 
 	LogLevel string `json:"log_level,omitempty"`
 

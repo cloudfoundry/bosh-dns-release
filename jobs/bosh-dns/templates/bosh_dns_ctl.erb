@@ -37,16 +37,33 @@ function create_directories_and_chown_to_vcap() {
 }
 
 function create_network_alias() {
-  if ! ip addr show dev lo | grep -q <%= p('aliased_address') %>
+  if ! ip addr show dev lo | grep -q <%= p('address') %>
   then
     ip addr add <%= p('address') %> dev lo
   fi
 }
 
 function remove_network_alias() {
-  if ip addr show dev lo | grep -q <%= p('aliased_address') %>
+  if ip addr show dev lo | grep -q <%= p('address') %>
   then
     ip addr del <%= p('address') %>/32 dev lo
+  fi
+}
+
+function create_network_interface() {
+  if ! ip addr show dev bosh-dns
+  then
+    ip link add bosh-dns type dummy
+    ip addr add <%= p('address') %>/32 dev bosh-dns
+    ip link set bosh-dns up
+    resolvectl dns bosh-dns <%= p('address') %>
+  fi
+}
+
+function remove_network_interface() {
+  if ip addr show dev bosh-dns
+  then
+    ip link delete bosh-dns
   fi
 }
 
@@ -106,13 +123,22 @@ function main() {
 
   case ${1} in
     start)
+      <% if p('configure_systemd_resolved') -%>
+      create_network_interface
+      "${DNS_PACKAGE}/bin/bosh-dns-systemd-resolved-updater" --config "${JOB_DIR}/config/config.json"
+      <% else -%>
       create_network_alias
+      <% end -%>
       start_dns
       ;;
 
     stop)
       stop_dns
+      <% if p('configure_systemd_resolved') -%>
+      remove_network_interface
+      <% else -%>
       remove_network_alias
+      <% end -%>
       ;;
 
     *)
