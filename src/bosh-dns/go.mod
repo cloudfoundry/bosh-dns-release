@@ -4,9 +4,9 @@ go 1.21.0
 
 require (
 	code.cloudfoundry.org/clock v1.1.0
-	code.cloudfoundry.org/tlsconfig v0.0.0-20240530171334-2593348de0c6
+	code.cloudfoundry.org/tlsconfig v0.0.0-20240606172222-82aa02bc07ea
 	code.cloudfoundry.org/workpool v0.0.0-20240408164905-b6c2fa5a80e4
-	github.com/cloudfoundry/bosh-utils v0.0.468
+	github.com/cloudfoundry/bosh-utils v0.0.471
 	github.com/cloudfoundry/gosigar v1.3.17
 	github.com/coredns/coredns v1.11.3
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.8.1
@@ -16,8 +16,8 @@ require (
 	github.com/onsi/gomega v1.33.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
-	golang.org/x/net v0.25.0
-	golang.org/x/sys v0.20.0
+	golang.org/x/net v0.26.0
+	golang.org/x/sys v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -28,7 +28,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charlievieth/fs v0.0.3 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.117 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.118 // indirect
 	github.com/coredns/caddy v1.1.1 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
@@ -44,17 +44,17 @@ require (
 	github.com/pivotal-cf/paraphernalia v0.0.0-20180203224945-a64ae2051c20 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.53.0 // indirect
+	github.com/prometheus/common v0.54.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/quic-go/quic-go v0.44.0 // indirect
+	github.com/quic-go/quic-go v0.45.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
-	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/exp v0.0.0-20240531132922-fd00a4e0eefc // indirect
-	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/crypto v0.24.0 // indirect
+	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8 // indirect
+	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
-	golang.org/x/tools v0.21.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
+	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/tools v0.22.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
 	google.golang.org/grpc v1.64.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 )
