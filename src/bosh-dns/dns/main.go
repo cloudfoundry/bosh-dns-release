@@ -125,14 +125,16 @@ func mainExitCode() int {
 	clock := clock.NewClock()
 	repoUpdate := make(chan struct{})
 
-	dnsManager := newDNSManager(config.Address, logger, clock, fs)
-	recursorReader := dnsconfig.NewRecursorReader(dnsManager, listenIPs)
-	err = dnsconfig.ConfigureRecursors(recursorReader, &config)
-	if err != nil {
-		logger.Error(logTag, fmt.Sprintf("Unable to configure recursor addresses from os: %s", err.Error()))
-		return 1
+	if !config.DisableRecursors {
+		dnsManager := newDNSManager(config.Address, logger, clock, fs)
+		recursorReader := dnsconfig.NewRecursorReader(dnsManager, listenIPs)
+		err = dnsconfig.ConfigureRecursors(recursorReader, &config)
+		if err != nil {
+			logger.Error(logTag, fmt.Sprintf("Unable to configure recursor addresses from os: %s", err.Error()))
+			return 1
+		}
+		logger.Debug(logTag, fmt.Sprintf("Upstream recursors are configured to %v with excluded recursors %v", config.Recursors, config.ExcludedRecursors))
 	}
-	logger.Debug(logTag, fmt.Sprintf("Upstream recursors are configured to %v with excluded recursors %v", config.Recursors, config.ExcludedRecursors))
 
 	var healthWatcher healthiness.HealthWatcher = healthiness.NewNopHealthWatcher()
 	var healthChecker healthiness.HealthChecker = healthiness.NewDisabledHealthChecker()
@@ -157,21 +159,41 @@ func mainExitCode() int {
 	truncater := dnsresolver.NewResponseTruncater()
 	localDomain := dnsresolver.NewLocalDomain(logger, recordSet, truncater)
 
-	recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, config.RecursorMaxRetries, logger)
-	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
-	forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger, truncater)
+	var (
+		nextInternalHandler  dns.Handler = handlers.NewDiscoveryHandler(logger, localDomain)
+		metricsServerWrapper *monitoring.MetricsServerWrapper
+	)
 
-	mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger, recordSet, forwardHandler), clock, logger))
+	if !config.DisableRecursors {
+		recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, config.RecursorMaxRetries, logger)
+		exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
+		forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger, truncater)
 
-	handlerFactory := handlers.NewFactory(exchangerFactory, clock, config.RecursorMaxRetries, logger, truncater)
+		mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger, recordSet, forwardHandler), clock, logger))
 
-	delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
-	if err != nil {
-		logger.Error(logTag, err.Error())
-		return 1
-	}
-	for domain, handler := range delegatingHandlers {
-		mux.Handle(domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
+		handlerFactory := handlers.NewFactory(exchangerFactory, clock, config.RecursorMaxRetries, logger, truncater)
+
+		delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
+		if err != nil {
+			logger.Error(logTag, err.Error())
+			return 1
+		}
+		for domain, handler := range delegatingHandlers {
+			mux.Handle(domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
+		}
+
+		var nextExternalHandler dns.Handler = forwardHandler
+
+		if config.Cache.Enabled {
+			nextExternalHandler = handlers.NewCachingDNSHandler(nextExternalHandler, truncater, clock, logger)
+		}
+		if config.Metrics.Enabled {
+			metricsAddr := fmt.Sprintf("%s:%d", config.Metrics.Address, config.Metrics.Port)
+			metricsServerWrapper = monitoring.NewMetricsServerWrapper(logger, monitoring.MetricsServer(metricsAddr, nextInternalHandler, nextExternalHandler))
+			nextExternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), monitoring.DNSRequestTypeExternal)
+			nextInternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), monitoring.DNSRequestTypeInternal)
+		}
+		mux.Handle(".", nextExternalHandler)
 	}
 
 	listenAddrs := []string{fmt.Sprintf("%s:%d", config.Address, config.Port)}
@@ -191,22 +213,6 @@ func mainExitCode() int {
 			}
 		}
 	}
-
-	var (
-		nextInternalHandler  dns.Handler = handlers.NewDiscoveryHandler(logger, localDomain)
-		nextExternalHandler  dns.Handler = forwardHandler
-		metricsServerWrapper *monitoring.MetricsServerWrapper
-	)
-	if config.Cache.Enabled {
-		nextExternalHandler = handlers.NewCachingDNSHandler(nextExternalHandler, truncater, clock, logger)
-	}
-	if config.Metrics.Enabled {
-		metricsAddr := fmt.Sprintf("%s:%d", config.Metrics.Address, config.Metrics.Port)
-		metricsServerWrapper = monitoring.NewMetricsServerWrapper(logger, monitoring.MetricsServer(metricsAddr, nextInternalHandler, nextExternalHandler))
-		nextExternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), monitoring.DNSRequestTypeExternal)
-		nextInternalHandler = handlers.NewMetricsDNSHandler(metricsServerWrapper.MetricsReporter(), monitoring.DNSRequestTypeInternal)
-	}
-	mux.Handle(".", nextExternalHandler)
 
 	servers := []server.DNSServer{}
 	numListeners := runtime.NumCPU()

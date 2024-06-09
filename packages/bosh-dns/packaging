@@ -11,6 +11,7 @@ pushd "${GOPATH}/src/bosh-dns"
   go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns-nameserverconfig" "bosh-dns/dns/nameserverconfig"
   go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns-health" "bosh-dns/healthcheck"
   go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns-wait" "bosh-dns/wait"
+  go build -o "${BOSH_INSTALL_TARGET}/bin/bosh-dns-systemd-resolved-updater" "bosh-dns/dns/systemdresolvedupdater"
 popd
 
 mv debug "${GOPATH}/src"
