@@ -57,6 +57,7 @@ function create_network_interface() {
     ip addr add <%= p('address') %>/32 dev bosh-dns
     ip link set bosh-dns up
     resolvectl dns bosh-dns <%= p('address') %>
+    resolvectl log-level <%= p('log_level')%>
   fi
 }
 
