@@ -35,7 +35,7 @@ require (
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/pprof v0.0.0-20240528025155-186aa0362fba // indirect
+	github.com/google/pprof v0.0.0-20240618054019-d3b898a103f8 // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
