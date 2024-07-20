@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/clock v1.2.0
 	code.cloudfoundry.org/tlsconfig v0.0.0-20240712175922-ffce9516cec8
 	code.cloudfoundry.org/workpool v0.0.0-20240408164905-b6c2fa5a80e4
-	github.com/cloudfoundry/bosh-utils v0.0.478
+	github.com/cloudfoundry/bosh-utils v0.0.479
 	github.com/cloudfoundry/gosigar v1.3.17
 	github.com/coredns/coredns v1.11.3
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.8.1
@@ -50,7 +50,7 @@ require (
 	github.com/quic-go/quic-go v0.45.1 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/exp v0.0.0-20240707233637-46b078467d37 // indirect
+	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
