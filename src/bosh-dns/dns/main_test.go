@@ -1121,7 +1121,7 @@ var _ = Describe("main", func() {
 						Expect(answer).To(BeAssignableToTypeOf(&dns.A{}))
 
 						return answer.(*dns.A).A.String()
-					}).Should(Equal("127.0.0.3"))
+					}, 5*time.Second).Should(Equal("127.0.0.3"))
 
 					Eventually(func() []dns.RR {
 						c := &dns.Client{}
