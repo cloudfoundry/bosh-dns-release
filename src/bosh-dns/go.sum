@@ -20,8 +20,8 @@ github.com/cloudfoundry/bosh-utils v0.0.480 h1:Tclq/gqehPoE6bmnAs54RNHxghbo3e/8K
 github.com/cloudfoundry/bosh-utils v0.0.480/go.mod h1:/0UYmiJPPxmRwMeth69IH4A75wmL8x++Cj77SyIT/M8=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e h1:FQdRViaoDphGRfgrotl2QGsX1gbloe57dbGBS5CG6KY=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e/go.mod h1:PXmcacyJB/pJjSxEl15IU6rEIKXrhZQRzsr0UTkgNNs=
-github.com/cloudfoundry/gosigar v1.3.17 h1:XfZWonXDGj305p+skyGcDVZHgADZTFC+R/p35ePBGGw=
-github.com/cloudfoundry/gosigar v1.3.17/go.mod h1:AE808sPiOcWT3ISwYIgtSgCTHDgsBFTUJ2fG4tyb+CE=
+github.com/cloudfoundry/gosigar v1.3.65 h1:D7J91+lR6+y8OQgKMine5pi47mxqGS8PwbAiRdaFJq4=
+github.com/cloudfoundry/gosigar v1.3.65/go.mod h1:ipFMHKl6vwxgJ0giHuYf8nMzufZWFOjlPr2RDWFczGc=
 github.com/cloudfoundry/socks5-proxy v0.2.120 h1:3H1XkaZziAYqtFHOucKOo4bx3YWgK7NmVF1yD0nM46k=
 github.com/cloudfoundry/socks5-proxy v0.2.120/go.mod h1:pnjvrGTBmTO826JNA9wysR06+4Rj8KHOrEWBdtE0VUQ=
 github.com/coredns/caddy v1.1.1 h1:2eYKZT7i6yxIfGP3qLJoJ7HAsDJqYB+X68g4NYjSrE0=

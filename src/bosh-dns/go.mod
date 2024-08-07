@@ -7,7 +7,7 @@ require (
 	code.cloudfoundry.org/tlsconfig v0.0.0-20240730181439-b476395a9e4e
 	code.cloudfoundry.org/workpool v0.0.0-20240408164905-b6c2fa5a80e4
 	github.com/cloudfoundry/bosh-utils v0.0.480
-	github.com/cloudfoundry/gosigar v1.3.17
+	github.com/cloudfoundry/gosigar v1.3.65
 	github.com/coredns/coredns v1.11.3
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.8.1
 	github.com/miekg/dns v1.1.61
