@@ -4,6 +4,7 @@
 package tools
 
 import (
+	_ "github.com/cloudfoundry/gosigar"
 	_ "github.com/maxbrunsfeld/counterfeiter/v6"
 	_ "github.com/onsi/ginkgo/v2/ginkgo"
 )
