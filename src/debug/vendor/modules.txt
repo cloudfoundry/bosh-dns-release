@@ -10,7 +10,7 @@ bosh-dns/tlsclient
 # code.cloudfoundry.org/clock v1.2.0
 ## explicit; go 1.20
 code.cloudfoundry.org/clock
-# code.cloudfoundry.org/tlsconfig v0.0.0-20240806182125-2cf75882e274
+# code.cloudfoundry.org/tlsconfig v0.0.0-20240808182450-b1b581e211a2
 ## explicit; go 1.21
 code.cloudfoundry.org/tlsconfig
 # github.com/VividCortex/ewma v1.2.0
@@ -44,7 +44,7 @@ github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e
 ## explicit
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.120
+# github.com/cloudfoundry/socks5-proxy v0.2.121
 ## explicit; go 1.21.0
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
@@ -172,7 +172,7 @@ golang.org/x/net/proxy
 # golang.org/x/sync v0.8.0
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.23.0
+# golang.org/x/sys v0.24.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
