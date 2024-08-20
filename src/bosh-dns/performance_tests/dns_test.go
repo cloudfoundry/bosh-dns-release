@@ -1,6 +1,7 @@
 package performance_test
 
 import (
+	"bosh-dns/dns/server/records/recordsfakes"
 	"fmt"
 	"time"
 
@@ -115,7 +116,13 @@ var _ = Describe("DNS", func() {
 			healthWatcher := &healthinessfakes.FakeHealthWatcher{}
 			fs := boshsys.NewOsFileSystem(logger)
 			recordSetReader := records.NewFileReader("assets/records.json", fs, clock.NewClock(), logger, signal)
-			recordSet, err := records.NewRecordSet(recordSetReader, aliases.NewConfig(), healthWatcher, uint(5), shutdown, logger)
+			fakeQueryFilterer := &recordsfakes.FakeFilterer{}
+			fakeHealthFilterer := &recordsfakes.FakeFilterer{}
+			fakeFiltererFactory := &recordsfakes.FakeFiltererFactory{}
+			fakeFiltererFactory.NewQueryFiltererReturns(fakeQueryFilterer)
+			fakeFiltererFactory.NewHealthFiltererReturns(fakeHealthFilterer)
+			fakeAliasQueryEncoder := &recordsfakes.FakeAliasQueryEncoder{}
+			recordSet, err := records.NewRecordSet(recordSetReader, aliases.NewConfig(), healthWatcher, uint(5), shutdown, logger, fakeFiltererFactory, fakeAliasQueryEncoder)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(recordSet.AllRecords()).To(HaveLen(102))
 
