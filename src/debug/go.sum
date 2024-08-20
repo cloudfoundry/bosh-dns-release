@@ -1,7 +1,7 @@
-code.cloudfoundry.org/clock v1.2.0 h1:1swXS7yPmQmhAdkTb1nJ2c0geOdf4LvibUleNCo2HjA=
-code.cloudfoundry.org/clock v1.2.0/go.mod h1:foDbmVp5RIuIGlota90ot4FkJtx5m4+oKoWiVuu2FDg=
-code.cloudfoundry.org/tlsconfig v0.0.0-20240808182450-b1b581e211a2 h1:KoCAuwi0tDa3JJW9qF6m7Fz5n6ftDx+yIVWEHgraRHw=
-code.cloudfoundry.org/tlsconfig v0.0.0-20240808182450-b1b581e211a2/go.mod h1:6ymG8DjGLta+bnqdpUmdv88Ikje2VvOTq+8drVe4pUU=
+code.cloudfoundry.org/clock v1.3.0 h1:0P9zWwt9eSCHYTFWSCT7FkX21x/dEDHKTlSbvJG80RI=
+code.cloudfoundry.org/clock v1.3.0/go.mod h1:U4uytQbm9TLDZh+pwNaIKBINM1FIgHPQuH0IewhtNMk=
+code.cloudfoundry.org/tlsconfig v0.1.0 h1:/SGZk3K7t79cuhSVs/qZXayEnLV1kodmvU3EBcc4E4w=
+code.cloudfoundry.org/tlsconfig v0.1.0/go.mod h1:6ymG8DjGLta+bnqdpUmdv88Ikje2VvOTq+8drVe4pUU=
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
 github.com/VividCortex/ewma v1.2.0 h1:f58SaIzcDXrSy3kWaHNvuJgJ3Nmz59Zji6XoJR/q1ow=
@@ -12,10 +12,10 @@ github.com/charlievieth/fs v0.0.3 h1:3lZQXTj4PbE81CVPwALSn+JoyCNXkZgORHN6h2XHGlg
 github.com/charlievieth/fs v0.0.3/go.mod h1:hD4sRzto1Hw8zCua76tNVKZxaeZZr1RiKftjAJQRLLo=
 github.com/cheggaaa/pb/v3 v3.1.5 h1:QuuUzeM2WsAqG2gMqtzaWithDJv0i+i6UlnwSCI4QLk=
 github.com/cheggaaa/pb/v3 v3.1.5/go.mod h1:CrxkeghYTXi1lQBEI7jSn+3svI3cuc19haAj6jM60XI=
-github.com/cloudfoundry/bosh-cli/v7 v7.6.2 h1:d5wFxppTcrZ2wI2x15n1ODOU4/dMFZ/rjd3QaNu1qRg=
-github.com/cloudfoundry/bosh-cli/v7 v7.6.2/go.mod h1:bpfnF/guEGFHa+FqJRbMrnUfa92+nV1tfqPQ5bTcTsE=
-github.com/cloudfoundry/bosh-utils v0.0.482 h1:E/QDV5s5Zic+8yvF9xaeOXWyMagJwFjYdTdZdEJOKiI=
-github.com/cloudfoundry/bosh-utils v0.0.482/go.mod h1:hjJaWvVE8FhIt378Jdxly8FfULg9LqPelZDjwMeCHV8=
+github.com/cloudfoundry/bosh-cli/v7 v7.7.0 h1:bfjkBok78lKHirZrt3G5cmFQ3z+fSKgRjDaKIa8p+Vc=
+github.com/cloudfoundry/bosh-cli/v7 v7.7.0/go.mod h1:lVSYcMWF/k0081hhGVuoZ23ICs+hhewvb4fheQt9Xsg=
+github.com/cloudfoundry/bosh-utils v0.0.484 h1:XgR0D0XJv/k+tmFW1qJo0tz877DDR3d/SLI3EzX+kGI=
+github.com/cloudfoundry/bosh-utils v0.0.484/go.mod h1:GrOm4BfT0KiXW4KfJ5I3MFYocO4leq90Ez41jAMer1M=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e h1:FQdRViaoDphGRfgrotl2QGsX1gbloe57dbGBS5CG6KY=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e/go.mod h1:PXmcacyJB/pJjSxEl15IU6rEIKXrhZQRzsr0UTkgNNs=
 github.com/cloudfoundry/socks5-proxy v0.2.121 h1:TiWZlwHCDUrPt+diReZp4kwXocwufKWE/JybLOsWsxo=
@@ -71,8 +71,8 @@ github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWE
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-runewidth v0.0.16 h1:E5ScNMtiwvlvB5paMFdw9p4kSQzbXFikJ5SQO6TULQc=
 github.com/mattn/go-runewidth v0.0.16/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
-github.com/miekg/dns v1.1.61 h1:nLxbwF3XxhwVSm8g9Dghm9MHPaUZuqhPiGL+675ZmEs=
-github.com/miekg/dns v1.1.61/go.mod h1:mnAarhS3nWaW+NVP2wTkYVIZyHNJ098SJZUki3eykwQ=
+github.com/miekg/dns v1.1.62 h1:cN8OuEF1/x5Rq6Np+h1epln8OiyPWV+lROx9LxcGgIQ=
+github.com/miekg/dns v1.1.62/go.mod h1:mvDlcItzm+br7MToIKqkglaGhlFMHJ9DTNNWONWXbNQ=
 github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d h1:VhgPp6v9qf9Agr/56bj7Y/xa04UccTW04VP0Qed4vnQ=
 github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d/go.mod h1:YUTz3bUH2ZwIWBy3CJBeOBEugqcmXREj14T+iG/4k4U=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
