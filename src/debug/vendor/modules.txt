@@ -7,7 +7,7 @@ bosh-dns/dns/server/record
 bosh-dns/healthcheck/api
 bosh-dns/healthconfig
 bosh-dns/tlsclient
-# code.cloudfoundry.org/clock v1.3.0
+# code.cloudfoundry.org/clock v1.5.0
 ## explicit; go 1.20
 code.cloudfoundry.org/clock
 # code.cloudfoundry.org/tlsconfig v0.1.0
@@ -94,7 +94,7 @@ github.com/miekg/dns
 # github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 ## explicit
 github.com/nu7hatch/gouuid
-# github.com/onsi/ginkgo/v2 v2.20.0
+# github.com/onsi/ginkgo/v2 v2.20.1
 ## explicit; go 1.20
 github.com/onsi/ginkgo/v2
 github.com/onsi/ginkgo/v2/config
@@ -149,7 +149,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
+# golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/slices
