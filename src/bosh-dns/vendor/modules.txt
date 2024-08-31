@@ -23,7 +23,7 @@ github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.3
 ## explicit; go 1.18
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.484
+# github.com/cloudfoundry/bosh-utils v0.0.485
 ## explicit; go 1.21.0
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -34,14 +34,14 @@ github.com/cloudfoundry/bosh-utils/retrystrategy
 github.com/cloudfoundry/bosh-utils/system
 github.com/cloudfoundry/bosh-utils/system/fakes
 github.com/cloudfoundry/bosh-utils/uuid
-# github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e
-## explicit
+# github.com/cloudfoundry/go-socks5 v0.0.0-20240831012420-2590b55236ee
+## explicit; go 1.21.0
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/gosigar v1.3.68
+# github.com/cloudfoundry/gosigar v1.3.69
 ## explicit; go 1.21.0
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.121
+# github.com/cloudfoundry/socks5-proxy v0.2.122
 ## explicit; go 1.21.0
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.1
@@ -194,7 +194,7 @@ github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.6.1
 ## explicit; go 1.19
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.55.0
+# github.com/prometheus/common v0.57.0
 ## explicit; go 1.20
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
@@ -325,10 +325,10 @@ golang.org/x/tools/internal/tokeninternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20240823204242-4ba0660f739c
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20240827150818-7e3bb234dfed
 ## explicit; go 1.21
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.65.0
+# google.golang.org/grpc v1.66.0
 ## explicit; go 1.21
 google.golang.org/grpc
 google.golang.org/grpc/attributes
@@ -346,7 +346,9 @@ google.golang.org/grpc/credentials
 google.golang.org/grpc/credentials/insecure
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
+google.golang.org/grpc/experimental/stats
 google.golang.org/grpc/grpclog
+google.golang.org/grpc/grpclog/internal
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/balancer/gracefulswitch
@@ -368,11 +370,13 @@ google.golang.org/grpc/internal/resolver/dns/internal
 google.golang.org/grpc/internal/resolver/passthrough
 google.golang.org/grpc/internal/resolver/unix
 google.golang.org/grpc/internal/serviceconfig
+google.golang.org/grpc/internal/stats
 google.golang.org/grpc/internal/status
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
 google.golang.org/grpc/internal/transport/networktype
 google.golang.org/grpc/keepalive
+google.golang.org/grpc/mem
 google.golang.org/grpc/metadata
 google.golang.org/grpc/peer
 google.golang.org/grpc/resolver
