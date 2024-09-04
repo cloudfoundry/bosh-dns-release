@@ -7,6 +7,8 @@ builds:
     version: 1.36.9
   04c81566-e715-4fee-722c-eb4e5dede25f:
     version: 1.8.0
+  0995f66d-8493-43e5-79db-f2665955b4e0:
+    version: 1.38.3
   0ec192de-873d-4ef4-421c-e59910a93603:
     version: 1.12.0
   10dfadbd-e70c-4f5c-5ed4-0b74a71107c2:
