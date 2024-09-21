@@ -6,7 +6,7 @@ require (
 	bosh-dns v0.0.0
 	code.cloudfoundry.org/tlsconfig v0.5.0
 	github.com/cloudfoundry/bosh-cli/v7 v7.7.2
-	github.com/cloudfoundry/bosh-utils v0.0.495
+	github.com/cloudfoundry/bosh-utils v0.0.496
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.2
