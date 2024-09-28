@@ -41,7 +41,7 @@ github.com/cloudfoundry/go-socks5
 ## explicit; go 1.22.0
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.124
+# github.com/cloudfoundry/socks5-proxy v0.2.125
 ## explicit; go 1.22.0
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.1
@@ -97,7 +97,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20240910150728-a0b0bb1d4134
+# github.com/google/pprof v0.0.0-20240927233043-f3f46ee36851
 ## explicit; go 1.22
 github.com/google/pprof/profile
 # github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645
@@ -106,8 +106,8 @@ github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc
 # github.com/jpillora/backoff v1.0.0
 ## explicit; go 1.13
 github.com/jpillora/backoff
-# github.com/klauspost/compress v1.17.9
-## explicit; go 1.20
+# github.com/klauspost/compress v1.17.10
+## explicit; go 1.21
 github.com/klauspost/compress
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
@@ -325,7 +325,7 @@ golang.org/x/tools/internal/tokeninternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20240924160255-9d4c2d233b61
 ## explicit; go 1.21
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.67.0
