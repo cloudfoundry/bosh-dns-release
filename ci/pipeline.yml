@@ -594,10 +594,11 @@ resources:
       name: bosh-warden-boshlite-ubuntu-jammy-go_agent
 
   - name: bosh-candidate-release
-    type: s3
+    type: gcs-resource
     source:
-      bucket: bosh-candidate-release-tarballs
-      versioned_file: bosh-dev-release.tgz
+      bucket: bosh-director-oss-ci-candidate-release-tarballs
+      json_key: ((bosh_director_oss_ci_service_account_json))
+      versioned_file: "bosh-dev-release.tgz"
 
   - name: envs
     type: git
