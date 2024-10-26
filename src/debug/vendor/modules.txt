@@ -7,7 +7,7 @@ bosh-dns/dns/server/record
 bosh-dns/healthcheck/api
 bosh-dns/healthconfig
 bosh-dns/tlsclient
-# code.cloudfoundry.org/clock v1.16.0
+# code.cloudfoundry.org/clock v1.17.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/clock
 # code.cloudfoundry.org/tlsconfig v0.7.0
@@ -44,7 +44,7 @@ github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20240831012420-2590b55236ee
 ## explicit; go 1.21.0
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.128
+# github.com/cloudfoundry/socks5-proxy v0.2.129
 ## explicit; go 1.22.0
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
@@ -53,7 +53,7 @@ github.com/cppforlife/go-semi-semantic/version
 # github.com/dustin/go-humanize v1.0.1
 ## explicit; go 1.16
 github.com/dustin/go-humanize
-# github.com/fatih/color v1.17.0
+# github.com/fatih/color v1.18.0
 ## explicit; go 1.17
 github.com/fatih/color
 # github.com/go-logr/logr v1.4.2
@@ -70,7 +70,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20241017200806-017d972448fc
+# github.com/google/pprof v0.0.0-20241023014458-598669927662
 ## explicit; go 1.22
 github.com/google/pprof/profile
 # github.com/jessevdk/go-flags v1.6.1
