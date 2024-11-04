@@ -131,6 +131,8 @@ jobs:
         timeout: 1h
         file: bosh-dns-release/ci/tasks/windows/test-unit-windows.yml
         tags: [ "windows-nimbus" ]
+        params:
+          BOSH_DNS_RECURSOR_ADDRESS: 192.19.189.10
 
   - name: test-unit-release
     public: true

@@ -672,7 +672,7 @@ var _ = Describe("main", func() {
 
 						m := &dns.Msg{}
 
-						SetQuestion(m, nil, "app-id.internal-domain.", dns.TypeANY)
+						SetQuestion(m, nil, "group.internal.alias.", dns.TypeANY)
 						_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
 
@@ -1625,10 +1625,15 @@ var _ = Describe("main", func() {
 		It("logs the recursor used to resolve", func() {
 			var err error
 
+			recursorAddress := os.Getenv("BOSH_DNS_RECURSOR_ADDRESS")
+			if recursorAddress == "" {
+				recursorAddress = "8.8.8.8"
+			}
+
 			cfg := config.NewDefaultConfig()
 			cfg.Address = listenAddress
 			cfg.Port = listenPort
-			cfg.Recursors = []string{"8.8.8.8"}
+			cfg.Recursors = []string{recursorAddress}
 			cfg.RecursorTimeout = config.DurationJSON(time.Second)
 			cfg.JobsDir = jobsDir
 			cfg.API = config.APIConfig{
@@ -1653,8 +1658,8 @@ var _ = Describe("main", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.Rcode).To(Equal(dns.RcodeSuccess))
 
-			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=1 recursor=8\.8\.8\.8:53\ time=\d+ns`))
-			Consistently(session.Out).ShouldNot(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=1 time=\d+ns`))
+			Eventually(session.Out).Should(gbytes.Say(`\[ForwardHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=\d+ recursor=` + recursorAddress + `:53\ time=\d+ns`))
+			Consistently(session.Out).ShouldNot(gbytes.Say(`\[RequestLoggerHandler\].*handlers\.ForwardHandler Request id=\d+ qtype=\[ANY\] qname=\[` + casedQname + `\] rcode=NOERROR ancount=\d+ time=\d+ns`))
 		})
 
 		AfterEach(func() {

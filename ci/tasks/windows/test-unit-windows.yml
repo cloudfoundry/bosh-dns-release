@@ -1,6 +1,9 @@
 ---
 platform: windows
 
+params:
+  BOSH_DNS_RECURSOR_ADDRESS:
+
 inputs:
 - name: bosh-dns-release
 
