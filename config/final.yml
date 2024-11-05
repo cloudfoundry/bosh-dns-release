@@ -1,6 +1,6 @@
 ---
 name: bosh-dns
 blobstore:
-  provider: s3
+  provider: gcs
   options:
-    bucket_name: dns-release-blobs
+    bucket_name: bosh-dns-release-blobs

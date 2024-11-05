@@ -1,6 +1,6 @@
 ---
 name: dns-acceptance
 blobstore:
-  provider: s3
+  provider: local
   options:
-    bucket_name: dns-release-blobs
+    blobstore_path: final_blobs
