@@ -98,7 +98,7 @@ jobs:
       - task: create
         file: bosh-dns-release/ci/tasks/create-candidate.yml
         output_mapping:
-          release: bumped-release
+          candidate-release: bumped-release
       - task: test-acceptance
         privileged: true
         file: bosh-dns-release/ci/tasks/test-acceptance.yml
@@ -140,7 +140,7 @@ jobs:
       - task: test-unit-release
         file: bosh-dns-release/ci/tasks/test-unit-release.yml
 
-  - name: create-release
+  - name: pre-integration-fan-in
     plan:
       - get: bosh-dns-release
         trigger: true
@@ -148,11 +148,6 @@ jobs:
           - test-unit
           - test-unit-windows
           - test-unit-release
-      - task: create
-        file: bosh-dns-release/ci/tasks/create-candidate.yml
-      - put: candidate-release
-        params:
-          file: "release/bosh-dns-dev-release.tgz"
 
   - name: test-acceptance-ubuntu-jammy
     public: true
@@ -160,37 +155,18 @@ jobs:
     plan:
       - in_parallel:
           - get: bosh-dns-release
-            passed: [ create-release ]
+            passed: [ pre-integration-fan-in ]
+            trigger: true
           - get: bosh-stemcell
             resource: warden-jammy-stemcell
           - get: bosh-candidate-release
-          - get: candidate-release
-            trigger: true
-            passed: [ create-release ]
+      - task: create-candidate
+        file: bosh-dns-release/ci/tasks/create-candidate.yml
       - task: test-acceptance
         privileged: true
         file: bosh-dns-release/ci/tasks/test-acceptance.yml
         params:
           BASE_STEMCELL: ubuntu-jammy
-
-  - name: test-acceptance-ubuntu-bionic
-    public: true
-    serial: true
-    plan:
-      - in_parallel:
-          - get: bosh-dns-release
-            passed: [ create-release ]
-          - get: bosh-stemcell
-            resource: warden-bionic-stemcell
-          - get: bosh-candidate-release
-          - get: candidate-release
-            trigger: true
-            passed: [ create-release ]
-      - task: test-acceptance
-        privileged: true
-        file: bosh-dns-release/ci/tasks/test-acceptance.yml
-        params:
-          BASE_STEMCELL: ubuntu-bionic
 
   - name: test-acceptance-windows2019
     public: true
@@ -198,22 +174,20 @@ jobs:
     plan:
       - do:
           - in_parallel:
-              - get: bosh-dns-release
-                passed:
-                  - create-release
-                trigger: true
-              - get: envs
-              - get: bosh-deployment
-              - get: gcp-linux-stemcell
-                resource: gcp-jammy-stemcell
-              - get: bosh-stemcell-windows
-                resource: gcp-windows-2019-stemcell
-              - get: bosh-candidate-release
-              - get: docker-bosh-integration-image
-              - get: candidate-release
-                passed:
-                  - create-release
-                trigger: true
+            - get: bosh-dns-release
+              passed:
+                - pre-integration-fan-in
+              trigger: true
+            - get: envs
+            - get: bosh-deployment
+            - get: gcp-linux-stemcell
+              resource: gcp-jammy-stemcell
+            - get: bosh-stemcell-windows
+              resource: gcp-windows-2019-stemcell
+            - get: bosh-candidate-release
+            - get: docker-bosh-integration-image
+          - task: create-candidate
+            file: bosh-dns-release/ci/tasks/create-candidate.yml
           - do:
               - task: bbl-up
                 file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
@@ -261,18 +235,18 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-          - get: bosh-dns-release
-            trigger: true
-            passed: [ create-release ]
-          - get: bbl-state
-            resource: envs
-          - get: bosh-deployment
-          - get: docker-release
-          - get: gcp-jammy-stemcell
-          - get: warden-jammy-stemcell
-          - get: bosh-docker-cpi-release
-          - get: candidate-release
-            passed: [ create-release ]
+        - get: bosh-dns-release
+          trigger: true
+          passed: [ pre-integration-fan-in ]
+        - get: bbl-state
+          resource: envs
+        - get: bosh-deployment
+        - get: docker-release
+        - get: gcp-jammy-stemcell
+        - get: warden-jammy-stemcell
+        - get: bosh-docker-cpi-release
+      - task: create-candidate
+        file: bosh-dns-release/ci/tasks/create-candidate.yml
       - do:
           - task: setup-env
             file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
@@ -317,16 +291,16 @@ jobs:
           - in_parallel:
               - get: bosh-dns-src
                 resource: bosh-dns-release
-                passed: [ create-release ]
+                passed: [ pre-integration-fan-in ]
               - get: brats-src
-              - get: bosh-dns-release
-                resource: candidate-release
-                trigger: true
-                passed: [ create-release ]
               - get: stemcell
                 resource: warden-jammy-stemcell
               - get: bosh-release
               - get: docker-cpi-image
+          - task: create-candidate
+            file: bosh-dns-release/ci/tasks/create-candidate.yml
+            output_mapping:
+              candidate-release: bosh-dns-release
           - task: test-brats # contain base manifest
             file: brats-src/ci/tasks/test-brats.yml
             image: docker-cpi-image
@@ -341,17 +315,6 @@ jobs:
               DNS_RELEASE_VERSION: "create"
               FOCUS_SPEC: "BoshDns"
               STEMCELL_OS: "ubuntu-jammy"
-
-  - name: upload-staging-release
-    serial: true
-    plan:
-      - get: candidate-release
-        passed: [ delivery ]
-        trigger: true
-      - put: staging-release
-        params:
-          file: "candidate-release/bosh-dns-dev-release.tgz"
-          acl: public-read
 
   - name: release-new-patch
     serial_groups:
@@ -450,8 +413,6 @@ jobs:
       - in_parallel:
           - get: bosh-dns-release
             passed: [ delivery ]
-          - get: candidate-release
-            passed: [ delivery ]
           - get: version
             trigger: true
           - get: release-notes
@@ -490,19 +451,11 @@ jobs:
   - name: delivery
     plan:
       - in_parallel:
-          - get: candidate-release
-            passed:
-              - test-stress
-              - test-acceptance-ubuntu-bionic
-              - test-acceptance-ubuntu-jammy
-              - test-acceptance-windows2019
-              - brats-ubuntu
           - get: bosh-dns-release
             version: every
             trigger: true
             passed:
               - test-stress
-              - test-acceptance-ubuntu-bionic
               - test-acceptance-ubuntu-jammy
               - test-acceptance-windows2019
               - brats-ubuntu
@@ -538,29 +491,12 @@ resources:
   - name: version
     type: semver
     source:
-      bucket: bosh-dns-release-candidate-tarballs
-      key: version
-      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.username))
-      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.password))
-      assume_role_arn: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.role_arn))
-
-  - name: candidate-release
-    type: s3
-    source:
-      bucket: bosh-dns-release-candidate-tarballs
-      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.username))
-      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.password))
-      aws_role_arn: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.role_arn))
-      versioned_file: "bosh-dns-dev-release.tgz"
-
-  - name: staging-release
-    type: s3
-    source:
-      bucket: bosh-dns-release-candidate-tarballs
-      access_key_id: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.username))
-      secret_access_key: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.password))
-      aws_role_arn: ((bosh-dns-release-candidate-tarballs-uploader_assume_aws_access_key.role_arn))
-      versioned_file: "bosh-dns-staging-release.tgz"
+      driver: git
+      uri: git@github.com:cloudfoundry/bosh-dns-release.git
+      branch: release-semver
+      file: VERSION
+      private_key: ((github_deploy_key_bosh-dns-release.private_key))
+      initial_version: '1.39.0'
 
   - name: brats-src
     type: git
@@ -592,11 +528,6 @@ resources:
     type: bosh-io-stemcell
     source:
       name: bosh-google-kvm-windows2019-go_agent
-
-  - name: warden-bionic-stemcell
-    type: bosh-io-stemcell
-    source:
-      name: bosh-warden-boshlite-ubuntu-bionic-go_agent
 
   - name: gcp-jammy-stemcell
     type: bosh-io-stemcell

@@ -11,7 +11,7 @@ inputs:
   - name: bosh-dns-release
 
 outputs:
-  - name: release
+  - name: candidate-release
 
 run:
   path: bosh-dns-release/ci/tasks/create-candidate.sh
