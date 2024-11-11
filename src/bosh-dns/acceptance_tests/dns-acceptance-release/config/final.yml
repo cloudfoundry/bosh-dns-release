@@ -1,6 +1,6 @@
 ---
 name: dns-acceptance
 blobstore:
-  provider: local
+  provider: gcs
   options:
-    blobstore_path: final_blobs
+    bucket_name: bosh-dns-release-blobs
