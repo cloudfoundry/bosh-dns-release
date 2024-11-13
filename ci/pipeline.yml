@@ -168,6 +168,25 @@ jobs:
         params:
           BASE_STEMCELL: ubuntu-jammy
 
+  - name: test-acceptance-ubuntu-noble
+    public: true
+    serial: true
+    plan:
+      - in_parallel:
+          - get: bosh-dns-release
+            passed: [ pre-integration-fan-in ]
+            trigger: true
+          - get: bosh-stemcell
+            resource: warden-noble-stemcell
+          - get: bosh-candidate-release
+      - task: create-candidate
+        file: bosh-dns-release/ci/tasks/create-candidate.yml
+      - task: test-acceptance
+        privileged: true
+        file: bosh-dns-release/ci/tasks/test-acceptance.yml
+        params:
+          BASE_STEMCELL: ubuntu-noble
+
   - name: test-acceptance-windows2019
     public: true
     serial: true
@@ -284,15 +303,15 @@ jobs:
               repository: cleanup-bbl-state
               rebase: true
 
-  - name: brats-ubuntu
+  - name: brats-ubuntu-jammy
     serial: true
     plan:
       - do:
           - in_parallel:
-              - get: bosh-dns-src
-                resource: bosh-dns-release
+              - get: bosh-dns-release
                 passed: [ pre-integration-fan-in ]
-              - get: brats-src
+                trigger: true
+              - get: bosh
               - get: stemcell
                 resource: warden-jammy-stemcell
               - get: bosh-release
@@ -302,12 +321,12 @@ jobs:
             output_mapping:
               candidate-release: bosh-dns-release
           - task: test-brats # contain base manifest
-            file: brats-src/ci/tasks/test-brats.yml
+            file: bosh/ci/tasks/test-brats.yml
             image: docker-cpi-image
             privileged: true
             input_mapping:
-              dns-release: bosh-dns-release-src
-              bosh-src: brats-src
+              dns-release: candidate-release
+              bosh-ci: bosh
             params:
               BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
               BOSH_DIRECTOR_RELEASE_VERSION: "latest"
@@ -315,6 +334,38 @@ jobs:
               DNS_RELEASE_VERSION: "create"
               FOCUS_SPEC: "BoshDns"
               STEMCELL_OS: "ubuntu-jammy"
+
+  - name: brats-ubuntu-noble
+    serial: true
+    plan:
+      - do:
+          - in_parallel:
+              - get: bosh-dns-release
+                passed: [ pre-integration-fan-in ]
+                trigger: true
+              - get: bosh
+              - get: stemcell
+                resource: warden-noble-stemcell
+              - get: bosh-release
+              - get: docker-cpi-image
+          - task: create-candidate
+            file: bosh-dns-release/ci/tasks/create-candidate.yml
+            output_mapping:
+              candidate-release: bosh-dns-release
+          - task: test-brats # contain base manifest
+            file: bosh/ci/tasks/test-brats.yml
+            image: docker-cpi-image
+            privileged: true
+            input_mapping:
+              dns-release: candidate-release
+              bosh-ci: bosh
+            params:
+              BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
+              BOSH_DIRECTOR_RELEASE_VERSION: "latest"
+              DNS_RELEASE_FILE_PATH: "dns-release"
+              DNS_RELEASE_VERSION: "create"
+              FOCUS_SPEC: "BoshDns"
+              STEMCELL_OS: "ubuntu-noble"
 
   - name: release-new-patch
     serial_groups:
@@ -458,7 +509,7 @@ jobs:
               - test-stress
               - test-acceptance-ubuntu-jammy
               - test-acceptance-windows2019
-              - brats-ubuntu
+              - brats-ubuntu-jammy
 
 resources:
   - name: bosh-shared-ci
@@ -498,7 +549,7 @@ resources:
       private_key: ((github_deploy_key_bosh-dns-release.private_key))
       initial_version: '1.39.0'
 
-  - name: brats-src
+  - name: bosh
     type: git
     source:
       uri: https://github.com/cloudfoundry/bosh
@@ -538,6 +589,11 @@ resources:
     type: bosh-io-stemcell
     source:
       name: bosh-warden-boshlite-ubuntu-jammy-go_agent
+
+  - name: warden-noble-stemcell
+    type: bosh-io-stemcell
+    source:
+      name: bosh-warden-boshlite-ubuntu-noble
 
   - name: bosh-candidate-release
     type: gcs-resource
