@@ -409,22 +409,56 @@ jobs:
         trigger: true
         passed:
         - delivery
-      - get: golang-release
-      - get: current-version
-        resource: version
-      - get: patched-version
-        resource: version
-        params:
-          bump: patch
-      - get: docker-bosh-integration-image
+      - get: version
+      - get: bosh-shared-ci
+      - get: bosh-security-scanner-image
     - try:
         task: check-for-updated-golang-package
-        file: golang-release/ci/tasks/shared/check-for-updated-golang-package.yml
+        file: bosh-shared-ci/tasks/release/check-for-updated-vendored-packages.yml
+        image: bosh-security-scanner-image
         input_mapping:
           input_repo: bosh-dns-release
-          version: current-version
         params:
           PACKAGES: [ golang-1-linux, golang-1-windows ]
+    - try:
+        task: check-for-patched-cves
+        file: bosh-shared-ci/tasks/release/check-for-patched-cves.yml
+        image: bosh-security-scanner-image
+        input_mapping:
+          input_repo: bosh-dns-release
+        params:
+          SEVERITY: CRITICAL,HIGH
+          SOURCE_PATH: src/bosh-dns
+    - task: ensure-package-check-succeeded
+      file: bosh-shared-ci/tasks/release/ensure-task-succeeded.yml
+      image: bosh-security-scanner-image
+      input_mapping:
+        task-output-folder: package-updates
+    - task: ensure-cve-checker-succeeded
+      file: bosh-shared-ci/tasks/release/ensure-task-succeeded.yml
+      image: bosh-security-scanner-image
+      input_mapping:
+        task-output-folder: patched_cves
+    - try:
+        task: check-needs-release
+        image: bosh-security-scanner-image
+        config:
+          platform: linux
+          inputs:
+            - name: release-notes
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                if [ -f release-notes/needs-release ]; then
+                  echo "## Release Notes"
+                  echo "${release-notes/release-notes.md}"
+                  exit 0
+                else
+                  echo "No release needed"
+                  exit 1
+                fi
         on_success:
           do:
             - put: release-notes
@@ -432,30 +466,7 @@ jobs:
                 file: release-notes/release-notes.md
             - put: version
               params:
-                file: patched-version/version
-    - try:
-        task: check-for-patched-cves
-        file: golang-release/ci/tasks/shared/check-for-patched-cves.yml
-        input_mapping:
-          input_repo: bosh-dns-release
-          version: current-version
-        params:
-          SEVERITY: CRITICAL,HIGH
-          SOURCE_PATH: src/bosh-dns
-        on_success:
-          do:
-          - put: release-notes
-            params:
-              file: release-notes/release-notes.md
-          - put: version
-            params:
-              file: patched-version/version
-    - task: ensure-cve-checker-succeeded
-      file: golang-release/ci/tasks/shared/ensure-cve-checker-succeeded.yml
-      image: docker-bosh-integration-image
-      params:
-        description: |
-          Since the previous step is wrapped in a "try", this task checks that the previous step fully executed.
+                bump: patch
 
   - name: finalize-release
     serial_groups:
@@ -629,6 +640,13 @@ resources:
     type: registry-image
     source:
       repository: bosh/integration
+      username: ((docker.username))
+      password: ((docker.password))
+
+  - name: bosh-security-scanner-image
+    type: registry-image
+    source:
+      repository: bosh/security-scanner
       username: ((docker.username))
       password: ((docker.password))
 
