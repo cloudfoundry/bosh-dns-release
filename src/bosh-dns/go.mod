@@ -3,12 +3,12 @@ module bosh-dns
 go 1.22.0
 
 require (
-	code.cloudfoundry.org/clock v1.20.0
-	code.cloudfoundry.org/tlsconfig v0.8.0
+	code.cloudfoundry.org/clock v1.21.0
+	code.cloudfoundry.org/tlsconfig v0.9.0
 	code.cloudfoundry.org/workpool v0.0.0-20241029002937-525c4cca6f6a
-	github.com/cloudfoundry/bosh-utils v0.0.500
+	github.com/cloudfoundry/bosh-utils v0.0.501
 	github.com/cloudfoundry/gosigar v1.3.76
-	github.com/coredns/coredns v1.11.3
+	github.com/coredns/coredns v1.11.4
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.9.0
 	github.com/miekg/dns v1.1.62
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
@@ -57,7 +57,7 @@ require (
 	golang.org/x/sync v0.9.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/tools v0.27.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241113202542-65e8d215514f // indirect
 	google.golang.org/grpc v1.68.0-dev // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 )
