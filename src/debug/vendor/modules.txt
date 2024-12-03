@@ -7,10 +7,10 @@ bosh-dns/dns/server/record
 bosh-dns/healthcheck/api
 bosh-dns/healthconfig
 bosh-dns/tlsclient
-# code.cloudfoundry.org/clock v1.21.0
+# code.cloudfoundry.org/clock v1.23.0
 ## explicit; go 1.22.0
 code.cloudfoundry.org/clock
-# code.cloudfoundry.org/tlsconfig v0.10.0
+# code.cloudfoundry.org/tlsconfig v0.11.0
 ## explicit; go 1.22
 code.cloudfoundry.org/tlsconfig
 # github.com/VividCortex/ewma v1.2.0
@@ -33,7 +33,7 @@ github.com/cloudfoundry/bosh-cli/v7/ui
 github.com/cloudfoundry/bosh-cli/v7/ui/fakes
 github.com/cloudfoundry/bosh-cli/v7/ui/fmt
 github.com/cloudfoundry/bosh-cli/v7/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.503
+# github.com/cloudfoundry/bosh-utils v0.0.507
 ## explicit; go 1.22.0
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -44,7 +44,7 @@ github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20240831012420-2590b55236ee
 ## explicit; go 1.21.0
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.132
+# github.com/cloudfoundry/socks5-proxy v0.2.133
 ## explicit; go 1.22.0
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
@@ -70,7 +70,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20241122213907-cbe949e5a41b
+# github.com/google/pprof v0.0.0-20241203143554-1e3fdc7de467
 ## explicit; go 1.22
 github.com/google/pprof/profile
 # github.com/jessevdk/go-flags v1.6.1
@@ -116,7 +116,7 @@ github.com/onsi/ginkgo/v2/internal/parallel_support
 github.com/onsi/ginkgo/v2/internal/testingtproxy
 github.com/onsi/ginkgo/v2/reporters
 github.com/onsi/ginkgo/v2/types
-# github.com/onsi/gomega v1.35.1
+# github.com/onsi/gomega v1.36.0
 ## explicit; go 1.22
 github.com/onsi/gomega
 github.com/onsi/gomega/format
@@ -126,6 +126,7 @@ github.com/onsi/gomega/ghttp
 github.com/onsi/gomega/internal
 github.com/onsi/gomega/internal/gutil
 github.com/onsi/gomega/matchers
+github.com/onsi/gomega/matchers/internal/miter
 github.com/onsi/gomega/matchers/support/goraph/bipartitegraph
 github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
