@@ -23,7 +23,7 @@ github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.3
 ## explicit; go 1.18
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.517
+# github.com/cloudfoundry/bosh-utils v0.0.518
 ## explicit; go 1.22.0
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -137,7 +137,7 @@ github.com/munnerz/goautoneg
 github.com/nu7hatch/gouuid
 # github.com/nxadm/tail v1.4.8
 ## explicit; go 1.13
-# github.com/onsi/ginkgo/v2 v2.22.1
+# github.com/onsi/ginkgo/v2 v2.22.2
 ## explicit; go 1.22.0
 github.com/onsi/ginkgo/v2
 github.com/onsi/ginkgo/v2/config
@@ -326,7 +326,7 @@ golang.org/x/tools/internal/stdlib
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20241223144023-3abc09e42ca8
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20241230172942-26aa7a208def
 ## explicit; go 1.21
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.69.2

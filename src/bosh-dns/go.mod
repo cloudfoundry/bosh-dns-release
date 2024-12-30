@@ -6,13 +6,13 @@ require (
 	code.cloudfoundry.org/clock v1.26.0
 	code.cloudfoundry.org/tlsconfig v0.14.0
 	code.cloudfoundry.org/workpool v0.0.0-20241210013132-62cbb12e809b
-	github.com/cloudfoundry/bosh-utils v0.0.517
+	github.com/cloudfoundry/bosh-utils v0.0.518
 	github.com/cloudfoundry/gosigar v1.3.82
 	github.com/coredns/coredns v1.11.4
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.11.1
 	github.com/miekg/dns v1.1.62
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
-	github.com/onsi/ginkgo/v2 v2.22.1
+	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
@@ -57,7 +57,7 @@ require (
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241223144023-3abc09e42ca8 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241230172942-26aa7a208def // indirect
 	google.golang.org/grpc v1.69.2 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
 )
