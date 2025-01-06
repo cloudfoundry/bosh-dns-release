@@ -420,6 +420,14 @@ jobs:
           input_repo: bosh-dns-release
         params:
           PACKAGES: [ golang-1-linux, golang-1-windows ]
+        on_success:
+          do:
+            - put: release-notes
+              params:
+                file: release-notes/release-notes.md
+            - put: version
+              params:
+                bump: patch
     - try:
         task: check-for-patched-cves
         file: bosh-shared-ci/tasks/release/check-for-patched-cves.yml
@@ -429,6 +437,14 @@ jobs:
         params:
           SEVERITY: CRITICAL,HIGH
           SOURCE_PATH: src/bosh-dns
+        on_success:
+          do:
+            - put: release-notes
+              params:
+                file: release-notes/release-notes.md
+            - put: version
+              params:
+                bump: patch
     - task: ensure-package-check-succeeded
       file: bosh-shared-ci/tasks/release/ensure-task-succeeded.yml
       image: bosh-security-scanner-image
@@ -439,34 +455,6 @@ jobs:
       image: bosh-security-scanner-image
       input_mapping:
         task-output-folder: patched_cves
-    - try:
-        task: check-needs-release
-        image: bosh-security-scanner-image
-        config:
-          platform: linux
-          inputs:
-            - name: release-notes
-          run:
-            path: /bin/bash
-            args:
-              - -c
-              - |
-                if [ -f release-notes/needs-release ]; then
-                  echo "## Release Notes"
-                  echo "${release-notes/release-notes.md}"
-                  exit 0
-                else
-                  echo "No release needed"
-                  exit 1
-                fi
-        on_success:
-          do:
-            - put: release-notes
-              params:
-                file: release-notes/release-notes.md
-            - put: version
-              params:
-                bump: patch
 
   - name: finalize-release
     serial_groups:
@@ -478,7 +466,6 @@ jobs:
           - get: version
             trigger: true
           - get: release-notes
-          - get: golang-release
           - get: bosh-shared-ci
       - task: finalize-release
         file: bosh-shared-ci/tasks/release/create-final-release.yml
@@ -504,11 +491,11 @@ jobs:
           name: release_metadata/tag-name
           tag: release_metadata/tag-name
           body: release-notes/release-notes.md
-      - task: clear-release-notes
-        file: golang-release/ci/tasks/shared/clear-release-notes.yml
+          commitish: bosh-dns-release/.git/ref
+          generate_release_notes: true
       - put: release-notes
         params:
-          file: release-notes/release-notes.md
+          file: release_repo/empty-file
 
   - name: delivery
     plan:
