@@ -321,7 +321,7 @@ jobs:
             output_mapping:
               candidate-release: bosh-dns-release
           - task: test-brats # contain base manifest
-            file: bosh/ci/tasks/test-brats.yml
+            file: bosh/ci/shared/brats/test-acceptance.yml
             image: docker-cpi-image
             privileged: true
             input_mapping:
@@ -353,7 +353,7 @@ jobs:
             output_mapping:
               candidate-release: bosh-dns-release
           - task: test-brats # contain base manifest
-            file: bosh/ci/tasks/test-brats.yml
+            file: bosh/ci/shared/brats/test-acceptance.yml
             image: docker-cpi-image
             privileged: true
             input_mapping:
