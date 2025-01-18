@@ -6,7 +6,7 @@ require (
 	bosh-dns v0.0.0
 	code.cloudfoundry.org/tlsconfig v0.15.0
 	github.com/cloudfoundry/bosh-cli/v7 v7.8.6
-	github.com/cloudfoundry/bosh-utils v0.0.520
+	github.com/cloudfoundry/bosh-utils v0.0.522
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
@@ -44,7 +44,7 @@ require (
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
-	google.golang.org/protobuf v1.36.2 // indirect
+	google.golang.org/protobuf v1.36.3 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
