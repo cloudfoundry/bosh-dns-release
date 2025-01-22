@@ -495,7 +495,7 @@ jobs:
           generate_release_notes: true
       - put: release-notes
         params:
-          file: release_repo/empty-file
+          file: release_metadata/empty-file
 
   - name: delivery
     plan:
