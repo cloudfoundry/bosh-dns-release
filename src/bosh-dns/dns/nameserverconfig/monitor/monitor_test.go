@@ -6,7 +6,7 @@ import (
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/clock/fakeclock"
-	"github.com/cloudfoundry/bosh-utils/logger/fakes"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -16,7 +16,7 @@ import (
 
 var _ = Describe("Monitor", func() {
 	var (
-		logger     *fakes.FakeLogger
+		logger     *loggerfakes.FakeLogger
 		applier    monitor.Monitor
 		dnsManager *managerfakes.FakeDNSManager
 		fakeClock  *fakeclock.FakeClock
@@ -24,7 +24,7 @@ var _ = Describe("Monitor", func() {
 	)
 
 	BeforeEach(func() {
-		logger = &fakes.FakeLogger{}
+		logger = &loggerfakes.FakeLogger{}
 		dnsManager = &managerfakes.FakeDNSManager{}
 		fakeClock = fakeclock.NewFakeClock(time.Now())
 		ticker = fakeClock.NewTicker(time.Second)

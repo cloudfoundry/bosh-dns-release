@@ -1,7 +1,7 @@
 package tracker_test
 
 import (
-	logfake "github.com/cloudfoundry/bosh-utils/logger/fakes"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -19,7 +19,7 @@ var _ = Describe("Tracker", func() {
 		shutdown       chan struct{}
 		hw             *fakes.Healther
 		qf             *fakes.Query
-		fakeLogger     *logfake.FakeLogger
+		fakeLogger     *loggerfakes.FakeLogger
 	)
 
 	BeforeEach(func() {
@@ -27,7 +27,7 @@ var _ = Describe("Tracker", func() {
 		healthMonitor = make(chan record.Host, 5)
 		shutdown = make(chan struct{})
 		trackedDomains = &fakes.LimitedTranscript{}
-		fakeLogger = &logfake.FakeLogger{}
+		fakeLogger = &loggerfakes.FakeLogger{}
 		hw = &fakes.Healther{}
 		qf = &fakes.Query{}
 	})

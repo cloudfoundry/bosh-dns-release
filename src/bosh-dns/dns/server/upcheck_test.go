@@ -3,7 +3,7 @@ package server_test
 import (
 	"fmt"
 
-	boshlogf "github.com/cloudfoundry/bosh-utils/logger/fakes"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -67,7 +67,7 @@ var _ = Describe("Upcheck", func() {
 		ports = map[string]int{}
 		addresses = map[string]string{}
 		listenDomain = "127.0.0.1"
-		dnsHandler = handlers.NewUpcheckHandler(&boshlogf.FakeLogger{})
+		dnsHandler = handlers.NewUpcheckHandler(&loggerfakes.FakeLogger{})
 	})
 
 	Context("when the upcheck target is a malformed address", func() {
@@ -80,16 +80,16 @@ var _ = Describe("Upcheck", func() {
 			Expect(err.Error()).To(ContainSubstring("~~~~~~~~~~"))
 		},
 			Entry("when networking is udp", "udp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, "udp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when networking is tcp", "tcp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when internal domain check and networking is udp", "udp", func() server.Upcheck {
-				return server.NewInternalDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, "udp", &boshlogf.FakeLogger{})
+				return server.NewInternalDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when internal domain check and networking is tcp", "tcp", func() server.Upcheck {
-				return server.NewInternalDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+				return server.NewInternalDNSAnswerValidatingUpcheck("~~~~~~~~~~", upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 			}),
 		)
 	})
@@ -102,16 +102,16 @@ var _ = Describe("Upcheck", func() {
 				Expect(err).NotTo(HaveOccurred())
 			},
 				Entry("when networking is udp", func() server.Upcheck {
-					return server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports["udp"]), upcheckDomain, "udp", &boshlogf.FakeLogger{})
+					return server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports["udp"]), upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 				}),
 				Entry("when networking is tcp", func() server.Upcheck {
-					return server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports["tcp"]), upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+					return server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports["tcp"]), upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 				}),
 				Entry("when internal domain check and networking is udp", func() server.Upcheck {
-					return server.NewInternalDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports["udp"]), upcheckDomain, "udp", &boshlogf.FakeLogger{})
+					return server.NewInternalDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports["udp"]), upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 				}),
 				Entry("when internal domain check and tcp", func() server.Upcheck {
-					return server.NewInternalDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports["tcp"]), upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+					return server.NewInternalDNSAnswerValidatingUpcheck(fmt.Sprintf("127.0.0.1:%d", ports["tcp"]), upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 				}),
 			)
 		})
@@ -123,16 +123,16 @@ var _ = Describe("Upcheck", func() {
 				Expect(err).NotTo(HaveOccurred())
 			},
 				Entry("when networking is udp", func() server.Upcheck {
-					return server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports["udp"]), upcheckDomain, "udp", &boshlogf.FakeLogger{})
+					return server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports["udp"]), upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 				}),
 				Entry("when networking is tcp", func() server.Upcheck {
-					return server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports["tcp"]), upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+					return server.NewDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports["tcp"]), upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 				}),
 				Entry("when internal domain check and networ is udp", func() server.Upcheck {
-					return server.NewInternalDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports["udp"]), upcheckDomain, "udp", &boshlogf.FakeLogger{})
+					return server.NewInternalDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports["udp"]), upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 				}),
 				Entry("when internal domain check and networ is tcp", func() server.Upcheck {
-					return server.NewInternalDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports["tcp"]), upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+					return server.NewInternalDNSAnswerValidatingUpcheck(fmt.Sprintf("0.0.0.0:%d", ports["tcp"]), upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 				}),
 			)
 		})
@@ -146,16 +146,16 @@ var _ = Describe("Upcheck", func() {
 		},
 			// 203.0.113.0/24 is reserved for documentation as per RFC 5737
 			Entry("when networking is udp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, "udp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when networking is tcp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when internal domain check and networ is udp", func() server.Upcheck {
-				return server.NewInternalDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, "upd", &boshlogf.FakeLogger{})
+				return server.NewInternalDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, "upd", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when internal domain check and networ is tcp", func() server.Upcheck {
-				return server.NewInternalDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+				return server.NewInternalDNSAnswerValidatingUpcheck("203.0.113.1:30", upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 			}),
 		)
 	})
@@ -174,16 +174,16 @@ var _ = Describe("Upcheck", func() {
 			Expect(err).To(HaveOccurred())
 		},
 			Entry("when networking is udp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck(addresses["udp"], upcheckDomain, "udp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck(addresses["udp"], upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when networking is tcp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when internal domain check and networ is udp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck(addresses["udp"], upcheckDomain, "udp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck(addresses["udp"], upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when internal domain check and networ is tcp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 			}),
 		)
 	})
@@ -202,16 +202,16 @@ var _ = Describe("Upcheck", func() {
 			Expect(err).To(HaveOccurred())
 		},
 			Entry("when networking is udp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck(addresses["udp"], upcheckDomain, "udp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck(addresses["udp"], upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when networking is tcp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when internal domain check and networ is udp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck(addresses["udp"], upcheckDomain, "udp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck(addresses["udp"], upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 			}),
 			Entry("when internal domain check and networ is tcp", func() server.Upcheck {
-				return server.NewDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+				return server.NewDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 			}),
 		)
 	})
@@ -239,10 +239,10 @@ var _ = Describe("Upcheck", func() {
 				Expect(err).NotTo(HaveOccurred())
 			},
 				Entry("when internal domain check and networ is udp", func() server.Upcheck {
-					return server.NewInternalDNSAnswerValidatingUpcheck(addresses["udp"], upcheckDomain, "udp", &boshlogf.FakeLogger{})
+					return server.NewInternalDNSAnswerValidatingUpcheck(addresses["udp"], upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 				}),
 				Entry("when internal domain check and networ is tcp", func() server.Upcheck {
-					return server.NewInternalDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+					return server.NewInternalDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 				}),
 			)
 		})
@@ -254,10 +254,10 @@ var _ = Describe("Upcheck", func() {
 				Expect(err).To(HaveOccurred())
 			},
 				Entry("when internal domain check and networ is udp", func() server.Upcheck {
-					return server.NewDNSAnswerValidatingUpcheck(addresses["upd"], upcheckDomain, "udp", &boshlogf.FakeLogger{})
+					return server.NewDNSAnswerValidatingUpcheck(addresses["upd"], upcheckDomain, "udp", &loggerfakes.FakeLogger{})
 				}),
 				Entry("when internal domain check and networ is tcp", func() server.Upcheck {
-					return server.NewDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &boshlogf.FakeLogger{})
+					return server.NewDNSAnswerValidatingUpcheck(addresses["tcp"], upcheckDomain, "tcp", &loggerfakes.FakeLogger{})
 				}),
 			)
 		})

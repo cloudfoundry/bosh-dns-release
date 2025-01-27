@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/cloudfoundry/bosh-utils/logger/fakes"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -111,7 +111,7 @@ var _ = Describe("Server", func() {
 		pollingInterval time.Duration
 		shutdownChannel chan struct{}
 		stopFakeServer  chan struct{}
-		logger          *fakes.FakeLogger
+		logger          *loggerfakes.FakeLogger
 	)
 
 	BeforeEach(func() {
@@ -128,7 +128,7 @@ var _ = Describe("Server", func() {
 		fakeTCPServer.ListenAndServeStub = tcpServerStub(bindAddress, stopFakeServer)
 		fakeUDPServer.ListenAndServeStub = udpServerStub(bindAddress, timeout, stopFakeServer)
 
-		logger = &fakes.FakeLogger{}
+		logger = &loggerfakes.FakeLogger{}
 
 		tcpUpcheck = upCheck()
 		udpUpcheck = upCheck()

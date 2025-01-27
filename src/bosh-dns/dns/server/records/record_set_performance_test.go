@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cloudfoundry/bosh-utils/logger/fakes"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -21,7 +21,7 @@ var _ = Describe("Record Set Performance", func() {
 
 	var (
 		recordSet             *records.RecordSet
-		fakeLogger            *fakes.FakeLogger
+		fakeLogger            *loggerfakes.FakeLogger
 		fileReader            *recordsfakes.FakeFileReader
 		aliasList             aliases.Config
 		shutdownChan          chan struct{}
@@ -31,7 +31,7 @@ var _ = Describe("Record Set Performance", func() {
 	)
 
 	BeforeEach(func() {
-		fakeLogger = &fakes.FakeLogger{}
+		fakeLogger = &loggerfakes.FakeLogger{}
 		fileReader = &recordsfakes.FakeFileReader{}
 		fakeAliasQueryEncoder = &recordsfakes.FakeAliasQueryEncoder{}
 

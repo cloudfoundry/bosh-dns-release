@@ -11,7 +11,7 @@ import (
 	zp "bosh-dns/performance_tests/zone_pickers"
 
 	"code.cloudfoundry.org/clock"
-	"github.com/cloudfoundry/bosh-utils/logger/fakes"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"github.com/miekg/dns"
 	"github.com/rcrowley/go-metrics"
@@ -112,7 +112,7 @@ var _ = Describe("DNS", func() {
 			signal = make(chan struct{})
 			shutdown = make(chan struct{})
 
-			logger := &fakes.FakeLogger{}
+			logger := &loggerfakes.FakeLogger{}
 			healthWatcher := &healthinessfakes.FakeHealthWatcher{}
 			fs := boshsys.NewOsFileSystem(logger)
 			recordSetReader := records.NewFileReader("assets/records.json", fs, clock.NewClock(), logger, signal)
