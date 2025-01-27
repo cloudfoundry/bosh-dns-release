@@ -3,7 +3,7 @@ module test-recursor
 go 1.22.0
 
 require (
-	github.com/miekg/dns v1.1.62
+	github.com/miekg/dns v1.1.63
 	gopkg.in/yaml.v3 v3.0.1
 )
 
