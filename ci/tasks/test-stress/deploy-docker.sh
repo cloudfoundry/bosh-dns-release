@@ -15,7 +15,6 @@ main() {
   pushd bosh-dns-release/ci/assets/test-stress/docker-hosts-deployment
     bosh -n update-cloud-config "${BBL_STATE_DIR}/cloud-config/cloud-config.yml" \
       -o "${BBL_STATE_DIR}/cloud-config/ops.yml" \
-      -o ops/increase-disk-size.yml \
       -o ops/docker-addressable-zones-template.yml \
       --vars-file "${BBL_STATE_DIR}/vars/cloud-config-vars.yml"
 
