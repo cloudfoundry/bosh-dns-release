@@ -1,6 +1,6 @@
 - path: /resource_pools/name=vms/cloud_properties/machine_type
   type: replace
-  value: e2-standard-4
+  value: e2-standard-16
 - path: /resource_pools/name=vms/cloud_properties/root_disk_size_gb
   type: replace
   value: 100
