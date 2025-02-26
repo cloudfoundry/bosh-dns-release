@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"os"
+	"log"
 	"time"
 
 	"bosh-dns/dns/config"
+	"bosh-dns/dns/config/handlers"
 	"bosh-dns/dns/manager"
 	"bosh-dns/dns/server/aliases"
 	"bosh-dns/dns/server/healthiness"
@@ -22,49 +22,55 @@ func main() {
 	flag.StringVar(&configPath, "config", "", "path to config file")
 	flag.Parse()
 
-	config, err := config.LoadFromFile(configPath)
+	boshDnsConfig, err := config.LoadFromFile(configPath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
-	level, err := config.GetLogLevel()
+	level, err := boshDnsConfig.GetLogLevel()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
-	logger := logger.NewLogger(level)
+	logr := logger.NewLogger(level)
 
-	clock := clock.NewClock()
 	shutdown := make(chan struct{})
-	fileReader := records.NewFileReader(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, shutdown)
-	fs := system.NewOsFileSystem(logger)
+	fileReader := records.NewFileReader(boshDnsConfig.RecordsFile, system.NewOsFileSystem(logr), clock.NewClock(), logr, shutdown)
+	fs := system.NewOsFileSystem(logr)
 	healthWatcher := healthiness.NewNopHealthWatcher()
 
 	aliasConfiguration, err := aliases.ConfigFromGlob(
 		fs,
 		aliases.NewFSLoader(fs),
-		config.AliasFilesGlob,
+		boshDnsConfig.AliasFilesGlob,
 	)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
-	filtererFactory := records.NewHealthFiltererFactory(healthWatcher, time.Duration(config.Health.SynchronousCheckTimeout))
+	filtererFactory := records.NewHealthFiltererFactory(healthWatcher, time.Duration(boshDnsConfig.Health.SynchronousCheckTimeout))
 
-	recordSet, err := records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger, filtererFactory, records.NewAliasEncoder())
+	recordSet, err := records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(boshDnsConfig.Health.MaxTrackedQueries), shutdown, logr, filtererFactory, records.NewAliasEncoder())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
-	if config.ConfigureSystemdResolved {
-		systemdResolvedManager := manager.NewSystemdResolvedManager(system.NewExecCmdRunner(logger))
-		err = systemdResolvedManager.UpdateDomains(recordSet.Domains())
+	handlersConfiguration, err := handlers.ConfigFromGlob(
+		fs,
+		handlers.NewFSLoader(fs),
+		boshDnsConfig.HandlersFilesGlob,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if boshDnsConfig.ConfigureSystemdResolved {
+		systemdResolvedManager := manager.NewSystemdResolvedManager(system.NewExecCmdRunner(logr))
+		var domains []string
+		domains = append(domains, handlersConfiguration.HandlerDomains()...)
+		domains = append(domains, recordSet.Domains()...)
+		err = systemdResolvedManager.UpdateDomains(domains)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
+			log.Fatal(err)
 		}
 	}
 	close(shutdown)
