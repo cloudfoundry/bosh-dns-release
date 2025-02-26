@@ -164,23 +164,24 @@ func mainExitCode() int {
 		metricsServerWrapper *monitoring.MetricsServerWrapper
 	)
 
+	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
+	handlerFactory := handlers.NewFactory(exchangerFactory, clock, config.RecursorMaxRetries, logger, truncater)
+	delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
+	if err != nil {
+		logger.Error(logTag, err.Error())
+		return 1
+	}
+
+	for domain, handler := range delegatingHandlers {
+		mux.Handle(domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
+	}
+
 	if !config.DisableRecursors {
+		// Upstream recursors
 		recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, config.RecursorMaxRetries, logger)
-		exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
 		forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger, truncater)
 
 		mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger, recordSet, forwardHandler), clock, logger))
-
-		handlerFactory := handlers.NewFactory(exchangerFactory, clock, config.RecursorMaxRetries, logger, truncater)
-
-		delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
-		if err != nil {
-			logger.Error(logTag, err.Error())
-			return 1
-		}
-		for domain, handler := range delegatingHandlers {
-			mux.Handle(domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
-		}
 
 		var nextExternalHandler dns.Handler = forwardHandler
 
