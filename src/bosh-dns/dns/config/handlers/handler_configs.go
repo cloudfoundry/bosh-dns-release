@@ -56,3 +56,11 @@ func (c HandlerConfigs) GenerateHandlers(factory HandlerFactory) (map[string]dns
 	}
 	return realHandlers, nil
 }
+
+func (c HandlerConfigs) HandlerDomains() []string {
+	domains := []string{}
+	for _, handlerConfig := range c {
+		domains = append(domains, handlerConfig.Domain)
+	}
+	return domains
+}

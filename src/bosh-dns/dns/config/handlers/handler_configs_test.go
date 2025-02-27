@@ -9,17 +9,20 @@ import (
 )
 
 var _ = Describe("Handlers Configuration", func() {
+	var (
+		handlersConfig     HandlerConfigs
+		fakeHandlerFactory *FakeHandlerFactory
+	)
+	BeforeEach(func() {
+		fakeHandlerFactory = &FakeHandlerFactory{}
+	})
+
 	Describe("GenerateHandlers", func() {
 		var (
-			handlersConfig     HandlerConfigs
-			fakeHandlerFactory *FakeHandlerFactory
-			fakeJsonHandler    *FakeDnsHandler
-			fakeDnsHandler     *FakeDnsHandler
+			fakeJsonHandler *FakeDnsHandler
+			fakeDnsHandler  *FakeDnsHandler
 		)
-
 		BeforeEach(func() {
-			fakeHandlerFactory = &FakeHandlerFactory{}
-
 			fakeDnsHandler = &FakeDnsHandler{}
 			fakeJsonHandler = &FakeDnsHandler{}
 
@@ -172,6 +175,31 @@ var _ = Describe("Handlers Configuration", func() {
 				Expect(handlers["my-tld."]).To(Equal(fakeDnsHandler))
 				Expect(handlers["my-other-tld."]).To(Equal(fakeJsonHandler))
 			})
+		})
+	})
+
+	Describe("HandlerDomains", func() {
+		It("returns an empty set when no handlers configured", func() {
+			handlersConfig = HandlerConfigs{}
+
+			domains := handlersConfig.HandlerDomains()
+			Expect(len(domains)).To(Equal(0))
+		})
+
+		It("returns an domains when for each configured handler", func() {
+			handlersConfig = HandlerConfigs{
+				{
+					Domain: "first-tld.",
+				},
+				{
+					Domain: "second-tld.",
+				},
+				{
+					Domain: "nested.domain.",
+				},
+			}
+			domains := handlersConfig.HandlerDomains()
+			Expect(domains).To(Equal([]string{"first-tld.", "second-tld.", "nested.domain."}))
 		})
 	})
 })
