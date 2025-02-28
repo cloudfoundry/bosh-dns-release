@@ -1,3 +1,0 @@
-- path: /vm_types/name=extra-large/cloud_properties/root_disk_size_gb
-  type: replace
-  value: 100

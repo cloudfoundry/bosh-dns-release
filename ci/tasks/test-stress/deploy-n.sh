@@ -52,7 +52,6 @@ deploy_n() {
         -v instances=$deployment_count
     fi
 
-    set -x
     seq 1 $deployment_count \
       | xargs -n1 -P${parallel_deployments} -I{} \
       -- bosh -d bosh-dns-{} deploy -n deployments/bosh-dns.yml \
@@ -60,7 +59,6 @@ deploy_n() {
         -v dns_lookuper_release=dns-lookuper \
         -v deployment_count=$deployment_count \
         -v instances=100
-    set +x
   popd
 }
 
