@@ -3,17 +3,17 @@ module bosh-dns
 go 1.23.0
 
 require (
-	code.cloudfoundry.org/clock v1.30.0
+	code.cloudfoundry.org/clock v1.31.0
 	code.cloudfoundry.org/tlsconfig v0.21.0
 	code.cloudfoundry.org/workpool v0.0.0-20241210013132-62cbb12e809b
 	github.com/cloudfoundry/bosh-utils v0.0.536
 	github.com/cloudfoundry/gosigar v1.3.90
 	github.com/coredns/coredns v1.12.0
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.11.2
-	github.com/miekg/dns v1.1.63
+	github.com/miekg/dns v1.1.64
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
-	github.com/onsi/ginkgo/v2 v2.23.0
-	github.com/onsi/gomega v1.36.2
+	github.com/onsi/ginkgo/v2 v2.23.3
+	github.com/onsi/gomega v1.36.3
 	github.com/prometheus/client_golang v1.21.1
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	golang.org/x/net v0.37.0
@@ -28,14 +28,14 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charlievieth/fs v0.0.3 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20240831012420-2590b55236ee // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.145 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.146 // indirect
 	github.com/coredns/caddy v1.1.2-0.20241029205200-8de985351a98 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20250315033105-103756e64e1d // indirect
+	github.com/google/pprof v0.0.0-20250317173921-a4b03ec1a45e // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
@@ -48,8 +48,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
-	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/quic-go/quic-go v0.50.0 // indirect
+	github.com/prometheus/procfs v0.16.0 // indirect
+	github.com/quic-go/quic-go v0.50.1 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/mock v0.5.0 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
@@ -60,5 +60,5 @@ require (
 	golang.org/x/tools v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
 	google.golang.org/grpc v1.71.0 // indirect
-	google.golang.org/protobuf v1.36.5 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 )
