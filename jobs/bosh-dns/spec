@@ -69,11 +69,11 @@ properties:
     default: /var/vcap/jobs/*/dns/aliases.json
 
   override_nameserver:
-    description: "Configure ourselves as the system nameserver (e.g. /etc/resolv.conf will be watched and overwritten)"
+    description: "Configure ourselves as the system nameserver (e.g. /etc/resolv.conf will be watched and overwritten). Should be disabled on Linux for Noble stemcells and later as systemd-resolved is intended to be the default resolver"
     default: true
 
   configure_systemd_resolved:
-    description: "Create a virtual interface so systemd-resolved can use bosh-dns to resolve queries"
+    description: "Create a virtual interface so systemd-resolved can use bosh-dns to resolve queries. Should be enabled on Linux for Noble stemcells and later so systemd-resolved can forward queries to bosh-dns"
     default: false
 
   handlers:
@@ -98,7 +98,7 @@ properties:
     default: /var/vcap/jobs/*/dns/handlers.json
 
   disable_recursors:
-    description: "When set to true, bosh-dns will only resolve bosh-dns queries and will never forward queries to recursors"
+    description: "When set to true, bosh-dns will only resolve bosh-dns queries and will never forward queries to recursors. Should be enabled on Linux for Noble stemcells and later as systemd-resolved is intended to be the default resolver and forwards queries to upstream recursors in parallel."
     default: false
   recursors:
     description: "Addresses of upstream DNS servers used for recursively resolving queries"
@@ -180,5 +180,5 @@ properties:
     default: "rfc3339"
 
   logging.tags:
-    description: "Provide logging configuration for log tags to overwrite the default logger behavior (e.g log_level property)"
+    description: "Provide logging configuration for log tags to overwrite the default logger behavior (e.g log_level property). Note that when override_nameserver is disabled and configure_systemd_resolved is enabled under Noble, bosh-dns will not receive all dns traffic so only bosh-dns queries can be logged."
     default: []
