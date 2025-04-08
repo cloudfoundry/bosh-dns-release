@@ -35,7 +35,7 @@ var _ = Describe("Monitor", func() {
 		h, err := os.OpenFile(healthFile.Name(), os.O_WRONLY, 0644)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = h.Write([]byte(fmt.Sprintf(`{"state":"%s"}`, status)))
+		_, err = h.Write([]byte(fmt.Sprintf(`{"state":"%s"}`, status))) //nolint:staticcheck
 		Expect(err).NotTo(HaveOccurred())
 		Expect(h.Close()).To(Succeed())
 	}

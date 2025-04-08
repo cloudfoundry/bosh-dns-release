@@ -1,22 +1,21 @@
 package performance_test
 
 import (
-	"bosh-dns/tlsclient"
-	"io/ioutil"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"fmt"
-
-	"crypto/tls"
-	"crypto/x509"
-
-	"net/http"
-
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+
+	"bosh-dns/tlsclient"
 )
 
 var _ = Describe("Health Server", func() {
@@ -84,13 +83,13 @@ func setupSecureGet() *httpclient.HTTPClient {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Load CA cert
-	caCert, err := ioutil.ReadFile("../healthcheck/assets/test_certs/test_ca.pem")
+	caCert, err := os.ReadFile("../healthcheck/assets/test_certs/test_ca.pem")
 	Expect(err).NotTo(HaveOccurred())
 
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM([]byte(caCert))
 
-	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, ioutil.Discard)
+	logger := boshlog.NewAsyncWriterLogger(boshlog.LevelDebug, io.Discard)
 
 	client, err := tlsclient.New("health.bosh-dns", caCert, cert, 5*time.Second, logger)
 	Expect(err).NotTo(HaveOccurred())

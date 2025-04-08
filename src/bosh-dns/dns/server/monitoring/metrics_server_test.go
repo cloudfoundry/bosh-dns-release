@@ -88,7 +88,7 @@ var _ = Describe("MetricsServerWrapper", func() {
 })
 
 func findMetric(metricsServer monitoring.CoreDNSMetricsServer, key string) float64 {
-	metricFamilies, _ := metricsServer.(*metrics.Metrics).Reg.Gather()
+	metricFamilies, _ := metricsServer.(*metrics.Metrics).Reg.Gather() //nolint:errcheck
 	for _, mf := range metricFamilies {
 		if mf.GetName() == key {
 			return *mf.GetMetric()[0].Counter.Value

@@ -82,7 +82,7 @@ func (p pluginHandlerAdapter) ServeDNS(ctx context.Context, writer dns.ResponseW
 	v := ctx.Value(dnsRequestContext)
 
 	if v == nil {
-		return 0, errors.New("No DNS request type found in context")
+		return 0, errors.New("No DNS request type found in context") //nolint:staticcheck
 	}
 
 	if p.externalHandler != nil && v == DNSRequestTypeExternal {

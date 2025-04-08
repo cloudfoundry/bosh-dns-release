@@ -1,16 +1,17 @@
 package performance_test
 
 import (
-	"bosh-dns/dns/config"
-	"bosh-dns/healthconfig"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
+	"os"
 	"os/exec"
 	"strconv"
 	"testing"
 	"time"
+
+	"bosh-dns/dns/config"
+	"bosh-dns/healthconfig"
 
 	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
@@ -49,7 +50,7 @@ func setupServers() {
 		startHealthServer(fmt.Sprintf("127.0.0.%d", i))
 	}
 
-	dnsConfigFile, err := ioutil.TempFile("", "config.json")
+	dnsConfigFile, err := os.CreateTemp("", "config.json")
 	Expect(err).ToNot(HaveOccurred())
 
 	dnsConfigContents, err := json.Marshal(map[string]interface{}{
@@ -77,7 +78,7 @@ func setupServers() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	err = ioutil.WriteFile(dnsConfigFile.Name(), []byte(dnsConfigContents), 0666)
+	err = os.WriteFile(dnsConfigFile.Name(), []byte(dnsConfigContents), 0666)
 	Expect(err).ToNot(HaveOccurred())
 
 	Expect(waitForServer(healthPort)).To(Succeed())
@@ -110,7 +111,7 @@ func waitForServer(port int) error {
 			continue
 		}
 
-		_ = c.Close()
+		c.Close() //nolint:errcheck
 		return nil
 	}
 
@@ -118,10 +119,10 @@ func waitForServer(port int) error {
 }
 
 func startHealthServer(addr string) {
-	healthConfigFile, err := ioutil.TempFile("", "config.json")
+	healthConfigFile, err := os.CreateTemp("", "config.json")
 	Expect(err).ToNot(HaveOccurred())
 
-	healthFile, err := ioutil.TempFile("", "health.json")
+	healthFile, err := os.CreateTemp("", "health.json")
 	Expect(err).ToNot(HaveOccurred())
 
 	healthConfigContents, err := json.Marshal(healthconfig.HealthCheckConfig{
@@ -135,7 +136,7 @@ func startHealthServer(addr string) {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	err = ioutil.WriteFile(healthConfigFile.Name(), []byte(healthConfigContents), 0666)
+	err = os.WriteFile(healthConfigFile.Name(), healthConfigContents, 0666)
 	Expect(err).ToNot(HaveOccurred())
 
 	cmd := exec.Command(healthServerPath, healthConfigFile.Name())
