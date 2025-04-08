@@ -156,7 +156,7 @@ func (manager *windowsManager) getPrimaryAdapter() (Adapter, error) {
 		}
 	}
 
-	return Adapter{}, fmt.Errorf("Unable to find primary adapter for %s", manager.address)
+	return Adapter{}, fmt.Errorf("Unable to find primary adapter for %s", manager.address) //nolint:staticcheck
 }
 
 type Adapter struct {

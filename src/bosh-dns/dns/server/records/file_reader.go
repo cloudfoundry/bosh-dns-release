@@ -58,7 +58,7 @@ func NewFileReader(recordsFilePath string, fileSys system.FileSystem, clock cloc
 		for {
 			select {
 			case <-shutdownChan:
-				break
+				break //nolint:staticcheck
 			default:
 				clock.Sleep(time.Second)
 

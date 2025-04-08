@@ -336,7 +336,7 @@ var _ = Describe("ForwardHandler", func() {
 					//create a fake dns endpoint that times out because of no response
 					listen, err := net.ListenPacket(protocol, dnsServer1)
 					Expect(err).ToNot(HaveOccurred())
-					defer listen.Close()
+					defer listen.Close() //nolint:errcheck
 
 					readBytes1 := make([]byte, 1024)
 					var retryCalled int32 = 0
@@ -358,7 +358,7 @@ var _ = Describe("ForwardHandler", func() {
 
 					fineListener, err := net.ListenPacket(protocol, dnsServer2)
 					Expect(err).ToNot(HaveOccurred())
-					defer fineListener.Close()
+					defer fineListener.Close() //nolint:errcheck
 
 					readBytes2 := make([]byte, 1024)
 
@@ -369,8 +369,8 @@ var _ = Describe("ForwardHandler", func() {
 								return
 							default:
 								//ignore sent information, just respond
-								bl, addr, _ := fineListener.ReadFrom(readBytes2)
-								fineListener.WriteTo(readBytes2[:bl], addr) //nolint:errcheck
+								bl, addr, _ := fineListener.ReadFrom(readBytes2) //nolint:errcheck
+								fineListener.WriteTo(readBytes2[:bl], addr)      //nolint:errcheck
 							}
 						}
 					}()
@@ -388,7 +388,7 @@ var _ = Describe("ForwardHandler", func() {
 					//create a fake dns endpoint that times out because of no response
 					listen, err := net.ListenPacket(protocol, dnsServer1)
 					Expect(err).ToNot(HaveOccurred())
-					defer listen.Close()
+					defer listen.Close() //nolint:errcheck
 
 					readBytes1 := make([]byte, 1024)
 					var retryCalled int32 = 0
@@ -410,7 +410,7 @@ var _ = Describe("ForwardHandler", func() {
 
 					fineListener, err := net.ListenPacket(protocol, dnsServer2)
 					Expect(err).ToNot(HaveOccurred())
-					defer fineListener.Close()
+					defer fineListener.Close() //nolint:errcheck
 
 					Expect(fineListener.SetReadDeadline(time.Time{})).To(Succeed())
 					readBytes2 := make([]byte, 1024)
@@ -422,8 +422,8 @@ var _ = Describe("ForwardHandler", func() {
 								return
 							default:
 								//ignore sent information, just respond
-								bl, addr, _ := fineListener.ReadFrom(readBytes2)
-								fineListener.WriteTo(readBytes2[:bl], addr) //nolint:errcheck
+								bl, addr, _ := fineListener.ReadFrom(readBytes2) //nolint:errcheck
+								fineListener.WriteTo(readBytes2[:bl], addr)      //nolint:errcheck
 							}
 						}
 					}()

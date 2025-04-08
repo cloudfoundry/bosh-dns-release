@@ -14,16 +14,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: src/bosh-dns/go.mod
-# TODO: uncomment once golangci-lint on windows-2019 respeects `exclude-dirs:`
-#      - uses: golangci/golangci-lint-action@v6
-#       with:
-#          args: --config ../../.golangci.yml
-#          working-directory: src/bosh-dns/
-#        if: ${{ matrix.os == 'windows-2019' }}
-      - uses: golangci/golangci-lint-action@v6
-        if: ${{ matrix.os != 'windows-2019' }}
+      - uses: golangci/golangci-lint-action@v7
         with:
-          args: --config ../../.golangci.yml --enable goimports
           working-directory: src/bosh-dns/
   lint_test_recursor:
     strategy:
@@ -36,15 +28,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor/go.mod
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v7
         with:
-          args: --config ../../../../../../.golangci.yml
-          working-directory: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
-        if: ${{ matrix.os == 'windows-2019' }}
-      - uses: golangci/golangci-lint-action@v6
-        if: ${{ matrix.os != 'windows-2019' }}
-        with:
-          args: --config ../../../../../../.golangci.yml --enable goimports
           working-directory: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
   lint_debug:
     strategy:
@@ -57,13 +42,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: src/debug/go.mod
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v7
         with:
-          args: --config ../../.golangci.yml
-          working-directory: src/debug/
-        if: ${{ matrix.os == 'windows-2019' }}
-      - uses: golangci/golangci-lint-action@v6
-        if: ${{ matrix.os != 'windows-2019' }}
-        with:
-          args: --config ../../.golangci.yml --enable goimports
           working-directory: src/debug/
