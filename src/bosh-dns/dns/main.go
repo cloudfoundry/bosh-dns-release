@@ -16,7 +16,6 @@ import (
 	"code.cloudfoundry.org/tlsconfig"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"github.com/cloudfoundry/bosh-utils/system"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"github.com/miekg/dns"
 
@@ -64,13 +63,13 @@ func mainExitCode() int {
 
 	config, err := dnsconfig.LoadFromFile(configPath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintln(os.Stderr, err.Error()) //nolint:errcheck
 		return 1
 	}
 
 	level, err := config.GetLogLevel()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintln(os.Stderr, err.Error()) //nolint:errcheck
 		return 1
 	}
 
@@ -122,11 +121,11 @@ func mainExitCode() int {
 	}
 
 	mux := dns.NewServeMux()
-	clock := clock.NewClock()
+	newClock := clock.NewClock()
 	repoUpdate := make(chan struct{})
 
 	if !config.DisableRecursors {
-		dnsManager := newDNSManager(config.Address, logger, clock, fs)
+		dnsManager := newDNSManager(config.Address, logger, newClock, fs)
 		recursorReader := dnsconfig.NewRecursorReader(dnsManager, listenIPs)
 		err = dnsconfig.ConfigureRecursors(recursorReader, &config)
 		if err != nil {
@@ -146,12 +145,12 @@ func mainExitCode() int {
 		}
 		healthChecker = healthiness.NewHealthChecker(httpClient, config.Health.Port, logger)
 		checkInterval := time.Duration(config.Health.CheckInterval)
-		healthWatcher = healthiness.NewHealthWatcher(1000, healthChecker, clock, checkInterval, logger)
+		healthWatcher = healthiness.NewHealthWatcher(1000, healthChecker, newClock, checkInterval, logger)
 	}
 
 	shutdown := make(chan struct{})
 
-	fileReader := records.NewFileReader(config.RecordsFile, system.NewOsFileSystem(logger), clock, logger, repoUpdate)
+	fileReader := records.NewFileReader(config.RecordsFile, boshsys.NewOsFileSystem(logger), newClock, logger, repoUpdate)
 	filtererFactory := records.NewHealthFiltererFactory(healthWatcher, time.Duration(config.Health.SynchronousCheckTimeout))
 	recordSet, err := //nolint:staticcheck
 		records.NewRecordSet(fileReader, aliasConfiguration, healthWatcher, uint(config.Health.MaxTrackedQueries), shutdown, logger, filtererFactory, records.NewAliasEncoder())
@@ -165,7 +164,7 @@ func mainExitCode() int {
 	)
 
 	exchangerFactory := handlers.NewExchangerFactory(time.Duration(config.RecursorTimeout))
-	handlerFactory := handlers.NewFactory(exchangerFactory, clock, config.RecursorMaxRetries, logger, truncater)
+	handlerFactory := handlers.NewFactory(exchangerFactory, newClock, config.RecursorMaxRetries, logger, truncater)
 	delegatingHandlers, err := handlersConfiguration.GenerateHandlers(handlerFactory)
 	if err != nil {
 		logger.Error(logTag, err.Error())
@@ -173,20 +172,20 @@ func mainExitCode() int {
 	}
 
 	for domain, handler := range delegatingHandlers {
-		mux.Handle(domain, handlers.NewRequestLoggerHandler(handler, clock, logger))
+		mux.Handle(domain, handlers.NewRequestLoggerHandler(handler, newClock, logger))
 	}
 
 	if !config.DisableRecursors {
 		// Upstream recursors
 		recursorPool := handlers.NewFailoverRecursorPool(config.Recursors, config.RecursorSelection, config.RecursorMaxRetries, logger)
-		forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, clock, logger, truncater)
+		forwardHandler := handlers.NewForwardHandler(recursorPool, exchangerFactory, newClock, logger, truncater)
 
-		mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger, recordSet, forwardHandler), clock, logger))
+		mux.Handle("arpa.", handlers.NewRequestLoggerHandler(handlers.NewArpaHandler(logger, recordSet, forwardHandler), newClock, logger))
 
 		var nextExternalHandler dns.Handler = forwardHandler
 
 		if config.Cache.Enabled {
-			nextExternalHandler = handlers.NewCachingDNSHandler(nextExternalHandler, truncater, clock, logger)
+			nextExternalHandler = handlers.NewCachingDNSHandler(nextExternalHandler, truncater, newClock, logger)
 		}
 		if config.Metrics.Enabled {
 			metricsAddr := fmt.Sprintf("%s:%d", config.Metrics.Address, config.Metrics.Port)
@@ -204,7 +203,7 @@ func mainExitCode() int {
 
 	upchecks := []server.Upcheck{}
 	for _, upcheckDomain := range config.UpcheckDomains {
-		mux.Handle(upcheckDomain, handlers.NewRequestLoggerHandler(handlers.NewUpcheckHandler(logger), clock, logger))
+		mux.Handle(upcheckDomain, handlers.NewRequestLoggerHandler(handlers.NewUpcheckHandler(logger), newClock, logger))
 		for _, addr := range listenAddrs {
 			upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(addr, upcheckDomain, "udp", logger))
 			upchecks = append(upchecks, server.NewDNSAnswerValidatingUpcheck(addr, upcheckDomain, "tcp", logger))
@@ -239,7 +238,7 @@ func mainExitCode() int {
 		logger,
 	)
 
-	handlerRegistrar := handlers.NewHandlerRegistrar(logger, clock, recordSet, mux, nextInternalHandler)
+	handlerRegistrar := handlers.NewHandlerRegistrar(logger, newClock, recordSet, mux, nextInternalHandler)
 	handlerRegistrar.RegisterAgentTLD()
 	handlerRegistrar.UpdateDomainRegistrations()
 	go func() {

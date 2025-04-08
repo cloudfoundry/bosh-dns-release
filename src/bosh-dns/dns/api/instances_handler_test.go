@@ -195,7 +195,7 @@ var _ = Describe("InstancesHandler", func() {
 			fakeRecordManager.ResolveRecordsReturns([]record.Record{}, fmt.Errorf("yo!"))
 			handler.ServeHTTP(w, r)
 			resp := w.Result()
-			defer resp.Body.Close()
+			defer resp.Body.Close() //nolint:errcheck
 			body, err := io.ReadAll(resp.Body)
 			Expect(resp.StatusCode).To(Equal(http.StatusUnprocessableEntity))
 			Expect(err).NotTo(HaveOccurred())

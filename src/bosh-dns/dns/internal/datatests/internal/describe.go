@@ -4,10 +4,10 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:staticcheck
+	. "github.com/onsi/gomega"    //nolint:staticcheck
 
-	. "bosh-dns/dns/internal/testhelpers/question_case_helpers"
+	. "bosh-dns/dns/internal/testhelpers/question_case_helpers" //nolint:staticcheck
 )
 
 func DescribeMatchingAnyA(serverFactory func() Server, entries ...TableEntry) bool {

@@ -35,21 +35,21 @@ func (c HandlerConfigs) GenerateHandlers(factory HandlerFactory) (map[string]dns
 	for _, handlerConfig := range c {
 		var handler dns.Handler
 
-		if handlerConfig.Source.Type == "http" {
+		if handlerConfig.Source.Type == "http" { //nolint:staticcheck
 			url := handlerConfig.Source.URL
 			if url == "" {
-				return nil, fmt.Errorf(`Configuring handler for "%s": HTTP handler must receive a URL`, handlerConfig.Domain)
+				return nil, fmt.Errorf(`Configuring handler for "%s": HTTP handler must receive a URL`, handlerConfig.Domain) //nolint:staticcheck
 			}
 
 			handler = factory.CreateHTTPJSONHandler(url, handlerConfig.Cache.Enabled)
 		} else if handlerConfig.Source.Type == "dns" {
 			if len(handlerConfig.Source.Recursors) == 0 {
-				return nil, fmt.Errorf(`Configuring handler for "%s": No recursors present`, handlerConfig.Domain)
+				return nil, fmt.Errorf(`Configuring handler for "%s": No recursors present`, handlerConfig.Domain) //nolint:staticcheck
 			}
 
 			handler = factory.CreateForwardHandler(handlerConfig.Source.Recursors, handlerConfig.Cache.Enabled)
 		} else {
-			return nil, fmt.Errorf(`Configuring handler for "%s": Unexpected handler source type: %s`, handlerConfig.Domain, handlerConfig.Source.Type)
+			return nil, fmt.Errorf(`Configuring handler for "%s": Unexpected handler source type: %s`, handlerConfig.Domain, handlerConfig.Source.Type) //nolint:staticcheck
 		}
 
 		realHandlers[handlerConfig.Domain] = handler

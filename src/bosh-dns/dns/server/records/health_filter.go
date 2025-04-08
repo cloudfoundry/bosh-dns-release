@@ -19,13 +19,13 @@ type healthFilter struct {
 	w                       healthWatcher
 	wg                      *sync.WaitGroup
 	shouldTrack             bool
-	domain                  string //nolint:deadcode,unused
+	domain                  string //nolint:unused
 	filterWorkPool          *workpool.WorkPool
 	clock                   clock.Clock
 	synchronousCheckTimeout time.Duration
 }
 
-type healthTracker interface { //nolint:deadcode,unused
+type healthTracker interface { //nolint:unused
 	MonitorRecordHealth(ip, fqdn string)
 }
 
@@ -36,7 +36,7 @@ type healthWatcher interface {
 }
 
 func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool, clock clock.Clock, synchronousCheckTimeout time.Duration, wg *sync.WaitGroup) healthFilter {
-	wp, _ := workpool.NewWorkPool(1000)
+	wp, _ := workpool.NewWorkPool(1000) //nolint:errcheck
 	return healthFilter{
 		nextFilter:              nextFilter,
 		health:                  health,
@@ -52,7 +52,7 @@ func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatc
 func (q *healthFilter) Filter(mm criteria.MatchMaker, recs []record.Record) []record.Record {
 	crit, ok := mm.(criteria.Criteria)
 	if !ok {
-		crit, _ = criteria.NewCriteria("", []string{})
+		crit, _ = criteria.NewCriteria("", []string{}) //nolint:errcheck
 	}
 	records := q.nextFilter.Filter(crit, recs)
 
@@ -61,7 +61,7 @@ func (q *healthFilter) Filter(mm criteria.MatchMaker, recs []record.Record) []re
 		healthStrategy = crit["s"][0]
 	}
 
-	skipTracking := false
+	skipTracking := false //nolint:staticcheck
 	if healthStrategy == "0" && len(records) == 1 {
 		// if there's only 1 target the smart strategy will always return it, healthy or not
 		// there's no value in tracking the health for this fqdn
