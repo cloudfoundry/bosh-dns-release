@@ -1,12 +1,15 @@
-version: "2"
+# https://golangci-lint.run/usage/configuration/
+run:
+  timeout: 5m # 1m default times out on github-action runners
 
-linters:
-  default: standard
+output:
+  # Sort results by: filepath, line and column.
+  sort-results: true
 
-  settings:
-    errcheck:
-      check-blank: true # assignment to blank identifier: `_ := someFunc()`.
-
-formatters:
-  enable:
-  - goimports
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-dirs:
+  # TODO: remove once the `performance_tests` module compiles
+  # TODO: ^^^^^^ also uncomment the windows github lint action for src/bosh-dns
+  - performance_tests/*

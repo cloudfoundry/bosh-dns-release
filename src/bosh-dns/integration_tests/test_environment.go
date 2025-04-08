@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	. "github.com/onsi/ginkgo/v2" //nolint:staticcheck
-	. "github.com/onsi/gomega"    //nolint:staticcheck
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 
@@ -172,7 +172,7 @@ func (t *testEnvironment) writeRecords() error {
 	}
 
 	swap.Aliases = map[string][]records.AliasDefinition{
-		"internal.alias": {
+		"internal.alias": []records.AliasDefinition{
 			records.AliasDefinition{
 				RootDomain:   "bosh",
 				HealthFilter: "smart",
@@ -274,7 +274,7 @@ func localPort() (uint16, error) {
 		return 0, err
 	}
 	addr := l.Addr().String()
-	l.Close() //nolint:errcheck
+	l.Close()
 
 	_, port, err := net.SplitHostPort(addr)
 	if err != nil {

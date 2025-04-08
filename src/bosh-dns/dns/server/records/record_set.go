@@ -28,11 +28,11 @@ type AliasDefinition struct {
 	InitialHealthCheck string `json:"initial_health_check"`
 }
 
-type recordGroup map[*record.Record]struct{} //nolint:unused
+type recordGroup map[*record.Record]struct{} //nolint:deadcode,unused
 
 var (
-	CriteriaError = errors.New("error parsing query criteria")      //nolint:staticcheck
-	DomainError   = errors.New("no records match requested domain") //nolint:staticcheck
+	CriteriaError = errors.New("error parsing query criteria")
+	DomainError   = errors.New("no records match requested domain")
 )
 
 type RecordSet struct {
@@ -128,7 +128,7 @@ func (r *RecordSet) Resolve(fqdnRaw string) ([]string, error) {
 	r.recordsMutex.RLock()
 	defer r.recordsMutex.RUnlock()
 
-	var fqdn = strings.ToLower(fqdnRaw)
+	var fqdn string = strings.ToLower(fqdnRaw)
 	r.logger.Debug("RecordSet", "FQDN lower-cased from '%s' to '%s'", fqdnRaw, fqdn)
 
 	aliasExpansions := r.unsafeExpandAliases(fqdn)
@@ -305,8 +305,8 @@ func (r *RecordSet) update() {
 	r.trackerSubscription <- records
 
 	domains := make(map[string]struct{})
-	for _, recordSetRecord := range r.records {
-		domains[recordSetRecord.Domain] = struct{}{}
+	for _, record := range r.records {
+		domains[record.Domain] = struct{}{}
 	}
 	r.domains = make([]string, len(domains))
 	i := 0
@@ -403,35 +403,35 @@ func createFromJSON(j []byte, logger boshlog.Logger, aliasEncoder AliasQueryEnco
 
 		domain := dns.Fqdn(domainIndexStr)
 
-		newRecord := record.Record{Domain: domain}
+		record := record.Record{Domain: domain}
 
-		if !requiredStringValue(&newRecord.ID, info, idIndex, "id", index, logger) {
+		if !requiredStringValue(&record.ID, info, idIndex, "id", index, logger) {
 			continue
-		} else if !requiredStringValue(&newRecord.Group, info, groupIndex, "group", index, logger) {
+		} else if !requiredStringValue(&record.Group, info, groupIndex, "group", index, logger) {
 			continue
-		} else if !requiredStringValue(&newRecord.Network, info, networkIndex, "network", index, logger) {
+		} else if !requiredStringValue(&record.Network, info, networkIndex, "network", index, logger) {
 			continue
-		} else if !requiredStringValue(&newRecord.Deployment, info, deploymentIndex, "deployment", index, logger) {
+		} else if !requiredStringValue(&record.Deployment, info, deploymentIndex, "deployment", index, logger) {
 			continue
-		} else if !requiredStringValue(&newRecord.IP, info, ipIndex, "ip", index, logger) {
+		} else if !requiredStringValue(&record.IP, info, ipIndex, "ip", index, logger) {
 			continue
-		} else if !optionalStringValue(&newRecord.AZ, info, azIndex, "az", index, logger) {
+		} else if !optionalStringValue(&record.AZ, info, azIndex, "az", index, logger) {
 			continue
-		} else if !optionalStringValue(&newRecord.AZID, info, azIDIndex, "az_id", index, logger) {
+		} else if !optionalStringValue(&record.AZID, info, azIDIndex, "az_id", index, logger) {
 			continue
-		} else if !optionalStringValue(&newRecord.NetworkID, info, networkIDIndex, "network_id", index, logger) {
+		} else if !optionalStringValue(&record.NetworkID, info, networkIDIndex, "network_id", index, logger) {
 			continue
-		} else if !optionalStringValue(&newRecord.NumID, info, numIDIndex, "num_id", index, logger) {
+		} else if !optionalStringValue(&record.NumID, info, numIDIndex, "num_id", index, logger) {
 			continue
-		} else if !optionalStringValue(&newRecord.AgentID, info, agentIdIndex, "agent_id", index, logger) {
+		} else if !optionalStringValue(&record.AgentID, info, agentIdIndex, "agent_id", index, logger) {
 			continue
-		} else if groupIdsIndex >= 0 && !assertStringArrayOfStringValue(&newRecord.GroupIDs, info, groupIdsIndex, "group_ids", index, logger) {
+		} else if groupIdsIndex >= 0 && !assertStringArrayOfStringValue(&record.GroupIDs, info, groupIdsIndex, "group_ids", index, logger) {
 			continue
 		}
 
-		assertStringIntegerValue(&newRecord.InstanceIndex, info, instanceIndexIndex, "instance_index", index, logger)
+		assertStringIntegerValue(&record.InstanceIndex, info, instanceIndexIndex, "instance_index", index, logger)
 
-		records = append(records, newRecord)
+		records = append(records, record)
 	}
 
 	var updatedAliases aliases.Config

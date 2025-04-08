@@ -197,8 +197,8 @@ var _ = Describe("main", func() {
 
 			addressesFile, err := os.CreateTemp(addressesDir, "addresses")
 			Expect(err).NotTo(HaveOccurred())
-			defer addressesFile.Close()                                                                                        //nolint:errcheck
-			_, err = addressesFile.Write([]byte(fmt.Sprintf(`[{"address": "%s", "port": %d }]`, listenAddress2, listenPort2))) //nolint:staticcheck
+			defer addressesFile.Close()
+			_, err = addressesFile.Write([]byte(fmt.Sprintf(`[{"address": "%s", "port": %d }]`, listenAddress2, listenPort2)))
 			Expect(err).NotTo(HaveOccurred())
 
 			aliasesDir, err = os.MkdirTemp("", "aliases")
@@ -206,13 +206,13 @@ var _ = Describe("main", func() {
 
 			aliasesFile1, err := os.CreateTemp(aliasesDir, "aliasesjson1")
 			Expect(err).NotTo(HaveOccurred())
-			defer aliasesFile1.Close() //nolint:errcheck
+			defer aliasesFile1.Close()
 			_, err = aliasesFile1.Write([]byte(aliases1JSONContent))
 			Expect(err).NotTo(HaveOccurred())
 
 			aliasesFile2, err := os.CreateTemp(aliasesDir, "aliasesjson2")
 			Expect(err).NotTo(HaveOccurred())
-			defer aliasesFile2.Close() //nolint:errcheck
+			defer aliasesFile2.Close()
 			_, err = aliasesFile2.Write([]byte(aliases2JSONContent))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -331,7 +331,7 @@ var _ = Describe("main", func() {
 			It("returns a 404 from unknown endpoints (well, one unknown endpoint)", func() {
 				resp, err := secureGet(apiClient, listenAPIPort, "unknown")
 				Expect(err).NotTo(HaveOccurred())
-				defer resp.Body.Close() //nolint:errcheck
+				defer resp.Body.Close()
 
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			})
@@ -379,7 +379,7 @@ var _ = Describe("main", func() {
 					status := func() []api.InstanceRecord {
 						resp, err := secureGet(apiClient, listenAPIPort, "instances")
 						Expect(err).NotTo(HaveOccurred())
-						defer resp.Body.Close() //nolint:errcheck
+						defer resp.Body.Close()
 
 						Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
@@ -479,7 +479,7 @@ var _ = Describe("main", func() {
 					Consistently(func() []api.InstanceRecord {
 						resp, err := secureGet(apiClient, listenAPIPort, "instances?address=q-s0.my-group.my-network.my-deployment-2.bosh.")
 						Expect(err).NotTo(HaveOccurred())
-						defer resp.Body.Close() //nolint:errcheck
+						defer resp.Body.Close()
 
 						Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
@@ -564,7 +564,7 @@ var _ = Describe("main", func() {
 					It("returns group information as JSON", func() {
 						resp, err := secureGet(apiClient, listenAPIPort, "local-groups")
 						Expect(err).NotTo(HaveOccurred())
-						defer resp.Body.Close() //nolint:errcheck
+						defer resp.Body.Close()
 
 						Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
@@ -617,7 +617,7 @@ var _ = Describe("main", func() {
 					It("returns group information as JSON", func() {
 						resp, err := secureGet(apiClient, listenAPIPort, "local-groups")
 						Expect(err).NotTo(HaveOccurred())
-						defer resp.Body.Close() //nolint:errcheck
+						defer resp.Body.Close()
 
 						Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
@@ -680,7 +680,7 @@ var _ = Describe("main", func() {
 						Expect(err).NotTo(HaveOccurred())
 
 						metrics, err := io.ReadAll(resp.Body)
-						defer resp.Body.Close() //nolint:errcheck
+						defer resp.Body.Close()
 						Expect(err).NotTo(HaveOccurred())
 
 						Expect(resp.StatusCode).To(Equal(http.StatusOK))
@@ -1313,8 +1313,7 @@ var _ = Describe("main", func() {
 				})
 
 				AfterEach(func() {
-					// ignore error, server may have already been shutdown
-					server.Shutdown() //nolint:errcheck
+					_ = server.Shutdown() // ignore error, server may have already been shutdown
 				})
 
 				It("serves local recursor", func() {
@@ -1575,7 +1574,7 @@ var _ = Describe("main", func() {
 		It("will timeout after the recursor_timeout has been reached", func() {
 			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", 9000+suiteConfig.ParallelProcess))
 			Expect(err).NotTo(HaveOccurred())
-			defer l.Close() //nolint:errcheck
+			defer l.Close()
 
 			go func() {
 				defer GinkgoRecover()
@@ -1705,7 +1704,7 @@ var _ = Describe("main", func() {
 		It("exits 1 when fails to bind to the tcp port", func() {
 			listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP(listenAddress), Port: listenPort})
 			Expect(err).NotTo(HaveOccurred())
-			defer listener.Close() //nolint:errcheck
+			defer listener.Close()
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -1715,7 +1714,7 @@ var _ = Describe("main", func() {
 		It("exits 1 when fails to bind to the udp port", func() {
 			listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(listenAddress), Port: listenPort})
 			Expect(err).NotTo(HaveOccurred())
-			defer listener.Close() //nolint:errcheck
+			defer listener.Close()
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
@@ -1833,7 +1832,7 @@ var _ = Describe("main", func() {
 		It("exits 1 and logs a message when the globbed config files contain a broken alias config", func() {
 			aliasesFile1, err := os.CreateTemp(aliasesDir, "aliasesjson1")
 			Expect(err).NotTo(HaveOccurred())
-			defer aliasesFile1.Close() //nolint:errcheck
+			defer aliasesFile1.Close()
 			_, err = aliasesFile1.Write([]byte(`{
 				"uc.alias.": ["upcheck.bosh-dns."]
 			}`))
@@ -1841,7 +1840,7 @@ var _ = Describe("main", func() {
 
 			aliasesFile2, err := os.CreateTemp(aliasesDir, "aliasesjson2")
 			Expect(err).NotTo(HaveOccurred())
-			defer aliasesFile2.Close() //nolint:errcheck
+			defer aliasesFile2.Close()
 			_, err = aliasesFile2.Write([]byte(`{"malformed":"aliasfile"}`))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -1856,13 +1855,13 @@ var _ = Describe("main", func() {
 		It("exits 1 and logs a message when the globbed config files contain a broken address config", func() {
 			addressesFile1, err := os.CreateTemp(addressesDir, "addressesjson1")
 			Expect(err).NotTo(HaveOccurred())
-			defer addressesFile1.Close() //nolint:errcheck
+			defer addressesFile1.Close()
 			_, err = addressesFile1.Write([]byte(`[{"address": "1.2.3.4", "port": 32 }]`))
 			Expect(err).NotTo(HaveOccurred())
 
 			addressesFile2, err := os.CreateTemp(addressesDir, "addressesjson2")
 			Expect(err).NotTo(HaveOccurred())
-			defer addressesFile2.Close() //nolint:errcheck
+			defer addressesFile2.Close()
 			_, err = addressesFile2.Write([]byte(`{"malformed":"addressesfile"}`))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -1991,7 +1990,7 @@ func writeHandlersConfig(dir string, handlersConfiguration handlersconfig.Handle
 
 	handlersFile, err := os.CreateTemp(dir, "handlersjson")
 	Expect(err).NotTo(HaveOccurred())
-	defer handlersFile.Close() //nolint:errcheck
+	defer handlersFile.Close()
 
 	_, err = handlersFile.Write([]byte(handlerConfigContents))
 	Expect(err).NotTo(HaveOccurred())
@@ -2017,7 +2016,7 @@ func localIP() (string, error) {
 		return "", err
 	}
 
-	defer conn.Close() //nolint:errcheck
+	defer conn.Close()
 
 	host, _, err := net.SplitHostPort(conn.LocalAddr().String())
 	if err != nil {

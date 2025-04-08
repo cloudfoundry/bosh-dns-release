@@ -8,6 +8,6 @@ import "github.com/miekg/dns"
 
 //counterfeiter:generate . responseWriter
 
-type responseWriter interface { //nolint:unused
+type responseWriter interface { //nolint:deadcode,unused
 	dns.ResponseWriter
 }

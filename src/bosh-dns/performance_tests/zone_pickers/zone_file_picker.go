@@ -2,7 +2,8 @@ package zone_pickers
 
 import (
 	"encoding/json"
-	"os"
+	"io/ioutil"
+
 	"sync/atomic"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
@@ -14,7 +15,7 @@ type ZoneFilePicker struct {
 }
 
 func NewZoneFilePickerFromFile(source string) (*ZoneFilePicker, error) {
-	jsonBytes, err := os.ReadFile(source)
+	jsonBytes, err := ioutil.ReadFile(source)
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Creating zone picker")
 	}
@@ -29,8 +30,8 @@ func NewZoneFilePickerFromFile(source string) (*ZoneFilePicker, error) {
 }
 
 func (j *ZoneFilePicker) NextZone() string {
-	headThreadSafe := atomic.LoadUint32(&j.head)
-	idx := int(headThreadSafe) % len(j.Domains)
+	head_threadsafe := atomic.LoadUint32(&j.head)
+	idx := int(head_threadsafe) % len(j.Domains)
 	atomic.AddUint32(&j.head, 1)
 
 	return j.Domains[idx]

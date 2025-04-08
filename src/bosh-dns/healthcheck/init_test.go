@@ -121,7 +121,7 @@ func waitForServer(port int) error {
 			continue
 		}
 
-		c.Close() //nolint:errcheck
+		_ = c.Close()
 		return nil
 	}
 

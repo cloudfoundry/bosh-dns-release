@@ -212,7 +212,7 @@ func AppendDefaultDNSPortIfMissing(recursors []string) ([]string, error) {
 			if strings.Contains(err.Error(), "missing port in address") || strings.Contains(err.Error(), "too many colons in address") {
 				ip := net.ParseIP(recursor)
 				if ip == nil {
-					return []string{}, fmt.Errorf("Invalid IP address %s", recursor) //nolint:staticcheck
+					return []string{}, fmt.Errorf("Invalid IP address %s", recursor)
 				}
 
 				cleanedUpRecursor = net.JoinHostPort(ip.String(), "53")

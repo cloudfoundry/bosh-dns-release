@@ -56,7 +56,7 @@ func (s Server) Run() error {
 
 	s.monitorUpchecks()
 
-	select { //nolint:staticcheck
+	select { //nolint:gosimple
 	case <-s.shutdownChan:
 		return s.shutdown()
 	}

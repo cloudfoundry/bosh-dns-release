@@ -57,7 +57,7 @@ func (m *MetricsServerWrapper) Run(shutdown chan struct{}) error {
 	if err := m.coreDNSServer.OnStartup(); err != nil {
 		return bosherr.WrapError(err, "setting up the metrics listener")
 	}
-	for { //nolint:staticcheck
+	for { //nolint:gosimple
 		select {
 		case <-shutdown:
 			err := m.coreDNSServer.OnFinalShutdown()

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega" //nolint:staticcheck
+	. "github.com/onsi/gomega"
 )
 
 const basePort = 4567
@@ -19,7 +19,7 @@ func GetFreePort() (int, error) {
 	suite, _ := ginkgo.GinkgoConfiguration()
 	maxPorts := 2000 / suite.ParallelTotal
 	for {
-		if portIndex > int32(maxPorts-1) { //nolint:staticcheck
+		if portIndex > int32(maxPorts-1) {
 			break
 		}
 		unusedport := basePort + int(atomic.AddInt32(&portIndex, 1)) + maxPorts*suite.ParallelProcess
@@ -28,7 +28,7 @@ func GetFreePort() (int, error) {
 			return unusedport, nil
 		}
 	}
-	return 0, fmt.Errorf("Cannot find a free port to use") //nolint:staticcheck
+	return 0, fmt.Errorf("Cannot find a free port to use")
 }
 
 func WaitForListeningTCP(port int) error {

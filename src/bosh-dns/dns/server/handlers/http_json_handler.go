@@ -78,8 +78,8 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 		"name": []string{question.Name},
 	}.Encode()
 
-	queryUrl := fmt.Sprintf("%s/?%s", h.address, queryParams)
-	httpResponse, err := h.client.Get(queryUrl)
+	url := fmt.Sprintf("%s/?%s", h.address, queryParams)
+	httpResponse, err := h.client.Get(url)
 
 	if err != nil {
 		h.logger.Error(h.logTag, "error connecting to '%s': %v", h.address, err)
@@ -89,7 +89,7 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 
 	defer func() {
 		io.ReadAll(httpResponse.Body) //nolint:errcheck
-		httpResponse.Body.Close()     //nolint:errcheck
+		httpResponse.Body.Close()
 	}()
 
 	if httpResponse.StatusCode != 200 {

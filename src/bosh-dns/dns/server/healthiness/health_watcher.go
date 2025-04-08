@@ -42,7 +42,7 @@ type healthWatcher struct {
 }
 
 func NewHealthWatcher(workpoolSize int, checker HealthChecker, clock clock.Clock, checkInterval time.Duration, logger boshlog.Logger) *healthWatcher {
-	wp, _ := workpool.NewWorkPool(workpoolSize) //nolint:errcheck
+	wp, _ := workpool.NewWorkPool(workpoolSize)
 
 	return &healthWatcher{
 		checker:       checker,
@@ -115,7 +115,7 @@ func (hw *healthWatcher) Run(signal <-chan struct{}) {
 			}
 			hw.stateMutex.RUnlock()
 
-			throttler, _ := workpool.NewThrottler(hw.workpoolSize, works) //nolint:errcheck
+			throttler, _ := workpool.NewThrottler(hw.workpoolSize, works)
 			throttler.Work()
 
 			timer.Reset(hw.checkInterval)

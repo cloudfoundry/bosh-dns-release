@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	. "github.com/onsi/gomega" //nolint:staticcheck
+	. "github.com/onsi/gomega"
 )
 
 type DigOpts struct {
