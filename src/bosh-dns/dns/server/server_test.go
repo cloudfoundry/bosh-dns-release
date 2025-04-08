@@ -67,7 +67,7 @@ func udpServerStub(bindAddress string, timeout time.Duration, stop chan struct{}
 
 func notListeningStub(stop chan struct{}) func() error {
 	return func() error {
-		select { //nolint:gosimple
+		select { //nolint:staticcheck
 		case <-stop:
 		}
 

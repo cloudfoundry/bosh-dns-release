@@ -36,7 +36,7 @@ func NewHealthChecker(client HTTPClientGetter, port int, logger boshlog.Logger) 
 	}
 }
 
-type healthStatus struct { //nolint:deadcode,unused
+type healthStatus struct { //nolint:unused
 	State api.HealthStatus
 }
 

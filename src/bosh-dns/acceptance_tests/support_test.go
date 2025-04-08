@@ -166,8 +166,8 @@ func setupSecureGet() *httpclient.HTTPClient {
 	cert, err := tls.X509KeyPair([]byte(clientCertificate), []byte(clientPrivateKey))
 	Expect(err).NotTo(HaveOccurred())
 
-	logger := logger.NewAsyncWriterLogger(logger.LevelDebug, io.Discard)
-	client, err := tlsclient.New("health.bosh-dns", []byte(caCert), cert, 5*time.Second, logger)
+	writerLogger := logger.NewAsyncWriterLogger(logger.LevelDebug, io.Discard)
+	client, err := tlsclient.New("health.bosh-dns", []byte(caCert), cert, 5*time.Second, writerLogger)
 	Expect(err).NotTo(HaveOccurred())
 	return client
 }
@@ -180,7 +180,7 @@ type healthResponse struct {
 func secureGetRespBody(client *httpclient.HTTPClient, hostname string, port int) healthResponse {
 	resp, err := client.Get(fmt.Sprintf("https://%s:%d/health", hostname, port))
 	Expect(err).NotTo(HaveOccurred())
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 

@@ -71,10 +71,10 @@ func (r ForwardHandler) ServeDNS(responseWriter dns.ResponseWriter, request *dns
 			question := request.Question[0].Name
 			r.logger.Error(r.logTag, "error recursing for %s to %q: %s", question, recursor, err.Error())
 		}
-		if exchangeAnswer != nil && exchangeAnswer.MsgHdr.Rcode != dns.RcodeSuccess {
+		if exchangeAnswer != nil && exchangeAnswer.MsgHdr.Rcode != dns.RcodeSuccess { //nolint:staticcheck
 			question := request.Question[0].Name
-			err = server.NewDnsError(exchangeAnswer.MsgHdr.Rcode, question, recursor)
-			if exchangeAnswer.MsgHdr.Rcode == dns.RcodeNameError {
+			err = server.NewDnsError(exchangeAnswer.MsgHdr.Rcode, question, recursor) //nolint:staticcheck
+			if exchangeAnswer.MsgHdr.Rcode == dns.RcodeNameError {                    //nolint:staticcheck
 				r.logger.Debug(r.logTag, "error recursing to %q: %s", recursor, err.Error())
 			} else {
 				r.logger.Error(r.logTag, "error recursing to %q: %s", recursor, err.Error())
@@ -130,10 +130,10 @@ func (r ForwardHandler) createResponseFromError(req *dns.Msg, err error) *dns.Ms
 		} else {
 			responseMessage.SetRcode(req, dns.RcodeNameError)
 		}
-		break //nolint:gosimple
+		break //nolint:staticcheck
 	default:
 		responseMessage.SetRcode(req, dns.RcodeNameError)
-		break //nolint:gosimple
+		break //nolint:staticcheck
 	}
 
 	return responseMessage
