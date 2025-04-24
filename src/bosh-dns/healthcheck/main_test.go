@@ -190,7 +190,7 @@ var _ = Describe("HealthCheck server", func() {
 func secureGetRespBody(client *httpclient.HTTPClient, port int) Health {
 	resp, err := secureGet(client, port)
 	Expect(err).NotTo(HaveOccurred())
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 

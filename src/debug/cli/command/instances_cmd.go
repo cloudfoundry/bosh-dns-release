@@ -51,7 +51,7 @@ func (o *InstancesCmd) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	defer response.Body.Close() //nolint:errcheck
 
 	if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("unable to retrieve instances: Got %s", response.Status)

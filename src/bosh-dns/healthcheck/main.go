@@ -20,7 +20,7 @@ import (
 
 var healthServer healthserver.HealthServer
 
-type LinkJson struct { //nolint:deadcode,unused
+type LinkJson struct { //nolint:unused
 	Group string `json:"group"`
 }
 
@@ -94,21 +94,21 @@ func getConfig() (*healthconfig.HealthCheckConfig, error) {
 	if len(os.Args) > 1 {
 		configFile = os.Args[1]
 	} else {
-		return nil, errors.New("Expected config file path argument")
+		return nil, errors.New("Expected config file path argument") //nolint:staticcheck
 	}
 
 	f, err := os.Open(configFile)
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't open config file for health. error: %s", err)
+		return nil, fmt.Errorf("Couldn't open config file for health. error: %s", err) //nolint:staticcheck
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	decoder := json.NewDecoder(f)
 
 	config := healthconfig.HealthCheckConfig{}
 	err = decoder.Decode(&config)
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't decode config file for health. error: %s", err)
+		return nil, fmt.Errorf("Couldn't decode config file for health. error: %s", err) //nolint:staticcheck
 	}
 
 	return &config, nil

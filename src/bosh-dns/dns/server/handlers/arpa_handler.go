@@ -45,7 +45,7 @@ func reverse(ss []string) []string {
 }
 
 func (a ArpaHandler) convertToRecordIP(q string) (string, error) {
-	var query string = strings.ToLower(q)
+	var query = strings.ToLower(q)
 	a.logger.Debug("ArpaHandler", "query lower-cased from '%s' to '%s'", q, query)
 
 	if strings.HasSuffix(query, ".ip6.arpa.") {
@@ -66,7 +66,7 @@ func (a ArpaHandler) convertToRecordIP(q string) (string, error) {
 		segments := strings.Split(strings.TrimRight(query, ".in-addr.arpa."), ".") //nolint:staticcheck
 		return strings.Join(reverse(segments), "."), nil
 	}
-	return "", fmt.Errorf("Error converting record '%s' to IP", query)
+	return "", fmt.Errorf("Error converting record '%s' to IP", query) //nolint:staticcheck
 }
 
 func (a ArpaHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {

@@ -15,8 +15,8 @@ import (
 
 	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:staticcheck
+	. "github.com/onsi/gomega"    //nolint:staticcheck
 	"github.com/onsi/gomega/gexec"
 
 	"bosh-dns/dns/config"
@@ -61,7 +61,7 @@ func (t *testHealthServer) Bootstrap() error {
 	}
 	t.rootDir = rootDir
 
-	fmt.Fprintf(GinkgoWriter, "Created root-dir: %s\n", rootDir)
+	fmt.Fprintf(GinkgoWriter, "Created root-dir: %s\n", rootDir) //nolint:errcheck
 	for i := 0; i < jobsCount; i++ {
 		err := os.MkdirAll(filepath.Join(t.rootDir, "jobs", strconv.Itoa(i), "bin", "dns"), 0740)
 		if err != nil {
@@ -107,7 +107,7 @@ func (t *testHealthServer) MakeJobLinks(index int) error {
 	if err != nil {
 		return err
 	}
-	f.Close()
+	f.Close() //nolint:errcheck
 
 	return nil
 }
@@ -125,13 +125,13 @@ func (t *testHealthServer) MakeHealthyExit(index, status int) error {
 	if err != nil {
 		return err
 	}
-	defer healthScript.Close()
+	defer healthScript.Close() //nolint:errcheck
 	if runtime.GOOS == "windows" {
-		fmt.Fprintf(healthScript, "exit %d", status)
+		fmt.Fprintf(healthScript, "exit %d", status) //nolint:errcheck
 		return nil
 	}
 
-	fmt.Fprintf(healthScript, "#!/bin/bash\n\nexit %d", status)
+	fmt.Fprintf(healthScript, "#!/bin/bash\n\nexit %d", status) //nolint:errcheck
 	return nil
 }
 
@@ -162,7 +162,7 @@ func (t *testHealthServer) writeConfig() (string, error) {
 		return "", err
 	}
 
-	defer configFile.Close()
+	defer configFile.Close() //nolint:errcheck
 
 	if _, err := configFile.Write(jsonBytes); err != nil {
 		return configFile.Name(), err
@@ -176,7 +176,7 @@ func (t *testHealthServer) GetResponseBody() (api.HealthResult, error) {
 	if err != nil {
 		return api.HealthResult{}, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -233,7 +233,7 @@ func (t *testHealthServer) Start() error {
 	Eventually(func() api.HealthResult {
 		Expect(t.session.ExitCode()).To(Equal(-1), "Health server may already be running")
 
-		res, _ := t.GetResponseBody()
+		res, _ := t.GetResponseBody() //nolint:errcheck
 		return res
 	}, 10*time.Second, 2*time.Second).Should(Equal(api.HealthResult{
 		State: api.StatusRunning,
@@ -249,7 +249,7 @@ func (t *testHealthServer) Start() error {
 func (t *testHealthServer) Stop() {
 	t.stopHealthServer()
 	t.session.Wait()
-	os.RemoveAll(t.rootDir)
+	os.RemoveAll(t.rootDir) //nolint:errcheck
 }
 
 func (t *testHealthServer) updateAgentHealthFile() error {

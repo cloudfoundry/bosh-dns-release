@@ -85,7 +85,7 @@ func (c *concreteHealthServer) Serve(config *healthconfig.HealthCheckConfig) {
 }
 
 func (c *concreteHealthServer) healthEntryPoint(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck
 
 	// Should not be possible to get here without having a peer certificate
 	cn := r.TLS.PeerCertificates[0].Subject.CommonName
