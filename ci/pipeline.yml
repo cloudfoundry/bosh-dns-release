@@ -211,7 +211,7 @@ jobs:
               - task: bbl-up
                 file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
                 params:
-                  BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_gcp_credentials_json))
+                  BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_labs_gcp_credentials_json))
                   ENV_NAME: windows2019
                 ensure:
                   put: envs
@@ -241,7 +241,7 @@ jobs:
               task: bbl-destroy
               file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
               params:
-                BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_gcp_credentials_json))
+                BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_labs_gcp_credentials_json))
                 ENV_NAME: windows2019
               ensure:
                 put: envs
@@ -270,7 +270,7 @@ jobs:
           - task: setup-env
             file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
             params:
-              BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_gcp_credentials_json))
+              BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_labs_gcp_credentials_json))
             ensure:
               put: envs
               params:
@@ -296,7 +296,7 @@ jobs:
           input_mapping:
             bbl-state: updated-bbl-state
           params:
-            BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_gcp_credentials_json))
+            BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_labs_gcp_credentials_json))
           ensure:
             put: envs
             params:
@@ -523,7 +523,7 @@ resources:
       uri: https://github.com/cloudfoundry/bosh-dns-release
       branch: master
       username: bosh-admin-bot
-      password: ((github_public_repo_token))
+      password: ((github_read_write_token))
       ignore_paths:
         - ci/docker
 
@@ -532,7 +532,7 @@ resources:
     source:
       owner: cloudfoundry
       repository: bosh-dns-release
-      access_token: ((github_public_repo_token))
+      access_token: ((github_read_write_token))
 
   - name: golang-release
     type: git
@@ -546,7 +546,7 @@ resources:
       driver: git
       uri: https://github.com/cloudfoundry/bosh-dns-release.git
       username: bosh-admin-bot
-      password: ((github_public_repo_token))
+      password: ((github_read_write_token))
       branch: release-semver
       file: VERSION
       initial_version: '1.39.0'
@@ -616,7 +616,7 @@ resources:
     type: gcs-resource
     source:
       bucket: bosh-ci-release-notes
-      json_key: ((broadcom_gcp_credentials_json))
+      json_key: ((broadcom_labs_gcp_credentials_json))
       versioned_file: bosh-dns-release/release-notes.md
       initial_content_text: ""
 
