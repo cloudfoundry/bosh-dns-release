@@ -58,16 +58,16 @@ var _ = Describe("Tracker", func() {
 
 		Context("when notified to monitor records", func() {
 			It("monitors the records", func() {
-				healthMonitor <- record.Host{FQDN: "qs-foo.doesnt.matter.anyway", IP: "8.8.8.8"}
+				healthMonitor <- record.Host{FQDN: "qs-foo.doesnt.matter.anyway", IP: "169.254.169.254"}
 				Eventually(hw.TrackCallCount).Should(Equal(1))
-				Expect(hw.TrackArgsForCall(0)).To(Equal("8.8.8.8"))
+				Expect(hw.TrackArgsForCall(0)).To(Equal("169.254.169.254"))
 			})
 		})
 
 		Context("when we exceed the transcript length", func() {
 			It("it untracks old records", func() {
 				trackedDomains.TouchReturns("qs-foo.doesnt.matter.anyway")
-				healthMonitor <- record.Host{FQDN: "qs-foo.doesnt.matter.anyway", IP: "8.8.8.8"}
+				healthMonitor <- record.Host{FQDN: "qs-foo.doesnt.matter.anyway", IP: "169.254.169.254"}
 				healthMonitor <- record.Host{FQDN: "qs-bar.doesnt.matter.anyway", IP: "1.1.1.1"}
 
 				Eventually(trackedDomains.TouchCallCount).Should(Equal(2))
@@ -75,15 +75,15 @@ var _ = Describe("Tracker", func() {
 				Expect(trackedDomains.TouchArgsForCall(1)).To(Equal("qs-bar.doesnt.matter.anyway"))
 
 				Eventually(hw.UntrackCallCount).Should(Equal(1))
-				Expect(hw.UntrackArgsForCall(0)).To(Equal("8.8.8.8"))
+				Expect(hw.UntrackArgsForCall(0)).To(Equal("169.254.169.254"))
 				Eventually(hw.TrackCallCount).Should(Equal(2))
 			})
 
 			It("doesn't retrack untracked records when we get notified of a subscription", func() {
 				trackedDomains.TouchReturns("qs-foo.doesnt.matter.anyway")
-				healthMonitor <- record.Host{FQDN: "qs-foo.doesnt.matter.anyway", IP: "8.8.8.8"}
+				healthMonitor <- record.Host{FQDN: "qs-foo.doesnt.matter.anyway", IP: "169.254.169.254"}
 				Eventually(hw.TrackCallCount).Should(Equal(1))
-				Expect(hw.TrackArgsForCall(0)).To(Equal("8.8.8.8"))
+				Expect(hw.TrackArgsForCall(0)).To(Equal("169.254.169.254"))
 
 				Eventually(trackedDomains.TouchCallCount).Should(Equal(1))
 				Expect(trackedDomains.TouchArgsForCall(0)).To(Equal("qs-foo.doesnt.matter.anyway"))
@@ -94,7 +94,7 @@ var _ = Describe("Tracker", func() {
 				}
 
 				Eventually(hw.UntrackCallCount).Should(Equal(1))
-				Expect(hw.UntrackArgsForCall(0)).To(Equal("8.8.8.8"))
+				Expect(hw.UntrackArgsForCall(0)).To(Equal("169.254.169.254"))
 
 				Eventually(hw.TrackCallCount).Should(Equal(2))
 				Eventually(hw.TrackArgsForCall(1)).Should(Equal("1.1.1.1"))

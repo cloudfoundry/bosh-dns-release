@@ -406,10 +406,10 @@ var _ = Describe("Config", func() {
 
 	Context("AppendDefaultDNSPortIfMissing", func() {
 		It("allows multiple recursors to be configured with default port of 53", func() {
-			recursors, err := config.AppendDefaultDNSPortIfMissing([]string{"8.8.8.8", "10.244.4.4:9700", "2001:db8::1", "[2001:db8::1]:1234"})
+			recursors, err := config.AppendDefaultDNSPortIfMissing([]string{"169.254.169.254", "10.244.4.4:9700", "2001:db8::1", "[2001:db8::1]:1234"})
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(recursors).To(ContainElement("8.8.8.8:53"))
+			Expect(recursors).To(ContainElement("169.254.169.254:53"))
 			Expect(recursors).To(ContainElement("10.244.4.4:9700"))
 			Expect(recursors).To(ContainElement("[2001:db8::1]:53"))
 			Expect(recursors).To(ContainElement("[2001:db8::1]:1234"))

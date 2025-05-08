@@ -204,7 +204,7 @@ nameserver 192.0.2.100
 
 			err := fs.WriteFileString("/etc/resolvconf/resolv.conf.d/head", `
 nameserver 192.0.2.100
-nameserver 8.8.8.8
+nameserver 169.254.169.254
 `)
 			Expect(err).NotTo(HaveOccurred())
 

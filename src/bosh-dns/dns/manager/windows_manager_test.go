@@ -54,7 +54,7 @@ var _ = Describe("WindowsManager", func() {
 						IfType:             manager.IfTypeSoftwareLoopback,
 						OperStatus:         manager.IfOperStatusUp,
 						UnicastAddresses:   []string{address},
-						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
+						DNSServerAddresses: []string{"169.254.169.254"},
 					},
 				}, nil)
 
@@ -69,7 +69,7 @@ var _ = Describe("WindowsManager", func() {
 						IfType:             manager.IfTypeTunnel,
 						OperStatus:         manager.IfOperStatusUp,
 						UnicastAddresses:   []string{address},
-						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
+						DNSServerAddresses: []string{"169.254.169.254"},
 					},
 				}, nil)
 
@@ -99,7 +99,7 @@ var _ = Describe("WindowsManager", func() {
 						IfType:             NotLoopBack,
 						OperStatus:         manager.IfOperStatusUp,
 						UnicastAddresses:   []string{address},
-						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
+						DNSServerAddresses: []string{"169.254.169.254"},
 					},
 					{
 						IfType:             NotTunnel,
@@ -111,7 +111,7 @@ var _ = Describe("WindowsManager", func() {
 
 				servers, err := dnsManager.Read()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(servers).To(ConsistOf("8.8.8.8", "8.8.4.4"))
+				Expect(servers).To(ConsistOf("169.254.169.254"))
 			})
 
 			It("returns the adapter if there is only one available", func() {
@@ -120,7 +120,7 @@ var _ = Describe("WindowsManager", func() {
 						IfType:             NotLoopBack,
 						OperStatus:         NonUp,
 						UnicastAddresses:   []string{"192.0.2.1"},
-						DNSServerAddresses: []string{"8.8.8.8", "8.8.4.4"},
+						DNSServerAddresses: []string{"169.254.169.254"},
 					},
 					{
 						IfType:             NotTunnel,
@@ -187,7 +187,7 @@ var _ = Describe("WindowsManager", func() {
 				Expect(stats.Size()).To(BeNumerically(">", 0))
 
 				Expect(err).NotTo(HaveOccurred())
-				return fmt.Sprintf("%s\r\n%s", "8.8.8.8", address), "", 0, nil
+				return fmt.Sprintf("%s\r\n%s", "169.254.169.254", address), "", 0, nil
 			}
 			fakeAdapterFetcher.AdaptersReturns([]manager.Adapter{
 				{

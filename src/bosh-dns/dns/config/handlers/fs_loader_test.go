@@ -60,14 +60,14 @@ var _ = Describe("FSLoader", func() {
 					{
 						"domain": "local.internal2.",
 						"cache": { "enabled": false },
-						"source": { "type": "dns", "recursors": [ "8.8.8.8", "10.244.4.4:9700" ] }
+						"source": { "type": "dns", "recursors": [ "169.254.169.254", "10.244.4.4:9700" ] }
 					}
 				]`)).To(Succeed())
 
 				config, err := parser.Load("/test/handlers.json")
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(config[0].Source.Recursors).To(ContainElement("8.8.8.8:53"))
+				Expect(config[0].Source.Recursors).To(ContainElement("169.254.169.254:53"))
 				Expect(config[0].Source.Recursors).To(ContainElement("10.244.4.4:9700"))
 			})
 		})

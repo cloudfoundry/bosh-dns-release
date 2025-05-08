@@ -1628,7 +1628,7 @@ var _ = Describe("main", func() {
 
 			recursorAddress := os.Getenv("BOSH_DNS_RECURSOR_ADDRESS")
 			if recursorAddress == "" {
-				recursorAddress = "8.8.8.8"
+				recursorAddress = "169.254.169.254"
 			}
 
 			cfg := config.NewDefaultConfig()
@@ -1689,7 +1689,7 @@ var _ = Describe("main", func() {
 			cfg := config.NewDefaultConfig()
 			cfg.Address = listenAddress
 			cfg.Port = listenPort
-			cfg.Recursors = []string{"8.8.8.8"}
+			cfg.Recursors = []string{"169.254.169.254"}
 			cfg.UpcheckDomains = []string{"upcheck.bosh-dns."}
 			cfg.AliasFilesGlob = path.Join(aliasesDir, "*")
 			cfg.AddressesFilesGlob = path.Join(addressesDir, "*")
