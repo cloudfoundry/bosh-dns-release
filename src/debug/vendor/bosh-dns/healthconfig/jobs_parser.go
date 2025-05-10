@@ -23,7 +23,7 @@ type LinkMetadata struct {
 func ParseJobs(jobsDir string, executablePath string) ([]Job, error) {
 	var jobs []Job
 
-	jobDirs, err := ioutil.ReadDir(jobsDir)
+	jobDirs, err := ioutil.ReadDir(jobsDir) //nolint:staticcheck
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func parseLinkGroups(jobsDir, jobName string) ([]LinkMetadata, error) {
 
 		return nil, err
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	var links []LinkMetadata
 	decoder := json.NewDecoder(f)
