@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/clock v1.38.0
 	code.cloudfoundry.org/tlsconfig v0.27.0
 	code.cloudfoundry.org/workpool v0.0.0-20241210013132-62cbb12e809b
-	github.com/cloudfoundry/bosh-utils v0.0.542
+	github.com/cloudfoundry/bosh-utils v0.0.543
 	github.com/cloudfoundry/gosigar v1.3.92
 	github.com/coredns/coredns v1.12.1
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.11.2
@@ -45,7 +45,7 @@ require (
 	github.com/pivotal-cf/paraphernalia v0.0.0-20180203224945-a64ae2051c20 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.63.0 // indirect
+	github.com/prometheus/common v0.64.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/quic-go/quic-go v0.51.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
@@ -55,7 +55,7 @@ require (
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250505200425-f936aa4a68b2 // indirect
-	google.golang.org/grpc v1.72.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250512202823-5a2f75b736a9 // indirect
+	google.golang.org/grpc v1.72.1 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 )
