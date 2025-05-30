@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	bosh-dns v0.0.0
 	code.cloudfoundry.org/tlsconfig v0.27.0
-	github.com/cloudfoundry/bosh-cli/v7 v7.9.5
+	github.com/cloudfoundry/bosh-cli/v7 v7.9.6
 	github.com/cloudfoundry/bosh-utils v0.0.543
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/onsi/ginkgo/v2 v2.23.4
@@ -24,7 +24,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
-	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20250501235452-c0086092b71a // indirect
