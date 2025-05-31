@@ -18,8 +18,8 @@ github.com/cloudfoundry/bosh-utils v0.0.543 h1:VWPGTIfONQPSiXVOlCNSnFk0aUAChFhsi
 github.com/cloudfoundry/bosh-utils v0.0.543/go.mod h1:IOAD42mKyiUeOv1D6+3Q0/Ai2F5U+wi0RYi1MnZ52UM=
 github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 h1:oy59UYcspoP44ggE8DM3kjxl1+sTFd802bbZlBBhBMk=
 github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851/go.mod h1:72EEm1oq5oXqGfu9XGtaRPWEcAFYd/P10cMNln0QhA8=
-github.com/cloudfoundry/socks5-proxy v0.2.151 h1:bWK6I3fzBi/3zNY55GOijcwjTGli0EL8QplUyA9egbI=
-github.com/cloudfoundry/socks5-proxy v0.2.151/go.mod h1:owS6/MYKOgbd6/FkRd27DXuTWTn5cUrDD/+z+VGgpJY=
+github.com/cloudfoundry/socks5-proxy v0.2.152 h1:KVyn19UL/Xqhr3cmVkBMZonoTYLm+4HmNSCMbzxT48s=
+github.com/cloudfoundry/socks5-proxy v0.2.152/go.mod h1:z8+R20TK2VPXFBKQOyatMzSlrLBPdjkzSeJVL5iyop8=
 github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4 h1:J+ghqo7ZubTzelkjo9hntpTtP/9lUCWH9icEmAW+B+Q=
 github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4/go.mod h1:socxpf5+mELPbosI149vWpNlHK6mbfWFxSWOoSndXR8=
 github.com/creack/pty v1.1.24 h1:bJrF4RRfyJnbTJqzRLHzcGaZK1NeM5kTC9jGgovnR1s=
