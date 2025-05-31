@@ -22,8 +22,8 @@ github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 h1:oy59UYcs
 github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851/go.mod h1:72EEm1oq5oXqGfu9XGtaRPWEcAFYd/P10cMNln0QhA8=
 github.com/cloudfoundry/gosigar v1.3.92 h1:XWSX71qvUMPq+GVPTb3jszOTrb5fcHcbK60LZPaTfbY=
 github.com/cloudfoundry/gosigar v1.3.92/go.mod h1:u8AAA406V/2T5BmE8LiLVjLFWLMXT7S65VHeQWnWMOY=
-github.com/cloudfoundry/socks5-proxy v0.2.151 h1:bWK6I3fzBi/3zNY55GOijcwjTGli0EL8QplUyA9egbI=
-github.com/cloudfoundry/socks5-proxy v0.2.151/go.mod h1:owS6/MYKOgbd6/FkRd27DXuTWTn5cUrDD/+z+VGgpJY=
+github.com/cloudfoundry/socks5-proxy v0.2.152 h1:KVyn19UL/Xqhr3cmVkBMZonoTYLm+4HmNSCMbzxT48s=
+github.com/cloudfoundry/socks5-proxy v0.2.152/go.mod h1:z8+R20TK2VPXFBKQOyatMzSlrLBPdjkzSeJVL5iyop8=
 github.com/coredns/caddy v1.1.2-0.20241029205200-8de985351a98 h1:c+Epklw9xk6BZ1OFBPWLA2PcL8QalKvl3if8CP9x8uw=
 github.com/coredns/caddy v1.1.2-0.20241029205200-8de985351a98/go.mod h1:A6ntJQlAWuQfFlsd9hvigKbo2WS0VUs2l1e2F+BawD4=
 github.com/coredns/coredns v1.12.1 h1:haptbGscSbdWU46xrjdPj1vp3wvH1Z2FgCSQKEdgN5s=
