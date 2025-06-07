@@ -183,7 +183,6 @@ var (
 
 // Build information obtained with the help of -ldflags
 var (
-	// nolint
 	appVersion = "(untracked dev build)" // inferred at startup
 	devBuild   = true                    // inferred at startup
 
