@@ -3,11 +3,11 @@ module bosh-dns
 go 1.23.0
 
 require (
-	code.cloudfoundry.org/clock v1.39.0
-	code.cloudfoundry.org/tlsconfig v0.28.0
+	code.cloudfoundry.org/clock v1.40.0
+	code.cloudfoundry.org/tlsconfig v0.29.0
 	code.cloudfoundry.org/workpool v0.0.0-20241210013132-62cbb12e809b
-	github.com/cloudfoundry/bosh-utils v0.0.544
-	github.com/cloudfoundry/gosigar v1.3.92
+	github.com/cloudfoundry/bosh-utils v0.0.545
+	github.com/cloudfoundry/gosigar v1.3.93
 	github.com/coredns/coredns v1.12.2
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.11.2
 	github.com/miekg/dns v1.1.66
@@ -28,14 +28,14 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charlievieth/fs v0.0.3 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.153 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.154 // indirect
 	github.com/coredns/caddy v1.1.2-0.20241029205200-8de985351a98 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20250602020802-c6617b811d0e // indirect
+	github.com/google/pprof v0.0.0-20250607225305-033d6d78b36a // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
