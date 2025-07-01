@@ -270,7 +270,11 @@ jobs:
           - task: setup-env
             file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
             params:
-              BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_labs_gcp_credentials_json))
+              BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_aws_access_key.username))
+              BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_aws_access_key.password))
+              BBL_AWS_REGION: us-west-1
+              BBL_IAAS: aws
+              BBL_STATE_DIR: test-stress/bbl-state
             ensure:
               put: envs
               params:
@@ -296,7 +300,9 @@ jobs:
           input_mapping:
             bbl-state: updated-bbl-state
           params:
-            BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_labs_gcp_credentials_json))
+            BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_aws_access_key.username))
+            BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_aws_access_key.password))
+            BBL_STATE_DIR: test-stress/bbl-state
           ensure:
             put: envs
             params:

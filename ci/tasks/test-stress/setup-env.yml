@@ -15,13 +15,11 @@ outputs:
   - name: updated-bbl-state
 
 params:
-
+  BBL_AWS_ACCESS_KEY_ID: ""
+  BBL_AWS_SECRET_ACCESS_KEY: ""
+  BBL_AWS_REGION: us-west-2
+  BBL_IAAS: aws
   BBL_STATE_DIR: test-stress/bbl-state
-  BBL_GCP_SERVICE_ACCOUNT_KEY:
-  BBL_GCP_PROJECT_ID: cf-bosh-core
-  BBL_GCP_ZONE: us-central1-a
-  BBL_GCP_REGION: us-central1
-  BBL_IAAS: gcp
 
 run:
   path: bosh-dns-release/ci/tasks/test-stress/setup-env.sh
