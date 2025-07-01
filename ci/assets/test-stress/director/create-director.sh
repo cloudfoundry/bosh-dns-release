@@ -3,11 +3,12 @@ bosh int \
   ${BBL_STATE_DIR}/bosh-deployment/bosh.yml \
   --vars-store ${BBL_STATE_DIR}/vars/director-vars-store.yml \
   -l ${BBL_STATE_DIR}/vars/director-vars-file.yml \
-  -o ${BBL_STATE_DIR}/bosh-deployment/gcp/cpi.yml \
+  -o ${BBL_STATE_DIR}/bosh-deployment/aws/cpi.yml \
   -o ${BBL_STATE_DIR}/bosh-deployment/jumpbox-user.yml \
   -o ${BBL_STATE_DIR}/bosh-deployment/uaa.yml \
   -o ${BBL_STATE_DIR}/bosh-deployment/credhub.yml \
-  -o ${BBL_STATE_DIR}/bbl-ops-files/gcp/bosh-director-ephemeral-ip-ops.yml \
+  -o ${BBL_STATE_DIR}/bosh-deployment/aws/iam-instance-profile.yml \
+  -o ${BBL_STATE_DIR}/bbl-ops-files/aws/bosh-director-ephemeral-ip-ops.yml \
   -o ${TEST_STRESS_ASSETS}/director/ops/add-docker-cpi-release.yml \
   -o ${TEST_STRESS_ASSETS}/director/ops/configure-max-threads.yml \
   -o ${TEST_STRESS_ASSETS}/director/ops/configure-workers.yml \
@@ -16,9 +17,8 @@ bosh int \
   -o ${TEST_STRESS_ASSETS}/director/ops/use-xlarge.yml \
   -l ${TEST_STRESS_ASSETS}/director/vars.yml \
   -v docker_cpi_release=$BOSH_DOCKER_CPI_RELEASE_TARBALL \
-  -v project_id="${BBL_GCP_PROJECT_ID}" \
-  --var-file gcp_credentials_json="${BBL_GCP_SERVICE_ACCOUNT_KEY_PATH}" \
-  -v zone="${BBL_GCP_ZONE}" \
+  -v access_key_id=$BBL_AWS_ACCESS_KEY_ID \
+  -v secret_access_key=$BBL_AWS_SECRET_ACCESS_KEY \
   > ${BBL_STATE_DIR}/director-manifest.yml
 
 bosh create-env ${BBL_STATE_DIR}/director-manifest.yml \
