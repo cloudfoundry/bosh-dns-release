@@ -25,70 +25,70 @@ networks:
   subnets:
   - az: d1
     range: 10.245.0.0/16
-    dns: [169.254.169.254]
+    dns: [8.8.8.8]
     gateway: 10.245.0.1
     static: [10.245.0.34]
     cloud_properties:
       name: docker-1
   - az: d2
     range: 10.246.0.0/16
-    dns: [169.254.169.254]
+    dns: [8.8.8.8]
     gateway: 10.246.0.1
     static: [10.246.0.34]
     cloud_properties:
       name: docker-2
   - az: d3
     range: 10.247.0.0/16
-    dns: [169.254.169.254]
+    dns: [8.8.8.8]
     gateway: 10.247.0.1
     static: [10.247.0.34]
     cloud_properties:
       name: docker-3
   - az: d4
     range: 10.248.0.0/16
-    dns: [169.254.169.254]
+    dns: [8.8.8.8]
     gateway: 10.248.0.1
     static: [10.248.0.34]
     cloud_properties:
       name: docker-4
   - az: d5
     range: 10.249.0.0/16
-    dns: [169.254.169.254]
+    dns: [8.8.8.8]
     gateway: 10.249.0.1
     static: [10.249.0.34]
     cloud_properties:
       name: docker-5
   - az: d6
     range: 10.250.0.0/16
-    dns: [169.254.169.254]
+    dns: [8.8.8.8]
     gateway: 10.250.0.1
     static: [10.250.0.34]
     cloud_properties:
       name: docker-6
   - az: d7
     range: 10.251.0.0/16
-    dns: [169.254.169.254]
+    dns: [8.8.8.8]
     gateway: 10.251.0.1
     static: [10.251.0.34]
     cloud_properties:
       name: docker-7
   - az: d8
     range: 10.252.0.0/16
-    dns: [169.254.169.254]
+    dns: [8.8.8.8]
     gateway: 10.252.0.1
     static: [10.252.0.34]
     cloud_properties:
       name: docker-8
   - az: d9
     range: 10.253.0.0/16
-    dns: [169.254.169.254]
+    dns: [8.8.8.8]
     gateway: 10.253.0.1
     static: [10.253.0.34]
     cloud_properties:
       name: docker-9
   - az: d10
     range: 10.254.0.0/16
-    dns: [169.254.169.254]
+    dns: [8.8.8.8]
     gateway: 10.254.0.1
     static: [10.254.0.34]
     cloud_properties:

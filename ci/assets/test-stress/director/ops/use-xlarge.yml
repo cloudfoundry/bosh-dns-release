@@ -1,3 +1,0 @@
-- path: /resource_pools/name=vms/cloud_properties/machine_type
-  type: replace
-  value: e2-standard-4
