@@ -16,6 +16,7 @@ outputs:
 params:
   BBL_AWS_ACCESS_KEY_ID: ""
   BBL_AWS_SECRET_ACCESS_KEY: ""
+  BBL_AWS_ASSUME_ROLE: ""
   BBL_STATE_DIR: test-stress/bbl-state
 
 run:

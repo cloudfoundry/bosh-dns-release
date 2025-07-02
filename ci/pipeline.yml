@@ -199,10 +199,10 @@ jobs:
               trigger: true
             - get: envs
             - get: bosh-deployment
-            - get: gcp-linux-stemcell
-              resource: gcp-jammy-stemcell
+            - get: linux-stemcell
+              resource: aws-jammy-stemcell
             - get: bosh-stemcell-windows
-              resource: gcp-windows-2019-stemcell
+              resource: aws-windows-2019-stemcell
             - get: bosh-candidate-release
             - get: docker-bosh-integration-image
           - task: create-candidate
@@ -211,7 +211,11 @@ jobs:
               - task: bbl-up
                 file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
                 params:
-                  BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_labs_gcp_credentials_json))
+                  BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
+                  BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
+                  BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
+                  BBL_AWS_REGION: us-west-1
+                  BBL_IAAS: aws
                   ENV_NAME: windows2019
                 ensure:
                   put: envs
@@ -241,7 +245,11 @@ jobs:
               task: bbl-destroy
               file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
               params:
-                BBL_GCP_SERVICE_ACCOUNT_KEY: ((broadcom_labs_gcp_credentials_json))
+                BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
+                BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
+                BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
+                BBL_AWS_REGION: us-west-1
+                BBL_IAAS: aws
                 ENV_NAME: windows2019
               ensure:
                 put: envs
@@ -261,7 +269,7 @@ jobs:
           resource: envs
         - get: bosh-deployment
         - get: docker-release
-        - get: gcp-jammy-stemcell
+        - get: aws-jammy-stemcell
         - get: warden-jammy-stemcell
         - get: bosh-docker-cpi-release
       - task: create-candidate
@@ -270,8 +278,9 @@ jobs:
           - task: setup-env
             file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
             params:
-              BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_aws_access_key.username))
-              BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_aws_access_key.password))
+              BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
+              BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
+              BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
               BBL_AWS_REGION: us-west-1
               BBL_IAAS: aws
               BBL_STATE_DIR: test-stress/bbl-state
@@ -284,7 +293,7 @@ jobs:
             file: bosh-dns-release/ci/tasks/test-stress/deploy-docker.yml
             input_mapping:
               bbl-state: updated-bbl-state
-              stemcell: gcp-jammy-stemcell
+              stemcell: aws-jammy-stemcell
           - task: deploy-containers
             file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
             input_mapping:
@@ -300,8 +309,9 @@ jobs:
           input_mapping:
             bbl-state: updated-bbl-state
           params:
-            BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_aws_access_key.username))
-            BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_aws_access_key.password))
+            BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
+            BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
+            BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
             BBL_STATE_DIR: test-stress/bbl-state
           ensure:
             put: envs
@@ -583,15 +593,15 @@ resources:
     source:
       repository: cppforlife/bosh-docker-cpi-release
 
-  - name: gcp-windows-2019-stemcell
+  - name: aws-windows-2019-stemcell
     type: bosh-io-stemcell
     source:
-      name: bosh-google-kvm-windows2019-go_agent
+      name: bosh-aws-xen-hvm-windows2019-go_agent
 
-  - name: gcp-jammy-stemcell
+  - name: aws-jammy-stemcell
     type: bosh-io-stemcell
     source:
-      name: bosh-google-kvm-ubuntu-jammy-go_agent
+      name: bosh-aws-xen-hvm-ubuntu-jammy-go_agent
 
   - name: warden-jammy-stemcell
     type: bosh-io-stemcell

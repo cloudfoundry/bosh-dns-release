@@ -10,7 +10,7 @@ inputs:
   - name: bosh-dns-release
   - name: envs
   - name: bosh-stemcell-windows
-  - name: gcp-linux-stemcell
+  - name: linux-stemcell
   - name: candidate-release
 
 params:

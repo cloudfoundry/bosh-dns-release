@@ -15,12 +15,12 @@ outputs:
     path: envs-output
 
 params:
-  BBL_GCP_SERVICE_ACCOUNT_KEY:
   ENV_NAME:
-  BBL_GCP_PROJECT_ID: cf-bosh-core
-  BBL_GCP_ZONE: us-central1-a
-  BBL_GCP_REGION: us-central1
-  BBL_IAAS: gcp
+  BBL_IAAS:
+  BBL_AWS_ACCESS_KEY_ID:
+  BBL_AWS_SECRET_ACCESS_KEY:
+  BBL_AWS_ASSUME_ROLE:
+  BBL_AWS_REGION:
 
 run:
   path: bosh-dns-release/ci/tasks/windows/bbl-destroy.sh
