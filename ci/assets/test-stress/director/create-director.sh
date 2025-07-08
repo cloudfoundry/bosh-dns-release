@@ -8,6 +8,7 @@ bosh int \
   -o ${BBL_STATE_DIR}/bosh-deployment/uaa.yml \
   -o ${BBL_STATE_DIR}/bosh-deployment/credhub.yml \
   -o ${BBL_STATE_DIR}/bosh-deployment/aws/iam-instance-profile.yml \
+  -o ${BBL_STATE_DIR}/bosh-deployment/aws/cpi-assume-role-credentials.yml \
   -o ${BBL_STATE_DIR}/bbl-ops-files/aws/bosh-director-ephemeral-ip-ops.yml \
   -o ${TEST_STRESS_ASSETS}/director/ops/add-docker-cpi-release.yml \
   -o ${TEST_STRESS_ASSETS}/director/ops/configure-max-threads.yml \
@@ -19,6 +20,7 @@ bosh int \
   -v docker_cpi_release=$BOSH_DOCKER_CPI_RELEASE_TARBALL \
   -v access_key_id=$BBL_AWS_ACCESS_KEY_ID \
   -v secret_access_key=$BBL_AWS_SECRET_ACCESS_KEY \
+  -v role_arn=$BBL_AWS_ASSUME_ROLE \
   > ${BBL_STATE_DIR}/director-manifest.yml
 
 bosh create-env ${BBL_STATE_DIR}/director-manifest.yml \
