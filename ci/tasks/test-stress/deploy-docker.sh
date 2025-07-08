@@ -11,11 +11,16 @@ main() {
   local bosh_dns_release_tarball=$PWD/candidate-release/*.tgz
   local state_dir=$(mktemp -d)
 
+  export JUMPBOX_TABLE_ID=$(jq '.resources[] | select(.type=="aws_route_table" and .name=="bosh_route_table") | .instances[0].attributes.id' $BBL_STATE_DIR/vars/terraform.tfstate)
+  export DEFAULT_TABLE_ID=$(jq '.resources[] | select(.type=="aws_route_table" and .name=="nated_route_table") | .instances[0].attributes.id' $BBL_STATE_DIR/vars/terraform.tfstate)
+
   # Deploy docker hosts to director
   pushd bosh-dns-release/ci/assets/test-stress/docker-hosts-deployment
     bosh -n update-cloud-config "${BBL_STATE_DIR}/cloud-config/cloud-config.yml" \
       -o "${BBL_STATE_DIR}/cloud-config/ops.yml" \
       -o ops/docker-addressable-zones-template.yml \
+      -v jumpbox_table_id=$JUMPBOX_TABLE_ID \
+      -v default_table_id=$DEFAULT_TABLE_ID \
       --vars-file "${BBL_STATE_DIR}/vars/cloud-config-vars.yml"
 
     bosh upload-stemcell $stemcell_path
