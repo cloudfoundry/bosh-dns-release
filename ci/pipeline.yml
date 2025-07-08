@@ -284,7 +284,6 @@ jobs:
               BBL_AWS_REGION: us-west-1
               BBL_IAAS: aws
               BBL_STATE_DIR: test-stress/bbl-state
-              BOSH_LOG_LEVEL: debug
             ensure:
               put: envs
               params:
