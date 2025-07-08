@@ -7,6 +7,7 @@ main() {
 
   export TEST_STRESS_ASSETS=$PWD/bosh-dns-release/ci/assets/test-stress
   export BOSH_DOCKER_CPI_RELEASE_TARBALL="$( echo $PWD/bosh-docker-cpi-release/*.tgz )"
+  export BOSH_LOG_LEVEL="${BOSH_LOG_LEVEL:-}"
 
   mkdir -p bbl-state/${BBL_STATE_DIR}
 

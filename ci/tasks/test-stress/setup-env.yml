@@ -21,6 +21,7 @@ params:
   BBL_AWS_REGION: us-west-2
   BBL_IAAS: aws
   BBL_STATE_DIR: test-stress/bbl-state
+  BOSH_LOG_LEVEL:
 
 run:
   path: bosh-dns-release/ci/tasks/test-stress/setup-env.sh
