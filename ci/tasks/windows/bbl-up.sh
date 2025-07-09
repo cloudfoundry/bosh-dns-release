@@ -11,7 +11,10 @@ main() {
   pushd envs/${ENV_NAME}
     bbl version
     bbl plan > bbl_plan.txt
+    # Use the local bosh release
     sed -i "/bosh create-env/a -o \${BBL_STATE_DIR}/bosh-deployment/local-bosh-release-tarball.yml -v local_bosh_release=${bosh_release_path} \\\\" create-director.sh
+    # Remove the iam profile ops file - doesn't work with our assume role setup
+    sed -i "/iam-instance-profile/d" create-director.sh
     bbl --debug up
     bbl print-env > .envrc
     source .envrc
