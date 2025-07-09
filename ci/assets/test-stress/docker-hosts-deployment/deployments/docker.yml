@@ -28,7 +28,7 @@ instance_groups:
       listen_address: 0.0.0.0
       tls: ((docker_server_tls))
     release: docker
-  persistent_disk_type: 10GB
+  persistent_disk_type: 100GB
   vm_type: extra-large
   name: server-0
   networks:
