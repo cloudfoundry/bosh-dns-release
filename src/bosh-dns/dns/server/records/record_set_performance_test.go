@@ -17,7 +17,7 @@ import (
 )
 
 var _ = Describe("Record Set Performance", func() {
-	const expectedAvergeResolutionTime int64 = 5000 // 5 milliseconds
+	const expectedAverageResolutionTime int64 = 5000 // 5 milliseconds
 
 	var (
 		recordSet             *records.RecordSet
@@ -89,7 +89,7 @@ var _ = Describe("Record Set Performance", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	It(fmt.Sprintf("resolves queries with a large number of records under %d nanoseconds", expectedAvergeResolutionTime), func() {
+	It(fmt.Sprintf("resolves queries with a large number of records under %d nanoseconds", expectedAverageResolutionTime), func() {
 		var totalTime time.Duration
 		var totalTimeLastRecord time.Duration
 		var count int
@@ -113,7 +113,7 @@ var _ = Describe("Record Set Performance", func() {
 		averageTime := totalTime.Microseconds() / int64(count)
 		averageTimeLastRecord := totalTimeLastRecord.Microseconds() / int64(count)
 
-		Expect(averageTime).To(BeNumerically("<", expectedAvergeResolutionTime))
-		Expect(averageTimeLastRecord).To(BeNumerically("<", expectedAvergeResolutionTime))
+		Expect(averageTime).To(BeNumerically("<", expectedAverageResolutionTime))
+		Expect(averageTimeLastRecord).To(BeNumerically("<", expectedAverageResolutionTime))
 	})
 })
