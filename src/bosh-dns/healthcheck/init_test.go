@@ -62,8 +62,7 @@ var _ = BeforeEach(func() {
 	jobsDir, err = os.MkdirTemp(tmpDir, "job-metadata")
 	Expect(err).ToNot(HaveOccurred())
 
-	suiteConfig, _ := GinkgoConfiguration()
-	configPort = 1234 + suiteConfig.ParallelProcess
+	configPort = 1234 + GinkgoParallelProcess()
 
 	healthExecutablePath = "healthy"
 	if runtime.GOOS == "windows" {

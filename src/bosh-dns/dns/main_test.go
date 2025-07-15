@@ -47,7 +47,6 @@ var _ = Describe("main", func() {
 		recursorList   []string
 		jobsDir        string
 	)
-	var suiteConfig, _ = GinkgoConfiguration()
 
 	BeforeEach(func() {
 		listenAddress = "127.0.0.1"
@@ -255,7 +254,7 @@ var _ = Describe("main", func() {
 
 			cfg.Health = config.HealthConfig{
 				Enabled:         healthEnabled,
-				Port:            2345 + suiteConfig.ParallelProcess,
+				Port:            2345 + GinkgoParallelProcess(),
 				CAFile:          "../healthcheck/assets/test_certs/test_ca.pem",
 				CertificateFile: "../healthcheck/assets/test_certs/test_client.pem",
 				PrivateKeyFile:  "../healthcheck/assets/test_certs/test_client.key",
@@ -265,7 +264,7 @@ var _ = Describe("main", func() {
 			cfg.Metrics = config.MetricsConfig{
 				Enabled: metricsEnabled,
 				Address: "127.0.0.1",
-				Port:    53088 + suiteConfig.ParallelProcess,
+				Port:    53088 + GinkgoParallelProcess(),
 			}
 
 			cmd = newCommandWithConfig(cfg)
@@ -679,7 +678,7 @@ var _ = Describe("main", func() {
 						_, _, err := c.Exchange(m, fmt.Sprintf("%s:%d", listenAddress, listenPort))
 						Expect(err).NotTo(HaveOccurred())
 
-						resp, err := http.Get(fmt.Sprintf("http://%s:%d/metrics", listenAddress, 53088+suiteConfig.ParallelProcess))
+						resp, err := http.Get(fmt.Sprintf("http://%s:%d/metrics", listenAddress, 53088+GinkgoParallelProcess()))
 						Expect(err).NotTo(HaveOccurred())
 
 						metrics, err := io.ReadAll(resp.Body)
@@ -694,7 +693,7 @@ var _ = Describe("main", func() {
 				Context("with Metrics disabled", func() {
 
 					It("does not start the metrics server", func() {
-						_, err := http.Get(fmt.Sprintf("http://%s:%d/metrics", listenAddress, 53088+suiteConfig.ParallelProcess))
+						_, err := http.Get(fmt.Sprintf("http://%s:%d/metrics", listenAddress, 53088+GinkgoParallelProcess()))
 
 						Expect(err).To(HaveOccurred())
 						Expect(err.Error()).To(MatchRegexp("connection.*refused"))
@@ -1576,7 +1575,7 @@ var _ = Describe("main", func() {
 		)
 
 		It("will timeout after the recursor_timeout has been reached", func() {
-			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", 9000+suiteConfig.ParallelProcess))
+			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", 9000+GinkgoParallelProcess()))
 			Expect(err).NotTo(HaveOccurred())
 			defer l.Close() //nolint:errcheck
 
@@ -1905,8 +1904,7 @@ func newFakeHealthServer(ip, state string, groups map[string]string) *ghttp.Serv
 	err = server.HTTPTestServer.Listener.Close()
 	Expect(err).NotTo(HaveOccurred())
 
-	suiteConfig, _ := GinkgoConfiguration()
-	port := 2345 + suiteConfig.ParallelProcess
+	port := 2345 + GinkgoParallelProcess()
 	server.HTTPTestServer.Listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	Expect(err).ToNot(HaveOccurred(),
 		fmt.Sprintf(`
