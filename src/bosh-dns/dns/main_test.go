@@ -35,6 +35,9 @@ import (
 )
 
 var _ = Describe("main", func() {
+	// up from Ginkgo's Eventually default of 1 Second because of slow test infrastructure
+	const expectedTimeout = 5 * time.Second
+
 	var (
 		listenAddress  string
 		listenPort     int
@@ -68,7 +71,7 @@ var _ = Describe("main", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).WithTimeout(expectedTimeout).Should(gexec.Exit(1))
 			Expect(session.Err).To(gbytes.Say("--config is a required flag"))
 		})
 
@@ -82,7 +85,7 @@ var _ = Describe("main", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).WithTimeout(expectedTimeout).Should(gexec.Exit(1))
 			Expect(session.Err).To(gbytes.Say("Unable to find config file at 'some/fake/path'"))
 		})
 
@@ -97,7 +100,7 @@ var _ = Describe("main", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).WithTimeout(expectedTimeout).Should(gexec.Exit(1))
 			Expect(session.Err).To(gbytes.Say("unexpected end of JSON input"))
 		})
 	})
@@ -1461,7 +1464,7 @@ var _ = Describe("main", func() {
 
 			session.Signal(syscall.SIGTERM)
 
-			Eventually(session).Should(gexec.Exit(0))
+			Eventually(session).WithTimeout(expectedTimeout).Should(gexec.Exit(0))
 		})
 
 		DescribeTable("local horizontal scaling (network buffers)",
@@ -1709,7 +1712,7 @@ var _ = Describe("main", func() {
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).WithTimeout(expectedTimeout).Should(gexec.Exit(1))
 		})
 
 		It("exits 1 when fails to bind to the udp port", func() {
@@ -1719,7 +1722,7 @@ var _ = Describe("main", func() {
 
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).WithTimeout(expectedTimeout).Should(gexec.Exit(1))
 		})
 
 		It("exits 1 and logs a helpful error message when the server times out binding to ports", func() {
@@ -1848,7 +1851,7 @@ var _ = Describe("main", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).WithTimeout(expectedTimeout).Should(gexec.Exit(1))
 			Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - loading alias configuration:.*alias config file malformed:`))
 			Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf(`alias config file malformed: %s`, aliasesFile2.Name())))
 		})
@@ -1869,7 +1872,7 @@ var _ = Describe("main", func() {
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).WithTimeout(expectedTimeout).Should(gexec.Exit(1))
 			Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - loading addresses configuration:.*addresses config file malformed:`))
 			Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf(`addresses config file malformed: %s`, addressesFile2.Name())))
 		})
