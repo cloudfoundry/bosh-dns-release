@@ -6,7 +6,7 @@ jobs:
   lint_bosh_dns:
     strategy:
       matrix:
-        os: [macos-latest, windows-2019, ubuntu-latest]
+        os: [macos-latest, windows-latest, ubuntu-latest]
     name: lint_bosh_dns
     runs-on: ${{ matrix.os }}
     steps:
@@ -20,7 +20,7 @@ jobs:
   lint_test_recursor:
     strategy:
       matrix:
-        os: [macos-latest, windows-2019, ubuntu-latest]
+        os: [macos-latest, windows-latest, ubuntu-latest]
     name: lint_test_recursor
     runs-on: ${{ matrix.os }}
     steps:
@@ -34,7 +34,7 @@ jobs:
   lint_debug:
     strategy:
       matrix:
-        os: [macos-latest, windows-2019, ubuntu-latest]
+        os: [macos-latest, windows-latest, ubuntu-latest]
     name: lint_debug
     runs-on: ${{ matrix.os }}
     steps:
