@@ -37,7 +37,12 @@ var _ bool = Describe("CacheHandler", func() {
 		cacheHandler = handlers.NewCachingDNSHandler(fakeDnsHandler, fakeTruncater, fakeClock, fakeLogger)
 
 		response = &dns.Msg{
-			Answer: []dns.RR{&dns.A{A: net.ParseIP("99.99.99.99")}},
+			// coredns now deep copies our object, which results in [] instead of nil for Ns and Extra,
+			// and a minimum TTL value being set. Mock those values in the test object so that we can
+			// use simple gomega Equals matchers in the tests.
+			Answer: []dns.RR{&dns.A{A: net.ParseIP("99.99.99.99"), Hdr: dns.RR_Header{Ttl: 5}}},
+			Ns:     []dns.RR{},
+			Extra:  []dns.RR{},
 		}
 		SetQuestion(response, nil, "my-instance.my-group.my-network.my-deployment.bosh.", dns.TypeANY)
 		fakeDnsHandler.ServeDNSStub = func(cacheWriter dns.ResponseWriter, r *dns.Msg) {
