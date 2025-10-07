@@ -179,6 +179,8 @@ builds:
     version: 1.31.0
   fad21870-5e13-468f-4398-c58a501a58f4:
     version: 1.36.12
+  fad537db-02a2-4965-707c-0e98a2e116df:
+    version: 1.39.17
   ff891bcd-01b5-469e-4609-7ddb0879e563:
     version: 1.38.1
 format-version: "2"
