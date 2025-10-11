@@ -332,7 +332,7 @@ golang.org/x/tools/internal/versions
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20250715232539-7130f93afb79
 ## explicit; go 1.23.0
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.75.1
+# google.golang.org/grpc v1.76.0-dev
 ## explicit; go 1.23.0
 google.golang.org/grpc
 google.golang.org/grpc/attributes
