@@ -22,10 +22,10 @@ github.com/cloudfoundry/bosh-utils v0.0.555 h1:tISTfz5Yb3El48lCtj/C663vyAlqVOdn1
 github.com/cloudfoundry/bosh-utils v0.0.555/go.mod h1:pqiwKNIx0KMUafC4lXeuq0FEK2zTU3jqbGcBXzHp/DY=
 github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 h1:oy59UYcspoP44ggE8DM3kjxl1+sTFd802bbZlBBhBMk=
 github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851/go.mod h1:72EEm1oq5oXqGfu9XGtaRPWEcAFYd/P10cMNln0QhA8=
-github.com/cloudfoundry/gosigar v1.3.102 h1:5yRagCTQXZJnk+lyQRu5I/YNO2Hz/Ko8NOuAtrf3W/g=
-github.com/cloudfoundry/gosigar v1.3.102/go.mod h1:q23pjOXI2Swjp5KorM77iZOKWpDr1/eeHECHlhvw+WE=
-github.com/cloudfoundry/socks5-proxy v0.2.156 h1:O0sqgbNlNzhUDU6B+Q1vAA0KdsHGViGYdKHSI1tYInc=
-github.com/cloudfoundry/socks5-proxy v0.2.156/go.mod h1:Blyn3pFyflE46w7mETBKe9CEkNvrTiNH8VItD8bRevU=
+github.com/cloudfoundry/gosigar v1.3.103 h1:1X69OSpRr8Nq9UziQjgpgL+hQv0sKW+44aJcfKUjzFw=
+github.com/cloudfoundry/gosigar v1.3.103/go.mod h1:q23pjOXI2Swjp5KorM77iZOKWpDr1/eeHECHlhvw+WE=
+github.com/cloudfoundry/socks5-proxy v0.2.157 h1:/6zGdttVfA1uKhR31APYha6FatINeDj2oRkf2XSBSX4=
+github.com/cloudfoundry/socks5-proxy v0.2.157/go.mod h1:owsGELXjFmfqFNYTFPnxloIM1Wqg7Uma2h0vpKtci0Q=
 github.com/coredns/caddy v1.1.3 h1:zy+rYOAhG1Qjxnaf4QGIglYpR3io9YTJ67abYbEgfwY=
 github.com/coredns/caddy v1.1.3/go.mod h1:A6ntJQlAWuQfFlsd9hvigKbo2WS0VUs2l1e2F+BawD4=
 github.com/coredns/coredns v1.12.3 h1:jYdwHGOj5tTPA+OPEq8aR5aqWkwu3Mgvaqfy14MiDZA=
