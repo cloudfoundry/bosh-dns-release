@@ -33,7 +33,7 @@ github.com/cheggaaa/pb/v3/termutil
 ## explicit; go 1.18
 github.com/clipperhouse/uax29/v2/graphemes
 github.com/clipperhouse/uax29/v2/internal/iterators
-# github.com/cloudfoundry/bosh-cli/v7 v7.9.11
+# github.com/cloudfoundry/bosh-cli/v7 v7.9.12
 ## explicit; go 1.23.0
 github.com/cloudfoundry/bosh-cli/v7/io
 github.com/cloudfoundry/bosh-cli/v7/ui
@@ -51,7 +51,7 @@ github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851
 ## explicit; go 1.21.0
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.156
+# github.com/cloudfoundry/socks5-proxy v0.2.157
 ## explicit; go 1.23.0
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
