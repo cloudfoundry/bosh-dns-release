@@ -26,7 +26,7 @@ github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.3
 ## explicit; go 1.18
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.555
+# github.com/cloudfoundry/bosh-utils v0.0.557
 ## explicit; go 1.23.0
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -43,7 +43,7 @@ github.com/cloudfoundry/go-socks5
 ## explicit; go 1.23.0
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.157
+# github.com/cloudfoundry/socks5-proxy v0.2.158
 ## explicit; go 1.23.0
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.3
@@ -128,7 +128,7 @@ github.com/munnerz/goautoneg
 github.com/nu7hatch/gouuid
 # github.com/nxadm/tail v1.4.8
 ## explicit; go 1.13
-# github.com/onsi/ginkgo/v2 v2.26.0
+# github.com/onsi/ginkgo/v2 v2.27.1
 ## explicit; go 1.23.0
 github.com/onsi/ginkgo/v2
 github.com/onsi/ginkgo/v2/config
