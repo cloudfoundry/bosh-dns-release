@@ -26,7 +26,7 @@ github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.3
 ## explicit; go 1.18
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.557
+# github.com/cloudfoundry/bosh-utils v0.0.558
 ## explicit; go 1.23.0
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -39,7 +39,7 @@ github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851
 ## explicit; go 1.21.0
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/gosigar v1.3.103
+# github.com/cloudfoundry/gosigar v1.3.106
 ## explicit; go 1.23.0
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
@@ -128,12 +128,13 @@ github.com/munnerz/goautoneg
 github.com/nu7hatch/gouuid
 # github.com/nxadm/tail v1.4.8
 ## explicit; go 1.13
-# github.com/onsi/ginkgo/v2 v2.27.1
+# github.com/onsi/ginkgo/v2 v2.27.2
 ## explicit; go 1.23.0
 github.com/onsi/ginkgo/v2
 github.com/onsi/ginkgo/v2/config
 github.com/onsi/ginkgo/v2/formatter
 github.com/onsi/ginkgo/v2/ginkgo
+github.com/onsi/ginkgo/v2/ginkgo/automaxprocs
 github.com/onsi/ginkgo/v2/ginkgo/build
 github.com/onsi/ginkgo/v2/ginkgo/command
 github.com/onsi/ginkgo/v2/ginkgo/generators
@@ -219,7 +220,6 @@ github.com/quic-go/quic-go/quicvarint
 github.com/rcrowley/go-metrics
 # go.uber.org/automaxprocs v1.6.0
 ## explicit; go 1.20
-go.uber.org/automaxprocs
 go.uber.org/automaxprocs/internal/cgroups
 go.uber.org/automaxprocs/internal/runtime
 go.uber.org/automaxprocs/maxprocs
