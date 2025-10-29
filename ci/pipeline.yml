@@ -3,39 +3,49 @@ jobs:
   - name: bump-deps
     public: true
     plan:
+      - get: golang-release-image
       - get: weekly
         trigger: true
       - get: golang-release
       - get: bosh-dns-release
       - task: bump-deps
         file: golang-release/ci/tasks/shared/bump-deps.yml
+        image: golang-release-image
+        tags: [ windows-nimbus ]
         params:
           GIT_USER_NAME: CI Bot
           GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
           GO_PACKAGE: golang-1-linux
           SOURCE_PATH: src/bosh-dns
+          GOPROXY: https://((broadcom_artifactory_mirrors.username)):((broadcom_artifactory_mirrors.password))@((broadcom_artifactory_mirrors.golang)),off
         input_mapping:
           input_repo: bosh-dns-release
         output_mapping:
           output_repo: bumped-bosh-dns-release
       - task: bump-deps-test-acceptance-release
         file: golang-release/ci/tasks/shared/bump-deps.yml
+        image: golang-release-image
+        tags: [ windows-nimbus ]
         params:
           GIT_USER_NAME: CI Bot
           GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
           GO_PACKAGE: golang-1-linux
           SOURCE_PATH: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
+          GOPROXY: https://((broadcom_artifactory_mirrors.username)):((broadcom_artifactory_mirrors.password))@((broadcom_artifactory_mirrors.golang)),off
         input_mapping:
           input_repo: bumped-bosh-dns-release
         output_mapping:
           output_repo: bumped-bosh-dns-release
       - task: bump-deps-debug
         file: golang-release/ci/tasks/shared/bump-deps.yml
+        image: golang-release-image
+        tags: [ windows-nimbus ]
         params:
           GIT_USER_NAME: CI Bot
           GIT_USER_EMAIL: cf-bosh-eng@pivotal.io
           GO_PACKAGE: golang-1-linux
           SOURCE_PATH: src/debug
+          GOPROXY: https://((broadcom_artifactory_mirrors.username)):((broadcom_artifactory_mirrors.password))@((broadcom_artifactory_mirrors.golang)),off
         input_mapping:
           input_repo: bumped-bosh-dns-release
         output_mapping:
@@ -128,7 +138,7 @@ jobs:
       - task: test-unit-windows
         timeout: 1h
         file: bosh-dns-release/ci/tasks/windows/test-unit-windows.yml
-        tags: [ "windows-nimbus" ]
+        tags: [ windows-nimbus ]
         params:
           BOSH_DNS_RECURSOR_ADDRESS: 192.19.189.10
 
@@ -555,6 +565,12 @@ resources:
     source:
       uri: https://github.com/cloudfoundry/bosh-package-golang-release.git
       branch: main
+  - name: golang-release-image
+    type: registry-image
+    source:
+      password: ((docker.password))
+      repository: bosh/golang-release
+      username: ((docker.username))
 
   - name: version
     type: semver
