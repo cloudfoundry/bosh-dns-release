@@ -33,7 +33,7 @@ func GetFreePort() (int, error) {
 
 func WaitForListeningTCP(port int) error {
 	for i := 0; i < 20; i++ {
-		c, err := net.Dial("tcp", fmt.Sprintf("%s:%d", "127.0.0.1", port))
+		c, err := net.Dial("tcp", fmt.Sprintf("%s:%d", "127.0.0.1", port)) //nolint:govet
 		if err != nil {
 			time.Sleep(100 * time.Millisecond)
 			continue
