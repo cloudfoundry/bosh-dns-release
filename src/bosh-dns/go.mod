@@ -6,8 +6,8 @@ require (
 	code.cloudfoundry.org/clock v1.44.0
 	code.cloudfoundry.org/tlsconfig v0.34.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.559
-	github.com/cloudfoundry/gosigar v1.3.106
+	github.com/cloudfoundry/bosh-utils v0.0.560
+	github.com/cloudfoundry/gosigar v1.3.107
 	github.com/coredns/coredns v1.12.3
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.11.3
 	github.com/miekg/dns v1.1.68
@@ -44,7 +44,6 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pivotal-cf/paraphernalia v0.0.0-20180203224945-a64ae2051c20 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.66.1 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
