@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/clock v1.44.0
 	code.cloudfoundry.org/tlsconfig v0.34.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.558
+	github.com/cloudfoundry/bosh-utils v0.0.559
 	github.com/cloudfoundry/gosigar v1.3.106
 	github.com/coredns/coredns v1.12.3
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.11.3
