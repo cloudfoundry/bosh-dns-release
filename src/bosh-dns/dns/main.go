@@ -251,7 +251,9 @@ func mainExitCode() int {
 	if metricsServerWrapper != nil {
 		go func() {
 			err := metricsServerWrapper.Run(shutdown)
-			logger.Error(logTag, "could not start metric server: %s", err.Error())
+			if err != nil {
+				logger.Error(logTag, "could not start metric server: %s", err.Error())
+			}
 		}()
 	}
 
