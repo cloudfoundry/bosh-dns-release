@@ -1875,6 +1875,94 @@ var _ = Describe("main", func() {
 			Eventually(session.Out).Should(gbytes.Say(`[main].*ERROR - loading addresses configuration:.*addresses config file malformed:`))
 			Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf(`addresses config file malformed: %s`, addressesFile2.Name())))
 		})
+		Context("metrics server error scenarios", func() {
+			var (
+				session *gexec.Session
+			)
+
+			AfterEach(func() {
+				if session != nil {
+					session.Kill()
+					session.Wait()
+				}
+			})
+
+			It("logs error when metrics server fails to start due to port conflict", func() {
+				dnsPort, err := testhelpers.GetFreePort()
+				Expect(err).NotTo(HaveOccurred())
+
+				apiPort, err := testhelpers.GetFreePort()
+				Expect(err).NotTo(HaveOccurred())
+
+				metricsPort, err := testhelpers.GetFreePort()
+				Expect(err).NotTo(HaveOccurred())
+
+				// Create a conflict by binding to the metrics port first
+				conflictListener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", metricsPort))
+				Expect(err).NotTo(HaveOccurred())
+				defer conflictListener.Close()
+
+				cfg := config.NewDefaultConfig()
+				cfg.Address = listenAddress
+				cfg.Port = dnsPort
+				cfg.JobsDir = jobsDir
+				cfg.Metrics = config.MetricsConfig{
+					Enabled: true,
+					Address: "127.0.0.1",
+					Port:    metricsPort, // This will conflict with our listener
+				}
+				cfg.API = config.APIConfig{
+					Port:            apiPort,
+					CAFile:          "api/assets/test_certs/test_ca.pem",
+					CertificateFile: "api/assets/test_certs/test_server.pem",
+					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+				}
+
+				cmd = newCommandWithConfig(cfg)
+				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Wait for DNS server to start (so we know the process is running)
+				Expect(testhelpers.WaitForListeningTCP(dnsPort)).To(Succeed())
+
+				// Verify the error is logged
+				Eventually(session.Out, 10*time.Second).Should(
+					gbytes.Say(`\[main\].*ERROR.*could not start metrics server:`),
+				)
+			})
+
+			It("logs error when metrics server fails due to invalid address", func() {
+				dnsPort, err := testhelpers.GetFreePort()
+				Expect(err).NotTo(HaveOccurred())
+
+				apiPort, err := testhelpers.GetFreePort()
+				Expect(err).NotTo(HaveOccurred())
+
+				cfg := config.NewDefaultConfig()
+				cfg.Address = listenAddress
+				cfg.Port = dnsPort
+				cfg.JobsDir = jobsDir
+				cfg.Metrics = config.MetricsConfig{
+					Enabled: true,
+					Address: "invalid.address.that.does.not.exist",
+					Port:    8080,
+				}
+				cfg.API = config.APIConfig{
+					Port:            apiPort,
+					CAFile:          "api/assets/test_certs/test_ca.pem",
+					CertificateFile: "api/assets/test_certs/test_server.pem",
+					PrivateKeyFile:  "api/assets/test_certs/test_server.key",
+				}
+
+				cmd = newCommandWithConfig(cfg)
+				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(session.Out, 10*time.Second).Should(
+					gbytes.Say(`\[main\].*ERROR.*could not start metrics server:`),
+				)
+			})
+		})
 	})
 })
 
