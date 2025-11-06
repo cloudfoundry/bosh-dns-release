@@ -1900,7 +1900,7 @@ var _ = Describe("main", func() {
 				// Create a conflict by binding to the metrics port first
 				conflictListener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", metricsPort))
 				Expect(err).NotTo(HaveOccurred())
-				defer conflictListener.Close()
+				defer conflictListener.Close() //nolint:errcheck
 
 				cfg := config.NewDefaultConfig()
 				cfg.Address = listenAddress
