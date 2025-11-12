@@ -36,5 +36,11 @@ sudo sysctl -w kern.ipc.somaxconn=1024  # default is 128
 Then run the tests:
 
 ```bash
+./scripts/test-unit
+```
+
+You could also use ginkgo to run a specific test suite
+
+```bash
 ginkgo -v --procs=1 src/bosh-dns/dns/
 ```
