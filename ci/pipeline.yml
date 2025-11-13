@@ -572,9 +572,7 @@ resources:
   - name: golang-release-image
     type: registry-image
     source:
-      password: ((docker.password))
-      repository: bosh/golang-release
-      username: ((docker.username))
+      repository: ghcr.io/cloudfoundry/bosh/golang-release
 
   - name: version
     type: semver
