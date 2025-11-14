@@ -25,6 +25,12 @@ type requestContext struct {
 	fromCache bool
 }
 
+type ctxKey int
+
+const (
+	indicatorKey ctxKey = iota
+)
+
 func NewCachingDNSHandler(next dns.Handler, truncater dnsresolver.ResponseTruncater, clock clock.Clock, logger boshlog.Logger) CachingDNSHandler {
 	ca := cache.New()
 	ca.Next = corednsHandlerWrapper{Next: next}
@@ -55,7 +61,7 @@ func (c CachingDNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	indicator := &requestContext{
 		fromCache: true,
 	}
-	requestContext := context.WithValue(context.Background(), "indicator", indicator)
+	requestContext := context.WithValue(context.Background(), indicatorKey, indicator)
 
 	before := c.clock.Now()
 	_, err := c.ca.ServeDNS(requestContext, truncatingWriter, r)
@@ -74,7 +80,7 @@ type corednsHandlerWrapper struct {
 }
 
 func (w corednsHandlerWrapper) ServeDNS(ctx context.Context, writer dns.ResponseWriter, m *dns.Msg) (int, error) {
-	requestContext := ctx.Value("indicator").(*requestContext)
+	requestContext := ctx.Value(indicatorKey).(*requestContext)
 	requestContext.fromCache = false
 
 	w.Next.ServeDNS(writer, m)
