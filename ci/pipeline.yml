@@ -20,6 +20,7 @@ jobs:
           SOURCE_PATH: src/bosh-dns
           GOPROXY: ((repository_mirrors.goproxy))
           GOSUMDB: ((repository_mirrors.gosumdb))
+          GOOS_LIST: linux,windows
         input_mapping:
           input_repo: bosh-dns-release
         output_mapping:
@@ -35,6 +36,7 @@ jobs:
           SOURCE_PATH: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
           GOPROXY: ((repository_mirrors.goproxy))
           GOSUMDB: ((repository_mirrors.gosumdb))
+          GOOS_LIST: linux,windows
         input_mapping:
           input_repo: bumped-bosh-dns-release
         output_mapping:
@@ -50,6 +52,7 @@ jobs:
           SOURCE_PATH: src/debug
           GOPROXY: ((repository_mirrors.goproxy))
           GOSUMDB: ((repository_mirrors.gosumdb))
+          GOOS_LIST: linux,windows
         input_mapping:
           input_repo: bumped-bosh-dns-release
         output_mapping:
