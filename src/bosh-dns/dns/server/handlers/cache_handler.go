@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"context"
+
 	"code.cloudfoundry.org/clock"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/coredns/coredns/plugin/cache"
 	"github.com/miekg/dns"
-	"golang.org/x/net/context"
 
 	"bosh-dns/dns/server/handlers/internal"
 	"bosh-dns/dns/server/records/dnsresolver"
