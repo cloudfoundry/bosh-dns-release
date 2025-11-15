@@ -117,13 +117,7 @@ func hash(qname string, qtype uint16, do, cd bool) uint64 {
 }
 
 func computeTTL(msgTTL, minTTL, maxTTL time.Duration) time.Duration {
-	ttl := msgTTL
-	if ttl < minTTL {
-		ttl = minTTL
-	}
-	if ttl > maxTTL {
-		ttl = maxTTL
-	}
+	ttl := min(max(msgTTL, minTTL), maxTTL)
 	return ttl
 }
 
