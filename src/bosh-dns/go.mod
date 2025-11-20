@@ -3,10 +3,10 @@ module bosh-dns
 go 1.24.0
 
 require (
-	code.cloudfoundry.org/clock v1.54.0
-	code.cloudfoundry.org/tlsconfig v0.39.0
+	code.cloudfoundry.org/clock v1.55.0
+	code.cloudfoundry.org/tlsconfig v0.40.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.568
+	github.com/cloudfoundry/bosh-utils v0.0.569
 	github.com/cloudfoundry/gosigar v1.3.111
 	github.com/coredns/coredns v1.13.1
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.0
@@ -44,20 +44,20 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pivotal-cf/paraphernalia v0.0.0-20180203224945-a64ae2051c20 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.2 // indirect
+	github.com/prometheus/common v0.67.3 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/quic-go/quic-go v0.56.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.44.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/mod v0.30.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba // indirect
-	google.golang.org/grpc v1.76.0 // indirect
+	google.golang.org/grpc v1.77.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 )
