@@ -10,7 +10,7 @@ jobs:
     name: lint_bosh_dns
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: src/bosh-dns/go.mod
@@ -24,7 +24,7 @@ jobs:
     name: lint_test_recursor
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor/go.mod
@@ -38,7 +38,7 @@ jobs:
     name: lint_debug
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: src/debug/go.mod
