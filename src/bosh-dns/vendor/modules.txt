@@ -2,7 +2,7 @@
 ## explicit; go 1.24.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
-# code.cloudfoundry.org/tlsconfig v0.40.0
+# code.cloudfoundry.org/tlsconfig v0.41.0
 ## explicit; go 1.24.0
 code.cloudfoundry.org/tlsconfig
 # code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
@@ -26,7 +26,7 @@ github.com/cespare/xxhash/v2
 # github.com/charlievieth/fs v0.0.3
 ## explicit; go 1.18
 github.com/charlievieth/fs
-# github.com/cloudfoundry/bosh-utils v0.0.570
+# github.com/cloudfoundry/bosh-utils v0.0.572
 ## explicit; go 1.24.0
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -197,7 +197,7 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/quic-go/quic-go v0.57.0
+# github.com/quic-go/quic-go v0.57.1
 ## explicit; go 1.24
 github.com/quic-go/quic-go
 github.com/quic-go/quic-go/internal/ackhandler
@@ -326,7 +326,7 @@ golang.org/x/tools/internal/stdlib
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20251124214823-79d6a2a48846
 ## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.77.0

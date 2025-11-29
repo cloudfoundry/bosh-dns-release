@@ -4,9 +4,9 @@ go 1.24.0
 
 require (
 	code.cloudfoundry.org/clock v1.55.0
-	code.cloudfoundry.org/tlsconfig v0.40.0
+	code.cloudfoundry.org/tlsconfig v0.41.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.570
+	github.com/cloudfoundry/bosh-utils v0.0.572
 	github.com/cloudfoundry/gosigar v1.3.112
 	github.com/coredns/coredns v1.13.1
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.0
@@ -46,7 +46,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.4 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
-	github.com/quic-go/quic-go v0.57.0 // indirect
+	github.com/quic-go/quic-go v0.57.1 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
@@ -57,7 +57,7 @@ require (
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251124214823-79d6a2a48846 // indirect
 	google.golang.org/grpc v1.77.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 )
