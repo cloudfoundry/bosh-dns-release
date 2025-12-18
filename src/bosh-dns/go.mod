@@ -4,9 +4,9 @@ go 1.24.0
 
 require (
 	code.cloudfoundry.org/clock v1.55.0
-	code.cloudfoundry.org/tlsconfig v0.41.0
+	code.cloudfoundry.org/tlsconfig v0.42.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.576
+	github.com/cloudfoundry/bosh-utils v0.0.577
 	github.com/cloudfoundry/gosigar v1.3.112
 	github.com/coredns/coredns v1.13.2
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.1
