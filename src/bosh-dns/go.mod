@@ -8,7 +8,7 @@ require (
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
 	github.com/cloudfoundry/bosh-utils v0.0.579
 	github.com/cloudfoundry/gosigar v1.3.112
-	github.com/coredns/coredns v1.13.2
+	github.com/coredns/coredns v1.14.0
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.1
 	github.com/miekg/dns v1.1.69
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
@@ -48,6 +48,7 @@ require (
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.58.0 // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
