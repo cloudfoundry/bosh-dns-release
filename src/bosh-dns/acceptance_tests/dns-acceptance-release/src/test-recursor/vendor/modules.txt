@@ -1,4 +1,4 @@
-# github.com/miekg/dns v1.1.70
+# github.com/miekg/dns v1.1.72
 ## explicit; go 1.24.0
 github.com/miekg/dns
 # golang.org/x/mod v0.32.0
