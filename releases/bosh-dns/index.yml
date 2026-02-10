@@ -145,6 +145,8 @@ builds:
     version: 1.36.10
   db372f6a-d835-4f56-5fe4-415b3c813b7c:
     version: 1.35.0
+  db5eaf5c-8dad-491c-5775-6f83eed109af:
+    version: 1.39.20
   e0403eda-d5d1-4c89-7e8b-0f2866a0c51f:
     version: 1.36.8
   e0a9ecb9-2d41-45b1-6cdd-fb521ecda08d:
