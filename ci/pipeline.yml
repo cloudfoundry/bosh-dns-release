@@ -185,8 +185,10 @@ jobs:
           - get: bosh-stemcell
             resource: warden-jammy-stemcell
           - get: bosh-candidate-release
+          - get: bosh-integration-image
       - task: create-candidate
         file: bosh-dns-release/ci/tasks/create-candidate.yml
+        image: bosh-integration-image
       - task: test-acceptance
         privileged: true
         file: bosh-dns-release/ci/tasks/test-acceptance.yml
@@ -204,8 +206,10 @@ jobs:
           - get: bosh-stemcell
             resource: warden-noble-stemcell
           - get: bosh-candidate-release
+          - get: bosh-integration-image
       - task: create-candidate
         file: bosh-dns-release/ci/tasks/create-candidate.yml
+        image: bosh-integration-image
       - task: test-acceptance
         privileged: true
         file: bosh-dns-release/ci/tasks/test-acceptance.yml
@@ -232,6 +236,7 @@ jobs:
             - get: bosh-integration-image
           - task: create-candidate
             file: bosh-dns-release/ci/tasks/create-candidate.yml
+            image: bosh-integration-image
           - do:
               - task: bbl-up
                 file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
@@ -297,8 +302,10 @@ jobs:
         - get: aws-jammy-stemcell
         - get: warden-jammy-stemcell
         - get: bosh-docker-cpi-release
+        - get: bosh-integration-image
       - task: create-candidate
         file: bosh-dns-release/ci/tasks/create-candidate.yml
+        image: bosh-integration-image
       - do:
           - task: setup-env
             file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
@@ -357,8 +364,10 @@ jobs:
                 resource: warden-jammy-stemcell
               - get: bosh-release
               - get: docker-cpi-image
+              - get: bosh-integration-image
           - task: create-candidate
             file: bosh-dns-release/ci/tasks/create-candidate.yml
+            image: bosh-integration-image
             output_mapping:
               candidate-release: bosh-dns-release
           - task: test-brats # contain base manifest
@@ -389,8 +398,10 @@ jobs:
                 resource: warden-noble-stemcell
               - get: bosh-release
               - get: docker-cpi-image-noble
+              - get: bosh-integration-image
           - task: create-candidate
             file: bosh-dns-release/ci/tasks/create-candidate.yml
+            image: bosh-integration-image
             output_mapping:
               candidate-release: bosh-dns-release
           - task: test-brats # contain base manifest
