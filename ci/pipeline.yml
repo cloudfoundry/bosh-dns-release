@@ -12,6 +12,7 @@ jobs:
           trigger: true
         - get: golang-release
         - get: bosh-dns-release
+        - get: bosh-integration-image
       - task: bump-deps
         file: golang-release/ci/tasks/shared/bump-deps.yml
         image: golang-release-image
@@ -58,9 +59,10 @@ jobs:
         output_mapping:
           output_repo: bumped-bosh-dns-release
       - task: test-unit
+        file: bosh-dns-release/ci/tasks/test-unit.yml
+        image: bosh-integration-image
         input_mapping:
           bosh-dns-release: bumped-bosh-dns-release
-        file: bosh-dns-release/ci/tasks/test-unit.yml
       - put: bosh-dns-release
         params:
           repository: bumped-bosh-dns-release
@@ -77,6 +79,7 @@ jobs:
           - get: bosh-stemcell
             resource: warden-jammy-stemcell
           - get: bosh-candidate-release
+          - get: bosh-integration-image
       - task: bump-golang-package
         file: golang-release/ci/tasks/shared/bump-golang-package.yml
         input_mapping:
@@ -114,6 +117,7 @@ jobs:
                 json_key: '((cloud-foundry-gcp-credentials))'
       - task: create
         file: bosh-dns-release/ci/tasks/create-candidate.yml
+        image: bosh-integration-image
         output_mapping:
           candidate-release: bumped-release
       - task: test-acceptance
@@ -133,8 +137,10 @@ jobs:
     plan:
       - get: bosh-dns-release
         trigger: true
+      - get: bosh-integration-image
       - task: test-unit
         file: bosh-dns-release/ci/tasks/test-unit.yml
+        image: bosh-integration-image
 
   - name: test-unit-windows
     public: true
@@ -154,8 +160,10 @@ jobs:
     plan:
       - get: bosh-dns-release
         trigger: true
+      - get: bosh-integration-image
       - task: test-unit-release
         file: bosh-dns-release/ci/tasks/test-unit-release.yml
+        image: bosh-integration-image
 
   - name: pre-integration-fan-in
     plan:
@@ -221,7 +229,7 @@ jobs:
             - get: bosh-stemcell-windows
               resource: aws-windows-2019-stemcell
             - get: bosh-candidate-release
-            - get: docker-bosh-integration-image
+            - get: bosh-integration-image
           - task: create-candidate
             file: bosh-dns-release/ci/tasks/create-candidate.yml
           - do:
@@ -246,14 +254,14 @@ jobs:
               - in_parallel:
                   - task: windows
                     file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
-                    image: docker-bosh-integration-image
+                    image: bosh-integration-image
                     params:
                       WINDOWS_OS_VERSION: windows2019
                       ENV_NAME: windows2019
                     timeout: 1h
                   - task: windows-nameserver-disabled
                     file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
-                    image: docker-bosh-integration-image
+                    image: bosh-integration-image
                     params:
                       WINDOWS_OS_VERSION: windows2019
                       ENV_NAME: windows2019
@@ -673,12 +681,12 @@ resources:
       username: ((docker.username))
       password: ((docker.password))
 
-  - name: docker-bosh-integration-image
-    type: registry-image
+  - name: bosh-integration-image
+    type: docker-image
     source:
-      repository: bosh/integration
-      username: ((docker.username))
-      password: ((docker.password))
+      repository: ghcr.io/cloudfoundry/bosh/integration
+      username: ((github_read_write_packages.username))
+      password: ((github_read_write_packages.password))
 
   - name: bosh-security-scanner-image
     type: registry-image
