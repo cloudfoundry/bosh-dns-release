@@ -88,7 +88,7 @@ func (q *QueryEncoder) encode() string {
 	sb.WriteString("q-")
 
 	if q.NumID != "" {
-		sb.WriteString(fmt.Sprintf("m%s", q.NumID))
+		sb.WriteString(fmt.Sprintf("m%s", q.NumID)) //nolint:staticcheck
 	}
 
 	switch q.HealthFilter {
@@ -109,7 +109,7 @@ func (q *QueryEncoder) encode() string {
 		sb.WriteString("y1")
 	}
 
-	sb.WriteString(fmt.Sprintf(".q-g%s.%s", q.GroupID, q.RootDomain))
+	sb.WriteString(fmt.Sprintf(".q-g%s.%s", q.GroupID, q.RootDomain)) //nolint:staticcheck
 	return sb.String()
 }
 
