@@ -52,6 +52,8 @@ func ConfigureRecursors(reader RecursorReader, dnsConfig *Config) error {
 		dnsConfig.Recursors = recursors
 	case SerialRecursorSelection:
 		dnsConfig.Recursors = recursors
+	case RaceRecursorSelection:
+		dnsConfig.Recursors = recursors
 	default:
 		return fmt.Errorf("invalid value for recursor selection: '%s'", dnsConfig.RecursorSelection)
 	}

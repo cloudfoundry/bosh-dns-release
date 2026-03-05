@@ -259,6 +259,15 @@ var _ = Describe("Config", func() {
 			Expect(dnsConfig.RecursorSelection).To(Equal("smart"))
 		})
 
+		It("allows configuring recursor selection to be race", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "recursor_selection": "race"}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.RecursorSelection).To(Equal("race"))
+		})
+
 		It("defaults recursor selection to be smart", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53 }`)
 

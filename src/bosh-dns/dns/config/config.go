@@ -196,8 +196,9 @@ func LoadFromFile(configFilePath string) (Config, error) {
 	switch c.RecursorSelection {
 	case "smart":
 	case "serial":
+	case "race":
 	default:
-		return Config{}, errors.New("invalid value for recursor_selection; expected 'serial' or 'smart'")
+		return Config{}, errors.New("invalid value for recursor_selection; expected 'serial', 'smart', or 'race'")
 	}
 
 	return c, nil
