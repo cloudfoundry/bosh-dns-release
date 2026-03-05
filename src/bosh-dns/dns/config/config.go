@@ -15,6 +15,7 @@ import (
 const (
 	SmartRecursorSelection  = "smart"
 	SerialRecursorSelection = "serial"
+	RaceRecursorSelection   = "race"
 	RFCFormatting           = "rfc3339"
 )
 

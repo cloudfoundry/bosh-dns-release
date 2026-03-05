@@ -10,6 +10,7 @@ import (
 	"github.com/miekg/dns"
 
 	"bosh-dns/dns/config"
+	"bosh-dns/dns/server"
 )
 
 const (
@@ -41,11 +42,15 @@ func NewFailoverRecursorPool(recursors []string, recursorSelection string, Recur
 	recursorSettings := recursorRetrySettings{
 		maxRetries: RecursorMaxRetries,
 	}
-	if recursorSelection == config.SmartRecursorSelection {
-		return newSmartFailoverRecursorPool(recursors, recursorSettings, logger)
-	}
 
-	return newSerialFailoverRecursorPool(recursors, recursorSettings, logger)
+	switch recursorSelection {
+	case config.SmartRecursorSelection:
+		return newSmartFailoverRecursorPool(recursors, recursorSettings, logger)
+	case config.RaceRecursorSelection:
+		return newRaceRecursorPool(recursors, recursorSettings, logger)
+	default: // serial
+		return newSerialFailoverRecursorPool(recursors, recursorSettings, logger)
+	}
 }
 
 type serialFailoverRecursorPool struct {
@@ -74,6 +79,19 @@ type recursorWithHistory struct {
 	failCount  int32
 }
 
+type raceRecursorPool struct {
+	recursors             []string
+	logger                logger.Logger
+	logTag                string
+	recursorRetrySettings recursorRetrySettings
+}
+
+type raceResult struct {
+	recursor string
+	err      error
+	priority int // Lower is better: 0=success, 1=NXDOMAIN, 2=SERVFAIL, 3=network error
+}
+
 func newSerialFailoverRecursorPool(recursors []string, recursorSettings recursorRetrySettings, logger logger.Logger) RecursorPool {
 	return &serialFailoverRecursorPool{
 		recursors,
@@ -82,6 +100,19 @@ func newSerialFailoverRecursorPool(recursors []string, recursorSettings recursor
 		recursorSettings,
 	}
 
+}
+
+func newRaceRecursorPool(recursors []string, recursorSettings recursorRetrySettings, logger logger.Logger) RecursorPool {
+	if recursors == nil {
+		recursors = []string{}
+	}
+
+	return &raceRecursorPool{
+		recursors:             recursors,
+		logger:                logger,
+		logTag:                "RaceRecursor",
+		recursorRetrySettings: recursorSettings,
+	}
 }
 
 func newSmartFailoverRecursorPool(recursors []string, recursorSettings recursorRetrySettings, logger logger.Logger) RecursorPool {
@@ -188,4 +219,115 @@ func (q *smartFailoverRecursorPool) registerResult(index int, wasError bool) int
 	}
 
 	return atomic.AddInt32(&failingRecursor.failCount, change)
+}
+
+func (q *raceRecursorPool) PerformStrategically(work func(string) error) error {
+	if len(q.recursors) == 0 {
+		return ErrNoRecursorResponse
+	}
+
+	// Buffered channel sized to number of recursors - prevents goroutine blocking
+	results := make(chan raceResult, len(q.recursors))
+
+	// Start all queries in parallel
+	for _, recursor := range q.recursors {
+		go func(r string) {
+			err := performWithRetryLogic(work, r, q.recursorRetrySettings.maxRetries, q.logTag, q.logger)
+
+			// Classify the error by priority
+			priority := q.classifyError(err)
+
+			results <- raceResult{
+				recursor: r,
+				err:      err,
+				priority: priority,
+			}
+		}(recursor)
+	}
+
+	// Collect all results
+	var bestResult *raceResult
+	receivedCount := 0
+	totalRecursors := len(q.recursors)
+
+	for receivedCount < totalRecursors {
+		res := <-results
+		receivedCount++
+
+		q.logger.Debug(q.logTag, fmt.Sprintf(
+			"received response %d/%d from %s (priority=%d, err=%v)",
+			receivedCount, totalRecursors, res.recursor, res.priority, res.err))
+
+		// Keep track of best result so far
+		if bestResult == nil || res.priority < bestResult.priority {
+			bestResult = &res
+		}
+
+		// If we got a perfect response (NOERROR), return immediately
+		// Don't wait for other responses
+		if res.priority == 0 {
+			q.logger.Info(q.logTag, fmt.Sprintf(
+				"recursor %s returned successful response (received %d/%d responses)",
+				res.recursor, receivedCount, totalRecursors))
+
+			// Drain remaining responses to prevent goroutine leaks
+			go q.drainResults(results, totalRecursors-receivedCount)
+
+			return nil
+		}
+
+		// For non-success responses, continue collecting to see if we get a better one
+	}
+
+	// All responses received, return best one
+	if bestResult == nil {
+		return ErrNoRecursorResponse
+	}
+
+	if bestResult.err != nil {
+		q.logger.Info(q.logTag, fmt.Sprintf(
+			"all %d recursors responded, best result from %s (priority=%d): %s",
+			totalRecursors, bestResult.recursor, bestResult.priority, bestResult.err.Error()))
+	} else {
+		q.logger.Info(q.logTag, fmt.Sprintf(
+			"all %d recursors responded, using result from %s",
+			totalRecursors, bestResult.recursor))
+	}
+
+	return bestResult.err
+}
+
+// classifyError assigns priority to errors
+// Lower number = better response
+func (q *raceRecursorPool) classifyError(err error) int {
+	if err == nil {
+		return 0 // NOERROR - perfect response
+	}
+
+	// Check if it's a DNS error with rcode
+	if dnsErr, ok := err.(server.DnsError); ok {
+		switch dnsErr.Rcode() {
+		case dns.RcodeNameError: // NXDOMAIN
+			return 1 // Name doesn't exist - could be correct, but prefer NOERROR
+		case dns.RcodeServerFailure: // SERVFAIL
+			return 2 // Server failure - prefer NXDOMAIN over this
+		default:
+			return 2 // Other DNS errors
+		}
+	}
+
+	// Network errors are worst
+	if _, ok := err.(net.Error); ok {
+		return 3
+	}
+
+	// Unknown errors
+	return 3
+}
+
+// drainResults reads remaining results to prevent goroutine blocking
+func (q *raceRecursorPool) drainResults(results chan raceResult, remaining int) {
+	for i := 0; i < remaining; i++ {
+		<-results
+	}
 }
