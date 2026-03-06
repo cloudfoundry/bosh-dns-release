@@ -110,7 +110,11 @@ properties:
     description: "Maximum number of retries for recursively resolving DNS queries"
     default: 0
   recursor_selection:
-    description: "The selection strategy for the recursors (serial or smart)"
+    description: |
+      The selection strategy for the recursors:
+      - "serial": Try recursors in order, no failure tracking
+      - "smart": Track failures and prefer reliable recursors (default, DNS spec compliant)
+      - "race": Query all recursors in parallel and use best/fastest response
     default: smart
   excluded_recursors:
     description: "A list of recursor addresses which should not be used by the DNS server"
