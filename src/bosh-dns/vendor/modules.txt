@@ -50,8 +50,8 @@ github.com/cloudfoundry/socks5-proxy
 ## explicit; go 1.13
 github.com/coredns/caddy
 github.com/coredns/caddy/caddyfile
-# github.com/coredns/coredns v1.14.1
-## explicit; go 1.24.0
+# github.com/coredns/coredns v1.14.2
+## explicit; go 1.25.0
 github.com/coredns/coredns/core/dnsserver
 github.com/coredns/coredns/coremain
 github.com/coredns/coredns/pb
@@ -71,6 +71,7 @@ github.com/coredns/coredns/plugin/pkg/edns
 github.com/coredns/coredns/plugin/pkg/fuzz
 github.com/coredns/coredns/plugin/pkg/log
 github.com/coredns/coredns/plugin/pkg/parse
+github.com/coredns/coredns/plugin/pkg/proxyproto
 github.com/coredns/coredns/plugin/pkg/rcode
 github.com/coredns/coredns/plugin/pkg/response
 github.com/coredns/coredns/plugin/pkg/reuseport
@@ -173,6 +174,9 @@ github.com/onsi/gomega/types
 github.com/opentracing/opentracing-go
 github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
+# github.com/pires/go-proxyproto v0.11.0
+## explicit; go 1.24
+github.com/pires/go-proxyproto
 # github.com/pivotal-cf/paraphernalia v0.0.0-20180203224945-a64ae2051c20
 ## explicit
 github.com/pivotal-cf/paraphernalia/secure/tlsconfig
@@ -223,6 +227,10 @@ github.com/quic-go/quic-go/quicvarint
 # github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 ## explicit
 github.com/rcrowley/go-metrics
+# github.com/rogpeppe/go-internal v1.14.1
+## explicit; go 1.23
+# go.opentelemetry.io/otel/sdk/metric v1.40.0
+## explicit; go 1.24.0
 # go.uber.org/automaxprocs v1.6.0
 ## explicit; go 1.20
 go.uber.org/automaxprocs/internal/cgroups
