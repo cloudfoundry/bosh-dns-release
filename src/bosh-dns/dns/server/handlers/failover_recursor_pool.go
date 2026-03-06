@@ -36,6 +36,9 @@ type RecursorPool interface {
 // the server starting.  It does track history around which recursors have
 // failed. This follows the standard DNS specification.
 //
+// When it is "race", the recursor pool will query all recursors simultaneously
+// and return the first successful response.
+//
 // Each recursor will be queried until one succeeds or all recursors were tried
 
 func NewFailoverRecursorPool(recursors []string, recursorSelection string, RecursorMaxRetries int, logger logger.Logger) RecursorPool {
@@ -226,15 +229,12 @@ func (q *raceRecursorPool) PerformStrategically(work func(string) error) error {
 		return ErrNoRecursorResponse
 	}
 
-	// Buffered channel sized to number of recursors - prevents goroutine blocking
 	results := make(chan raceResult, len(q.recursors))
 
-	// Start all queries in parallel
 	for _, recursor := range q.recursors {
 		go func(r string) {
 			err := performWithRetryLogic(work, r, q.recursorRetrySettings.maxRetries, q.logTag, q.logger)
 
-			// Classify the error by priority
 			priority := q.classifyError(err)
 
 			results <- raceResult{
@@ -245,7 +245,6 @@ func (q *raceRecursorPool) PerformStrategically(work func(string) error) error {
 		}(recursor)
 	}
 
-	// Collect all results
 	var bestResult *raceResult
 	receivedCount := 0
 	totalRecursors := len(q.recursors)
@@ -258,28 +257,21 @@ func (q *raceRecursorPool) PerformStrategically(work func(string) error) error {
 			"received response %d/%d from %s (priority=%d, err=%v)",
 			receivedCount, totalRecursors, res.recursor, res.priority, res.err))
 
-		// Keep track of best result so far
 		if bestResult == nil || res.priority < bestResult.priority {
 			bestResult = &res
 		}
 
-		// If we got a perfect response (NOERROR), return immediately
-		// Don't wait for other responses
 		if res.priority == 0 {
 			q.logger.Info(q.logTag, fmt.Sprintf(
 				"recursor %s returned successful response (received %d/%d responses)",
 				res.recursor, receivedCount, totalRecursors))
 
-			// Drain remaining responses to prevent goroutine leaks
 			go q.drainResults(results, totalRecursors-receivedCount)
 
 			return nil
 		}
-
-		// For non-success responses, continue collecting to see if we get a better one
 	}
 
-	// All responses received, return best one
 	if bestResult == nil {
 		return ErrNoRecursorResponse
 	}
@@ -297,18 +289,15 @@ func (q *raceRecursorPool) PerformStrategically(work func(string) error) error {
 	return bestResult.err
 }
 
-// classifyError assigns priority to errors
-// Lower number = better response
 func (q *raceRecursorPool) classifyError(err error) int {
 	if err == nil {
 		return 0 // NOERROR - perfect response
 	}
 
-	// Check if it's a DNS error with rcode
 	if dnsErr, ok := err.(server.DnsError); ok {
 		switch dnsErr.Rcode() {
 		case dns.RcodeNameError: // NXDOMAIN
-			return 1 // Name doesn't exist - could be correct, but prefer NOERROR
+			return 1 // Name doesn't exist - could be correct, but prefer NOERROR to ignore temporary broken recursors
 		case dns.RcodeServerFailure: // SERVFAIL
 			return 2 // Server failure - prefer NXDOMAIN over this
 		default:
@@ -316,16 +305,13 @@ func (q *raceRecursorPool) classifyError(err error) int {
 		}
 	}
 
-	// Network errors are worst
 	if _, ok := err.(net.Error); ok {
 		return 3
 	}
 
-	// Unknown errors
 	return 3
 }
 
-// drainResults reads remaining results to prevent goroutine blocking
 func (q *raceRecursorPool) drainResults(results chan raceResult, remaining int) {
 	for i := 0; i < remaining; i++ {
 		<-results
