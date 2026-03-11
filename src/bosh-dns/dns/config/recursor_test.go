@@ -58,6 +58,19 @@ var _ = Describe("Recursor", func() {
 			})
 		})
 
+		Context("race", func() {
+			BeforeEach(func() {
+				dnsConfig.RecursorSelection = "race"
+				dnsConfig.Recursors = []string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}
+			})
+
+			It("should not shuffle the recursors", func() {
+				err := config.ConfigureRecursors(resolvConfReader, &dnsConfig)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(dnsConfig.Recursors).Should(Equal([]string{"some-recursor-1:53", "some-recursor-2:53", "recursor-custom:1234"}))
+			})
+		})
+
 		Context("smart", func() {
 			var originalRecursors []string
 			BeforeEach(func() {
