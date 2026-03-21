@@ -3,11 +3,11 @@ module bosh-dns
 go 1.25.0
 
 require (
-	code.cloudfoundry.org/clock v1.63.0
-	code.cloudfoundry.org/tlsconfig v0.47.0
+	code.cloudfoundry.org/clock v1.64.0
+	code.cloudfoundry.org/tlsconfig v0.48.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.596
-	github.com/cloudfoundry/gosigar v1.3.116
+	github.com/cloudfoundry/bosh-utils v0.0.599
+	github.com/cloudfoundry/gosigar v1.3.117
 	github.com/coredns/coredns v1.14.2
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.1
 	github.com/miekg/dns v1.1.72
@@ -26,9 +26,8 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/charlievieth/fs v0.0.3 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.170 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.171 // indirect
 	github.com/coredns/caddy v1.1.4 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -59,7 +58,7 @@ require (
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/grpc v1.79.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
