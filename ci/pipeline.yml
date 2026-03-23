@@ -715,14 +715,14 @@ resources:
 
 resource_types:
   - name: gcs-resource
-    type: docker-image
+    type: registry-image
     source:
       repository: frodenas/gcs-resource
       username: ((docker.username))
       password: ((docker.password))
 
   - name: semver
-    type: docker-image
+    type: registry-image
     source:
       repository: concourse/semver-resource
       tag: 1.6
