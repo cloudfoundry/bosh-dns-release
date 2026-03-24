@@ -362,6 +362,8 @@ jobs:
               - get: bosh
               - get: stemcell
                 resource: warden-jammy-stemcell
+              - get: director-stemcell
+                resource: warden-jammy-stemcell
               - get: bosh-release
               - get: docker-cpi-image
               - get: bosh-integration-image
@@ -383,7 +385,8 @@ jobs:
               DNS_RELEASE_FILE_PATH: "dns-release"
               DNS_RELEASE_VERSION: "create"
               FOCUS_SPEC: "BoshDns"
-              STEMCELL_OS: "ubuntu-jammy"
+              DIRECTOR_STEMCELL_OS: ubuntu-jammy
+              STEMCELL_OS: ubuntu-jammy
 
   - name: brats-ubuntu-noble
     serial: true
@@ -395,6 +398,8 @@ jobs:
                 trigger: true
               - get: bosh
               - get: stemcell
+                resource: warden-noble-stemcell
+              - get: director-stemcell
                 resource: warden-noble-stemcell
               - get: bosh-release
               - get: docker-cpi-image-noble
@@ -417,7 +422,8 @@ jobs:
               DNS_RELEASE_FILE_PATH: "dns-release"
               DNS_RELEASE_VERSION: "create"
               FOCUS_SPEC: "BoshDns"
-              STEMCELL_OS: "ubuntu-noble"
+              DIRECTOR_STEMCELL_OS: ubuntu-noble
+              STEMCELL_OS: ubuntu-noble
 
   - name: release-new-patch
     serial_groups:
