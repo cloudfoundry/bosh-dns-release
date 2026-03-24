@@ -402,7 +402,7 @@ jobs:
               - get: director-stemcell
                 resource: warden-noble-stemcell
               - get: bosh-release
-              - get: docker-cpi-image-noble
+              - get: docker-cpi-image
               - get: bosh-integration-image
           - task: create-candidate
             file: bosh-dns-release/ci/tasks/create-candidate.yml
@@ -411,7 +411,7 @@ jobs:
               candidate-release: bosh-dns-release
           - task: test-brats # contain base manifest
             file: bosh/ci/shared/brats/test-acceptance.yml
-            image: docker-cpi-image-noble
+            image: docker-cpi-image
             privileged: true
             input_mapping:
               dns-release: candidate-release
@@ -686,17 +686,9 @@ resources:
     type: registry-image
     source:
       tag: main
-      repository: bosh/docker-cpi
-      username: ((docker.username))
-      password: ((docker.password))
-
-  - name: docker-cpi-image-noble
-    type: registry-image
-    source:
-      tag: noble
-      repository: bosh/docker-cpi
-      username: ((docker.username))
-      password: ((docker.password))
+      repository: ghcr.io/cloudfoundry/bosh/docker-cpi
+      username: ((github_read_write_packages.username))
+      password: ((github_read_write_packages.password))
 
   - name: bosh-integration-image
     type: docker-image
