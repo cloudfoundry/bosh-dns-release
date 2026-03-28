@@ -4,9 +4,9 @@ go 1.25.0
 
 require (
 	bosh-dns v0.0.0
-	code.cloudfoundry.org/tlsconfig v0.48.0
+	code.cloudfoundry.org/tlsconfig v0.49.0
 	github.com/cloudfoundry/bosh-cli/v7 v7.10.1
-	github.com/cloudfoundry/bosh-utils v0.0.599
+	github.com/cloudfoundry/bosh-utils v0.0.600
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
