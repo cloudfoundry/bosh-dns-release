@@ -4,16 +4,16 @@ go 1.25.0
 
 require (
 	bosh-dns v0.0.0
-	code.cloudfoundry.org/tlsconfig v0.50.0
+	code.cloudfoundry.org/tlsconfig v0.51.0
 	github.com/cloudfoundry/bosh-cli/v7 v7.10.2
-	github.com/cloudfoundry/bosh-utils v0.0.605
+	github.com/cloudfoundry/bosh-utils v0.0.607
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
 )
 
 require (
-	code.cloudfoundry.org/clock v1.65.0 // indirect
+	code.cloudfoundry.org/clock v1.66.0 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
