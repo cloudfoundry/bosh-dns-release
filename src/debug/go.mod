@@ -6,7 +6,7 @@ require (
 	bosh-dns v0.0.0
 	code.cloudfoundry.org/tlsconfig v0.52.0
 	github.com/cloudfoundry/bosh-cli/v7 v7.10.3
-	github.com/cloudfoundry/bosh-utils v0.0.607
+	github.com/cloudfoundry/bosh-utils v0.0.608
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/onsi/ginkgo/v2 v2.28.3
 	github.com/onsi/gomega v1.40.0
@@ -14,7 +14,7 @@ require (
 
 require (
 	code.cloudfoundry.org/clock v1.67.0 // indirect
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
+	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/cheggaaa/pb/v3 v3.1.7 // indirect
