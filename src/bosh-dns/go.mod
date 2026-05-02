@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/clock v1.67.0
 	code.cloudfoundry.org/tlsconfig v0.52.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.607
+	github.com/cloudfoundry/bosh-utils v0.0.608
 	github.com/cloudfoundry/gosigar v1.3.118
 	github.com/coredns/coredns v1.14.2
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.2
@@ -21,7 +21,7 @@ require (
 )
 
 require (
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
+	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/apparentlymart/go-cidr v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
