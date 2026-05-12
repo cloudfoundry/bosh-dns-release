@@ -1,21 +1,21 @@
 #!/bin/bash
+set -eu -o pipefail
+
+BBL_STATE_DIR="${PWD}/${CI_BBL_STATE}"
+
 main() {
-  source $PWD/bosh-dns-release/ci/assets/utils.sh
-  local output_dir="$PWD/cleanup-bbl-state/"
-  local bbl_state_env_repo_dir=$PWD/bbl-state
-  trap "commit_bbl_state_dir ${bbl_state_env_repo_dir} ${BBL_STATE_DIR} ${output_dir} 'Remove bbl state dir'" EXIT
+  source "$PWD/bosh-dns-release/ci/assets/utils.sh"
 
-  (
-    if source_bbl_env bbl-state/${BBL_STATE_DIR} && bosh env; then
-      clean_up_director docker
-    fi
-  )
+  cd "${BBL_STATE_DIR}"
 
-  pushd "bbl-state/${BBL_STATE_DIR}"
-    bbl version
+  bbl version
 
-    bbl --debug destroy --no-confirm
-  popd
+  eval "$(bbl print-env)" || echo "error running 'bbl print-env'"
+  if ! clean_up_director docker; then
+    echo "Failed to cleanup director"
+  fi
+
+  bbl --debug destroy --no-confirm
 }
 
 main

@@ -8,15 +8,13 @@ image_resource:
 
 inputs:
   - name: bosh-dns-release
-  - name: envs
   - name: bosh-candidate-release
 
 outputs:
-  - name: envs
-    path: envs-output
+  - name: bbl-state
 
 params:
-  ENV_NAME:
+  CI_BBL_STATE: bbl-state
   BBL_IAAS:
   BBL_AWS_ACCESS_KEY_ID:
   BBL_AWS_SECRET_ACCESS_KEY:

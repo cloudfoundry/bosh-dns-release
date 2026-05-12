@@ -1,25 +1,21 @@
 #!/bin/bash
+set -eu -o pipefail
 
-set -e
+BBL_STATE_DIR="${PWD}/${CI_BBL_STATE}"
 
 main() {
   source "$PWD/bosh-dns-release/ci/assets/utils.sh"
-  local output_dir="$PWD/envs-output/"
-  local bbl_state_env_repo_dir=$PWD/envs
-  trap "commit_bbl_state_dir ${bbl_state_env_repo_dir} ${ENV_NAME} ${output_dir} 'Remove bbl state dir'" EXIT
 
-  (
-    source_bbl_env "envs/${ENV_NAME}"
-    clean_up_director
-  )
+  cd "${BBL_STATE_DIR}"
 
-  (
-    cd "envs/${ENV_NAME}"
+  bbl version
 
-    bbl version
+  eval "$(bbl print-env)" || echo "error running 'bbl print-env'"
+  if ! clean_up_director; then
+    echo "Failed to cleanup director"
+  fi
 
-    bbl --debug destroy --no-confirm
-  )
+  bbl --debug destroy --no-confirm
 }
 
 main

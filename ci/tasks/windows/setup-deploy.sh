@@ -1,14 +1,12 @@
-#!/bin/bash -lx
-
+#!/bin/bash
 set -eu -o pipefail
+
+BBL_STATE_DIR="${PWD}/${CI_BBL_STATE}"
 
 main() {
   ROOT_DIR=$PWD
-  BBL_STATE_DIR=$ROOT_DIR/envs/$ENV_NAME
 
-  pushd $BBL_STATE_DIR
-    source .envrc
-  popd
+  source "${BBL_STATE_DIR}/.envrc"
 
   env
 

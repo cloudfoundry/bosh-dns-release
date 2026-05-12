@@ -2,12 +2,12 @@
 platform: linux
 
 inputs:
+  - name: bbl-state
   - name: bosh-dns-release
-  - name: envs
 
 run:
   path: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.sh
 
 params:
-  ENV_NAME: ""
-  WINDOWS_OS_VERSION: ""
+  CI_BBL_STATE: bbl-state
+  WINDOWS_OS_VERSION:
