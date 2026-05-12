@@ -226,55 +226,54 @@ jobs:
     public: true
     serial: true
     plan:
+      - in_parallel:
+          - get: bosh-dns-release
+            passed:
+              - pre-integration-fan-in
+            trigger: true
+          - get: bosh-deployment
+          - get: linux-stemcell
+            resource: aws-jammy-stemcell
+          - get: bosh-stemcell-windows
+            resource: aws-windows-2019-stemcell
+          - get: bosh-candidate-release
+          - get: bosh-integration-image
+      - task: create-candidate
+        file: bosh-dns-release/ci/tasks/create-candidate.yml
+        image: bosh-integration-image
       - do:
+          - task: bbl-up
+            file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
+            params:
+              BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
+              BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
+              BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
+              BBL_AWS_REGION: us-west-1
+              BBL_IAAS: aws
+          - task: setup-deploy
+            file: bosh-dns-release/ci/tasks/windows/setup-deploy.yml
           - in_parallel:
-            - get: bosh-dns-release
-              passed:
-                - pre-integration-fan-in
-              trigger: true
-            - get: bosh-deployment
-            - get: linux-stemcell
-              resource: aws-jammy-stemcell
-            - get: bosh-stemcell-windows
-              resource: aws-windows-2019-stemcell
-            - get: bosh-candidate-release
-            - get: bosh-integration-image
-          - task: create-candidate
-            file: bosh-dns-release/ci/tasks/create-candidate.yml
-            image: bosh-integration-image
-          - do:
-              - task: bbl-up
-                file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
+              - task: windows
+                file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
+                image: bosh-integration-image
                 params:
-                  BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
-                  BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
-                  BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
-                  BBL_AWS_REGION: us-west-1
-                  BBL_IAAS: aws
-              - task: setup-deploy
-                file: bosh-dns-release/ci/tasks/windows/setup-deploy.yml
-              - in_parallel:
-                  - task: windows
-                    file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
-                    image: bosh-integration-image
-                    params:
-                      WINDOWS_OS_VERSION: windows2019
-                    timeout: 1h
-                  - task: windows-nameserver-disabled
-                    file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
-                    image: bosh-integration-image
-                    params:
-                      WINDOWS_OS_VERSION: windows2019
-                    timeout: 1h
-            ensure:
-              task: bbl-destroy
-              file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
-              params:
-                BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
-                BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
-                BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
-                BBL_AWS_REGION: us-west-1
-                BBL_IAAS: aws
+                  WINDOWS_OS_VERSION: windows2019
+                timeout: 1h
+              - task: windows-nameserver-disabled
+                file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
+                image: bosh-integration-image
+                params:
+                  WINDOWS_OS_VERSION: windows2019
+                timeout: 1h
+        ensure:
+          task: bbl-destroy
+          file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
+          params:
+            BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
+            BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
+            BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
+            BBL_AWS_REGION: us-west-1
+            BBL_IAAS: aws
 
   - name: test-stress
     public: false
@@ -323,76 +322,74 @@ jobs:
   - name: brats-ubuntu-jammy
     serial: true
     plan:
-      - do:
-          - in_parallel:
-              - get: bosh-dns-release
-                passed: [ pre-integration-fan-in ]
-                trigger: true
-              - get: bosh
-              - get: stemcell
-                resource: warden-jammy-stemcell
-              - get: director-stemcell
-                resource: warden-jammy-stemcell
-              - get: bosh-release
-              - get: docker-cpi-image
-              - get: bosh-integration-image
-          - task: create-candidate
-            file: bosh-dns-release/ci/tasks/create-candidate.yml
-            image: bosh-integration-image
-            output_mapping:
-              candidate-release: bosh-dns-release
-          - task: test-brats # contain base manifest
-            file: bosh/ci/shared/brats/test-acceptance.yml
-            image: docker-cpi-image
-            privileged: true
-            input_mapping:
-              dns-release: candidate-release
-              bosh-ci: bosh
-            params:
-              BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
-              BOSH_DIRECTOR_RELEASE_VERSION: "latest"
-              DNS_RELEASE_FILE_PATH: "dns-release"
-              DNS_RELEASE_VERSION: "create"
-              FOCUS_SPEC: "BoshDns"
-              DIRECTOR_STEMCELL_OS: ubuntu-jammy
-              STEMCELL_OS: ubuntu-jammy
+      - in_parallel:
+          - get: bosh-dns-release
+            passed: [ pre-integration-fan-in ]
+            trigger: true
+          - get: bosh
+          - get: stemcell
+            resource: warden-jammy-stemcell
+          - get: director-stemcell
+            resource: warden-jammy-stemcell
+          - get: bosh-release
+          - get: docker-cpi-image
+          - get: bosh-integration-image
+      - task: create-candidate
+        file: bosh-dns-release/ci/tasks/create-candidate.yml
+        image: bosh-integration-image
+        output_mapping:
+          candidate-release: bosh-dns-release
+      - task: test-brats # contain base manifest
+        file: bosh/ci/shared/brats/test-acceptance.yml
+        image: docker-cpi-image
+        privileged: true
+        input_mapping:
+          dns-release: candidate-release
+          bosh-ci: bosh
+        params:
+          BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
+          BOSH_DIRECTOR_RELEASE_VERSION: "latest"
+          DNS_RELEASE_FILE_PATH: "dns-release"
+          DNS_RELEASE_VERSION: "create"
+          FOCUS_SPEC: "BoshDns"
+          DIRECTOR_STEMCELL_OS: ubuntu-jammy
+          STEMCELL_OS: ubuntu-jammy
 
   - name: brats-ubuntu-noble
     serial: true
     plan:
-      - do:
-          - in_parallel:
-              - get: bosh-dns-release
-                passed: [ pre-integration-fan-in ]
-                trigger: true
-              - get: bosh
-              - get: stemcell
-                resource: warden-noble-stemcell
-              - get: director-stemcell
-                resource: warden-noble-stemcell
-              - get: bosh-release
-              - get: docker-cpi-image
-              - get: bosh-integration-image
-          - task: create-candidate
-            file: bosh-dns-release/ci/tasks/create-candidate.yml
-            image: bosh-integration-image
-            output_mapping:
-              candidate-release: bosh-dns-release
-          - task: test-brats # contain base manifest
-            file: bosh/ci/shared/brats/test-acceptance.yml
-            image: docker-cpi-image
-            privileged: true
-            input_mapping:
-              dns-release: candidate-release
-              bosh-ci: bosh
-            params:
-              BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
-              BOSH_DIRECTOR_RELEASE_VERSION: "latest"
-              DNS_RELEASE_FILE_PATH: "dns-release"
-              DNS_RELEASE_VERSION: "create"
-              FOCUS_SPEC: "BoshDns"
-              DIRECTOR_STEMCELL_OS: ubuntu-noble
-              STEMCELL_OS: ubuntu-noble
+      - in_parallel:
+          - get: bosh-dns-release
+            passed: [ pre-integration-fan-in ]
+            trigger: true
+          - get: bosh
+          - get: stemcell
+            resource: warden-noble-stemcell
+          - get: director-stemcell
+            resource: warden-noble-stemcell
+          - get: bosh-release
+          - get: docker-cpi-image
+          - get: bosh-integration-image
+      - task: create-candidate
+        file: bosh-dns-release/ci/tasks/create-candidate.yml
+        image: bosh-integration-image
+        output_mapping:
+          candidate-release: bosh-dns-release
+      - task: test-brats # contain base manifest
+        file: bosh/ci/shared/brats/test-acceptance.yml
+        image: docker-cpi-image
+        privileged: true
+        input_mapping:
+          dns-release: candidate-release
+          bosh-ci: bosh
+        params:
+          BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
+          BOSH_DIRECTOR_RELEASE_VERSION: "latest"
+          DNS_RELEASE_FILE_PATH: "dns-release"
+          DNS_RELEASE_VERSION: "create"
+          FOCUS_SPEC: "BoshDns"
+          DIRECTOR_STEMCELL_OS: ubuntu-noble
+          STEMCELL_OS: ubuntu-noble
 
   - name: release-new-patch
     serial_groups:
