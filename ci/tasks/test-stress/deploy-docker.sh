@@ -1,9 +1,12 @@
 #!/bin/bash
-main() {
-  source $PWD/bosh-dns-release/ci/assets/utils.sh
+set -eu -o pipefail
 
-  export BBL_STATE_DIR=$PWD/bbl-state/${BBL_STATE_SUBDIRECTORY}
-  source_bbl_env $BBL_STATE_DIR
+BBL_STATE_DIR="${PWD}/${CI_BBL_STATE}"
+
+main() {
+  source "$PWD/bosh-dns-release/ci/assets/utils.sh"
+
+  source "${BBL_STATE_DIR}/.envrc"
 
   local bosh_deployment_repo=$PWD/bosh-deployment
   local docker_release=$(echo $PWD/docker-release/*.tgz)

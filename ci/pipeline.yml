@@ -232,7 +232,6 @@ jobs:
               passed:
                 - pre-integration-fan-in
               trigger: true
-            - get: envs
             - get: bosh-deployment
             - get: linux-stemcell
               resource: aws-jammy-stemcell
@@ -252,30 +251,20 @@ jobs:
                   BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
                   BBL_AWS_REGION: us-west-1
                   BBL_IAAS: aws
-                  ENV_NAME: windows2019
-                ensure:
-                  put: envs
-                  params:
-                    repository: envs
-                    rebase: true
               - task: setup-deploy
                 file: bosh-dns-release/ci/tasks/windows/setup-deploy.yml
-                params:
-                  ENV_NAME: windows2019
               - in_parallel:
                   - task: windows
                     file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
                     image: bosh-integration-image
                     params:
                       WINDOWS_OS_VERSION: windows2019
-                      ENV_NAME: windows2019
                     timeout: 1h
                   - task: windows-nameserver-disabled
                     file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
                     image: bosh-integration-image
                     params:
                       WINDOWS_OS_VERSION: windows2019
-                      ENV_NAME: windows2019
                     timeout: 1h
             ensure:
               task: bbl-destroy
@@ -286,12 +275,6 @@ jobs:
                 BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
                 BBL_AWS_REGION: us-west-1
                 BBL_IAAS: aws
-                ENV_NAME: windows2019
-              ensure:
-                put: envs
-                params:
-                  repository: envs
-                  rebase: true
 
   - name: test-stress
     public: false
@@ -301,8 +284,6 @@ jobs:
         - get: bosh-dns-release
           trigger: true
           passed: [ pre-integration-fan-in ]
-        - get: bbl-state
-          resource: envs
         - get: bosh-deployment
         - get: docker-release
         - get: aws-jammy-stemcell
@@ -321,41 +302,23 @@ jobs:
               BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
               BBL_AWS_REGION: us-west-1
               BBL_IAAS: aws
-              BBL_STATE_DIR: test-stress/bbl-state
-            ensure:
-              put: envs
-              params:
-                repository: updated-bbl-state
-                rebase: true
           - task: deploy-docker-vms
             file: bosh-dns-release/ci/tasks/test-stress/deploy-docker.yml
             input_mapping:
-              bbl-state: updated-bbl-state
               stemcell: aws-jammy-stemcell
           - task: deploy-containers
             file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
             input_mapping:
               stemcell: warden-jammy-stemcell
-              bbl-state: updated-bbl-state
           - task: stress-containers
             file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
-            input_mapping:
-              bbl-state: updated-bbl-state
         ensure:
           task: destroy-env
           file: bosh-dns-release/ci/tasks/test-stress/destroy-env.yml
-          input_mapping:
-            bbl-state: updated-bbl-state
           params:
             BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
             BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
             BBL_AWS_ASSUME_ROLE: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.role_arn))
-            BBL_STATE_DIR: test-stress/bbl-state
-          ensure:
-            put: envs
-            params:
-              repository: cleanup-bbl-state
-              rebase: true
 
   - name: brats-ubuntu-jammy
     serial: true
@@ -671,14 +634,6 @@ resources:
       bucket: bosh-director-oss-ci-candidate-release-tarballs
       json_key: ((bosh_director_oss_ci_service_account_json))
       versioned_file: "bosh-dev-release.tgz"
-
-  - name: envs
-    type: git
-    source:
-      branch: master
-      uri: https://github.com/cloudfoundry/bosh-bbl-ci-envs.git
-      username: bosh-admin-bot
-      password: ((github_read_write_token))
 
   - name: release-notes
     type: gcs-resource

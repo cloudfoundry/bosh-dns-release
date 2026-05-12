@@ -7,20 +7,19 @@ image_resource:
     repository: cloudfoundry/cf-deployment-concourse-tasks
 
 inputs:
-  - name: bbl-state
   - name: bosh-dns-release
   - name: bosh-docker-cpi-release
 
 outputs:
-  - name: updated-bbl-state
+  - name: bbl-state
 
 params:
+  CI_BBL_STATE: bbl-state
   BBL_AWS_ACCESS_KEY_ID: ""
   BBL_AWS_SECRET_ACCESS_KEY: ""
   BBL_AWS_ASSUME_ROLE: ""
   BBL_AWS_REGION: us-west-2
   BBL_IAAS: aws
-  BBL_STATE_DIR: test-stress/bbl-state
   BOSH_LOG_LEVEL:
 
 run:

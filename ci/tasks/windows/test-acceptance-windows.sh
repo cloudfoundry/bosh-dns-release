@@ -1,22 +1,20 @@
-#!/bin/bash -eux
-
+#!/bin/bash
 set -eu -o pipefail
 
-ROOT_DIR=$PWD
-BBL_STATE_DIR=$ROOT_DIR/envs/$ENV_NAME
+BBL_STATE_DIR="${PWD}/${CI_BBL_STATE}"
 
-pushd "${BBL_STATE_DIR}"
-  source .envrc
-popd
+ROOT_DIR=$PWD
+
+source "${BBL_STATE_DIR}/.envrc"
 
 export BOSH_DEPLOYMENT=bosh-dns-windows-acceptance
 
 bosh -n deploy \
-  $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/manifests/windows-acceptance-manifest.yml \
+  "$ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/manifests/windows-acceptance-manifest.yml" \
   -v deployment_name="$BOSH_DEPLOYMENT" \
-  -v windows_stemcell=$WINDOWS_OS_VERSION \
+  -v windows_stemcell="$WINDOWS_OS_VERSION" \
   --vars-store dns-creds.yml \
-  -o $ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/manifest/enable-health-manifest-windows.yml \
+  -o "$ROOT_DIR/bosh-dns-release/src/bosh-dns/test_yml_assets/ops/manifest/enable-health-manifest-windows.yml" \
   -v health_server_port=2345
 
 bosh run-errand acceptance-tests-windows

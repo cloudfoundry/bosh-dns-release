@@ -8,13 +8,13 @@ image_resource:
 
 inputs:
   - name: bosh-dns-release
-  - name: envs
+  - name: bbl-state
   - name: bosh-stemcell-windows
   - name: linux-stemcell
   - name: candidate-release
 
 params:
-  ENV_NAME:
+  CI_BBL_STATE: bbl-state
 
 run:
   path: bosh-dns-release/ci/tasks/windows/setup-deploy.sh

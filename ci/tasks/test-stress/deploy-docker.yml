@@ -18,7 +18,7 @@ outputs:
   - name: docker-vars
 
 params:
-  BBL_STATE_SUBDIRECTORY: test-stress/bbl-state
+  CI_BBL_STATE: bbl-state
 
 run:
   path: bosh-dns-release/ci/tasks/test-stress/deploy-docker.sh

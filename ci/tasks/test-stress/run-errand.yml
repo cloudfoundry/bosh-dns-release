@@ -11,9 +11,9 @@ inputs:
   - name: bosh-dns-release
 
 params:
+  CI_BBL_STATE: bbl-state
   DEPLOYMENTS_OF_100: 10
   PARALLEL_DEPLOYMENTS: 10
-  BBL_STATE_SUBDIRECTORY: test-stress/bbl-state
 
 run:
   path: bosh-dns-release/ci/tasks/test-stress/run-errand.sh
