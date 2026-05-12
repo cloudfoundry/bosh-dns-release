@@ -80,6 +80,7 @@ jobs:
             resource: warden-jammy-stemcell
           - get: bosh-candidate-release
           - get: bosh-integration-image
+          - get: docker-cpi-image
       - task: bump-golang-package
         file: golang-release/ci/tasks/shared/bump-golang-package.yml
         input_mapping:
@@ -123,6 +124,7 @@ jobs:
       - task: test-acceptance
         privileged: true
         file: bosh-dns-release/ci/tasks/test-acceptance.yml
+        image: docker-cpi-image
         input_mapping:
           candidate-release: bumped-release
         params:
@@ -186,12 +188,14 @@ jobs:
             resource: warden-jammy-stemcell
           - get: bosh-candidate-release
           - get: bosh-integration-image
+          - get: docker-cpi-image
       - task: create-candidate
         file: bosh-dns-release/ci/tasks/create-candidate.yml
         image: bosh-integration-image
       - task: test-acceptance
         privileged: true
         file: bosh-dns-release/ci/tasks/test-acceptance.yml
+        image: docker-cpi-image
         params:
           BASE_STEMCELL: ubuntu-jammy
 
@@ -207,12 +211,14 @@ jobs:
             resource: warden-noble-stemcell
           - get: bosh-candidate-release
           - get: bosh-integration-image
+          - get: docker-cpi-image
       - task: create-candidate
         file: bosh-dns-release/ci/tasks/create-candidate.yml
         image: bosh-integration-image
       - task: test-acceptance
         privileged: true
         file: bosh-dns-release/ci/tasks/test-acceptance.yml
+        image: docker-cpi-image
         params:
           BASE_STEMCELL: ubuntu-noble
 
