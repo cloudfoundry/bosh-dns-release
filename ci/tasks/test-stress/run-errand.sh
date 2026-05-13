@@ -4,7 +4,7 @@ set -eu -o pipefail
 BBL_STATE_DIR="${PWD}/${CI_BBL_STATE}"
 
 main() {
-  source "${BBL_STATE_DIR}/.envrc"
+  eval "$(bbl print-env --state-dir="${BBL_STATE_DIR}")"
 
   cd bosh-dns-release/ci/assets/test-stress/bosh-workspace
   # Run test

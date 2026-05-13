@@ -21,8 +21,7 @@ main() {
   cp "$TEST_STRESS_ASSETS"/director/*.sh .
 
   bbl --debug up
-  bbl print-env > .envrc
-  source .envrc
+  eval "$(bbl print-env --state-dir="${BBL_STATE_DIR}")"
 
   # Need to delete the bosh-dns runtime config because bbl uses a hard-coded
   # bosh-deployment which specifies a bosh-dns version that may conflict with the

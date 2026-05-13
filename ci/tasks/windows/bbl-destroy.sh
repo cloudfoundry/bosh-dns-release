@@ -10,7 +10,7 @@ main() {
 
   bbl version
 
-  eval "$(bbl print-env)" || echo "error running 'bbl print-env'"
+  eval "$(bbl print-env --state-dir="${BBL_STATE_DIR}")" || echo "error running 'bbl print-env'"
   if ! clean_up_director; then
     echo "Failed to cleanup director"
   fi

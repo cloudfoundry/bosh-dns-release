@@ -6,7 +6,7 @@ BBL_STATE_DIR="${PWD}/${CI_BBL_STATE}"
 main() {
   ROOT_DIR=$PWD
 
-  source "${BBL_STATE_DIR}/.envrc"
+  eval "$(bbl print-env --state-dir="${BBL_STATE_DIR}")"
 
   env
 

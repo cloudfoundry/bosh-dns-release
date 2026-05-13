@@ -6,7 +6,7 @@ BBL_STATE_DIR="${PWD}/${CI_BBL_STATE}"
 main() {
   source "$PWD/bosh-dns-release/ci/assets/utils.sh"
 
-  source "${BBL_STATE_DIR}/.envrc"
+  eval "$(bbl print-env --state-dir="${BBL_STATE_DIR}")"
 
   local bosh_deployment_repo=$PWD/bosh-deployment
   local docker_release=$(echo $PWD/docker-release/*.tgz)

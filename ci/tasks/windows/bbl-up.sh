@@ -20,8 +20,7 @@ main() {
   sed -i "/iam-instance-profile/d" create-director.sh
 
   bbl --debug up
-  bbl print-env > .envrc
-  source .envrc
+  eval "$(bbl print-env --state-dir="${BBL_STATE_DIR}")"
 }
 
 main

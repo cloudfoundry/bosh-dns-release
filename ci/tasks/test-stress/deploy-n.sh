@@ -6,7 +6,7 @@ BBL_STATE_DIR="${PWD}/${CI_BBL_STATE}"
 main() {
   source "$PWD/bosh-dns-release/ci/assets/utils.sh"
 
-  source "${BBL_STATE_DIR}/.envrc"
+  eval "$(bbl print-env --state-dir="${BBL_STATE_DIR}")"
 
   local state_dir=$PWD/docker-vars
   local stemcell_path=$PWD/stemcell/*.tgz
