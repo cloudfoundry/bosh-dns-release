@@ -603,7 +603,7 @@ resources:
   - name: bosh-docker-cpi-release
     type: bosh-io-release
     source:
-      repository: cppforlife/bosh-docker-cpi-release
+      repository: cloudfoundry/bosh-docker-cpi-release
 
   - name: aws-windows-2019-stemcell
     type: bosh-io-stemcell
