@@ -10,7 +10,7 @@ source start-bosh \
     -v local_bosh_release="$(echo -n "$PWD"/bosh-candidate-release/*.tgz)"
 
 # shellcheck disable=SC1091
-source /tmp/local-bosh/director/env
+source /tmp/local-bosh/director/bosh-env
 
 bosh int /tmp/local-bosh/director/creds.yml --path /jumpbox_ssh/private_key > /tmp/jumpbox_ssh_key.pem
 chmod 400 /tmp/jumpbox_ssh_key.pem
