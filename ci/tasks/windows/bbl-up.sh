@@ -7,12 +7,16 @@ main() {
   source "$PWD/bosh-dns-release/ci/assets/utils.sh"
 
   local bosh_release_path=$(echo "$PWD"/bosh-candidate-release/*.tgz)
+  local bosh_deployment_dir="$PWD/bosh-deployment"
 
   mkdir -p "${BBL_STATE_DIR}"
   cd "${BBL_STATE_DIR}"
 
   bbl version
   bbl plan > bbl_plan.txt
+
+  # bbl is out of date with bosh deployment, use the latest stemcell
+  cp "${bosh_deployment_dir}/aws/cpi.yml" ./bosh-deployment/aws/cpi.yml
 
   # Use the local bosh release
   sed -i "/bosh create-env/a -o \${BBL_STATE_DIR}/bosh-deployment/local-bosh-release-tarball.yml -v local_bosh_release=${bosh_release_path} \\\\" create-director.sh
