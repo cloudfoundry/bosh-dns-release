@@ -1,0 +1,13 @@
+# On Jammy, bosh-dns binds directly to 169.254.0.2:53 via a loopback alias,
+# overrides /etc/resolv.conf, and forwards non-.bosh queries to upstream recursors.
+# The three properties below are Noble-specific (set in dns-with-templates-manifest.yml
+# as part of Noble support) and must be reverted to their Jammy defaults.
+- path: /addons/name=bosh-dns/jobs/name=bosh-dns/properties/configure_systemd_resolved
+  type: replace
+  value: false
+- path: /addons/name=bosh-dns/jobs/name=bosh-dns/properties/override_nameserver
+  type: replace
+  value: true
+- path: /addons/name=bosh-dns/jobs/name=bosh-dns/properties/disable_recursors
+  type: replace
+  value: false
