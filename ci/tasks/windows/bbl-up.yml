@@ -9,6 +9,7 @@ image_resource:
 inputs:
   - name: bosh-dns-release
   - name: bosh-candidate-release
+  - name: bosh-deployment
 
 outputs:
   - name: bbl-state
