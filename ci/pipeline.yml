@@ -365,6 +365,7 @@ jobs:
           DIRECTOR_STEMCELL_OS: ubuntu-jammy
           STEMCELL_OS: ubuntu-jammy
           ADDITIONAL_DIRECTOR_OPS_FILES: "-o bosh-ci/ci/dockerfiles/docker-cpi/gcp-internal-dns-ops.yml"
+          BRATS_DNS_MANIFEST_OPS_FILES: "-o bosh-dns-release/ci/ops/brats-jammy-dns-overrides.yml"
 
   - name: brats-ubuntu-noble
     serial: true
