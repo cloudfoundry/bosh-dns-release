@@ -15,8 +15,11 @@ main() {
   bbl version
   bbl plan > bbl_plan.txt
 
-  # bbl is out of date with bosh deployment, use the latest stemcell
-  cp "${bosh_deployment_dir}/aws/cpi.yml" ./bosh-deployment/aws/cpi.yml
+  # bbl 9.0.43 bundles a stale bosh-deployment. Replace it entirely with the
+  # pipeline's copy (master) so that stemcell pins, director address, BPM
+  # version, and any other drift are all kept current without piecemeal patches.
+  rm -rf ./bosh-deployment
+  cp -r "${bosh_deployment_dir}" ./bosh-deployment
 
   # Use the local bosh release
   sed -i "/bosh create-env/a -o \${BBL_STATE_DIR}/bosh-deployment/local-bosh-release-tarball.yml -v local_bosh_release=${bosh_release_path} \\\\" create-director.sh
