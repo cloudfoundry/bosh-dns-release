@@ -19,7 +19,10 @@ func main() {
 
 	cfg := loadConfig(os.Args[1])
 
-	server := &dns.Server{Addr: fmt.Sprintf("0.0.0.0:%d", cfg.Port), Net: "udp", UDPSize: 65535}
+	if cfg.Address == "" {
+		cfg.Address = "0.0.0.0"
+	}
+	server := &dns.Server{Addr: fmt.Sprintf("%s:%d", cfg.Address, cfg.Port), Net: "udp", UDPSize: 65535}
 	nextAddress := 0
 
 	dns.HandleFunc("truncated-recursor.com.", func(resp dns.ResponseWriter, req *dns.Msg) {
