@@ -364,6 +364,7 @@ jobs:
           FOCUS_SPEC: "BoshDns"
           DIRECTOR_STEMCELL_OS: ubuntu-jammy
           STEMCELL_OS: ubuntu-jammy
+          ADDITIONAL_DIRECTOR_OPS_FILES: "-o bosh-ci/ci/dockerfiles/docker-cpi/gcp-internal-dns-ops.yml"
 
   - name: brats-ubuntu-noble
     serial: true
@@ -400,6 +401,7 @@ jobs:
           FOCUS_SPEC: "BoshDns"
           DIRECTOR_STEMCELL_OS: ubuntu-noble
           STEMCELL_OS: ubuntu-noble
+          ADDITIONAL_DIRECTOR_OPS_FILES: "-o bosh-ci/ci/dockerfiles/docker-cpi/gcp-internal-dns-ops.yml"
 
   - name: release-new-patch
     serial_groups:
