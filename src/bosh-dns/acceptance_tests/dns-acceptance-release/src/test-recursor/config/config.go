@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	Address              string `yaml:"address"`
 	Port                 int    `yaml:"port"`
 	ConfigurableResponse string `yaml:"configurable_response"`
 }
