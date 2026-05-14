@@ -238,12 +238,14 @@ jobs:
             resource: aws-windows-2019-stemcell
           - get: bosh-candidate-release
           - get: bosh-integration-image
+          - get: cf-deployment-concourse-tasks-image
       - task: create-candidate
         file: bosh-dns-release/ci/tasks/create-candidate.yml
         image: bosh-integration-image
       - do:
           - task: bbl-up
             file: bosh-dns-release/ci/tasks/windows/bbl-up.yml
+            image: cf-deployment-concourse-tasks-image
             params:
               BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
               BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
@@ -252,22 +254,24 @@ jobs:
               BBL_IAAS: aws
           - task: setup-deploy
             file: bosh-dns-release/ci/tasks/windows/setup-deploy.yml
+            image: cf-deployment-concourse-tasks-image
           - in_parallel:
               - task: windows
                 file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows.yml
-                image: bosh-integration-image
+                image: cf-deployment-concourse-tasks-image
                 params:
                   WINDOWS_OS_VERSION: windows2019
                 timeout: 1h
               - task: windows-nameserver-disabled
                 file: bosh-dns-release/ci/tasks/windows/test-acceptance-windows-nameserver-disabled.yml
-                image: bosh-integration-image
+                image: cf-deployment-concourse-tasks-image
                 params:
                   WINDOWS_OS_VERSION: windows2019
                 timeout: 1h
         ensure:
           task: bbl-destroy
           file: bosh-dns-release/ci/tasks/windows/bbl-destroy.yml
+          image: cf-deployment-concourse-tasks-image
           params:
             BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
             BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
@@ -289,12 +293,14 @@ jobs:
         - get: warden-jammy-stemcell
         - get: bosh-docker-cpi-release
         - get: bosh-integration-image
+        - get: cf-deployment-concourse-tasks-image
       - task: create-candidate
         file: bosh-dns-release/ci/tasks/create-candidate.yml
         image: bosh-integration-image
       - do:
           - task: setup-env
             file: bosh-dns-release/ci/tasks/test-stress/setup-env.yml
+            image: cf-deployment-concourse-tasks-image
             params:
               BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
               BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
@@ -303,17 +309,21 @@ jobs:
               BBL_IAAS: aws
           - task: deploy-docker-vms
             file: bosh-dns-release/ci/tasks/test-stress/deploy-docker.yml
+            image: cf-deployment-concourse-tasks-image
             input_mapping:
               stemcell: aws-jammy-stemcell
           - task: deploy-containers
             file: bosh-dns-release/ci/tasks/test-stress/deploy-n.yml
+            image: cf-deployment-concourse-tasks-image
             input_mapping:
               stemcell: warden-jammy-stemcell
           - task: stress-containers
             file: bosh-dns-release/ci/tasks/test-stress/run-errand.yml
+            image: cf-deployment-concourse-tasks-image
         ensure:
           task: destroy-env
           file: bosh-dns-release/ci/tasks/test-stress/destroy-env.yml
+          image: cf-deployment-concourse-tasks-image
           params:
             BBL_AWS_ACCESS_KEY_ID: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.username))
             BBL_AWS_SECRET_ACCESS_KEY: ((bosh-dns-release-bbl-test-stress_assume_aws_access_key.password))
@@ -654,6 +664,11 @@ resources:
       repository: ghcr.io/cloudfoundry/bosh/integration
       username: ((github_read_write_packages.username))
       password: ((github_read_write_packages.password))
+
+  - name: cf-deployment-concourse-tasks-image
+    type: registry-image
+    source:
+      repository: cloudfoundry/cf-deployment-concourse-tasks
 
   - name: bosh-security-scanner-image
     type: registry-image
