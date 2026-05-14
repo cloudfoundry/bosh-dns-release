@@ -1,11 +1,6 @@
 ---
 platform: linux
 
-image_resource:
-  type: registry-image
-  source:
-    repository: cloudfoundry/cf-deployment-concourse-tasks
-
 inputs:
   - name: bosh-dns-release
   - name: bosh-docker-cpi-release
