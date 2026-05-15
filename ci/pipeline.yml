@@ -336,6 +336,8 @@ jobs:
           - get: bosh-dns-release
             passed: [ pre-integration-fan-in ]
             trigger: true
+          - get: dns-ops-file-source
+            resource: bosh-dns-release
           - get: bosh
           - get: stemcell
             resource: warden-jammy-stemcell
@@ -365,7 +367,7 @@ jobs:
           DIRECTOR_STEMCELL_OS: ubuntu-jammy
           STEMCELL_OS: ubuntu-jammy
           ADDITIONAL_DIRECTOR_OPS_FILES: "-o bosh-ci/ci/dockerfiles/docker-cpi/gcp-internal-dns-ops.yml"
-          BRATS_DNS_MANIFEST_OPS_FILES: "-o bosh-dns-release/ci/ops/brats-jammy-dns-overrides.yml"
+          BRATS_DNS_MANIFEST_OPS_FILES: "-o dns-ops-file-source/ci/ops/brats-jammy-dns-overrides.yml"
 
   - name: brats-ubuntu-noble
     serial: true
