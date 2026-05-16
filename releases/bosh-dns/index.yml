@@ -109,6 +109,8 @@ builds:
     version: 1.39.12
   b1488249-3c42-4e19-5fd6-e382d499374a:
     version: 1.36.1
+  b2124a1f-cd78-47b1-7909-79d754bd1516:
+    version: 1.39.23
   b2802fa1-7367-4297-45ff-0d4e5415f38c:
     version: 0.1.1
   b84af335-c6fc-44e8-44d1-b5ec5b9d49e4:
