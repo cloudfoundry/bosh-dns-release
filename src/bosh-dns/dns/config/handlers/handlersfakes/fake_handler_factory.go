@@ -9,6 +9,17 @@ import (
 )
 
 type FakeHandlerFactory struct {
+	CreateDenyHandlerStub        func(string) dns.Handler
+	createDenyHandlerMutex       sync.RWMutex
+	createDenyHandlerArgsForCall []struct {
+		arg1 string
+	}
+	createDenyHandlerReturns struct {
+		result1 dns.Handler
+	}
+	createDenyHandlerReturnsOnCall map[int]struct {
+		result1 dns.Handler
+	}
 	CreateForwardHandlerStub        func([]string, bool) dns.Handler
 	createForwardHandlerMutex       sync.RWMutex
 	createForwardHandlerArgsForCall []struct {
@@ -35,6 +46,67 @@ type FakeHandlerFactory struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeHandlerFactory) CreateDenyHandler(arg1 string) dns.Handler {
+	fake.createDenyHandlerMutex.Lock()
+	ret, specificReturn := fake.createDenyHandlerReturnsOnCall[len(fake.createDenyHandlerArgsForCall)]
+	fake.createDenyHandlerArgsForCall = append(fake.createDenyHandlerArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	stub := fake.CreateDenyHandlerStub
+	fakeReturns := fake.createDenyHandlerReturns
+	fake.recordInvocation("CreateDenyHandler", []interface{}{arg1})
+	fake.createDenyHandlerMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeHandlerFactory) CreateDenyHandlerCallCount() int {
+	fake.createDenyHandlerMutex.RLock()
+	defer fake.createDenyHandlerMutex.RUnlock()
+	return len(fake.createDenyHandlerArgsForCall)
+}
+
+func (fake *FakeHandlerFactory) CreateDenyHandlerCalls(stub func(string) dns.Handler) {
+	fake.createDenyHandlerMutex.Lock()
+	defer fake.createDenyHandlerMutex.Unlock()
+	fake.CreateDenyHandlerStub = stub
+}
+
+func (fake *FakeHandlerFactory) CreateDenyHandlerArgsForCall(i int) string {
+	fake.createDenyHandlerMutex.RLock()
+	defer fake.createDenyHandlerMutex.RUnlock()
+	argsForCall := fake.createDenyHandlerArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeHandlerFactory) CreateDenyHandlerReturns(result1 dns.Handler) {
+	fake.createDenyHandlerMutex.Lock()
+	defer fake.createDenyHandlerMutex.Unlock()
+	fake.CreateDenyHandlerStub = nil
+	fake.createDenyHandlerReturns = struct {
+		result1 dns.Handler
+	}{result1}
+}
+
+func (fake *FakeHandlerFactory) CreateDenyHandlerReturnsOnCall(i int, result1 dns.Handler) {
+	fake.createDenyHandlerMutex.Lock()
+	defer fake.createDenyHandlerMutex.Unlock()
+	fake.CreateDenyHandlerStub = nil
+	if fake.createDenyHandlerReturnsOnCall == nil {
+		fake.createDenyHandlerReturnsOnCall = make(map[int]struct {
+			result1 dns.Handler
+		})
+	}
+	fake.createDenyHandlerReturnsOnCall[i] = struct {
+		result1 dns.Handler
+	}{result1}
 }
 
 func (fake *FakeHandlerFactory) CreateForwardHandler(arg1 []string, arg2 bool) dns.Handler {
@@ -169,10 +241,6 @@ func (fake *FakeHandlerFactory) CreateHTTPJSONHandlerReturnsOnCall(i int, result
 func (fake *FakeHandlerFactory) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.createForwardHandlerMutex.RLock()
-	defer fake.createForwardHandlerMutex.RUnlock()
-	fake.createHTTPJSONHandlerMutex.RLock()
-	defer fake.createHTTPJSONHandlerMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

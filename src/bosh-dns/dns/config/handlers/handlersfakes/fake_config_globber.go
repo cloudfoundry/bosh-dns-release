@@ -91,8 +91,6 @@ func (fake *FakeConfigGlobber) GlobReturnsOnCall(i int, result1 []string, result
 func (fake *FakeConfigGlobber) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.globMutex.RLock()
-	defer fake.globMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

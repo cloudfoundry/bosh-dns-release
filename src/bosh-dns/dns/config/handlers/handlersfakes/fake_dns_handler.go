@@ -54,8 +54,6 @@ func (fake *FakeDnsHandler) ServeDNSArgsForCall(i int) (dns.ResponseWriter, *dns
 func (fake *FakeDnsHandler) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.serveDNSMutex.RLock()
-	defer fake.serveDNSMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
