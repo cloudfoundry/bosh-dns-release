@@ -1,14 +1,16 @@
 package handlers
 
 import (
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	"github.com/miekg/dns"
 )
 
 type DenyHandler struct {
 	responseCode int
+	logger       boshlog.Logger
 }
 
-func NewDenyHandler(responseType string) DenyHandler {
+func NewDenyHandler(responseType string, logger boshlog.Logger) DenyHandler {
 	rcode := dns.RcodeNameError // NXDOMAIN by default
 
 	if responseType == "REFUSED" {
@@ -17,6 +19,7 @@ func NewDenyHandler(responseType string) DenyHandler {
 
 	return DenyHandler{
 		responseCode: rcode,
+		logger:       logger,
 	}
 }
 
@@ -27,6 +30,7 @@ func (h DenyHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	response.Authoritative = true
 	response.RecursionAvailable = false
 
-	//nolint:errcheck
-	w.WriteMsg(response)
+	if err := w.WriteMsg(response); err != nil {
+		h.logger.Error("DenyHandler", "error writing response: %s", err.Error())
+	}
 }
