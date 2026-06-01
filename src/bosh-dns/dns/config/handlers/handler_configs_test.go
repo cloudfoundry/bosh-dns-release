@@ -21,13 +21,16 @@ var _ = Describe("Handlers Configuration", func() {
 		var (
 			fakeJsonHandler *FakeDnsHandler
 			fakeDnsHandler  *FakeDnsHandler
+			fakeDenyHandler *FakeDnsHandler
 		)
 		BeforeEach(func() {
 			fakeDnsHandler = &FakeDnsHandler{}
 			fakeJsonHandler = &FakeDnsHandler{}
+			fakeDenyHandler = &FakeDnsHandler{}
 
 			fakeHandlerFactory.CreateHTTPJSONHandlerReturns(fakeJsonHandler)
 			fakeHandlerFactory.CreateForwardHandlerReturns(fakeDnsHandler)
+			fakeHandlerFactory.CreateDenyHandlerReturns(fakeDenyHandler)
 		})
 
 		Context("with no handlers configured", func() {
@@ -127,6 +130,72 @@ var _ = Describe("Handlers Configuration", func() {
 						_, err := handlersConfig.GenerateHandlers(fakeHandlerFactory)
 						Expect(err).To(HaveOccurred())
 						Expect(err.Error()).To(Equal(`Configuring handler for "my-tld.": No recursors present`))
+					})
+				})
+			})
+
+			Context("of deny type", func() {
+				BeforeEach(func() {
+					handlersConfig = HandlerConfigs{
+						{
+							Domain: "blocked.com.",
+							Source: Source{
+								Type:     "deny",
+								Response: "NXDOMAIN",
+							},
+						},
+					}
+				})
+
+				It("creates a deny handler with NXDOMAIN response", func() {
+					handlers, err := handlersConfig.GenerateHandlers(fakeHandlerFactory)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(len(handlers)).To(Equal(1))
+					Expect(handlers["blocked.com."]).To(Equal(fakeDenyHandler))
+
+					responseType := fakeHandlerFactory.CreateDenyHandlerArgsForCall(0)
+					Expect(responseType).To(Equal("NXDOMAIN"))
+				})
+
+				Context("with REFUSED response", func() {
+					BeforeEach(func() {
+						handlersConfig[0].Source.Response = "REFUSED"
+					})
+
+					It("creates a deny handler with REFUSED response", func() {
+						handlers, err := handlersConfig.GenerateHandlers(fakeHandlerFactory)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(len(handlers)).To(Equal(1))
+
+						responseType := fakeHandlerFactory.CreateDenyHandlerArgsForCall(0)
+						Expect(responseType).To(Equal("REFUSED"))
+					})
+				})
+
+				Context("with no response type specified", func() {
+					BeforeEach(func() {
+						handlersConfig[0].Source.Response = ""
+					})
+
+					It("defaults to NXDOMAIN", func() {
+						handlers, err := handlersConfig.GenerateHandlers(fakeHandlerFactory)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(len(handlers)).To(Equal(1))
+
+						responseType := fakeHandlerFactory.CreateDenyHandlerArgsForCall(0)
+						Expect(responseType).To(Equal("NXDOMAIN"))
+					})
+				})
+
+				Context("with invalid response type", func() {
+					BeforeEach(func() {
+						handlersConfig[0].Source.Response = "INVALID"
+					})
+
+					It("produces an error", func() {
+						_, err := handlersConfig.GenerateHandlers(fakeHandlerFactory)
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(Equal(`Configuring handler for "blocked.com.": Invalid response type "INVALID", must be NXDOMAIN or REFUSED`))
 					})
 				})
 			})

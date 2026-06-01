@@ -92,6 +92,10 @@ properties:
         source:
           type: dns
           recursors: [ 10.0.0.2 ]
+      - domain: blocked.example.com.
+        source:
+          type: deny
+          response: NXDOMAIN
 
   handlers_files_glob:
     description: "Glob for any files to look for DNS handler information"
