@@ -14,6 +14,7 @@ import (
 type HandlerFactory interface {
 	CreateHTTPJSONHandler(string, bool) dns.Handler
 	CreateForwardHandler([]string, bool) dns.Handler
+	CreateDenyHandler(string) dns.Handler
 }
 
 type HandlerConfigs []HandlerConfig
@@ -28,6 +29,7 @@ type Source struct {
 	Type      string   `json:"type"`
 	URL       string   `json:"url,omitempty"`
 	Recursors []string `json:"recursors,omitempty"`
+	Response  string   `json:"response,omitempty"`
 }
 
 func (c HandlerConfigs) GenerateHandlers(factory HandlerFactory) (map[string]dns.Handler, error) {
@@ -48,6 +50,16 @@ func (c HandlerConfigs) GenerateHandlers(factory HandlerFactory) (map[string]dns
 			}
 
 			handler = factory.CreateForwardHandler(handlerConfig.Source.Recursors, handlerConfig.Cache.Enabled)
+		} else if handlerConfig.Source.Type == "deny" {
+			responseType := handlerConfig.Source.Response
+			if responseType == "" {
+				responseType = "NXDOMAIN"
+			}
+			if responseType != "NXDOMAIN" && responseType != "REFUSED" {
+				return nil, fmt.Errorf(`Configuring handler for "%s": Invalid response type "%s", must be NXDOMAIN or REFUSED`, handlerConfig.Domain, responseType) //nolint:staticcheck
+			}
+
+			handler = factory.CreateDenyHandler(responseType)
 		} else {
 			return nil, fmt.Errorf(`Configuring handler for "%s": Unexpected handler source type: %s`, handlerConfig.Domain, handlerConfig.Source.Type) //nolint:staticcheck
 		}

@@ -62,3 +62,7 @@ func (f *Factory) CreateForwardHandler(recursors []string, cache bool) dns.Handl
 	}
 	return handler
 }
+
+func (f *Factory) CreateDenyHandler(responseType string) dns.Handler {
+	return NewDenyHandler(responseType, f.logger)
+}

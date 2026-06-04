@@ -91,8 +91,6 @@ func (fake *FakeNamedConfigLoader) LoadReturnsOnCall(i int, result1 handlers.Han
 func (fake *FakeNamedConfigLoader) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.loadMutex.RLock()
-	defer fake.loadMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
