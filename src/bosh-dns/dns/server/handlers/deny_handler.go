@@ -28,7 +28,7 @@ func (h DenyHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	response.SetReply(r)
 	response.SetRcode(r, h.responseCode)
 	response.Authoritative = true
-	response.RecursionAvailable = false
+	response.RecursionAvailable = true
 
 	if err := w.WriteMsg(response); err != nil {
 		h.logger.Error("DenyHandler", "error writing response: %s", err.Error())
