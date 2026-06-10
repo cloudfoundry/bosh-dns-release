@@ -81,7 +81,7 @@ function start_dns() {
 
   pushd ${JOB_DIR}
 
-  chpst -u vcap:vcap \
+  setpriv --reuid=vcap --regid=vcap --clear-groups -- \
     "${DNS_PACKAGE}/bin/bosh-dns" \
     --config "${JOB_DIR}/config/config.json" \
     1>> ${LOG_DIR}/bosh_dns.stdout.log \
