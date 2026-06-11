@@ -74,15 +74,19 @@ func ensureRecursorIsDefinedByBoshAgent() {
 
 	updateCloudConfigWithOurLocalRecursor()
 
-	helpers.Bosh(
+	args := []string{
 		"deploy",
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
 		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
 		"-o", disableOverridePath,
 		"-o", excludedRecursorsPath,
 		"--vars-store", "creds.yml",
-		manifestPath,
-	)
+	}
+	if ops := stemcellDNSOpsFile(); ops != "" {
+		args = append(args, "-o", assetPath(ops))
+	}
+	args = append(args, manifestPath)
+	helpers.Bosh(args...)
 	allDeployedInstances = helpers.BoshInstances("bosh-dns")
 }
 
@@ -92,7 +96,7 @@ func ensureRecursorIsDefinedByDNSRelease() {
 
 	updateCloudConfigWithDefaultCloudConfig()
 
-	helpers.Bosh(
+	args := []string{
 		"deploy",
 		"-o", configureRecursorPath,
 		"-v", fmt.Sprintf("name=%s", boshDeployment),
@@ -100,8 +104,12 @@ func ensureRecursorIsDefinedByDNSRelease() {
 		"-v", fmt.Sprintf("recursor_a=%s", RecursorIPAddresses[0]),
 		"-v", fmt.Sprintf("recursor_b=%s", RecursorIPAddresses[1]),
 		"--vars-store", "creds.yml",
-		manifestPath,
-	)
+	}
+	if ops := stemcellDNSOpsFile(); ops != "" {
+		args = append(args, "-o", assetPath(ops))
+	}
+	args = append(args, manifestPath)
+	helpers.Bosh(args...)
 	allDeployedInstances = helpers.BoshInstances("bosh-dns")
 }
 
@@ -138,10 +146,13 @@ func ensureHealthEndpointDeployed(extraOps ...string) {
 		"-v", "health_server_port=2345",
 		"-o", assetPath(enableHealthManifestOps()),
 		"--vars-store", "creds.yml",
-		manifestPath,
 	}
 
 	args = append(args, extraOps...)
+	if ops := stemcellDNSOpsFile(); ops != "" {
+		args = append(args, "-o", assetPath(ops))
+	}
+	args = append(args, manifestPath)
 	helpers.Bosh(args...)
 
 	allDeployedInstances = helpers.BoshInstances("bosh-dns")
