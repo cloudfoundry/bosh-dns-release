@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"bosh-dns/acceptance_tests/helpers"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
@@ -132,6 +134,11 @@ var _ = Describe("Alias address binding", func() {
 
 		Context("external processes changing /etc/resolv.conf", func() {
 			BeforeEach(func() {
+				// TODO: remove when Jammy goes EOL
+				if !helpers.OverrideNameserverFor(baseStemcell) {
+					Skip("bosh-dns-resolvconf is disabled on non-Jammy stemcells; /etc/resolv.conf is managed by systemd-resolved")
+				}
+
 				backup := exec.Command(boshBinaryPath, []string{"ssh", "bosh-dns/0", "-c", "sudo cp `readlink /etc/resolv.conf` /tmp/resolv.conf.backup"}...)
 
 				session, err := gexec.Start(backup, GinkgoWriter, GinkgoWriter)
@@ -140,6 +147,10 @@ var _ = Describe("Alias address binding", func() {
 			})
 
 			AfterEach(func() {
+				// TODO: remove when Jammy goes EOL
+				if !helpers.OverrideNameserverFor(baseStemcell) {
+					return
+				}
 				restore := exec.Command(boshBinaryPath, []string{"ssh", "bosh-dns/0", "-c", "sudo mv /tmp/resolv.conf.backup `readlink /etc/resolv.conf`"}...)
 				session, err := gexec.Start(restore, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())

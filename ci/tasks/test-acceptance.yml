@@ -8,7 +8,7 @@ inputs:
   - name: bosh-candidate-release
 
 params:
-  BASE_STEMCELL: ubuntu-bionic
+  BASE_STEMCELL: ubuntu-jammy
 
 run:
   path: bosh-dns-release/ci/tasks/test-acceptance.sh

@@ -33,7 +33,6 @@ var _ = BeforeSuite(func() {
 	testTargetOS = assertEnvExists("TEST_TARGET_OS")
 	baseStemcell = assertEnvExists("BASE_STEMCELL")
 	boshDeployment = assertEnvExists("BOSH_DEPLOYMENT")
-
 	deployTestRecursors()
 	deployTestHTTPDNSServer()
 
@@ -111,4 +110,12 @@ func setupLocalRecursorOpsFile() string {
 	}
 
 	return "ops/cloud-config/add-test-dns-nameservers.yml"
+}
+
+func stemcellDNSOpsFile() string {
+	if helpers.OverrideNameserverFor(baseStemcell) {
+		// TODO: remove when Jammy goes EOL
+		return "ops/manifest/override-nameserver-dns-settings.yml"
+	}
+	return ""
 }

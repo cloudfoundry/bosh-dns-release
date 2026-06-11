@@ -30,7 +30,8 @@ instance_groups:
   - name: bosh-dns
     release: bosh-dns
     properties:
-      address: 0.0.0.0
+      configure_systemd_resolved: true
+      override_nameserver: false
       api:
         server:
           tls: ((dns_api_server_tls))

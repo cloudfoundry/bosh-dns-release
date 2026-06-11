@@ -25,6 +25,7 @@ var (
 	boshBinaryPath       string
 	allDeployedInstances []instanceInfo
 	firstInstanceSlug    string
+	baseStemcell         string
 )
 
 var _ = BeforeSuite(func() {
@@ -34,6 +35,7 @@ var _ = BeforeSuite(func() {
 	assertEnvExists("BOSH_CA_CERT")
 	assertEnvExists("BOSH_ENVIRONMENT")
 	assertEnvExists("BOSH_DEPLOYMENT")
+	baseStemcell = assertEnvExists("BASE_STEMCELL")
 
 	allDeployedInstances = getInstanceInfos(boshBinaryPath)
 	firstInstanceSlug = fmt.Sprintf("%s/%s", allDeployedInstances[0].InstanceGroup, allDeployedInstances[0].InstanceID)
