@@ -3,20 +3,20 @@ module bosh-dns
 go 1.25.0
 
 require (
-	code.cloudfoundry.org/clock v1.73.0
+	code.cloudfoundry.org/clock v1.74.0
 	code.cloudfoundry.org/tlsconfig v0.53.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.615
+	github.com/cloudfoundry/bosh-utils v0.0.616
 	github.com/cloudfoundry/gosigar v1.3.120
-	github.com/coredns/coredns v1.14.3
+	github.com/coredns/coredns v1.14.4
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.2
 	github.com/miekg/dns v1.1.72
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
-	github.com/onsi/ginkgo/v2 v2.29.0
+	github.com/onsi/ginkgo/v2 v2.30.0
 	github.com/onsi/gomega v1.41.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
-	golang.org/x/sys v0.45.0
+	golang.org/x/sys v0.46.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -27,7 +27,7 @@ require (
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.177 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.178 // indirect
 	github.com/coredns/caddy v1.1.4 // indirect
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
@@ -56,15 +56,15 @@ require (
 	go.uber.org/mock v0.6.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.52.0 // indirect
-	golang.org/x/mod v0.36.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
+	golang.org/x/mod v0.37.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	golang.org/x/tools v0.45.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
+	golang.org/x/tools v0.46.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260610212136-7ab31c22f7ad // indirect
 	google.golang.org/grpc v1.81.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
