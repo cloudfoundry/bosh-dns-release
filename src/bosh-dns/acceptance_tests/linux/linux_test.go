@@ -167,17 +167,33 @@ var _ = Describe("Alias address binding", func() {
 				// upstream (IaaS DHCP DNS), not through bosh-dns. Regression test for
 				// the warden noble DNS issue where bosh-dns incorrectly held +DefaultRoute
 				// and intercepted all external queries, returning REFUSED.
+				//
+				// The regression only manifests when disable_recursors=true — if it is
+				// false, bosh-dns forwards external queries anyway and the test would pass
+				// even with a broken +DefaultRoute. Guard on the rendered config first.
 				if !hasBoshDnsInterface() {
 					Skip("bosh-dns dummy interface not present — configure_systemd_resolved not enabled on this stemcell")
 				}
 
+				// Read disable_recursors from the rendered config.json on the VM.
 				cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c",
-					"nslookup google.com 2>&1"}...)
+					`python3 -c "import json; c=json.load(open('/var/vcap/jobs/bosh-dns/config/config.json')); print(c.get('disable_recursors', False))" 2>/dev/null`}...)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				if !strings.Contains(string(session.Out.Contents()), "True") {
+					Skip("disable_recursors is not true on this deployment — test only validates warden regression when disable_recursors=true")
+				}
+
+				// Use dig for stable output — check status: NOERROR rather than
+				// nslookup's locale-sensitive "Non-authoritative answer" string.
+				cmd = exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c",
+					"dig +time=5 google.com 2>&1"}...)
+				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(session, 15*time.Second).Should(gexec.Exit(0))
-				Expect(session.Out).To(gbytes.Say(`Non-authoritative answer`))
+				Expect(session.Out).To(gbytes.Say(`status: NOERROR`))
 			})
 		})
 
