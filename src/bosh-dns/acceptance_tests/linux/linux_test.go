@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"bosh-dns/acceptance_tests/helpers"
@@ -130,6 +131,72 @@ var _ = Describe("Alias address binding", func() {
 			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 			output := string(session.Out.Contents())
 			Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+		})
+
+		Context("when configure_systemd_resolved is enabled (noble stemcell)", func() {
+			// The bosh-dns dummy interface is only created when configure_systemd_resolved=true,
+			// which is set exclusively for ubuntu-noble in the bosh-dns-systemd runtime config addon.
+			// On jammy and earlier, bosh-dns binds to a loopback alias instead — no bosh-dns link exists.
+			hasBoshDnsInterface := func() bool {
+				cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c",
+					"ip link show bosh-dns > /dev/null 2>&1 && echo yes || echo no"}...)
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				return strings.Contains(string(session.Out.Contents()), "yes")
+			}
+
+			It("does not set the bosh-dns interface as the default DNS route", func() {
+				// bosh-dns must never hold +DefaultRoute on the bosh-dns dummy interface.
+				// If it does, all external DNS queries are routed to bosh-dns instead of
+				// the IaaS-provided upstream - causing REFUSED on warden containers where
+				// no physical NIC has DHCP DNS to serve as an alternative default route.
+				if !hasBoshDnsInterface() {
+					Skip("bosh-dns dummy interface not present — configure_systemd_resolved not enabled on this stemcell")
+				}
+
+				cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c",
+					"resolvectl status bosh-dns 2>/dev/null | grep Protocols"}...)
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				Expect(session.Out).To(gbytes.Say(`-DefaultRoute`))
+			})
+
+			It("resolves external names via the OS resolver when disable_recursors is true", func() {
+				// Verify that external DNS works end-to-end via systemd-resolved's
+				// upstream (IaaS DHCP DNS), not through bosh-dns. Regression test for
+				// the warden noble DNS issue where bosh-dns incorrectly held +DefaultRoute
+				// and intercepted all external queries, returning REFUSED.
+				//
+				// The regression only manifests when disable_recursors=true — if it is
+				// false, bosh-dns forwards external queries anyway and the test would pass
+				// even with a broken +DefaultRoute. Guard on the rendered config first.
+				if !hasBoshDnsInterface() {
+					Skip("bosh-dns dummy interface not present — configure_systemd_resolved not enabled on this stemcell")
+				}
+
+				// Read disable_recursors from the rendered config.json on the VM.
+				cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c",
+					`python3 -c "import json; c=json.load(open('/var/vcap/jobs/bosh-dns/config/config.json')); print(c.get('disable_recursors', False))" 2>/dev/null`}...)
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				if !strings.Contains(string(session.Out.Contents()), "True") {
+					Skip("disable_recursors is not true on this deployment — test only validates warden regression when disable_recursors=true")
+				}
+
+				// Use dig for stable output — check status: NOERROR rather than
+				// nslookup's locale-sensitive "Non-authoritative answer" string.
+				cmd = exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c",
+					"dig +time=5 google.com 2>&1"}...)
+				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(session, 15*time.Second).Should(gexec.Exit(0))
+				Expect(session.Out).To(gbytes.Say(`status: NOERROR`))
+			})
 		})
 
 		Context("external processes changing /etc/resolv.conf", func() {
