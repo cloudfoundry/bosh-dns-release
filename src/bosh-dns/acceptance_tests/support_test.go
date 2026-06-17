@@ -67,6 +67,38 @@ func testHTTPDNSServerIPAddress() string {
 	return helpers.BoshInstances("test-http-dns-server")[0].IP
 }
 
+func ensureHTTPJSONEndpointDeployed() {
+	manifestPath := assetPath(testManifestName())
+	enableHTTPJSONEndpointsPath := assetPath(enableHTTPJSONEndpointsOpsFile())
+	enableConfiguresHandler := assetPath("ops/manifest/enable-configures-handler-job.yml")
+	configureRecursorPath := assetPath(configureRecursorOpsFile())
+
+	updateCloudConfigWithDefaultCloudConfig()
+
+	testHTTPDNSServerAddress := fmt.Sprintf(
+		"http://%s:8081",
+		testHTTPDNSServerIPAddress(),
+	)
+	args := []string{
+		"deploy",
+		"-o", configureRecursorPath,
+		"-o", enableHTTPJSONEndpointsPath,
+		"-o", enableConfiguresHandler,
+		"-v", fmt.Sprintf("name=%s", boshDeployment),
+		"-v", fmt.Sprintf("base_stemcell=%s", baseStemcell),
+		"-v", fmt.Sprintf("http_json_server_address=%s", testHTTPDNSServerAddress),
+		"-v", fmt.Sprintf("recursor_a=%s", RecursorIPAddresses[0]),
+		"-v", fmt.Sprintf("recursor_b=%s", RecursorIPAddresses[1]),
+		"--vars-store", "creds.yml",
+	}
+	if ops := stemcellDNSOpsFile(); ops != "" {
+		args = append(args, "-o", assetPath(ops))
+	}
+	args = append(args, manifestPath)
+	helpers.Bosh(args...)
+	allDeployedInstances = helpers.BoshInstances("bosh-dns")
+}
+
 func ensureRecursorIsDefinedByBoshAgent() {
 	manifestPath := assetPath(testManifestName())
 	disableOverridePath := assetPath(noRecursorsOpsFile())
