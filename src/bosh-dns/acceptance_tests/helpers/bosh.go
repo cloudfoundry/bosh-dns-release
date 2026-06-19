@@ -47,6 +47,10 @@ type InstanceInfo struct {
 	ProcessState  string
 }
 
+func (i InstanceInfo) Slug() string {
+	return fmt.Sprintf("%s/%s", i.InstanceGroup, i.InstanceID)
+}
+
 func BoshInstances(deploymentName string) []InstanceInfo {
 	output := Bosh("instances", "-d", deploymentName, "--details", "--json")
 

@@ -17,8 +17,15 @@ var _ = Describe("recursor", func() {
 	// is cannot be moved as it modifies /etc/resolv.conf. We need to figure out
 	// how to make this change safely in integration_tests/*.
 	// [#165801868]
+	//
+	// TODO: remove when Jammy goes EOL. On Noble, bosh-dns is only a handler for
+	// BOSH-specific domains; systemd-resolved handles external queries directly so
+	// bosh-dns never does recursion in production.
 	Context("when the recursors must be read from the system resolver list", func() {
 		BeforeEach(func() {
+			if !helpers.OverrideNameserverFor(baseStemcell) {
+				Skip("bosh-dns is not the system resolver, no need to test recursion")
+			}
 			ensureRecursorIsDefinedByBoshAgent()
 			firstBoshDNS = allDeployedInstances[0]
 		})
@@ -29,7 +36,7 @@ var _ = Describe("recursor", func() {
 		})
 
 		It("forwards queries to the configured recursors on port 53", func() {
-			dnsResponse := helpers.Dig("example.com.", firstBoshDNS.IP)
+			dnsResponse := helpers.RemoteDig(firstBoshDNS.Slug(), "example.com.")
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 			Expect(dnsResponse.Answer).To(ConsistOf(
 				gomegadns.MatchResponse(gomegadns.Response{"ip": "10.10.10.10", "ttl": 5}),
