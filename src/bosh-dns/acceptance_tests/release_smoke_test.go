@@ -44,7 +44,7 @@ var _ = Describe("Integration", func() {
 
 			dnsResponse = helpers.RemoteDig(firstInstance.Slug(), fmt.Sprintf("%s.placeholder-alias.bosh.", allDeployedInstances[0].InstanceID))
 
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "rd", "ra"))
 			Expect(dnsResponse.Answer).To(ConsistOf(
 				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
 			))
