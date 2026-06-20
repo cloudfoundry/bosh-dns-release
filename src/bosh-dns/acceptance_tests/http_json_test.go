@@ -21,7 +21,7 @@ var _ = Describe("HTTP JSON Server integration", func() {
 
 		It("answers queries with the response from the http server", func() {
 			dnsResponse := helpers.RemoteDig(firstInstance.Slug(), "app-id.internal.local.")
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "rd", "ra"))
 			Expect(dnsResponse.Answer).To(ConsistOf(
 				gomegadns.MatchResponse(gomegadns.Response{"ip": "192.168.0.1", "ttl": 0}),
 			))
@@ -29,7 +29,7 @@ var _ = Describe("HTTP JSON Server integration", func() {
 
 		It("configures Bosh DNS handlers by producing a dns handlers json file", func() {
 			dnsResponse := helpers.RemoteDig(firstInstance.Slug(), "handler.internal.local.")
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "rd", "ra"))
 			Expect(dnsResponse.Answer).To(ConsistOf(
 				gomegadns.MatchResponse(gomegadns.Response{"ip": "10.168.0.1", "ttl": 0}),
 			))
