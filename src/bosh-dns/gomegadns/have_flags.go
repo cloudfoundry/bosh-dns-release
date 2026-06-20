@@ -24,9 +24,7 @@ func (matcher *haveFlagsMatcher) Match(actual interface{}) (success bool, err er
 	if !ok {
 		return false, fmt.Errorf("HaveFlags matcher expects a *dns.Msg")
 	}
-	actualFlags := flags(msg)
-
-	return gomega.ConsistOf(matcher.expected).Match(actualFlags)
+	return gomega.ContainElements(matcher.expected).Match(flags(msg))
 }
 
 func (matcher *haveFlagsMatcher) FailureMessage(actual interface{}) (message string) {
