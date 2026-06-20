@@ -37,6 +37,10 @@ var _ = Describe("recursor", func() {
 
 		It("forwards queries to the configured recursors on port 53", func() {
 			dnsResponse := helpers.RemoteDig(firstBoshDNS.Slug(), "example.com.")
+
+			// Per RFC 2181 §5.4.1, the AA bit should only be set when the responding server is
+			// itself authoritative for the zone — a forwarder shouldn't propagate it. bosh-dns
+			// passing through aa from an upstream is technically non-conformant.
 			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
 			Expect(dnsResponse.Answer).To(ConsistOf(
 				gomegadns.MatchResponse(gomegadns.Response{"ip": "10.10.10.10", "ttl": 5}),

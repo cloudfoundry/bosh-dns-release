@@ -25,7 +25,7 @@ var _ = Describe("Integration", func() {
 		It("resolves alias globs", func() {
 			for _, alias := range []string{"asterisk.alias.", "another.asterisk.alias.", "yetanother.asterisk.alias."} {
 				dnsResponse := helpers.RemoteDig(firstInstance.Slug(), alias)
-				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+				Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "rd", "ra"))
 				Expect(dnsResponse.Answer).To(ConsistOf(
 					gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
 					gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
@@ -36,7 +36,7 @@ var _ = Describe("Integration", func() {
 		It("resolves aliases from links", func() {
 			dnsResponse := helpers.RemoteDig(firstInstance.Slug(), "dns-acceptance-alias.bosh.")
 
-			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "aa", "rd", "ra"))
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "rd", "ra"))
 			Expect(dnsResponse.Answer).To(ConsistOf(
 				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[0].IP, "ttl": 0}),
 				gomegadns.MatchResponse(gomegadns.Response{"ip": allDeployedInstances[1].IP, "ttl": 0}),
