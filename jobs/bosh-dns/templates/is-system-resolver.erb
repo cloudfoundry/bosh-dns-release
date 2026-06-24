@@ -1,2 +1,13 @@
 #!/bin/bash
-exit <%= p('override_nameserver') ? 0 : 1 %>
+# Returns 0 (true) if bosh-dns is responsible for resolving BOSH-specific DNS
+# queries via the system resolver, so callers can decide whether to wait for
+# bosh-dns to be ready before querying DNS in pre-start scripts.
+#
+# On Jammy and earlier, bosh-dns owns /etc/resolv.conf (override_nameserver).
+#
+# On Noble and later, systemd-resolved is the system resolver, but bosh-dns
+# configures it to delegate BOSH-specific domains (*.bosh, etc.) to bosh-dns
+# via a virtual network interface (configure_systemd_resolved). BOSH DNS names
+# are therefore unavailable until bosh-dns has started and systemd-resolved has
+# been updated, so callers still need to wait.
+exit <%= (p('override_nameserver') || p('configure_systemd_resolved')) ? 0 : 1 %>

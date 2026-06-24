@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"strings"
 	"time"
 
 	"bosh-dns/dns/config"
@@ -68,10 +69,22 @@ func main() {
 		var domains []string
 		domains = append(domains, handlersConfiguration.HandlerDomains()...)
 		domains = append(domains, recordSet.Domains()...)
+		domains = append(domains, parentDomains(boshDnsConfig.UpcheckDomains)...)
+
 		err = systemdResolvedManager.UpdateDomains(domains)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 	close(shutdown)
+}
+
+func parentDomains(fqdns []string) []string {
+	var parents []string
+	for _, fqdn := range fqdns {
+		if dotIdx := strings.Index(fqdn, "."); dotIdx >= 0 && dotIdx+1 < len(fqdn) {
+			parents = append(parents, fqdn[dotIdx+1:])
+		}
+	}
+	return parents
 }
