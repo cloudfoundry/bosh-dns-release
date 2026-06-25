@@ -112,7 +112,7 @@ func startServer() {
 
 func waitForServer(port int) error {
 	var err error
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 100; i++ {
 		var c net.Conn
 		c, err = net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", strconv.Itoa(port)))
 		if err != nil {
