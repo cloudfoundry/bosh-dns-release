@@ -1,0 +1,18 @@
+processes:
+- name: bosh-dns
+  executable: /var/vcap/packages/bosh-dns/bin/bosh-dns
+  args:
+  - --config
+  - /var/vcap/jobs/bosh-dns/config/config.json
+  capabilities:
+  - NET_BIND_SERVICE
+  limits:
+    open_files: 65536
+<% if p('health.enabled') -%>
+- name: bosh-dns-health
+  executable: /var/vcap/packages/bosh-dns/bin/bosh-dns-health
+  args:
+  - /var/vcap/jobs/bosh-dns/config/health_server_config.json
+  limits:
+    open_files: 4096
+<% end -%>
