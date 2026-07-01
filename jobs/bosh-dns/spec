@@ -3,8 +3,7 @@ name: bosh-dns
 
 templates:
   aliases.json.erb: dns/aliases.json
-  bosh_dns_ctl.erb: bin/bosh_dns_ctl
-  bosh_dns_health_ctl.erb: bin/bosh_dns_health_ctl
+  bpm.yml.erb: config/bpm.yml
   bosh_dns_resolvconf_ctl.erb: bin/bosh_dns_resolvconf_ctl
   cli.erb: bin/cli
   config.json.erb: config/config.json

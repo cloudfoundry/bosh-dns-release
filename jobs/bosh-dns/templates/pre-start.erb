@@ -1,5 +1,11 @@
-#!/bin/bash
+#!/bin/bash -exu
+
+set -o pipefail
+
+RUN_DIR=/var/vcap/sys/run/bosh-dns
 LOG_DIR=/var/vcap/sys/log/bosh-dns
+JOB_DIR=/var/vcap/jobs/bosh-dns
+DNS_PACKAGE=/var/vcap/packages/bosh-dns
 SCRIPT_NAME=pre-start
 
 function start_logging() {
@@ -11,21 +17,54 @@ function prepend_datetime() {
   LOG_FORMAT=<%= p('logging.format.timestamp') %>
 
   if [ "$LOG_FORMAT" == "deprecated" ]; then
-  awk -W interactive '{ system("echo -n [$(date +\"%Y-%m-%d %H:%M:%S%z\")]"); print " " $0 }'
+    awk -W interactive '{ system("echo -n [$(date +\"%Y-%m-%d %H:%M:%S%z\")]"); print " " $0 }'
   else
-  perl -ne 'BEGIN { use Time::HiRes "time"; use POSIX "strftime"; STDOUT->autoflush(1) }; my $t = time; my $fsec = sprintf ".%09d", ($t-int($t))*1000000000; my $time = strftime("[%Y-%m-%dT%H:%M:%S".$fsec."Z]", localtime $t); print("$time $_")'
+    perl -ne 'BEGIN { use Time::HiRes "time"; use POSIX "strftime"; STDOUT->autoflush(1) }; my $t = time; my $fsec = sprintf ".%09d", ($t-int($t))*1000000000; my $time = strftime("[%Y-%m-%dT%H:%M:%S".$fsec."Z]", localtime $t); print("$time $_")'
   fi
 }
 
+function create_directories_and_chown_to_vcap() {
+  mkdir -p "${LOG_DIR}"
+  chown -R vcap:vcap "${LOG_DIR}"
+
+  mkdir -p "${RUN_DIR}"
+  chown -R vcap:vcap "${RUN_DIR}"
+}
+
+function create_network_alias() {
+  if ! ip addr show dev lo | grep -q <%= p('address') %>
+  then
+    ip addr add <%= p('address') %> dev lo
+  fi
+}
+
+function create_network_interface() {
+  if ! ip addr show dev bosh-dns
+  then
+    ip link add bosh-dns type dummy
+    ip addr add <%= p('address') %>/32 dev bosh-dns
+    ip link set bosh-dns up
+    resolvectl dns bosh-dns <%= p('address') %>
+    resolvectl log-level <%= {'DEBUG' => 'debug', 'INFO' => 'info', 'WARN' => 'warning', 'ERROR' => 'err', 'NONE' => 'emerg'}[p('log_level')] %>
+  fi
+}
+
+create_directories_and_chown_to_vcap
 start_logging
 
-<% if p('health.enabled') %>
-/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl start
-<% end %>
+<% if p('configure_systemd_resolved') -%>
+create_network_interface
+"${DNS_PACKAGE}/bin/bosh-dns-systemd-resolved-updater" --config "${JOB_DIR}/config/config.json"
+<% else -%>
+create_network_alias
+<% end -%>
 
-/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl start
+<% if p('health.enabled') -%>
+/var/vcap/jobs/bpm/bin/bpm start bosh-dns -p bosh-dns-health
+<% end -%>
 
-<% if p('override_nameserver') %>
+/var/vcap/jobs/bpm/bin/bpm start bosh-dns
+
+<% if p('override_nameserver') -%>
 /var/vcap/jobs/bosh-dns/bin/bosh_dns_resolvconf_ctl start
-<% end %>
-
+<% end -%>
