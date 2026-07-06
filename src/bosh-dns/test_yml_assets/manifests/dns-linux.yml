@@ -27,6 +27,8 @@ instance_groups:
         - domain: "dns-acceptance-alias.bosh."
         - domain: "_.placeholder-alias.bosh."
           placeholder_type: "uuid"
+  - name: bpm
+    release: bpm
   - name: bosh-dns
     release: bosh-dns
     properties:
@@ -47,6 +49,9 @@ instance_groups:
 
 releases:
 - name: bosh-dns
+  version: latest
+
+- name: bpm
   version: latest
 
 - name: dns-acceptance

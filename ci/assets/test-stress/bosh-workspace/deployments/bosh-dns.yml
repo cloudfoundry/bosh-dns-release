@@ -14,6 +14,8 @@ instance_groups:
   stemcell: default
   azs: [d1, d2, d3, d4, d5, d6, d7, d8, d9, d10]
   jobs:
+  - name: bpm
+    release: bpm
   - name: bosh-dns
     release: bosh-dns
     properties:
@@ -36,6 +38,8 @@ instance_groups:
   vm_extensions: [tcp_22]
 releases:
 - name: bosh-dns
+  version: latest
+- name: bpm
   version: latest
 - name: dns-lookuper
   version: latest
