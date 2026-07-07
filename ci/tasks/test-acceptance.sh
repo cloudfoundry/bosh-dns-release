@@ -30,6 +30,9 @@ bosh upload-stemcell bosh-stemcell/*.tgz
 
 bosh upload-release "$PWD"/candidate-release/*.tgz
 
+BPM_VERSION=$(bosh int /usr/local/bosh-deployment/bosh.yml --path /releases/name=bpm/version)
+bosh upload-release "https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=${BPM_VERSION}"
+
 pushd "$PWD/bosh-dns-release"
   ./scripts/run-acceptance-tests
 popd
