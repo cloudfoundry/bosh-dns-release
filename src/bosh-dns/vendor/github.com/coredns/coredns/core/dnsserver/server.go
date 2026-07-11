@@ -35,9 +35,9 @@ import (
 // graceful termination (POSIX only).
 type Server struct {
 	Addr         string        // Address we listen on
-	IdleTimeout  time.Duration // Idle timeout for TCP
-	ReadTimeout  time.Duration // Read timeout for TCP
-	WriteTimeout time.Duration // Write timeout for TCP
+	IdleTimeout  time.Duration // Idle timeout for connection-oriented transports
+	ReadTimeout  time.Duration // Read timeout for connection-oriented transports
+	WriteTimeout time.Duration // Write timeout for connection-oriented transports that support it
 
 	connPolicy                    proxyproto.ConnPolicyFunc // Proxy Protocol connection policy function
 	udpSessionTrackingTTL         time.Duration             // TTL for UDP PPv2 session tracking (0 = disabled)
@@ -54,6 +54,11 @@ type Server struct {
 	classChaos   bool                 // allow non-INET class queries
 
 	tsigSecret map[string]string
+
+	// udpDecorateWriterFunc is selected in NewServer from the group configs in
+	// stable order (last one set wins), so the choice is deterministic when
+	// several server blocks share a listener. See Config.UDPDecorateWriterFunc.
+	udpDecorateWriterFunc func(*Server) dns.DecorateWriter
 
 	// Ensure Stop is idempotent when invoked concurrently (e.g., during reload and SIGTERM).
 	stopOnce sync.Once
@@ -138,6 +143,9 @@ func NewServer(addr string, group []*Config) (*Server, error) {
 		if site.ProxyProtoUDPSessionTrackingMaxSessions > 0 {
 			s.udpSessionTrackingMaxSessions = site.ProxyProtoUDPSessionTrackingMaxSessions
 		}
+		if site.UDPDecorateWriterFunc != nil {
+			s.udpDecorateWriterFunc = site.UDPDecorateWriterFunc
+		}
 	}
 
 	if !s.debug {
@@ -179,12 +187,17 @@ func (s *Server) Serve(l net.Listener) error {
 // ServePacket starts the server with an existing packetconn. It blocks until the server stops.
 // This implements caddy.UDPServer interface.
 func (s *Server) ServePacket(p net.PacketConn) error {
+	// Use a custom writer decorator if one was configured.
+	var dw dns.DecorateWriter
+	if s.udpDecorateWriterFunc != nil {
+		dw = s.udpDecorateWriterFunc(s)
+	}
 	s.m.Lock()
 	s.server[udp] = &dns.Server{PacketConn: p, Net: "udp", Handler: dns.HandlerFunc(func(w dns.ResponseWriter, r *dns.Msg) {
 		ctx := context.WithValue(context.Background(), Key{}, s)
 		ctx = context.WithValue(ctx, LoopKey{}, 0)
 		s.ServeDNS(ctx, w, r)
-	}), TsigSecret: s.tsigSecret}
+	}), TsigSecret: s.tsigSecret, DecorateWriter: dw}
 	s.m.Unlock()
 
 	return s.server[udp].ActivateAndServe()
