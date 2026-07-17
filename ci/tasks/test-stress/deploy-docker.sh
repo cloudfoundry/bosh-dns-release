@@ -29,9 +29,9 @@ main() {
     bosh upload-stemcell $stemcell_path
     bosh upload-release $bosh_dns_release_tarball
 
-    local bpm_version
-    bpm_version=$(bosh int "${bosh_deployment_repo}/bosh.yml" --path /releases/name=bpm/version)
-    bosh upload-release "https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=${bpm_version}"
+    local bpm_url
+    bpm_url=$(bosh int "${bosh_deployment_repo}/bosh.yml" --path /releases/name=bpm/url)
+    bosh upload-release "${bpm_url}"
 
     bosh -n deploy -d docker deployments/docker.yml \
       -l vars/docker-vars.yml \

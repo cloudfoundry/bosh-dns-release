@@ -1,8 +1,16 @@
+<% if p('use_bpm') %>
 check process bosh-dns
   with pidfile /var/vcap/sys/run/bpm/bosh-dns/bosh-dns.pid
   start program "/var/vcap/jobs/bpm/bin/bpm start bosh-dns"
   stop program "/var/vcap/jobs/bpm/bin/bpm stop bosh-dns"
   group vcap
+<% else %>
+check process bosh-dns
+  with pidfile /var/vcap/sys/run/bosh-dns/bosh-dns.pid
+  start program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl start"
+  stop program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl stop"
+  group vcap
+<% end %>
 <% if p('override_nameserver') %>
 check process bosh-dns-resolvconf
   with pidfile /var/vcap/sys/run/bosh-dns/bosh_dns_resolvconf.pid
@@ -11,9 +19,17 @@ check process bosh-dns-resolvconf
   group vcap
 <% end %>
 <% if p('health.enabled') %>
+<% if p('use_bpm') %>
 check process bosh-dns-healthcheck
   with pidfile /var/vcap/sys/run/bpm/bosh-dns/bosh-dns-health.pid
   start program "/var/vcap/jobs/bpm/bin/bpm start bosh-dns -p bosh-dns-health"
   stop program "/var/vcap/jobs/bpm/bin/bpm stop bosh-dns -p bosh-dns-health"
   group vcap
+<% else %>
+check process bosh-dns-healthcheck
+  with pidfile /var/vcap/sys/run/bosh-dns/bosh_dns_health.pid
+  start program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl start"
+  stop program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl stop"
+  group vcap
+<% end %>
 <% end %>

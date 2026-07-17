@@ -1,5 +1,11 @@
 require_relative 'shared_examples'
 
+def render_monit(properties = {})
+  job_dir = File.join(File.dirname(__FILE__), '../../jobs/bosh-dns')
+  spec = YAML.safe_load(File.read(File.join(job_dir, 'spec')))
+  Bosh::Template::Test::Template.new(spec, File.join(job_dir, 'monit')).render(properties)
+end
+
 describe 'bosh-dns' do
   let(:release) { Bosh::Template::Test::ReleaseDir.new(File.join(File.dirname(__FILE__), '../..')) }
   let(:job) { release.job('bosh-dns') }
@@ -123,22 +129,49 @@ describe 'bosh-dns' do
   describe 'bin/pre-start' do
     let(:template) { job.template('bin/pre-start') }
 
-    it 'starts bosh-dns via bpm so DNS is available during other jobs pre-starts' do
-      rendered = template.render({})
-      expect(rendered).to include('/var/vcap/jobs/bpm/bin/bpm start bosh-dns')
-    end
+    context 'when use_bpm is false (default)' do
+      it 'starts bosh-dns via the ctl script so DNS is available during other jobs pre-starts' do
+        rendered = template.render({})
+        expect(rendered).to include('/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl start')
+        expect(rendered).not_to include('bpm start bosh-dns')
+      end
 
-    context 'when health.enabled is true' do
-      it 'starts the health process before bosh-dns' do
-        rendered = template.render({'health' => {'enabled' => true}})
-        expect(rendered).to match(%r{bpm start bosh-dns -p bosh-dns-health.*bpm start bosh-dns$}m)
+      context 'when health.enabled is true' do
+        it 'starts the health process via ctl before bosh-dns' do
+          rendered = template.render({'health' => {'enabled' => true}})
+          expect(rendered).to match(%r{bosh_dns_health_ctl start.*bosh_dns_ctl start}m)
+          expect(rendered).not_to include('bpm start')
+        end
+      end
+
+      context 'when health.enabled is false (default)' do
+        it 'does not start the health process' do
+          rendered = template.render({})
+          expect(rendered).not_to include('bosh-dns-health')
+          expect(rendered).not_to include('bosh_dns_health_ctl')
+        end
       end
     end
 
-    context 'when health.enabled is false (default)' do
-      it 'does not start the health process' do
-        rendered = template.render({})
-        expect(rendered).not_to include('bosh-dns-health')
+    context 'when use_bpm is true' do
+      it 'starts bosh-dns via bpm so DNS is available during other jobs pre-starts' do
+        rendered = template.render({'use_bpm' => true})
+        expect(rendered).to include('/var/vcap/jobs/bpm/bin/bpm start bosh-dns')
+        expect(rendered).not_to include('bosh_dns_ctl start')
+      end
+
+      context 'when health.enabled is true' do
+        it 'starts the health process via bpm before bosh-dns' do
+          rendered = template.render({'use_bpm' => true, 'health' => {'enabled' => true}})
+          expect(rendered).to match(%r{bpm start bosh-dns -p bosh-dns-health.*bpm start bosh-dns$}m)
+        end
+      end
+
+      context 'when health.enabled is false (default)' do
+        it 'does not start the health process' do
+          rendered = template.render({'use_bpm' => true})
+          expect(rendered).not_to include('bosh-dns-health')
+        end
       end
     end
 
@@ -157,6 +190,50 @@ describe 'bosh-dns' do
       it 'invokes the dummy interface setup and runs the systemd-resolved updater' do
         expect(rendered).to match(/^create_network_interface$/)
         expect(rendered).to include('bosh-dns-systemd-resolved-updater')
+      end
+    end
+  end
+
+  describe 'monit' do
+    context 'when use_bpm is false (default)' do
+      let(:rendered) { render_monit({}) }
+
+      it 'uses the ctl script pidfile and start/stop programs' do
+        expect(rendered).to include('with pidfile /var/vcap/sys/run/bosh-dns/bosh-dns.pid')
+        expect(rendered).to include('start program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl start"')
+        expect(rendered).to include('stop program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl stop"')
+        expect(rendered).not_to include('/var/vcap/jobs/bpm/bin/bpm')
+      end
+
+      context 'when health.enabled is true' do
+        let(:rendered) { render_monit({'health' => {'enabled' => true}}) }
+
+        it 'uses the health ctl script pidfile and start/stop programs' do
+          expect(rendered).to include('with pidfile /var/vcap/sys/run/bosh-dns/bosh_dns_health.pid')
+          expect(rendered).to include('start program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl start"')
+          expect(rendered).to include('stop program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl stop"')
+        end
+      end
+    end
+
+    context 'when use_bpm is true' do
+      let(:rendered) { render_monit({'use_bpm' => true}) }
+
+      it 'uses the bpm pidfile and start/stop programs' do
+        expect(rendered).to include('with pidfile /var/vcap/sys/run/bpm/bosh-dns/bosh-dns.pid')
+        expect(rendered).to include('start program "/var/vcap/jobs/bpm/bin/bpm start bosh-dns"')
+        expect(rendered).to include('stop program "/var/vcap/jobs/bpm/bin/bpm stop bosh-dns"')
+        expect(rendered).not_to include('bosh_dns_ctl')
+      end
+
+      context 'when health.enabled is true' do
+        let(:rendered) { render_monit({'use_bpm' => true, 'health' => {'enabled' => true}}) }
+
+        it 'uses the bpm health pidfile and start/stop programs' do
+          expect(rendered).to include('with pidfile /var/vcap/sys/run/bpm/bosh-dns/bosh-dns-health.pid')
+          expect(rendered).to include('start program "/var/vcap/jobs/bpm/bin/bpm start bosh-dns -p bosh-dns-health"')
+          expect(rendered).to include('stop program "/var/vcap/jobs/bpm/bin/bpm stop bosh-dns -p bosh-dns-health"')
+        end
       end
     end
   end
