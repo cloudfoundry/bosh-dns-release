@@ -31,7 +31,14 @@ bosh upload-stemcell bosh-stemcell/*.tgz
 bosh upload-release "$PWD"/candidate-release/*.tgz
 
 BPM_VERSION=$(bosh int /usr/local/bosh-deployment/bosh.yml --path /releases/name=bpm/version)
-bosh upload-release "https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=${BPM_VERSION}"
+if [[ "${BASE_STEMCELL:-ubuntu-noble}" == "ubuntu-noble" ]]; then
+  # Use pre-compiled release for noble — no compilation needed, faster
+  bosh upload-release /usr/local/releases/bpm.tgz
+else
+  # Download source release so the director can compile BPM for non-noble stemcells
+  curl -fsSLo /tmp/bpm-src.tgz "https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=${BPM_VERSION}"
+  bosh upload-release /tmp/bpm-src.tgz
+fi
 
 pushd "$PWD/bosh-dns-release"
   ./scripts/run-acceptance-tests

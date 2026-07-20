@@ -59,11 +59,17 @@ create_network_interface
 create_network_alias
 <% end -%>
 
+<% if p('use_bpm') -%>
 <% if p('health.enabled') -%>
 /var/vcap/jobs/bpm/bin/bpm start bosh-dns -p bosh-dns-health
 <% end -%>
-
 /var/vcap/jobs/bpm/bin/bpm start bosh-dns
+<% else -%>
+<% if p('health.enabled') -%>
+/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl start
+<% end -%>
+/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl start
+<% end -%>
 
 <% if p('override_nameserver') -%>
 /var/vcap/jobs/bosh-dns/bin/bosh_dns_resolvconf_ctl start
