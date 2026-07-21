@@ -37,6 +37,8 @@ builds:
     version: 1.39.14
   4caee6fa-5c0c-4bb1-7281-1faabce63bec:
     version: 0.0.12
+  50d67581-69de-4b21-4913-0e7022dfdcda:
+    version: 1.39.25
   50e2fbdb-d37d-4ca0-6a9d-641689254687:
     version: 1.33.0
   5342fb34-f083-4c84-761a-3a5bc9693ec1:
