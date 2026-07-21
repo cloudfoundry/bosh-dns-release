@@ -29,10 +29,6 @@ main() {
     bosh upload-stemcell $stemcell_path
     bosh upload-release $bosh_dns_release_tarball
 
-    local bpm_url
-    bpm_url=$(bosh int "${bosh_deployment_repo}/bosh.yml" --path /releases/name=bpm/url)
-    bosh upload-release "${bpm_url}"
-
     bosh -n deploy -d docker deployments/docker.yml \
       -l vars/docker-vars.yml \
       -v director_ip=$(echo $BOSH_ENVIRONMENT | sed 's#https://##g' | sed 's#:.*##g') \
