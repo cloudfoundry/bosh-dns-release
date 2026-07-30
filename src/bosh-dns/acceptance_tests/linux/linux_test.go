@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"bosh-dns/acceptance_tests/helpers"
@@ -130,6 +131,54 @@ var _ = Describe("Alias address binding", func() {
 			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 			output := string(session.Out.Contents())
 			Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+		})
+
+		Context("when configure_systemd_resolved is enabled (noble stemcell)", func() {
+			hasBoshDnsInterface := func() bool {
+				cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c",
+					"ip link show bosh-dns > /dev/null 2>&1 && echo yes || echo no"}...)
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				return strings.Contains(string(session.Out.Contents()), "yes")
+			}
+
+			It("does not set the bosh-dns interface as the default DNS route", func() {
+				if !hasBoshDnsInterface() {
+					Skip("bosh-dns dummy interface not present — configure_systemd_resolved not enabled on this stemcell")
+				}
+
+				cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c",
+					"resolvectl status bosh-dns 2>/dev/null | grep Protocols"}...)
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				Expect(session.Out).To(gbytes.Say(`-DefaultRoute`))
+			})
+
+			It("resolves external names via the OS resolver when disable_recursors is true", func() {
+				if !hasBoshDnsInterface() {
+					Skip("bosh-dns dummy interface not present — configure_systemd_resolved not enabled on this stemcell")
+				}
+
+				cmd := exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c",
+					`python3 -c "import json; c=json.load(open('/var/vcap/jobs/bosh-dns/config/config.json')); print(c.get('disable_recursors', False))" 2>/dev/null`}...)
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+				if !strings.Contains(string(session.Out.Contents()), "True") {
+					Skip("disable_recursors is not true on this deployment — test only validates warden regression when disable_recursors=true")
+				}
+
+				cmd = exec.Command(boshBinaryPath, []string{"ssh", firstInstanceSlug, "-c",
+					"nslookup google.com 2>&1"}...)
+				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(session, 15*time.Second).Should(gexec.Exit(0))
+				Expect(session.Out).To(gbytes.Say(`Non-authoritative answer`))
+			})
 		})
 
 		Context("external processes changing /etc/resolv.conf", func() {
