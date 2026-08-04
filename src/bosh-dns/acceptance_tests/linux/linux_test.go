@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"bosh-dns/acceptance_tests/helpers"
+	"bosh-dns/gomegadns"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -123,13 +124,11 @@ var _ = Describe("Alias address binding", func() {
 
 	Context("as the system-configured nameserver", func() {
 		It("resolves the bosh-dns upcheck", func() {
-			cmd := exec.Command(boshBinaryPath, []string{"ssh", "bosh-dns/0", "-c", "dig -t A upcheck.bosh-dns."}...)
-			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
-			output := string(session.Out.Contents())
-			Expect(output).To(ContainSubstring(";; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0"))
+			dnsResponse := helpers.RemoteDig("bosh-dns/0", "upcheck.bosh-dns.")
+			Expect(dnsResponse).To(gomegadns.HaveFlags("qr", "rd", "ra"))
+			Expect(dnsResponse.Answer).To(ConsistOf(
+				gomegadns.MatchResponse(gomegadns.Response{"ip": "127.0.0.1", "ttl": 0}),
+			))
 		})
 
 		Context("external processes changing /etc/resolv.conf", func() {
