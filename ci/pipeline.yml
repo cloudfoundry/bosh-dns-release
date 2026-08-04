@@ -222,6 +222,29 @@ jobs:
         params:
           BASE_STEMCELL: ubuntu-noble
 
+  - name: test-acceptance-ubuntu-resolute
+    public: true
+    serial: true
+    plan:
+      - in_parallel:
+          - get: bosh-dns-release
+            passed: [ pre-integration-fan-in ]
+            trigger: true
+          - get: bosh-stemcell
+            resource: warden-resolute-stemcell
+          - get: bosh-candidate-release
+          - get: bosh-integration-image
+          - get: docker-cpi-image
+      - task: create-candidate
+        file: bosh-dns-release/ci/tasks/create-candidate.yml
+        image: bosh-integration-image
+      - task: test-acceptance
+        privileged: true
+        file: bosh-dns-release/ci/tasks/test-acceptance.yml
+        image: docker-cpi-image
+        params:
+          BASE_STEMCELL: ubuntu-resolute
+
   - name: test-acceptance-windows2019
     public: true
     serial: true
@@ -545,6 +568,8 @@ jobs:
             passed:
               - test-stress
               - test-acceptance-ubuntu-jammy
+              - test-acceptance-ubuntu-noble
+              - test-acceptance-ubuntu-resolute
               - test-acceptance-windows2019
               - brats-ubuntu-jammy
 
@@ -639,6 +664,11 @@ resources:
     type: bosh-io-stemcell
     source:
       name: bosh-warden-boshlite-ubuntu-noble
+
+  - name: warden-resolute-stemcell
+    type: bosh-io-stemcell
+    source:
+      name: bosh-warden-boshlite-ubuntu-resolute
 
   - name: bosh-candidate-release
     type: gcs-resource
