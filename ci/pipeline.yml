@@ -230,20 +230,27 @@ jobs:
           - get: bosh-dns-release
             passed: [ pre-integration-fan-in ]
             trigger: true
+            tags: [ resolute ]
           - get: bosh-stemcell
             resource: warden-resolute-stemcell
+            tags: [ resolute ]
           - get: bosh-candidate-release
+            tags: [ resolute ]
           - get: bosh-integration-image
+            tags: [ resolute ]
           - get: docker-cpi-image
+            tags: [ resolute ]
       - task: create-candidate
         file: bosh-dns-release/ci/tasks/create-candidate.yml
         image: bosh-integration-image
+        tags: [ resolute ]
       - task: test-acceptance
         privileged: true
         file: bosh-dns-release/ci/tasks/test-acceptance.yml
         image: docker-cpi-image
         params:
           BASE_STEMCELL: ubuntu-resolute
+        tags: [ resolute ]
 
   - name: test-acceptance-windows2019
     public: true
@@ -429,6 +436,52 @@ jobs:
           STEMCELL_OS: ubuntu-noble
           ADDITIONAL_DIRECTOR_OPS_FILES: "-o bosh-ci/ci/dockerfiles/docker-cpi/gcp-internal-dns-ops.yml"
 
+  - name: brats-ubuntu-resolute
+    serial: true
+    plan:
+      - in_parallel:
+          - get: bosh-dns-release
+            passed: [ pre-integration-fan-in ]
+            trigger: true
+            tags: [ resolute ]
+          - get: bosh
+            tags: [ resolute ]
+          - get: stemcell
+            resource: warden-resolute-stemcell
+            tags: [ resolute ]
+          - get: director-stemcell
+            resource: warden-resolute-stemcell
+            tags: [ resolute ]
+          - get: bosh-release
+            tags: [ resolute ]
+          - get: docker-cpi-image
+            tags: [ resolute ]
+          - get: bosh-integration-image
+            tags: [ resolute ]
+      - task: create-candidate
+        file: bosh-dns-release/ci/tasks/create-candidate.yml
+        image: bosh-integration-image
+        output_mapping:
+          candidate-release: bosh-dns-release
+        tags: [ resolute ]
+      - task: test-brats # contain base manifest
+        file: bosh/ci/shared/brats/test-acceptance.yml
+        image: docker-cpi-image
+        privileged: true
+        input_mapping:
+          dns-release: candidate-release
+          bosh-ci: bosh
+        params:
+          BOSH_DIRECTOR_RELEASE_PATH: "bosh-release/release.tgz"
+          BOSH_DIRECTOR_RELEASE_VERSION: "latest"
+          DNS_RELEASE_FILE_PATH: "dns-release"
+          DNS_RELEASE_VERSION: "create"
+          FOCUS_SPEC: "BoshDns"
+          DIRECTOR_STEMCELL_OS: ubuntu-resolute
+          STEMCELL_OS: ubuntu-resolute
+          ADDITIONAL_DIRECTOR_OPS_FILES: "-o bosh-ci/ci/dockerfiles/docker-cpi/gcp-internal-dns-ops.yml"
+        tags: [ resolute ]
+
   - name: release-new-patch
     serial_groups:
     - version
@@ -572,6 +625,8 @@ jobs:
               - test-acceptance-ubuntu-resolute
               - test-acceptance-windows2019
               - brats-ubuntu-jammy
+              - brats-ubuntu-noble
+              - brats-ubuntu-resolute
 
 resources:
   - name: bosh-shared-ci
@@ -694,7 +749,7 @@ resources:
       password: ((github_read_write_packages.password))
 
   - name: bosh-integration-image
-    type: docker-image
+    type: registry-image
     source:
       repository: ghcr.io/cloudfoundry/bosh/integration
       username: ((github_read_write_packages.username))
