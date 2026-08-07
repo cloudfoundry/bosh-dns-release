@@ -7,7 +7,7 @@ require (
 	code.cloudfoundry.org/tlsconfig v0.53.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
 	github.com/cloudfoundry/bosh-utils v0.0.630
-	github.com/cloudfoundry/gosigar v1.3.125
+	github.com/cloudfoundry/gosigar v1.3.126
 	github.com/coredns/coredns v1.14.6
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.2
 	github.com/miekg/dns v1.1.72
@@ -64,7 +64,7 @@ require (
 	golang.org/x/text v0.40.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260807164820-c8921c73eeea // indirect
 	google.golang.org/grpc v1.83.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
