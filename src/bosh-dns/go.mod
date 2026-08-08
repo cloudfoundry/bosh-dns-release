@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/clock v1.82.0
 	code.cloudfoundry.org/tlsconfig v0.53.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.630
+	github.com/cloudfoundry/bosh-utils v0.0.631
 	github.com/cloudfoundry/gosigar v1.3.126
 	github.com/coredns/coredns v1.14.6
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.2
@@ -27,7 +27,7 @@ require (
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.183 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.184 // indirect
 	github.com/coredns/caddy v1.1.4 // indirect
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
