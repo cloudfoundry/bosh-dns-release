@@ -63,6 +63,8 @@ builds:
     version: 1.15.0
   69375c17-ccdb-4fc7-571d-c39ca5892b75:
     version: 1.39.0
+  6a894717-ea84-4fc0-5e20-7f32fa9256e6:
+    version: 1.39.27
   6c4f9efb-088e-4a33-4c97-cb0c4e131d16:
     version: 1.27.0
   78ccccc0-6187-4b0b-5d79-f038286c7006:
