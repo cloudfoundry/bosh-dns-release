@@ -190,6 +190,7 @@ describe 'bosh-dns' do
       it 'invokes the dummy interface setup and runs the systemd-resolved updater' do
         expect(rendered).to match(/^create_network_interface$/)
         expect(rendered).to include('bosh-dns-systemd-resolved-updater')
+        expect(rendered).to include('resolvectl default-route bosh-dns no')
       end
     end
   end
