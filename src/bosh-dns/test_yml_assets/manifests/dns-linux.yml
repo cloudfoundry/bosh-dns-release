@@ -34,7 +34,6 @@ instance_groups:
     properties:
       configure_systemd_resolved: true
       override_nameserver: false
-      disable_recursors: true
       api:
         server:
           tls: ((dns_api_server_tls))
