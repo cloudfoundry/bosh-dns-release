@@ -50,6 +50,8 @@ DEPLOY_OPS="${DEPLOY_OPS} -o ./src/bosh-dns/test_yml_assets/ops/manifest/enable-
 # TODO: remove when Jammy goes EOL
 if [[ "${BASE_STEMCELL}" == "ubuntu-jammy" ]]; then
   DEPLOY_OPS="${DEPLOY_OPS} -o ./src/bosh-dns/test_yml_assets/ops/manifest/override-nameserver-dns-settings.yml"
+else
+  DEPLOY_OPS="${DEPLOY_OPS} -o ./src/bosh-dns/test_yml_assets/ops/manifest/disable-recursors.yml"
 fi
 
 # shellcheck disable=SC2086
