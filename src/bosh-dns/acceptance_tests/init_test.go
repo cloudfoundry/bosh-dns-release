@@ -117,5 +117,5 @@ func stemcellDNSOpsFile() string {
 		// TODO: remove when Jammy goes EOL
 		return "ops/manifest/override-nameserver-dns-settings.yml"
 	}
-	return ""
+	return "ops/manifest/disable-recursors.yml"
 }

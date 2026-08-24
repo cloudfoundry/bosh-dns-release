@@ -1,0 +1,3 @@
+- type: replace
+  path: /instance_groups/name=bosh-dns/jobs/name=bosh-dns/properties/disable_recursors?
+  value: true
