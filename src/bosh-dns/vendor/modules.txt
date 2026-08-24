@@ -1,4 +1,4 @@
-# code.cloudfoundry.org/clock v1.83.0
+# code.cloudfoundry.org/clock v1.84.0
 ## explicit; go 1.25.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
@@ -23,7 +23,7 @@ github.com/bmatcuk/doublestar
 # github.com/cespare/xxhash/v2 v2.3.0
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
-# github.com/cloudfoundry/bosh-utils v0.0.636
+# github.com/cloudfoundry/bosh-utils v0.0.643
 ## explicit; go 1.25.0
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -47,7 +47,7 @@ github.com/cloudfoundry/socks5-proxy
 ## explicit; go 1.13
 github.com/coredns/caddy
 github.com/coredns/caddy/caddyfile
-# github.com/coredns/coredns v1.14.6
+# github.com/coredns/coredns v1.14.7
 ## explicit; go 1.25.0
 github.com/coredns/coredns/core/dnsserver
 github.com/coredns/coredns/coremain
@@ -128,8 +128,8 @@ github.com/mdlayher/socket
 # github.com/mdlayher/vsock v1.3.0
 ## explicit; go 1.25.0
 github.com/mdlayher/vsock
-# github.com/miekg/dns v1.1.72
-## explicit; go 1.24.0
+# github.com/miekg/dns v1.1.73
+## explicit; go 1.25.0
 github.com/miekg/dns
 # github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
 ## explicit
@@ -362,10 +362,10 @@ golang.org/x/tools/internal/stdlib
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20260810153831-ec0a7760b754
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688
 ## explicit; go 1.25.0
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.83.0
+# google.golang.org/grpc v1.83.1
 ## explicit; go 1.25.0
 google.golang.org/grpc
 google.golang.org/grpc/attributes
