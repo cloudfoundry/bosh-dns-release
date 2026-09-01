@@ -1,0 +1,56 @@
+name: bosh-dns
+version: 1.39.30
+commit_hash: 17901db2
+uncommitted_changes: false
+jobs:
+- name: acceptance-tests-windows
+  version: 0bc52f47592ba7a1a3d61da9bdfdb650388e39feb794a555149d279f35e034f4
+  fingerprint: 0bc52f47592ba7a1a3d61da9bdfdb650388e39feb794a555149d279f35e034f4
+  sha1: sha256:69f38dc9bac354aa8690c570e9da9f2ab2589326ddac069f96bbdc82be6f5f07
+  packages:
+  - golang-1-windows
+  - acceptance-tests-windows
+- name: bosh-dns
+  version: 7dd2145bee440d030eff27dc09e5c22f663e720cad353692c0cf59b92ad3e748
+  fingerprint: 7dd2145bee440d030eff27dc09e5c22f663e720cad353692c0cf59b92ad3e748
+  sha1: sha256:87c357a4ad1b55038802d4aae8457e60739e27cd8585290a92363392c0a8b046
+  packages:
+  - bosh-dns
+- name: bosh-dns-windows
+  version: af321defb97cd7b778db2a2d90eb3dc70774fac6e3992bef734f46b52320d060
+  fingerprint: af321defb97cd7b778db2a2d90eb3dc70774fac6e3992bef734f46b52320d060
+  sha1: sha256:358658e7a42ec30d92821fa427caa0339e05b0c57a2dc967f8df0c3250be9eee
+  packages:
+  - bosh-dns-windows
+packages:
+- name: acceptance-tests-windows
+  version: 131f1fd168d2f7f3e571c8626a12ff715f48d3c0d71a7bc5b6045c80b7ce10ca
+  fingerprint: 131f1fd168d2f7f3e571c8626a12ff715f48d3c0d71a7bc5b6045c80b7ce10ca
+  sha1: sha256:96bd33f29099f1e3ad1f1b1b5f9909c84738c12d374e97f0ff016c540ae01073
+  dependencies: []
+- name: bosh-dns
+  version: 5d015289f278e729e58ac451936bd132a30718bdbf231355a9a4266e8d9ecd58
+  fingerprint: 5d015289f278e729e58ac451936bd132a30718bdbf231355a9a4266e8d9ecd58
+  sha1: sha256:ec3ed239053209b97d73091efdbed8ee82bcfea9e4d0cd791537cd5087157d22
+  dependencies:
+  - golang-1-linux
+- name: bosh-dns-windows
+  version: 09e5f17f98dfb7b63769cd4bb898ed67604f239e6b0df68a1432d2200850980d
+  fingerprint: 09e5f17f98dfb7b63769cd4bb898ed67604f239e6b0df68a1432d2200850980d
+  sha1: sha256:d213e28586b3f9d01503a6f459ae67041501a81a4027cf269f3f00fa7663e965
+  dependencies:
+  - golang-1-windows
+- name: golang-1-linux
+  version: a2d12250d6eb3803abcaa1b0cd834930d35a98619d1396f01dc0bc81aa70d373
+  fingerprint: a2d12250d6eb3803abcaa1b0cd834930d35a98619d1396f01dc0bc81aa70d373
+  sha1: sha256:207328cc511360293999a5441736cef80a5d4fb6012c2778cfd470688412276a
+  dependencies: []
+- name: golang-1-windows
+  version: 4c71cc848341cd97393de65416fb4eb46eda8864ff510052fda816db4e9d8200
+  fingerprint: 4c71cc848341cd97393de65416fb4eb46eda8864ff510052fda816db4e9d8200
+  sha1: sha256:236186cb1856c3c20a4002556bc2b3ab3767dbaf42a66a6cc6cbf4f2c41179e6
+  dependencies: []
+license:
+  version: bcc45d485856f77feb9b7c4f58e53712477ab73f0e6eb523da0230d226c56fa2
+  fingerprint: bcc45d485856f77feb9b7c4f58e53712477ab73f0e6eb523da0230d226c56fa2
+  sha1: sha256:465fb1d96e8588bed4d393a752197487d692723ea7fd2cc86124cb663f11e8b6
