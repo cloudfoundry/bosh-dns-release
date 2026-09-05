@@ -1,4 +1,4 @@
-# code.cloudfoundry.org/clock v1.85.0
+# code.cloudfoundry.org/clock v1.86.0
 ## explicit; go 1.25.0
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
@@ -23,7 +23,7 @@ github.com/bmatcuk/doublestar
 # github.com/cespare/xxhash/v2 v2.3.0
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
-# github.com/cloudfoundry/bosh-utils v0.0.645
+# github.com/cloudfoundry/bosh-utils v0.0.647
 ## explicit; go 1.25.0
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -40,7 +40,7 @@ github.com/cloudfoundry/go-socks5
 ## explicit; go 1.25.0
 github.com/cloudfoundry/gosigar
 github.com/cloudfoundry/gosigar/sys/windows
-# github.com/cloudfoundry/socks5-proxy v0.2.186
+# github.com/cloudfoundry/socks5-proxy v0.2.187
 ## explicit; go 1.25.0
 github.com/cloudfoundry/socks5-proxy
 # github.com/coredns/caddy v1.1.4
@@ -100,7 +100,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20260825171938-4d453200e7d9
+# github.com/google/pprof v0.0.0-20260903180319-d6c3cb2f37ec
 ## explicit; go 1.25.0
 github.com/google/pprof/profile
 # github.com/google/uuid v1.6.0
@@ -198,10 +198,10 @@ github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promauto
 github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus/promhttp/internal
-# github.com/prometheus/client_model v0.6.2
-## explicit; go 1.22.0
+# github.com/prometheus/client_model v0.6.3
+## explicit; go 1.23
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.70.1
+# github.com/prometheus/common v0.71.0
 ## explicit; go 1.25.0
 github.com/prometheus/common/config
 github.com/prometheus/common/expfmt
@@ -362,7 +362,7 @@ golang.org/x/tools/internal/stdlib
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20260825221802-da73d73af1c5
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20260904194346-d0f1323225a4
 ## explicit; go 1.25.0
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.83.2
