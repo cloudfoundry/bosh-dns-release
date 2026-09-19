@@ -3,17 +3,17 @@ module bosh-dns
 go 1.26.0
 
 require (
-	code.cloudfoundry.org/clock v1.87.0
-	code.cloudfoundry.org/tlsconfig v0.66.0
+	code.cloudfoundry.org/clock v1.88.0
+	code.cloudfoundry.org/tlsconfig v0.67.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.649
-	github.com/cloudfoundry/gosigar v1.3.126
+	github.com/cloudfoundry/bosh-utils v0.0.653
+	github.com/cloudfoundry/gosigar v1.3.127
 	github.com/coredns/coredns v1.14.7
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.13.0
 	github.com/miekg/dns v1.1.73
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
-	github.com/onsi/ginkgo/v2 v2.32.2
-	github.com/onsi/gomega v1.43.0
+	github.com/onsi/ginkgo/v2 v2.33.0
+	github.com/onsi/gomega v1.43.1
 	github.com/prometheus/client_golang v1.24.1
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	golang.org/x/sys v0.48.0
@@ -27,7 +27,7 @@ require (
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.188 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.189 // indirect
 	github.com/coredns/caddy v1.1.4 // indirect
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
@@ -64,7 +64,7 @@ require (
 	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.50.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260911204522-f61a6ca850bd // indirect
-	google.golang.org/grpc v1.83.2 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260918162117-cecb64721679 // indirect
+	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
