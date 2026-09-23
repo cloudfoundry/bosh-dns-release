@@ -45,3 +45,18 @@ jobs:
       - uses: golangci/golangci-lint-action@v9
         with:
           working-directory: src/debug/
+  cross_compile_linux_arm64:
+    # Verifies the bosh-dns binaries cross-compile for linux/arm64 (AWS Graviton
+    # and other ARM64 targets). Pure-Go build, so this runs on the standard
+    # amd64 runner and needs no ARM64 hardware. Guards against regressions in
+    # ARM64 support on every push/PR.
+    name: cross_compile_linux_arm64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: src/bosh-dns/go.mod
+      - name: build linux/arm64
+        working-directory: src/bosh-dns/
+        run: GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build ./...
