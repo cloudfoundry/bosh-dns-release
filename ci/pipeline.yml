@@ -222,12 +222,12 @@ jobs:
         params:
           BASE_STEMCELL: ubuntu-noble
 
-  #! arm64 (Graviton) acceptance tests on ubuntu-noble. RFC: cloudfoundry/community#1530.
-  #! Mirrors test-acceptance-ubuntu-noble but consumes the arm64 warden stemcell
-  #! and pins every step to an arm64 worker so bosh-dns is exercised natively on
-  #! aarch64. Dormant until the platform team both publishes the arm64 warden
-  #! stemcell (RFC D1/D5) and registers a Concourse worker with the `arm64` tag
-  #! (RFC D3 / Open Question 2). The amd64 job above is unchanged.
+  # arm64 (Graviton) acceptance tests on ubuntu-noble. RFC: cloudfoundry/community#1530.
+  # Mirrors test-acceptance-ubuntu-noble but consumes the arm64 warden stemcell
+  # and pins every step to an arm64 worker so bosh-dns is exercised natively on
+  # aarch64. Dormant until the platform team both publishes the arm64 warden
+  # stemcell (RFC D1/D5) and registers a Concourse worker with the `arm64` tag
+  # (RFC D3 / Open Question 2). The amd64 job above is unchanged.
   - name: test-acceptance-ubuntu-noble-arm64
     public: true
     serial: true
@@ -243,8 +243,10 @@ jobs:
           - get: bosh-candidate-release
             tags: [ arm64 ]
           - get: bosh-integration-image
+            resource: bosh-integration-image-arm64
             tags: [ arm64 ]
           - get: docker-cpi-image
+            resource: docker-cpi-image-arm64
             tags: [ arm64 ]
       - task: create-candidate
         file: bosh-dns-release/ci/tasks/create-candidate.yml
@@ -472,12 +474,12 @@ jobs:
           STEMCELL_OS: ubuntu-noble
           ADDITIONAL_DIRECTOR_OPS_FILES: "-o bosh-ci/ci/dockerfiles/docker-cpi/gcp-internal-dns-ops.yml"
 
-  #! arm64 (Graviton) BOSH release acceptance (BRATS) on ubuntu-noble.
-  #! RFC: cloudfoundry/community#1530. Mirrors brats-ubuntu-noble but runs the
-  #! director and DNS release against the arm64 warden stemcell on an arm64
-  #! worker. Dormant until the platform team publishes the arm64 warden stemcell
-  #! (RFC D1/D5) and registers an `arm64`-tagged Concourse worker (RFC D3 /
-  #! Open Question 2). The amd64 brats-ubuntu-noble job above is unchanged.
+  # arm64 (Graviton) BOSH release acceptance (BRATS) on ubuntu-noble.
+  # RFC: cloudfoundry/community#1530. Mirrors brats-ubuntu-noble but runs the
+  # director and DNS release against the arm64 warden stemcell on an arm64
+  # worker. Dormant until the platform team publishes the arm64 warden stemcell
+  # (RFC D1/D5) and registers an `arm64`-tagged Concourse worker (RFC D3 /
+  # Open Question 2). The amd64 brats-ubuntu-noble job above is unchanged.
   - name: brats-ubuntu-noble-arm64
     serial: true
     plan:
@@ -497,8 +499,10 @@ jobs:
           - get: bosh-release
             tags: [ arm64 ]
           - get: docker-cpi-image
+            resource: docker-cpi-image-arm64
             tags: [ arm64 ]
           - get: bosh-integration-image
+            resource: bosh-integration-image-arm64
             tags: [ arm64 ]
       - task: create-candidate
         file: bosh-dns-release/ci/tasks/create-candidate.yml
@@ -808,11 +812,11 @@ resources:
     source:
       name: bosh-warden-boshlite-ubuntu-noble
 
-  #! arm64 (Graviton) warden stemcell. RFC: cloudfoundry/community#1530.
-  #! Dormant until the platform team publishes an arm64 warden/boshlite noble
-  #! stemcell to bosh.io (RFC D1/D5: stemcell build + naming). Until it exists
-  #! this resource has no versions, so the arm64 acceptance/brats jobs stay
-  #! pending and never affect the amd64 jobs.
+  # arm64 (Graviton) warden stemcell. RFC: cloudfoundry/community#1530.
+  # Dormant until the platform team publishes an arm64 warden/boshlite noble
+  # stemcell to bosh.io (RFC D1/D5: stemcell build + naming). Until it exists
+  # this resource has no versions, so the arm64 acceptance/brats jobs stay
+  # pending and never affect the amd64 jobs.
   - name: warden-noble-arm64-stemcell
     type: bosh-io-stemcell
     source:
@@ -850,6 +854,26 @@ resources:
     type: registry-image
     source:
       repository: ghcr.io/cloudfoundry/bosh/integration
+      username: ((github_read_write_packages.username))
+      password: ((github_read_write_packages.password))
+
+  # arm64 (Graviton) CI images published by the cloudfoundry/bosh pipeline
+  # (build-integration-arm64 / build-docker-cpi-arm64) under the "main-arm64"
+  # tag, consumed by the arm64 acceptance/BRATS jobs. RFC:
+  # cloudfoundry/community#1530.
+  - name: bosh-integration-image-arm64
+    type: registry-image
+    source:
+      repository: ghcr.io/cloudfoundry/bosh/integration
+      tag: main-arm64
+      username: ((github_read_write_packages.username))
+      password: ((github_read_write_packages.password))
+
+  - name: docker-cpi-image-arm64
+    type: registry-image
+    source:
+      tag: main-arm64
+      repository: ghcr.io/cloudfoundry/bosh/docker-cpi
       username: ((github_read_write_packages.username))
       password: ((github_read_write_packages.password))
 
