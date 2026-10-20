@@ -63,6 +63,8 @@ builds:
     version: 1.38.5
   6506eabd-44ba-47ea-4c87-e061d90096c9:
     version: 1.39.13
+  65663cda-4a26-40a0-7345-719e4286e2f5:
+    version: 1.39.34
   65c24683-3026-4971-7a94-b7be8101e10c:
     version: 0.0.9
   68440f6f-fcfe-494e-5e29-43ecb70a1ead:
