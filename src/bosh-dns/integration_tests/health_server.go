@@ -3,6 +3,7 @@ package integration_tests
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -117,22 +118,28 @@ func (t *testHealthServer) MakeHealthyExit(index, status int) error {
 	if runtime.GOOS == "windows" {
 		healthExecutable = "healthy.ps1"
 	}
-	healthScript, err := os.OpenFile(
-		filepath.Join(t.rootDir, "jobs", strconv.Itoa(index), "bin", "dns", healthExecutable),
-		os.O_WRONLY|os.O_CREATE,
-		0700,
-	)
+
+	dir := filepath.Join(t.rootDir, "jobs", strconv.Itoa(index), "bin", "dns")
+	targetPath := filepath.Join(dir, healthExecutable)
+
+	tmpFile, err := os.CreateTemp(dir, "healthy-tmp-*")
 	if err != nil {
 		return err
 	}
-	defer healthScript.Close() //nolint:errcheck
+	// No-op after a successful rename; cleans up the temp file on failure.
+	defer os.Remove(tmpFile.Name()) //nolint:errcheck
+
+	content := fmt.Sprintf("#!/bin/bash\n\nexit %d\n", status)
 	if runtime.GOOS == "windows" {
-		fmt.Fprintf(healthScript, "exit %d", status) //nolint:errcheck
-		return nil
+		content = fmt.Sprintf("exit %d", status)
 	}
 
-	fmt.Fprintf(healthScript, "#!/bin/bash\n\nexit %d", status) //nolint:errcheck
-	return nil
+	_, writeErr := tmpFile.WriteString(content)
+	if err := errors.Join(writeErr, tmpFile.Chmod(0700), tmpFile.Close()); err != nil {
+		return err
+	}
+
+	return os.Rename(tmpFile.Name(), targetPath)
 }
 
 func (t *testHealthServer) writeConfig() (string, error) {
