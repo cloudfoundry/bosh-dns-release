@@ -15,14 +15,20 @@ import (
 
 // ServeDNS implements the plugin.Handler interface.
 func (c *Cache) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	// The cache only handles QUERY messages. In particular, an UPDATE can
+	// have the same zone name and QTYPE as a cached query, but must always
+	// reach the authoritative handler instead of being answered from cache.
+	if r.Opcode != dns.OpcodeQuery {
+		return plugin.NextOrFailure(c.Name(), c.Next, ctx, w, r)
+	}
+
 	rc := r.Copy() // We potentially modify r, to prevent other plugins from seeing this (r is a pointer), copy r into rc.
 	state := request.Request{W: w, Req: rc}
 	do := state.Do()
 	cd := r.CheckingDisabled
 	ad := r.AuthenticatedData
 
-	zone := plugin.Zones(c.Zones).Matches(state.Name())
-	if zone == "" {
+	if !plugin.Zones(c.Zones).Contains(state.Name()) || plugin.Zones(c.bypass).Contains(state.Name()) {
 		return plugin.NextOrFailure(c.Name(), c.Next, ctx, w, rc)
 	}
 
@@ -39,7 +45,18 @@ func (c *Cache) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 		refreshState := authenticatedRefreshState(state)
 		crr := &ResponseWriter{ResponseWriter: w, Cache: c, state: refreshState, server: server, do: do, ad: ad, cd: cd,
 			nexcept: c.nexcept, pexcept: c.pexcept, wildcardFunc: wildcardFunc(ctx)}
-		return c.doRefresh(ctx, refreshState, crr)
+		ret, err := c.doRefresh(ctx, refreshState, crr)
+		// The next plugin can fail without writing a response, e.g. forward when
+		// the upstream times out. In that case the failure never reaches
+		// ResponseWriter.WriteMsg, so it is not cached and every client retry
+		// hits the upstream again. Store a SERVFAIL bounded by the servfail TTL
+		// so identical queries are answered from the cache while it is valid.
+		// A canceled request context (e.g. a canceled DoH request) is not an
+		// upstream failure, so it must not poison the shared failure cache.
+		if err != nil && ret == dns.RcodeServerFailure && ctx.Err() == nil && crr.lastResponse == nil && c.failttl > 0 {
+			crr.cacheServerFailure(refreshState.Req)
+		}
+		return ret, err
 	}
 	ttl := i.ttl(now)
 	stale := ttl <= 0
@@ -48,7 +65,7 @@ func (c *Cache) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 		if c.verifyStale {
 			failureRecheck := c.staleRecheck
 			nowFunc := c.now
-			trackRefresh := failureRecheck > 0
+			trackRefresh := failureRecheck > 0 || c.verifyStaleTimeout > 0
 			if !trackRefresh || i.beginRefresh(now, failureRecheck) {
 				refreshState := authenticatedRefreshState(state)
 				crr := &ResponseWriter{ResponseWriter: w, Cache: c, state: refreshState, server: server, do: do, ad: ad, cd: cd}
@@ -181,9 +198,7 @@ func (c *Cache) verifyWithTimeout(ctx context.Context, state request.Request, w 
 	}
 	go func() {
 		rc, re := c.doRefresh(refreshCtx, state, cw)
-		if failureRecheck > 0 {
-			i.endRefresh(now(), failureRecheck, cw.refreshed)
-		}
+		i.endRefresh(now(), failureRecheck, cw.refreshed)
 		done <- result{rc, re}
 	}()
 	timer := time.NewTimer(c.verifyStaleTimeout)

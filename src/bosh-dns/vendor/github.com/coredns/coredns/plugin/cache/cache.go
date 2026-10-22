@@ -3,6 +3,7 @@ package cache
 
 import (
 	"encoding/binary"
+	"fmt"
 	"hash/fnv"
 	"net"
 	"strings"
@@ -53,12 +54,19 @@ type Cache struct {
 	// Positive/negative zone exceptions
 	pexcept []string
 	nexcept []string
+	bypass  []string // mutable authoritative zones discovered at startup
 
 	// Keep ttl option
 	keepttl bool
 
 	// Testing.
 	now func() time.Time
+}
+
+// ZoneBypasser identifies canonical authoritative zones that must always be
+// queried directly. Cache discovers implementations in its server block at startup.
+type ZoneBypasser interface {
+	CacheBypassZones() []string
 }
 
 // New returns an initialized Cache with default settings. It's up to the
@@ -88,6 +96,13 @@ func New() *Cache {
 func key(qname string, m *dns.Msg, t response.Type, do, cd bool) (bool, uint64) {
 	// We don't store truncated responses.
 	if m.Truncated {
+		return false, 0
+	}
+	// A response with no question cannot be keyed or cached and would panic
+	// on m.Question[0] below. Some plugins can emit such a malformed message
+	// (e.g. during prefetch); warn and skip it rather than crash the server.
+	if len(m.Question) == 0 {
+		log.Warningf("Not caching malformed response with an empty question section for %q", qname)
 		return false, 0
 	}
 	// Nor errors or Meta or Update.
@@ -413,6 +428,9 @@ func (w *ResponseWriter) Hijack() {
 
 // WriteMsg implements the dns.ResponseWriter interface.
 func (w *ResponseWriter) WriteMsg(res *dns.Msg) error {
+	if res == nil {
+		return fmt.Errorf("cache: response message is nil")
+	}
 	res = res.Copy()
 	w.lastItem = nil
 	mt := cacheResponseType(res, w.now().UTC())
@@ -463,12 +481,23 @@ func (w *ResponseWriter) WriteMsg(res *dns.Msg) error {
 	return w.ResponseWriter.WriteMsg(res)
 }
 
+// cacheServerFailure stores a SERVFAIL response for req in the cache without
+// writing it to the client. It is used when the next plugin fails without
+// producing a response, so the failure can be served from the cache while the
+// servfail TTL is valid.
+func (w *ResponseWriter) cacheServerFailure(req *dns.Msg) {
+	resp := new(dns.Msg)
+	resp.SetRcode(req, dns.RcodeServerFailure)
+	w.prefetch = true
+	_ = w.WriteMsg(resp)
+}
+
 func (w *ResponseWriter) set(m *dns.Msg, key uint64, mt response.Type, duration time.Duration) {
 	// duration is expected > 0
 	// and key is valid
 	switch mt {
 	case response.NoError, response.Delegation:
-		if plugin.Zones(w.pexcept).Matches(m.Question[0].Name) != "" {
+		if plugin.Zones(w.pexcept).Contains(m.Question[0].Name) {
 			// zone is in exception list, do not cache
 			return
 		}
@@ -493,7 +522,7 @@ func (w *ResponseWriter) set(m *dns.Msg, key uint64, mt response.Type, duration 
 		}
 
 	case response.NameError, response.NoData, response.ServerError:
-		if plugin.Zones(w.nexcept).Matches(m.Question[0].Name) != "" {
+		if plugin.Zones(w.nexcept).Contains(m.Question[0].Name) {
 			// zone is in exception list, do not cache
 			return
 		}

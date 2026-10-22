@@ -77,18 +77,15 @@ func (l *limitQUICListener) Accept(ctx context.Context) (*quic.Conn, error) {
 
 // NewServerHTTPS3 builds the HTTP/3 (DoH3) server.
 func NewServerHTTPS3(addr string, group []*Config) (*ServerHTTPS3, error) {
+	tlsConfig, err := sharedTLSConfig(addr, group)
+	if err != nil {
+		return nil, err
+	}
 	s, err := NewServer(addr, group)
 	if err != nil {
 		return nil, err
 	}
 
-	// Extract TLS config (CoreDNS guarantees it is consistent)
-	var tlsConfig *tls.Config
-	for _, z := range s.zones {
-		for _, conf := range z {
-			tlsConfig = conf.TLSConfig
-		}
-	}
 	if tlsConfig == nil {
 		return nil, fmt.Errorf("DoH3 requires TLS, no TLS config found")
 	}
@@ -159,7 +156,7 @@ func (s *ServerHTTPS3) ListenPacket() (net.PacketConn, error) {
 		return nil, err
 	}
 	if s.connPolicy != nil {
-		p = &cproxyproto.PacketConn{PacketConn: p, ConnPolicy: s.connPolicy}
+		p = &cproxyproto.PacketConn{PacketConn: p, ConnPolicy: s.connPolicy, UDPSessionTrackingTTL: s.udpSessionTrackingTTL, UDPSessionTrackingMaxSessions: s.udpSessionTrackingMaxSessions, CaptureTLVs: s.proxyProtoTLVMetadata}
 	}
 	return p, nil
 }
@@ -203,7 +200,7 @@ func (s *ServerHTTPS3) OnStartupComplete() {
 	}
 	out := startUpZones(transport.HTTPS3+"://", s.Addr, s.zones)
 	if out != "" {
-		fmt.Print(out)
+		printStartup(out)
 	}
 }
 
@@ -250,10 +247,17 @@ func (s *ServerHTTPS3) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		request: r,
 	}
 
+	// If proxyproto captured PPv2 TLVs, http3 stores the QUIC connection's
+	// RemoteAddr (our *Addr) under RemoteAddrContextKey; use it so the metadata
+	// provider exposes the TLVs, same as the other transports.
+	if ra, ok := r.Context().Value(http3.RemoteAddrContextKey).(*cproxyproto.Addr); ok {
+		dw.raddr = ra
+	}
+
 	if tsig := msg.IsTsig(); tsig != nil {
-		if s.tsigSecret == nil {
+		if s.TsigSecret == nil {
 			dw.tsigStatus = dns.ErrSecret
-		} else if secret, ok := s.tsigSecret[tsig.Hdr.Name]; !ok {
+		} else if secret, ok := s.TsigSecret[tsig.Hdr.Name]; !ok {
 			dw.tsigStatus = dns.ErrSecret
 		} else {
 			dw.tsigStatus = dns.TsigVerify(raw, secret, "", false)
