@@ -1,5 +1,5 @@
 # bosh-dns v0.0.0 => ../bosh-dns
-## explicit; go 1.26.0
+## explicit; go 1.26.10
 bosh-dns/dns/api
 bosh-dns/dns/config
 bosh-dns/dns/manager
@@ -7,7 +7,7 @@ bosh-dns/dns/server/record
 bosh-dns/healthcheck/api
 bosh-dns/healthconfig
 bosh-dns/tlsclient
-# code.cloudfoundry.org/clock v1.92.0
+# code.cloudfoundry.org/clock v1.93.0
 ## explicit; go 1.26.0
 code.cloudfoundry.org/clock
 # code.cloudfoundry.org/tlsconfig v0.69.0
@@ -29,14 +29,14 @@ github.com/cheggaaa/pb/v3/termutil
 # github.com/clipperhouse/uax29/v2 v2.7.0
 ## explicit; go 1.18
 github.com/clipperhouse/uax29/v2/graphemes
-# github.com/cloudfoundry/bosh-cli/v7 v7.11.1
+# github.com/cloudfoundry/bosh-cli/v7 v7.11.2
 ## explicit; go 1.26.0
 github.com/cloudfoundry/bosh-cli/v7/io
 github.com/cloudfoundry/bosh-cli/v7/ui
 github.com/cloudfoundry/bosh-cli/v7/ui/fakes
 github.com/cloudfoundry/bosh-cli/v7/ui/fmt
 github.com/cloudfoundry/bosh-cli/v7/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.659
+# github.com/cloudfoundry/bosh-utils v0.0.666
 ## explicit; go 1.26.0
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -59,8 +59,10 @@ github.com/dustin/go-humanize
 # github.com/fatih/color v1.19.0
 ## explicit; go 1.25.0
 github.com/fatih/color
-# github.com/fsnotify/fsnotify v1.8.0
-## explicit; go 1.17
+# github.com/fsnotify/fsnotify v1.10.1
+## explicit; go 1.23
+# github.com/gkampitakis/ciinfo v0.3.4
+## explicit; go 1.20
 # github.com/go-logr/logr v1.4.4
 ## explicit; go 1.18
 github.com/go-logr/logr
@@ -68,6 +70,8 @@ github.com/go-logr/logr/funcr
 # github.com/go-task/slim-sprig/v3 v3.0.0
 ## explicit; go 1.20
 github.com/go-task/slim-sprig/v3
+# github.com/goccy/go-yaml v1.19.2
+## explicit; go 1.21.0
 # github.com/google/go-cmp v0.7.0
 ## explicit; go 1.21
 github.com/google/go-cmp/cmp
@@ -84,6 +88,8 @@ github.com/jessevdk/go-flags
 # github.com/jpillora/backoff v1.0.0
 ## explicit; go 1.13
 github.com/jpillora/backoff
+# github.com/maruel/natural v1.3.0
+## explicit; go 1.21
 # github.com/mattn/go-colorable v0.1.16
 ## explicit; go 1.18
 github.com/mattn/go-colorable
@@ -141,6 +147,8 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
+# github.com/sergi/go-diff v1.4.0
+## explicit; go 1.13
 # github.com/vito/go-interact v1.0.2
 ## explicit; go 1.23.0
 github.com/vito/go-interact/interact
