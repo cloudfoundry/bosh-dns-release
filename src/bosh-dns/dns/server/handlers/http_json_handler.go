@@ -21,6 +21,9 @@ type HTTPClient interface {
 	Get(endpoint string) (*http.Response, error)
 }
 
+// Allow larger JSON payloads than the maximum DNS wire message.
+const maxHTTPDNSResponseBytes = 1 << 20
+
 type HTTPJSONHandler struct {
 	address   string
 	client    HTTPClient
@@ -87,10 +90,7 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 		return responseMsg
 	}
 
-	defer func() {
-		io.ReadAll(httpResponse.Body) //nolint:errcheck
-		httpResponse.Body.Close()     //nolint:errcheck
-	}()
+	defer httpResponse.Body.Close() //nolint:errcheck
 
 	if httpResponse.StatusCode != 200 {
 		h.logger.Error(h.logTag, "non successful response from server '%s': %v", h.address, httpResponse)
@@ -99,9 +99,15 @@ func (h HTTPJSONHandler) buildResponse(request *dns.Msg) *dns.Msg {
 	}
 
 	httpDNSMessage := &httpDNSMessage{}
-	bytes, err := io.ReadAll(httpResponse.Body)
+	bytes, err := io.ReadAll(io.LimitReader(httpResponse.Body, maxHTTPDNSResponseBytes+1))
 	if err != nil {
 		h.logger.Error(h.logTag, "failed to read response message '%s': %v", string(bytes), err)
+		responseMsg.SetRcode(request, dns.RcodeServerFailure)
+		return responseMsg
+	}
+
+	if len(bytes) > maxHTTPDNSResponseBytes {
+		h.logger.Error(h.logTag, "HTTP DNS response exceeds size limit")
 		responseMsg.SetRcode(request, dns.RcodeServerFailure)
 		return responseMsg
 	}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"math/rand"
+	"time"
 
 	"code.cloudfoundry.org/clock"
 	"github.com/cloudfoundry/bosh-utils/httpclient"
@@ -33,7 +34,9 @@ func NewFactory(exchangerFactory ExchangerFactory, clock clock.Clock, recursorRe
 func (f *Factory) CreateHTTPJSONHandler(url string, cache bool) dns.Handler {
 	var handler dns.Handler
 
-	httpClient := httpclient.NewHTTPClient(httpclient.DefaultClient, f.logger)
+	client := httpclient.CreateDefaultClient(nil)
+	client.Timeout = 30 * time.Second
+	httpClient := httpclient.NewHTTPClient(client, f.logger)
 	handler = NewHTTPJSONHandler(url, httpClient, f.logger, f.truncater)
 
 	if cache {
