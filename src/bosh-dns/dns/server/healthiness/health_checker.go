@@ -20,6 +20,9 @@ type HTTPClientGetter interface {
 	Get(endpoint string) (*http.Response, error)
 }
 
+// Health responses contain only status and group metadata.
+const maxHealthResponseBytes = 1 << 20
+
 type healthChecker struct {
 	client HTTPClientGetter
 	port   int
@@ -47,15 +50,23 @@ func (hc *healthChecker) GetStatus(ip string) api.HealthResult {
 	if err != nil {
 		hc.logger.Warn(hc.logTag, "network error connecting to %s: %v", ip, err)
 		return api.HealthResult{State: StateUnknown}
-	} else if response.StatusCode != http.StatusOK {
+	}
+	defer response.Body.Close() //nolint:errcheck
+
+	if response.StatusCode != http.StatusOK {
 		hc.logger.Warn(hc.logTag, "http error connecting to %s: %v", ip, response.StatusCode)
 		return api.HealthResult{State: StateUnknown}
 	}
 
-	responseBytes, err := io.ReadAll(response.Body)
+	responseBytes, err := io.ReadAll(io.LimitReader(response.Body, maxHealthResponseBytes+1))
 	if err != nil {
 		hc.logger.Warn(hc.logTag, "error reading response body from %s: %v", ip, err)
 		return api.HealthResult{State: StateUnknown} // untested
+	}
+
+	if len(responseBytes) > maxHealthResponseBytes {
+		hc.logger.Warn(hc.logTag, "health response from %s exceeds size limit", ip)
+		return api.HealthResult{State: StateUnknown}
 	}
 
 	var parsedResponse api.HealthResult
