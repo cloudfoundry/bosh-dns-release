@@ -71,12 +71,15 @@ func (t *Tracker) monitor(ip, fqdn string) {
 				if len(domains) == 0 {
 					t.logger.Debug("Tracker", "remove %s from tracked IPs - %s was last domain", ip, fqdn)
 					t.h.Untrack(ip)
+					delete(t.trackedIPs, ip)
 				}
 			}
 		}
 	}
 
-	t.trackedIPs[ip] = map[string]struct{}{}
+	if _, ok := t.trackedIPs[ip]; !ok {
+		t.trackedIPs[ip] = map[string]struct{}{}
+	}
 	t.trackedIPs[ip][fqdn] = struct{}{}
 	t.trackedIPsMutex.Unlock()
 	t.h.Track(ip)

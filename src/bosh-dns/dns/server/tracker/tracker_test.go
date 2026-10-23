@@ -64,6 +64,23 @@ var _ = Describe("Tracker", func() {
 			})
 		})
 
+		It("keeps an IP tracked while another domain still references it", func() {
+			healthMonitor <- record.Host{FQDN: "first.bosh.", IP: "1.1.1.1"}
+			healthMonitor <- record.Host{FQDN: "second.bosh.", IP: "1.1.1.1"}
+			Eventually(hw.TrackCallCount).Should(Equal(2))
+
+			trackedDomains.TouchReturns("second.bosh.")
+			healthMonitor <- record.Host{FQDN: "third.bosh.", IP: "2.2.2.2"}
+			Eventually(hw.TrackCallCount).Should(Equal(3))
+			Expect(hw.UntrackCallCount()).To(Equal(0))
+
+			trackedDomains.TouchReturns("first.bosh.")
+			healthMonitor <- record.Host{FQDN: "fourth.bosh.", IP: "3.3.3.3"}
+			Eventually(hw.TrackCallCount).Should(Equal(4))
+			Expect(hw.UntrackCallCount()).To(Equal(1))
+			Expect(hw.UntrackArgsForCall(0)).To(Equal("1.1.1.1"))
+		})
+
 		Context("when we exceed the transcript length", func() {
 			It("it untracks old records", func() {
 				trackedDomains.TouchReturns("qs-foo.doesnt.matter.anyway")
