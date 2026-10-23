@@ -20,7 +20,6 @@ type healthFilter struct {
 	wg                      *sync.WaitGroup
 	shouldTrack             bool
 	domain                  string //nolint:unused
-	filterWorkPool          *workpool.WorkPool
 	clock                   clock.Clock
 	synchronousCheckTimeout time.Duration
 }
@@ -36,14 +35,12 @@ type healthWatcher interface {
 }
 
 func NewHealthFilter(nextFilter Reducer, health chan<- record.Host, w healthWatcher, shouldTrack bool, clock clock.Clock, synchronousCheckTimeout time.Duration, wg *sync.WaitGroup) healthFilter {
-	wp, _ := workpool.NewWorkPool(1000) //nolint:errcheck
 	return healthFilter{
 		nextFilter:              nextFilter,
 		health:                  health,
 		w:                       w,
 		wg:                      wg,
 		shouldTrack:             shouldTrack,
-		filterWorkPool:          wp,
 		clock:                   clock,
 		synchronousCheckTimeout: synchronousCheckTimeout,
 	}
@@ -92,13 +89,16 @@ func (q *healthFilter) Filter(mm criteria.MatchMaker, recs []record.Record) []re
 
 func (q *healthFilter) processRecords(criteria criteria.Criteria, records []record.Record) {
 	usedWaitGroup := false
+	// Each call gets its own pool, stopped once its checks finish, so that
+	// worker goroutines don't outlive the checks they ran.
+	pool, _ := workpool.NewWorkPool(1000) //nolint:errcheck
 
 	for _, r := range records {
 		if fqdn, ok := criteria["fqdn"]; ok {
 			q.health <- record.Host{IP: r.IP, FQDN: fqdn[0]}
 
 			if len(criteria["y"]) > 0 {
-				if q.synchronousHealthCheck(criteria["y"][0], r.IP) {
+				if q.synchronousHealthCheck(pool, criteria["y"][0], r.IP) {
 					usedWaitGroup = true
 				}
 			}
@@ -106,16 +106,17 @@ func (q *healthFilter) processRecords(criteria criteria.Criteria, records []reco
 	}
 
 	if usedWaitGroup {
-		q.waitForWaitGroupOrTimeout()
+		q.waitForWaitGroupOrTimeout(pool)
 	}
 }
 
-func (q *healthFilter) waitForWaitGroupOrTimeout() {
+func (q *healthFilter) waitForWaitGroupOrTimeout(pool *workpool.WorkPool) {
 	timeout := q.clock.After(q.synchronousCheckTimeout)
 	success := make(chan struct{})
 
 	go func() {
 		q.wg.Wait()
+		pool.Stop()
 		close(success)
 	}()
 
@@ -166,14 +167,14 @@ func (q *healthFilter) interpretHealthState(ip string, queriedGroupIDs []string)
 	return healthState
 }
 
-func (q *healthFilter) synchronousHealthCheck(strategy, ip string) bool {
+func (q *healthFilter) synchronousHealthCheck(pool *workpool.WorkPool, strategy, ip string) bool {
 	usedWaitGroup := false
 	switch strategy {
 	case "0":
 	case "1":
 		if q.w.HealthState(ip).State == healthiness.StateUnchecked {
 			q.wg.Add(1)
-			q.filterWorkPool.Submit(func() {
+			pool.Submit(func() {
 				defer q.wg.Done()
 				q.w.RunCheck(ip)
 			})
