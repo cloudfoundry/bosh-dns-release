@@ -1,4 +1,6 @@
 require_relative 'shared_examples'
+require 'tmpdir'
+require 'open3'
 
 def render_monit(properties = {})
   job_dir = File.join(File.dirname(__FILE__), '../../jobs/bosh-dns')
@@ -11,6 +13,60 @@ describe 'bosh-dns' do
   let(:job) { release.job('bosh-dns') }
 
   it_behaves_like 'common config.json'
+
+  %w[bin/bosh_dns_ctl bin/bosh_dns_health_ctl bin/bosh_dns_resolvconf_ctl bin/pre-start].each do |name|
+    describe "#{name} process directory" do
+      let(:script) { job.template(name).render({}) }
+
+      def run_directory_setup(script, dir, run_dir)
+        setup = script[/function create_directories_and_chown_to_vcap\(\) \{.*?^\}/m]
+        # Keep log ownership outside these process-directory checks.
+        command = "function chown() { :; }\nfunction install() { :; }\n#{setup}\n" \
+                  "LOG_DIR='#{dir}/log'\nRUN_DIR='#{run_dir}'\ncreate_directories_and_chown_to_vcap"
+        Open3.capture3('bash', '-euc', command)
+      end
+
+      it 'is valid bash' do
+        _, stderr, status = Open3.capture3('bash', '-n', stdin_data: script)
+        expect(status.success?).to be(true), stderr
+      end
+
+      it 'rejects a symlinked process directory before changing its target' do
+        Dir.mktmpdir do |dir|
+          target = File.join(dir, 'target')
+          Dir.mkdir(target)
+          link = File.join(dir, 'run')
+          File.symlink(target, link)
+          _, _, status = run_directory_setup(script, dir, link)
+          expect(status.success?).to be(false)
+          expect(Dir.children(target)).to be_empty
+        end
+      end
+
+      it 'rejects an existing process directory owned by another user' do
+        Dir.mktmpdir do |dir|
+          other = '/'
+          if Process.uid.zero?
+            other = File.join(dir, 'run')
+            Dir.mkdir(other)
+            File.chown(65_534, 65_534, other)
+          end
+          _, _, status = run_directory_setup(script, dir, other)
+          expect(status.success?).to be(false)
+        end
+      end
+
+      it 'creates a missing process directory' do
+        Dir.mktmpdir do |dir|
+          run_dir = File.join(dir, 'run')
+          _, stderr, status = run_directory_setup(script, dir, run_dir)
+          expect(status.success?).to be(true), stderr
+          expect(File.directory?(run_dir)).to be(true)
+          expect(File.stat(run_dir).mode & 0o777).to eq(0o755)
+        end
+      end
+    end
+  end
 
   describe 'bin/is-system-resolver' do
     let(:template) { job.template('bin/is-system-resolver') }
@@ -200,7 +256,7 @@ describe 'bosh-dns' do
       let(:rendered) { render_monit({}) }
 
       it 'uses the ctl script pidfile and start/stop programs' do
-        expect(rendered).to include('with pidfile /var/vcap/sys/run/bosh-dns/bosh-dns.pid')
+        expect(rendered).to include('with pidfile /var/vcap/sys/run/bosh-dns-control/bosh-dns.pid')
         expect(rendered).to include('start program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl start"')
         expect(rendered).to include('stop program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl stop"')
         expect(rendered).not_to include('/var/vcap/jobs/bpm/bin/bpm')
@@ -210,7 +266,7 @@ describe 'bosh-dns' do
         let(:rendered) { render_monit({'health' => {'enabled' => true}}) }
 
         it 'uses the health ctl script pidfile and start/stop programs' do
-          expect(rendered).to include('with pidfile /var/vcap/sys/run/bosh-dns/bosh_dns_health.pid')
+          expect(rendered).to include('with pidfile /var/vcap/sys/run/bosh-dns-control/bosh_dns_health.pid')
           expect(rendered).to include('start program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl start"')
           expect(rendered).to include('stop program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl stop"')
         end

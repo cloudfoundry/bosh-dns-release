@@ -32,7 +32,7 @@ for deployment_index in $(seq 1 $DEPLOYMENT_COUNT); do
       netstat -s
 
       # check bosh-dns dropped packets
-      PID=$(cat /var/vcap/sys/run/bosh-dns/bosh-dns.pid)
+      PID=$(cat /var/vcap/sys/run/bosh-dns-control/bosh-dns.pid)
       cat /proc/$PID/net/udp
 
       uptime

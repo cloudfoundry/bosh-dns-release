@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-RUN_DIR=/var/vcap/sys/run/bosh-dns
+RUN_DIR=/var/vcap/sys/run/bosh-dns-control
 PIDFILE=$RUN_DIR/bosh_dns_resolvconf.pid
 LOG_DIR=/var/vcap/sys/log/bosh-dns
 DNS_PACKAGE=/var/vcap/packages/bosh-dns
@@ -30,8 +30,15 @@ function create_directories_and_chown_to_vcap() {
   mkdir -p "${LOG_DIR}"
   chown -R vcap:vcap "${LOG_DIR}"
 
-  mkdir -p "${RUN_DIR}"
-  chown -R vcap:vcap "${RUN_DIR}"
+  # Keep root's process bookkeeping separate from service-writable state.
+  # Create the directory atomically, and only reuse an existing one that is a
+  # real directory owned by root, so no other user can place files in it.
+  if ! mkdir -m 0755 "${RUN_DIR}" 2>/dev/null; then
+    if [ -L "${RUN_DIR}" ] || [ ! -d "${RUN_DIR}" ] || [ ! -O "${RUN_DIR}" ]; then
+      echo "Refusing run directory that is not a root-owned directory" >&2
+      exit 1
+    fi
+  fi
 }
 
 function start_process() {

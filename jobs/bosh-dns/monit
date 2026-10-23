@@ -6,14 +6,14 @@ check process bosh-dns
   group vcap
 <% else %>
 check process bosh-dns
-  with pidfile /var/vcap/sys/run/bosh-dns/bosh-dns.pid
+  with pidfile /var/vcap/sys/run/bosh-dns-control/bosh-dns.pid
   start program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl start"
   stop program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_ctl stop"
   group vcap
 <% end %>
 <% if p('override_nameserver') %>
 check process bosh-dns-resolvconf
-  with pidfile /var/vcap/sys/run/bosh-dns/bosh_dns_resolvconf.pid
+  with pidfile /var/vcap/sys/run/bosh-dns-control/bosh_dns_resolvconf.pid
   start program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_resolvconf_ctl start"
   stop program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_resolvconf_ctl stop"
   group vcap
@@ -27,7 +27,7 @@ check process bosh-dns-healthcheck
   group vcap
 <% else %>
 check process bosh-dns-healthcheck
-  with pidfile /var/vcap/sys/run/bosh-dns/bosh_dns_health.pid
+  with pidfile /var/vcap/sys/run/bosh-dns-control/bosh_dns_health.pid
   start program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl start"
   stop program "/var/vcap/jobs/bosh-dns/bin/bosh_dns_health_ctl stop"
   group vcap
