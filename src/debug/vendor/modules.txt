@@ -7,7 +7,7 @@ bosh-dns/dns/server/record
 bosh-dns/healthcheck/api
 bosh-dns/healthconfig
 bosh-dns/tlsclient
-# code.cloudfoundry.org/clock v1.93.0
+# code.cloudfoundry.org/clock v1.94.0
 ## explicit; go 1.26.0
 code.cloudfoundry.org/clock
 # code.cloudfoundry.org/tlsconfig v0.69.0
@@ -36,7 +36,7 @@ github.com/cloudfoundry/bosh-cli/v7/ui
 github.com/cloudfoundry/bosh-cli/v7/ui/fakes
 github.com/cloudfoundry/bosh-cli/v7/ui/fmt
 github.com/cloudfoundry/bosh-cli/v7/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.666
+# github.com/cloudfoundry/bosh-utils v0.0.667
 ## explicit; go 1.26.0
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
@@ -47,8 +47,8 @@ github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851
 ## explicit; go 1.21.0
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.192
-## explicit; go 1.26.0
+# github.com/cloudfoundry/socks5-proxy v0.2.193
+## explicit; go 1.26.10
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
 ## explicit
@@ -79,14 +79,14 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20261016150608-1facf8f91b50
+# github.com/google/pprof v0.0.0-20261026192309-dbd0ed30aa88
 ## explicit; go 1.26.0
 github.com/google/pprof/profile
 # github.com/jessevdk/go-flags v1.6.1
 ## explicit; go 1.20
 github.com/jessevdk/go-flags
-# github.com/jpillora/backoff v1.0.0
-## explicit; go 1.13
+# github.com/jpillora/backoff v1.1.0
+## explicit; go 1.19
 github.com/jpillora/backoff
 # github.com/maruel/natural v1.3.0
 ## explicit; go 1.21
@@ -169,7 +169,7 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/mod v0.42.0
 ## explicit; go 1.26.0
 golang.org/x/mod/semver
-# golang.org/x/net v0.61.0
+# golang.org/x/net v0.62.0
 ## explicit; go 1.26.0
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -263,6 +263,8 @@ google.golang.org/protobuf/reflect/protoreflect
 google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
+# gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
+## explicit; go 1.11
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
