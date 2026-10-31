@@ -6,8 +6,8 @@ require (
 	code.cloudfoundry.org/clock v1.94.0
 	code.cloudfoundry.org/tlsconfig v0.69.0
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
-	github.com/cloudfoundry/bosh-utils v0.0.667
-	github.com/cloudfoundry/gosigar v1.3.128
+	github.com/cloudfoundry/bosh-utils v0.0.669
+	github.com/cloudfoundry/gosigar v1.3.130
 	github.com/coredns/coredns v1.15.0
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.14.0
 	github.com/miekg/dns v1.1.73
@@ -27,13 +27,14 @@ require (
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 // indirect
-	github.com/cloudfoundry/socks5-proxy v0.2.193 // indirect
+	github.com/cloudfoundry/socks5-proxy v0.2.194 // indirect
 	github.com/coredns/caddy v1.1.4 // indirect
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
-	github.com/gkampitakis/go-snaps v0.5.25 // indirect
+	github.com/gkampitakis/ciinfo v0.3.4 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
+	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20261026192309-dbd0ed30aa88 // indirect
@@ -42,19 +43,21 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/jpillora/backoff v1.1.0 // indirect
 	github.com/klauspost/compress v1.20.3 // indirect
+	github.com/maruel/natural v1.3.0 // indirect
 	github.com/mdlayher/socket v0.8.0 // indirect
 	github.com/mdlayher/vsock v1.3.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/pandatix/go-abnf v0.5.4 // indirect
 	github.com/pires/go-proxyproto v0.16.0 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
-	github.com/prometheus/common v0.72.1 // indirect
+	github.com/prometheus/common v0.73.1 // indirect
 	github.com/prometheus/exporter-toolkit v0.20.0 // indirect
 	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.64.1 // indirect
-	go.step.sm/crypto v0.91.1 // indirect
+	github.com/sergi/go-diff v1.4.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
