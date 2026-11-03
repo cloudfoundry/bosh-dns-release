@@ -16,7 +16,7 @@ main() {
   bbl plan > bbl_plan.txt
 
   # bbl 9.0.43 bundles a stale bosh-deployment. Replace it entirely with the
-  # pipeline's copy (master) so that stemcell pins, director address, BPM
+  # pipeline's copy so that stemcell pins, director address, BPM
   # version, and any other drift are all kept current without piecemeal patches.
   rm -rf ./bosh-deployment
   cp -r "${bosh_deployment_dir}" ./bosh-deployment
