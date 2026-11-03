@@ -1,5 +1,5 @@
 # bosh-dns v0.0.0 => ../bosh-dns
-## explicit; go 1.26.0
+## explicit; go 1.26.10
 bosh-dns/dns/api
 bosh-dns/dns/config
 bosh-dns/dns/manager
@@ -7,7 +7,7 @@ bosh-dns/dns/server/record
 bosh-dns/healthcheck/api
 bosh-dns/healthconfig
 bosh-dns/tlsclient
-# code.cloudfoundry.org/clock v1.92.0
+# code.cloudfoundry.org/clock v1.94.0
 ## explicit; go 1.26.0
 code.cloudfoundry.org/clock
 # code.cloudfoundry.org/tlsconfig v0.69.0
@@ -29,15 +29,15 @@ github.com/cheggaaa/pb/v3/termutil
 # github.com/clipperhouse/uax29/v2 v2.7.0
 ## explicit; go 1.18
 github.com/clipperhouse/uax29/v2/graphemes
-# github.com/cloudfoundry/bosh-cli/v7 v7.11.1
+# github.com/cloudfoundry/bosh-cli/v7 v7.11.2
 ## explicit; go 1.26.0
 github.com/cloudfoundry/bosh-cli/v7/io
 github.com/cloudfoundry/bosh-cli/v7/ui
 github.com/cloudfoundry/bosh-cli/v7/ui/fakes
 github.com/cloudfoundry/bosh-cli/v7/ui/fmt
 github.com/cloudfoundry/bosh-cli/v7/ui/table
-# github.com/cloudfoundry/bosh-utils v0.0.659
-## explicit; go 1.26.0
+# github.com/cloudfoundry/bosh-utils v0.0.669
+## explicit; go 1.26.10
 github.com/cloudfoundry/bosh-utils/errors
 github.com/cloudfoundry/bosh-utils/httpclient
 github.com/cloudfoundry/bosh-utils/logger
@@ -47,8 +47,8 @@ github.com/cloudfoundry/bosh-utils/uuid
 # github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851
 ## explicit; go 1.21.0
 github.com/cloudfoundry/go-socks5
-# github.com/cloudfoundry/socks5-proxy v0.2.192
-## explicit; go 1.26.0
+# github.com/cloudfoundry/socks5-proxy v0.2.194
+## explicit; go 1.26.10
 github.com/cloudfoundry/socks5-proxy
 # github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
 ## explicit
@@ -59,8 +59,8 @@ github.com/dustin/go-humanize
 # github.com/fatih/color v1.19.0
 ## explicit; go 1.25.0
 github.com/fatih/color
-# github.com/fsnotify/fsnotify v1.8.0
-## explicit; go 1.17
+# github.com/fsnotify/fsnotify v1.10.1
+## explicit; go 1.23
 # github.com/go-logr/logr v1.4.4
 ## explicit; go 1.18
 github.com/go-logr/logr
@@ -75,14 +75,14 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/pprof v0.0.0-20261016150608-1facf8f91b50
+# github.com/google/pprof v0.0.0-20261026192309-dbd0ed30aa88
 ## explicit; go 1.26.0
 github.com/google/pprof/profile
 # github.com/jessevdk/go-flags v1.6.1
 ## explicit; go 1.20
 github.com/jessevdk/go-flags
-# github.com/jpillora/backoff v1.0.0
-## explicit; go 1.13
+# github.com/jpillora/backoff v1.1.0
+## explicit; go 1.19
 github.com/jpillora/backoff
 # github.com/mattn/go-colorable v0.1.16
 ## explicit; go 1.18
@@ -101,6 +101,8 @@ github.com/miekg/dns
 github.com/nu7hatch/gouuid
 # github.com/nxadm/tail v1.4.11
 ## explicit; go 1.13
+# github.com/onsi/ginkgo v1.16.5
+## explicit; go 1.16
 # github.com/onsi/ginkgo/v2 v2.33.1
 ## explicit; go 1.25.0
 github.com/onsi/ginkgo/v2
@@ -161,7 +163,7 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/mod v0.42.0
 ## explicit; go 1.26.0
 golang.org/x/mod/semver
-# golang.org/x/net v0.61.0
+# golang.org/x/net v0.62.0
 ## explicit; go 1.26.0
 golang.org/x/net/bpf
 golang.org/x/net/context

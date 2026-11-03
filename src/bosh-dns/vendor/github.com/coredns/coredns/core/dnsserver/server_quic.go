@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"time"
 
 	"github.com/coredns/coredns/plugin/metrics/vars"
@@ -63,18 +64,13 @@ type ServerQUIC struct {
 
 // NewServerQUIC returns a new CoreDNS QUIC server and compiles all plugin in to it.
 func NewServerQUIC(addr string, group []*Config) (*ServerQUIC, error) {
-	s, err := NewServer(addr, group)
+	tlsConfig, err := sharedTLSConfig(addr, group)
 	if err != nil {
 		return nil, err
 	}
-	// The *tls* plugin must make sure that multiple conflicting
-	// TLS configuration returns an error: it can only be specified once.
-	var tlsConfig *tls.Config
-	for _, z := range s.zones {
-		for _, conf := range z {
-			// Should we error if some configs *don't* have TLS?
-			tlsConfig = conf.TLSConfig
-		}
+	s, err := NewServer(addr, group)
+	if err != nil {
+		return nil, err
 	}
 
 	if tlsConfig != nil {
@@ -225,7 +221,7 @@ func (s *ServerQUIC) serveQUICStream(stream *quic.Stream, conn *quic.Conn) {
 	// server's read timeout (the same deadline used for reading a query on
 	// TCP), so a stalled stream cannot hold a worker forever. A deadline
 	// hit surfaces as a read error handled by the existing error path below,
-	// which closes the connection and frees the worker.
+	// which frees the worker by cancelling just this stream.
 	if s.ReadTimeout != 0 {
 		_ = stream.SetReadDeadline(time.Now().Add(s.ReadTimeout))
 	}
@@ -236,6 +232,16 @@ func (s *ServerQUIC) serveQUICStream(stream *quic.Stream, conn *quic.Conn) {
 	// the STREAM FIN indicating that there will be no data to read
 	// anymore from this stream.
 	if err != nil && err != io.EOF {
+		if isTransientStreamError(err) {
+			// Abandon just this stream, not the whole connection (RFC 9250
+			// §4.3.3). Only RESET_STREAM (CancelWrite): STOP_SENDING is
+			// client-only (§4.3.1) and would itself force a connection abort.
+			stream.CancelWrite(quic.StreamErrorCode(DoQCodeInternalError))
+			s.countResponse(DoQCodeInternalError)
+
+			return
+		}
+
 		s.closeQUICConn(conn, DoQCodeProtocolError)
 
 		return
@@ -254,7 +260,7 @@ func (s *ServerQUIC) serveQUICStream(stream *quic.Stream, conn *quic.Conn) {
 		// fatal error. It SHOULD forcibly abort the connection using QUIC's
 		// CONNECTION_CLOSE mechanism and SHOULD use the DoQ error code
 		// DOQ_PROTOCOL_ERROR.
-		// See https://www.rfc-editor.org/rfc/rfc9250#section-4.3.3-3
+		// See https://www.rfc-editor.org/info/rfc9250/#section-4.3.3-3
 		s.closeQUICConn(conn, DoQCodeProtocolError)
 
 		return
@@ -269,9 +275,9 @@ func (s *ServerQUIC) serveQUICStream(stream *quic.Stream, conn *quic.Conn) {
 	}
 
 	if tsig := req.IsTsig(); tsig != nil {
-		if s.tsigSecret == nil {
+		if s.TsigSecret == nil {
 			w.tsigStatus = dns.ErrSecret
-		} else if secret, ok := s.tsigSecret[tsig.Hdr.Name]; !ok {
+		} else if secret, ok := s.TsigSecret[tsig.Hdr.Name]; !ok {
 			w.tsigStatus = dns.ErrSecret
 		} else {
 			w.tsigStatus = dns.TsigVerify(buf, secret, "", false)
@@ -292,7 +298,7 @@ func (s *ServerQUIC) ListenPacket() (net.PacketConn, error) {
 	}
 
 	if s.connPolicy != nil {
-		p = &cproxyproto.PacketConn{PacketConn: p, ConnPolicy: s.connPolicy}
+		p = &cproxyproto.PacketConn{PacketConn: p, ConnPolicy: s.connPolicy, UDPSessionTrackingTTL: s.udpSessionTrackingTTL, UDPSessionTrackingMaxSessions: s.udpSessionTrackingMaxSessions, CaptureTLVs: s.proxyProtoTLVMetadata}
 	}
 
 	s.m.Lock()
@@ -315,7 +321,7 @@ func (s *ServerQUIC) OnStartupComplete() {
 
 	out := startUpZones(transport.QUIC+"://", s.Addr, s.zones)
 	if out != "" {
-		fmt.Print(out)
+		printStartup(out)
 	}
 }
 
@@ -356,7 +362,7 @@ func (s *ServerQUIC) closeQUICConn(conn *quic.Conn, code quic.ApplicationErrorCo
 }
 
 // validRequest checks for protocol errors in the unpacked DNS message.
-// See https://www.rfc-editor.org/rfc/rfc9250.html#name-protocol-errors
+// See https://www.rfc-editor.org/info/rfc9250/#name-protocol-errors
 func validRequest(req *dns.Msg) (ok bool) {
 	// 1. a client or server receives a message with a non-zero Message ID.
 	if req.Id != 0 {
@@ -398,7 +404,7 @@ func readDOQMessage(r io.Reader) ([]byte, error) {
 	// All DNS messages (queries and responses) sent over DoQ connections MUST
 	// be encoded as a 2-octet length field followed by the message content as
 	// specified in [RFC1035].
-	// See https://www.rfc-editor.org/rfc/rfc9250.html#section-4.2-4
+	// See https://www.rfc-editor.org/info/rfc9250/#section-4.2-4
 	sizeBuf := make([]byte, 2)
 	_, err := io.ReadFull(r, sizeBuf)
 	if err != nil {
@@ -416,12 +422,33 @@ func readDOQMessage(r io.Reader) ([]byte, error) {
 
 	// A client or server receives a STREAM FIN before receiving all the bytes
 	// for a message indicated in the 2-octet length field.
-	// See https://www.rfc-editor.org/rfc/rfc9250#section-4.3.3-2.2
+	// See https://www.rfc-editor.org/info/rfc9250/#section-4.3.3-2.2
 	if size != uint16(len(buf)) { // #nosec G115 -- buf length fits in uint16
 		return nil, fmt.Errorf("message size does not match 2-byte prefix")
 	}
 
 	return buf, err
+}
+
+// isTransientStreamError reports whether err reflects a condition scoped to
+// a single QUIC stream — the server's own read deadline expiring, or the
+// peer resetting just that stream — rather than a DoQ message-framing
+// violation by the peer. RFC 9250 §4.3.3 requires the latter to abort the
+// whole connection; the former must not, since DoQ multiplexes many
+// independent queries as separate streams on one connection.
+//
+// A deadline timeout is identified specifically via os.ErrDeadlineExceeded
+// (what stream.SetReadDeadline produces) rather than the broader net.Error
+// Timeout() check, because connection-level failures such as
+// quic.IdleTimeoutError also report Timeout() == true but must still take
+// the existing connection-closing path.
+func isTransientStreamError(err error) bool {
+	if errors.Is(err, os.ErrDeadlineExceeded) {
+		return true
+	}
+
+	var streamErr *quic.StreamError
+	return errors.As(err, &streamErr)
 }
 
 // isExpectedErr returns true if err is an expected error, likely related to
