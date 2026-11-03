@@ -724,7 +724,7 @@ resources:
     type: git
     source:
       uri: https://github.com/cloudfoundry/bosh-dns-release
-      branch: master
+      branch: main
       username: bosh-admin-bot
       password: ((github_read_write_token))
       ignore_paths:
