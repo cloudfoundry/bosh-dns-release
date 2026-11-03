@@ -688,7 +688,6 @@ resources:
     type: git
     source:
       uri: https://github.com/cloudfoundry/bosh-deployment
-      branch: master
 
   - name: docker-release
     type: bosh-io-release
