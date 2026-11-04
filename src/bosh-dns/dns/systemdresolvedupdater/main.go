@@ -65,7 +65,7 @@ func main() {
 	}
 
 	if boshDnsConfig.ConfigureSystemdResolved {
-		systemdResolvedManager := manager.NewSystemdResolvedManager(system.NewExecCmdRunner(logr))
+		systemdResolvedManager := manager.NewSystemdResolvedManager(system.NewExecCmdRunner(logr), logr)
 		var domains []string
 		domains = append(domains, handlersConfiguration.HandlerDomains()...)
 		domains = append(domains, recordSet.Domains()...)
