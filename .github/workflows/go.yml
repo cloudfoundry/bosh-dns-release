@@ -3,45 +3,37 @@ on:
   push:
   pull_request:
 jobs:
-  lint_bosh_dns:
+  lint:
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-    name: lint_bosh_dns
+        # "native" keeps the runner's own architecture; other entries are
+        # cross-compiled from Linux only.
+        goarch: [native, arm64]
+        component:
+          - { name: bosh_dns, dir: src/bosh-dns }
+          - { name: test_recursor, dir: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor }
+          - { name: debug, dir: src/debug }
+        exclude:
+          - { os: macos-latest, goarch: arm64 }
+          - { os: windows-latest, goarch: arm64 }
+    name: lint_${{ matrix.component.name }} (${{ matrix.os }}${{ matrix.goarch != 'native' && format(', {0}', matrix.goarch) || '' }})
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version-file: src/bosh-dns/go.mod
+          go-version-file: ${{ matrix.component.dir }}/go.mod
       - uses: golangci/golangci-lint-action@v9
+        env:
+          GOARCH: ${{ matrix.goarch != 'native' && matrix.goarch || '' }}
         with:
-          working-directory: src/bosh-dns/
-  lint_test_recursor:
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-    name: lint_test_recursor
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
-        with:
-          go-version-file: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor/go.mod
-      - uses: golangci/golangci-lint-action@v9
-        with:
-          working-directory: src/bosh-dns/acceptance_tests/dns-acceptance-release/src/test-recursor
-  lint_debug:
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-    name: lint_debug
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
-        with:
-          go-version-file: src/debug/go.mod
-      - uses: golangci/golangci-lint-action@v9
-        with:
-          working-directory: src/debug/
+          working-directory: ${{ matrix.component.dir }}
+      - name: build
+        if: runner.os == 'Linux'
+        working-directory: ${{ matrix.component.dir }}
+        env:
+          GOARCH: ${{ matrix.goarch != 'native' && matrix.goarch || '' }}
+          CGO_ENABLED: "0"
+        run: go build ./...
