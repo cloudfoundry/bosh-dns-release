@@ -19,14 +19,14 @@ var _ = Describe("SystemdResolvedManager", func() {
 
 	Describe("UpdateDomains", func() {
 		It("configures the Domains for the bosh-dns interface using resolvectl", func() {
-			fakeCmdRunner.AddCmdResult("resolvectl domain bosh-dns bosh. alias-domain.", fakes.FakeCmdResult{})
+			fakeCmdRunner.AddCmdResult("resolvectl domain bosh-dns ~bosh. ~alias-domain.", fakes.FakeCmdResult{})
 
 			manager := manager.NewSystemdResolvedManager(fakeCmdRunner)
 
 			err := manager.UpdateDomains([]string{"bosh.", "alias-domain."})
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(fakeCmdRunner.RunCommands[0]).To(Equal([]string{"resolvectl", "domain", "bosh-dns", "bosh.", "alias-domain."}))
+			Expect(fakeCmdRunner.RunCommands[0]).To(Equal([]string{"resolvectl", "domain", "bosh-dns", "~bosh.", "~alias-domain."}))
 		})
 	})
 })

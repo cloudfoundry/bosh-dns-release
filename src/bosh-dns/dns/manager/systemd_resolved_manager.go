@@ -14,7 +14,9 @@ func NewSystemdResolvedManager(cmdRunner system.CmdRunner) systemdResolvedManage
 
 func (r systemdResolvedManager) UpdateDomains(domains []string) error {
 	resolvectlArgs := []string{"domain", "bosh-dns"}
-	resolvectlArgs = append(resolvectlArgs, domains...)
+	for _, d := range domains {
+		resolvectlArgs = append(resolvectlArgs, "~"+d)
+	}
 
 	_, _, _, err := r.cmdRunner.RunCommand("resolvectl", resolvectlArgs...)
 	return err
