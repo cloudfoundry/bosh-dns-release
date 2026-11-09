@@ -39,9 +39,10 @@
   end
 
   # bosh-dns forwards to the systemd-resolved stub resolver when recursors names
-  # it, or when recursors is empty and bosh-dns reads it from resolv.conf.
+  # it, or when recursors is empty and bosh-dns reads either stub address from
+  # resolv.conf.
   without_port = ->(r) { r.to_s.sub(/:53\z/, '') }
-  stubs = (p('recursors').empty? ? ['127.0.0.53'] : p('recursors')).map(&without_port) & %w[127.0.0.53 127.0.0.54]
+  stubs = (p('recursors').empty? ? %w[127.0.0.53 127.0.0.54] : p('recursors')).map(&without_port) & %w[127.0.0.53 127.0.0.54]
   stubs -= p('excluded_recursors').map(&without_port)
   if p('configure_systemd_resolved') && !p('disable_recursors') && !stubs.empty? &&
      (!routing_domains.empty? || !alias_suffixes.empty?)

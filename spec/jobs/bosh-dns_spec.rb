@@ -187,6 +187,14 @@ describe 'bosh-dns' do
         end
       end
 
+      context 'with only one stub resolver read from resolv.conf excluded' do
+        let(:properties) { stub_properties.merge('excluded_recursors' => ['127.0.0.53'], 'systemd_resolved' => {'routing_domains' => ['bosh']}) }
+
+        it 'fails to render' do
+          expect { rendered }.to raise_error(/need disable_recursors: true/)
+        end
+      end
+
       context 'without routing domains or alias suffixes' do
         let(:properties) { stub_properties }
 
@@ -231,8 +239,8 @@ describe 'bosh-dns' do
         end
       end
 
-      context 'with the stub resolver read from resolv.conf and excluded' do
-        let(:properties) { stub_properties.merge('excluded_recursors' => ['127.0.0.53']) }
+      context 'with both stub resolvers read from resolv.conf excluded' do
+        let(:properties) { stub_properties.merge('excluded_recursors' => ['127.0.0.53', '127.0.0.54:53']) }
 
         it 'renders' do
           expect(rendered['systemd_resolved_routing_domains']).to eq(['bosh'])

@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"bosh-dns/dns/config"
+	"bosh-dns/dns/config/configfakes"
 	"bosh-dns/dns/config/handlers"
 	"bosh-dns/dns/manager/managerfakes"
 	"bosh-dns/dns/server/aliases"
@@ -369,11 +370,12 @@ var _ = Describe("systemd-resolved domains", func() {
 		const ownSuffixFile = "/var/vcap/jobs/bosh-dns/dns/alias_suffixes.json"
 
 		var (
-			cfg         config.Config
-			fs          *boshsysfakes.FakeFileSystem
-			fakeLogger  *loggerfakes.FakeLogger
-			recordSet   *records.RecordSet
-			suffixFiles []string
+			cfg            config.Config
+			fs             *boshsysfakes.FakeFileSystem
+			fakeLogger     *loggerfakes.FakeLogger
+			recordSet      *records.RecordSet
+			recursorReader *configfakes.FakeRecursorReader
+			suffixFiles    []string
 		)
 
 		warnings := func() []string {
@@ -395,6 +397,7 @@ var _ = Describe("systemd-resolved domains", func() {
 		BeforeEach(func() {
 			fs = boshsysfakes.NewFakeFileSystem()
 			fakeLogger = &loggerfakes.FakeLogger{}
+			recursorReader = &configfakes.FakeRecursorReader{}
 			suffixFiles = nil
 
 			cfg = config.NewDefaultConfig()
@@ -414,7 +417,7 @@ var _ = Describe("systemd-resolved domains", func() {
 
 		Context("when nothing is configured", func() {
 			It("sends exactly the list built from Domains and logs nothing", func() {
-				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, fakeLogger)
+				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
 
 				Expect(domains).To(Equal([]string{
 					"corp.intranet.local.",
@@ -430,6 +433,17 @@ var _ = Describe("systemd-resolved domains", func() {
 				Expect(fakeLogger.WarnCallCount()).To(Equal(0))
 				Expect(fakeLogger.InfoCallCount()).To(Equal(0))
 			})
+
+			It("does not read the recursors when bosh-dns would read them from resolv.conf", func() {
+				cfg.DisableRecursors = false
+				recursorReader.GetReturns(nil, errors.New("no resolv.conf"))
+
+				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
+
+				Expect(domains).To(Equal(masterDomains(handlerDomains, recordSet, upcheckDomains)))
+				Expect(recursorReader.GetCallCount()).To(Equal(0))
+				Expect(fakeLogger.WarnCallCount()).To(Equal(0))
+			})
 		})
 
 		Context("when routing domains and alias suffix files are configured", func() {
@@ -442,7 +456,7 @@ var _ = Describe("systemd-resolved domains", func() {
 			})
 
 			It("passes the canonical routing domains, the suffixes from the default glob under jobs_dir, and the upcheck domains through", func() {
-				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, fakeLogger)
+				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
 
 				Expect(domains).To(Equal([]string{
 					"corp.intranet.local.",
@@ -456,7 +470,7 @@ var _ = Describe("systemd-resolved domains", func() {
 			It("uses the configured glob in place of the default", func() {
 				cfg.AliasSuffixFilesGlob = "/other/*/alias_suffixes.json"
 
-				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, fakeLogger)
+				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
 
 				Expect(domains).To(Equal([]string{
 					"corp.intranet.local.",
@@ -470,7 +484,7 @@ var _ = Describe("systemd-resolved domains", func() {
 			It("logs and skips an alias suffix file it cannot read", func() {
 				fs.RegisterReadFileError("/var/vcap/jobs/a/dns/alias_suffixes.json", errors.New("permission denied"))
 
-				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, fakeLogger)
+				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
 
 				Expect(domains).To(Equal([]string{
 					"corp.intranet.local.",
@@ -488,7 +502,7 @@ var _ = Describe("systemd-resolved domains", func() {
 				Expect(fs.WriteFileString("/var/vcap/jobs/a/dns/alias_suffixes.json", `{"a.service.cf.internal": "service.cf.internal"}`)).To(Succeed())
 				Expect(fs.WriteFileString(ownSuffixFile, `{"a.service.cf.internal": "a.service.cf.internal"}`)).To(Succeed())
 
-				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, fakeLogger)
+				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
 
 				Expect(domains).To(Equal([]string{
 					"corp.intranet.local.",
@@ -504,7 +518,7 @@ var _ = Describe("systemd-resolved domains", func() {
 		It("logs and drops a routing domain that cannot be registered and keeps the others", func() {
 			cfg.SystemdResolvedRoutingDomains = []string{"", ".", "~bosh", "*.bosh", "bo sh", "-bad.bosh", "Kube.internal", "service.cf.internal"}
 
-			domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, fakeLogger)
+			domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
 
 			Expect(domains).To(Equal([]string{
 				"corp.intranet.local.",
@@ -538,7 +552,7 @@ var _ = Describe("systemd-resolved domains", func() {
 			recordSet = newRecordSet(aliases.NewConfig())
 			writeSuffixFile("a", `{"_.cell.service.cf.internal": "service.cf.internal"}`)
 
-			Expect(domainsFromConfig(cfg, ownSuffixFile, nil, recordSet, fs, fakeLogger)).To(Equal([]string{
+			Expect(domainsFromConfig(cfg, ownSuffixFile, nil, recordSet, fs, recursorReader, fakeLogger)).To(Equal([]string{
 				"bosh.",
 				"0a1b.cell.service.cf.internal.",
 				"2c3d.cell.service.cf.internal.",
@@ -547,7 +561,7 @@ var _ = Describe("systemd-resolved domains", func() {
 			}))
 
 			cfg.SystemdResolvedRoutingDomains = []string{"service.cf.internal"}
-			Expect(domainsFromConfig(cfg, ownSuffixFile, nil, recordSet, fs, fakeLogger)).To(Equal([]string{
+			Expect(domainsFromConfig(cfg, ownSuffixFile, nil, recordSet, fs, recursorReader, fakeLogger)).To(Equal([]string{
 				"bosh.",
 				"service.cf.internal.",
 				"bosh-dns.",
@@ -559,11 +573,12 @@ var _ = Describe("systemd-resolved domains", func() {
 				cfg.DisableRecursors = false
 				cfg.Recursors = nil
 				cfg.SystemdResolvedRoutingDomains = []string{"bosh."}
+				recursorReader.GetReturns([]string{"127.0.0.53:53"}, nil)
 				writeSuffixFile("a", `{"a.service.cf.internal": "service.cf.internal"}`)
 			})
 
 			It("ignores the routing domains and alias suffixes with a warning that says why", func() {
-				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, fakeLogger)
+				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
 
 				Expect(domains).To(Equal(masterDomains(handlerDomains, recordSet, upcheckDomains)))
 				Expect(warnings()).To(ConsistOf(And(
@@ -578,9 +593,36 @@ var _ = Describe("systemd-resolved domains", func() {
 				suffixFiles = nil
 				writeSuffixFile("b", `{"missing.service.cf.internal": "service.cf.internal"}`)
 
-				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, fakeLogger)
+				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
 
 				Expect(domains).To(Equal(masterDomains(handlerDomains, recordSet, upcheckDomains)))
+				Expect(fakeLogger.WarnCallCount()).To(Equal(0))
+			})
+
+			It("ignores the routing domains and alias suffixes with a warning that names the error when the recursors cannot be read", func() {
+				recursorReader.GetReturns(nil, errors.New("no resolv.conf"))
+
+				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
+
+				Expect(domains).To(Equal(masterDomains(handlerDomains, recordSet, upcheckDomains)))
+				Expect(warnings()).To(ConsistOf(And(
+					ContainSubstring("Ignoring alias suffixes and systemd_resolved.routing_domains"),
+					ContainSubstring("could not read its recursors (no resolv.conf)"),
+					ContainSubstring("disable_recursors: true"),
+				)))
+			})
+
+			It("applies the routing domains and alias suffixes when the recursors read from resolv.conf do not include the stub", func() {
+				recursorReader.GetReturns([]string{"10.0.0.2:53"}, nil)
+
+				domains := domainsFromConfig(cfg, ownSuffixFile, handlerDomains, recordSet, fs, recursorReader, fakeLogger)
+
+				Expect(domains).To(Equal([]string{
+					"corp.intranet.local.",
+					"bosh.",
+					"service.cf.internal.",
+					"bosh-dns.",
+				}))
 				Expect(fakeLogger.WarnCallCount()).To(Equal(0))
 			})
 		})
@@ -593,12 +635,14 @@ var _ = Describe("systemd-resolved domains", func() {
 			fakeLogger             *loggerfakes.FakeLogger
 			systemdResolvedManager *managerfakes.FakeSystemdResolvedManager
 			handlersConfiguration  handlers.HandlerConfigs
+			recursorReader         *configfakes.FakeRecursorReader
 		)
 
 		BeforeEach(func() {
 			fs = boshsysfakes.NewFakeFileSystem()
 			fakeLogger = &loggerfakes.FakeLogger{}
 			systemdResolvedManager = &managerfakes.FakeSystemdResolvedManager{}
+			recursorReader = &configfakes.FakeRecursorReader{}
 			handlersConfiguration = handlers.HandlerConfigs{{Domain: "corp.intranet.local."}, {Domain: "bosh."}}
 
 			cfg = config.NewDefaultConfig()
@@ -607,7 +651,7 @@ var _ = Describe("systemd-resolved domains", func() {
 		})
 
 		It("sends the handler, record set, and upcheck parent domains", func() {
-			err := updateSystemdResolved(systemdResolvedManager, cfg, "", handlersConfiguration, newRecordSet(aliases.NewConfig()), fs, fakeLogger)
+			err := updateSystemdResolved(systemdResolvedManager, cfg, "", handlersConfiguration, newRecordSet(aliases.NewConfig()), fs, recursorReader, fakeLogger)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(systemdResolvedManager.UpdateDomainsCallCount()).To(Equal(1))
@@ -625,7 +669,7 @@ var _ = Describe("systemd-resolved domains", func() {
 		It("returns the error from systemd-resolved", func() {
 			systemdResolvedManager.UpdateDomainsReturns(errors.New("resolvectl failed"))
 
-			err := updateSystemdResolved(systemdResolvedManager, cfg, "", handlersConfiguration, newRecordSet(aliases.NewConfig()), fs, fakeLogger)
+			err := updateSystemdResolved(systemdResolvedManager, cfg, "", handlersConfiguration, newRecordSet(aliases.NewConfig()), fs, recursorReader, fakeLogger)
 
 			Expect(err).To(MatchError("resolvectl failed"))
 		})
@@ -633,7 +677,7 @@ var _ = Describe("systemd-resolved domains", func() {
 		It("does nothing when configure_systemd_resolved is false", func() {
 			cfg.ConfigureSystemdResolved = false
 
-			err := updateSystemdResolved(systemdResolvedManager, cfg, "", handlersConfiguration, newRecordSet(aliases.NewConfig()), fs, fakeLogger)
+			err := updateSystemdResolved(systemdResolvedManager, cfg, "", handlersConfiguration, newRecordSet(aliases.NewConfig()), fs, recursorReader, fakeLogger)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(systemdResolvedManager.UpdateDomainsCallCount()).To(Equal(0))
@@ -642,7 +686,7 @@ var _ = Describe("systemd-resolved domains", func() {
 		It("warns before it sends more distinct domains than systemd-resolved accepts", func() {
 			recordsJSON = largeDeploymentRecordsJSON(300, 1)
 
-			err := updateSystemdResolved(systemdResolvedManager, cfg, "", nil, newRecordSet(aliases.NewConfig()), fs, fakeLogger)
+			err := updateSystemdResolved(systemdResolvedManager, cfg, "", nil, newRecordSet(aliases.NewConfig()), fs, recursorReader, fakeLogger)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(systemdResolvedManager.UpdateDomainsArgsForCall(0)).To(HaveLen(303))
@@ -654,7 +698,7 @@ var _ = Describe("systemd-resolved domains", func() {
 		It("does not warn at the limit or for repeated domains", func() {
 			recordsJSON = largeDeploymentRecordsJSON(253, 1)
 
-			err := updateSystemdResolved(systemdResolvedManager, cfg, "", handlersConfiguration, newRecordSet(aliases.NewConfig()), fs, fakeLogger)
+			err := updateSystemdResolved(systemdResolvedManager, cfg, "", handlersConfiguration, newRecordSet(aliases.NewConfig()), fs, recursorReader, fakeLogger)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(systemdResolvedManager.UpdateDomainsArgsForCall(0)).To(HaveLen(258))
@@ -664,31 +708,111 @@ var _ = Describe("systemd-resolved domains", func() {
 
 	Describe("forwardsToStubResolver", func() {
 		DescribeTable("reports whether bosh-dns can forward to the systemd-resolved stub resolver",
-			func(disableRecursors bool, recursors []string, excludedRecursors []string, expected bool) {
+			func(disableRecursors bool, recursors []string, discovered []string, excludedRecursors []string, expected bool) {
 				cfg := config.NewDefaultConfig()
 				cfg.ConfigureSystemdResolved = true
 				cfg.DisableRecursors = disableRecursors
 				cfg.Recursors = recursors
 				cfg.ExcludedRecursors = excludedRecursors
+				recursorReader := &configfakes.FakeRecursorReader{}
+				recursorReader.GetReturns(discovered, nil)
 
-				Expect(forwardsToStubResolver(cfg)).To(Equal(expected))
+				forwards, err := forwardsToStubResolver(cfg, recursorReader)
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(forwards).To(Equal(expected))
+				Expect(cfg.Recursors).To(Equal(recursors))
+				if disableRecursors || len(recursors) > 0 {
+					Expect(recursorReader.GetCallCount()).To(Equal(0))
+				}
 			},
-			Entry("recursors from the system resolver", false, nil, nil, true),
-			Entry("recursors disabled", true, nil, nil, false),
-			Entry("explicit recursors", false, []string{"10.0.0.2:53"}, nil, false),
-			Entry("the stub as a recursor", false, []string{"127.0.0.53"}, nil, true),
-			Entry("the stub with its port", false, []string{"127.0.0.53:53"}, nil, true),
-			Entry("the proxy stub", false, []string{"127.0.0.54:53"}, nil, true),
-			Entry("the stub after another recursor", false, []string{"10.0.0.2:53", "127.0.0.53:53"}, nil, true),
-			Entry("the stub address on another port", false, []string{"127.0.0.53:5353"}, nil, false),
-			Entry("the stub from the system resolver excluded", false, nil, []string{"127.0.0.53:53"}, false),
-			Entry("an explicit stub excluded", false, []string{"127.0.0.53"}, []string{"127.0.0.53:53"}, false),
-			Entry("the other stub excluded", false, []string{"127.0.0.53:53"}, []string{"127.0.0.54:53"}, true),
+			Entry("recursors disabled", true, nil, []string{"127.0.0.53:53"}, nil, false),
+			Entry("the stub read from resolv.conf", false, nil, []string{"127.0.0.53:53"}, nil, true),
+			Entry("the proxy stub read from resolv.conf", false, nil, []string{"127.0.0.54:53"}, nil, true),
+			Entry("an upstream read from resolv.conf", false, nil, []string{"10.0.0.2:53"}, nil, false),
+			Entry("the stub after an upstream read from resolv.conf", false, nil, []string{"10.0.0.2:53", "127.0.0.53:53"}, nil, true),
+			Entry("nothing read from resolv.conf", false, nil, []string{}, nil, false),
+			Entry("the proxy stub read from resolv.conf and excluded", false, nil, []string{"127.0.0.54:53"}, []string{"127.0.0.54:53"}, false),
+			Entry("the proxy stub read from resolv.conf with the other stub excluded", false, nil, []string{"127.0.0.54:53"}, []string{"127.0.0.53:53"}, true),
+			Entry("explicit recursors", false, []string{"10.0.0.2:53"}, []string{"127.0.0.53:53"}, nil, false),
+			Entry("the stub as a recursor", false, []string{"127.0.0.53"}, nil, nil, true),
+			Entry("the stub with its port", false, []string{"127.0.0.53:53"}, nil, nil, true),
+			Entry("the proxy stub", false, []string{"127.0.0.54:53"}, nil, nil, true),
+			Entry("the stub after another recursor", false, []string{"10.0.0.2:53", "127.0.0.53:53"}, nil, nil, true),
+			Entry("the stub address on another port", false, []string{"127.0.0.53:5353"}, nil, nil, false),
+			Entry("the stub as an IPv4-mapped address", false, []string{"[::ffff:127.0.0.53]:53"}, nil, nil, true),
+			Entry("an explicit stub excluded", false, []string{"127.0.0.53"}, nil, []string{"127.0.0.53:53"}, false),
+			Entry("the other stub excluded", false, []string{"127.0.0.53:53"}, nil, []string{"127.0.0.54:53"}, true),
 		)
+
+		It("reports true with the error when the recursors cannot be read", func() {
+			cfg := config.NewDefaultConfig()
+			cfg.ConfigureSystemdResolved = true
+			recursorReader := &configfakes.FakeRecursorReader{}
+			recursorReader.GetReturns(nil, errors.New("no resolv.conf"))
+
+			forwards, err := forwardsToStubResolver(cfg, recursorReader)
+
+			Expect(err).To(MatchError("no resolv.conf"))
+			Expect(forwards).To(BeTrue())
+		})
 
 		It("reports false when configure_systemd_resolved is false", func() {
 			cfg := config.NewDefaultConfig()
-			Expect(forwardsToStubResolver(cfg)).To(BeFalse())
+			recursorReader := &configfakes.FakeRecursorReader{}
+
+			forwards, err := forwardsToStubResolver(cfg, recursorReader)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(forwards).To(BeFalse())
+			Expect(recursorReader.GetCallCount()).To(Equal(0))
+		})
+	})
+
+	Describe("serverRecursorReader", func() {
+		var (
+			fs         *boshsysfakes.FakeFileSystem
+			dnsManager *managerfakes.FakeDNSManager
+			reader     serverRecursorReader
+		)
+
+		BeforeEach(func() {
+			fs = boshsysfakes.NewFakeFileSystem()
+			dnsManager = &managerfakes.FakeDNSManager{}
+			reader = serverRecursorReader{
+				address:            "169.254.0.2",
+				addressesFilesGlob: "/var/vcap/jobs/*/dns/addresses.json",
+				fs:                 fs,
+				dnsManager:         dnsManager,
+			}
+
+			Expect(fs.WriteFileString("/var/vcap/jobs/a/dns/addresses.json", `[{"address": "169.254.0.3", "port": 53}]`)).To(Succeed())
+			fs.SetGlob("/var/vcap/jobs/*/dns/addresses.json", []string{"/var/vcap/jobs/a/dns/addresses.json"})
+		})
+
+		It("reads the nameservers without bosh-dns's own addresses and never sets bosh-dns as the primary", func() {
+			dnsManager.ReadReturns([]string{"169.254.0.2", "169.254.0.3", "127.0.0.1", "127.0.0.53"}, nil)
+
+			Expect(reader.Get()).To(Equal([]string{"127.0.0.53:53"}))
+			Expect(dnsManager.ReadCallCount()).To(Equal(1))
+			Expect(dnsManager.SetPrimaryCallCount()).To(Equal(0))
+		})
+
+		It("returns the error when an addresses file cannot be read", func() {
+			fs.RegisterReadFileError("/var/vcap/jobs/a/dns/addresses.json", errors.New("permission denied"))
+
+			_, err := reader.Get()
+
+			Expect(err).To(MatchError(ContainSubstring("permission denied")))
+			Expect(dnsManager.ReadCallCount()).To(Equal(0))
+		})
+
+		It("returns the error when resolv.conf cannot be read", func() {
+			dnsManager.ReadReturns(nil, errors.New("no resolv.conf"))
+
+			_, err := reader.Get()
+
+			Expect(err).To(MatchError("no resolv.conf"))
 		})
 	})
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"bosh-dns/dns/config"
+	"bosh-dns/dns/config/addresses"
 	"bosh-dns/dns/config/handlers"
 	"bosh-dns/dns/manager"
 	"bosh-dns/dns/server/aliases"
@@ -77,8 +79,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	recursorReader := serverRecursorReader{
+		address:            boshDnsConfig.Address,
+		addressesFilesGlob: boshDnsConfig.AddressesFilesGlob,
+		fs:                 fs,
+		dnsManager:         manager.NewResolvConfManager(boshDnsConfig.Address, clock.NewClock(), fs, system.NewExecCmdRunner(logr)),
+	}
+
 	systemdResolvedManager := manager.NewSystemdResolvedManager(system.NewExecCmdRunner(logr))
-	err = updateSystemdResolved(systemdResolvedManager, boshDnsConfig, ownAliasSuffixFile(configPath), handlersConfiguration, recordSet, fs, logr)
+	err = updateSystemdResolved(systemdResolvedManager, boshDnsConfig, ownAliasSuffixFile(configPath), handlersConfiguration, recordSet, fs, recursorReader, logr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -89,12 +98,12 @@ func main() {
 // systemd-resolved, and does nothing when systemd-resolved is not configured.
 // It warns when there are more distinct domains than one link accepts, and
 // still sends them. It returns the error from the manager.
-func updateSystemdResolved(systemdResolvedManager manager.SystemdResolvedManager, cfg config.Config, ownSuffixFile string, handlersConfiguration handlers.HandlerConfigs, recordSet *records.RecordSet, fs system.FileSystem, logr logger.Logger) error {
+func updateSystemdResolved(systemdResolvedManager manager.SystemdResolvedManager, cfg config.Config, ownSuffixFile string, handlersConfiguration handlers.HandlerConfigs, recordSet *records.RecordSet, fs system.FileSystem, recursorReader config.RecursorReader, logr logger.Logger) error {
 	if !cfg.ConfigureSystemdResolved {
 		return nil
 	}
 
-	domains := domainsFromConfig(cfg, ownSuffixFile, handlersConfiguration.HandlerDomains(), recordSet, fs, logr)
+	domains := domainsFromConfig(cfg, ownSuffixFile, handlersConfiguration.HandlerDomains(), recordSet, fs, recursorReader, logr)
 
 	distinct := map[string]bool{}
 	for _, domain := range domains {
@@ -123,11 +132,38 @@ func aliasSuffixFilesGlob(cfg config.Config) string {
 	return filepath.Join(cfg.JobsDir, "*", "dns", "alias_suffixes.json")
 }
 
+// serverRecursorReader reads the recursors that the bosh-dns server
+// discovers when recursors is empty, skipping its own listen addresses the
+// way the server does. It loads the addresses files when it is read, so a
+// failure there is a failure to discover the recursors.
+type serverRecursorReader struct {
+	address            string
+	addressesFilesGlob string
+	fs                 system.FileSystem
+	// dnsManager is only read, so the updater never writes resolv.conf.
+	dnsManager manager.DNSManager
+}
+
+// Get returns the recursors that the bosh-dns server reads from resolv.conf.
+func (r serverRecursorReader) Get() ([]string, error) {
+	addressConfiguration, err := addresses.ConfigFromGlob(r.fs, addresses.NewFSLoader(r.fs), r.addressesFilesGlob)
+	if err != nil {
+		return nil, err
+	}
+
+	listenIPs := []string{r.address}
+	for _, addr := range addressConfiguration {
+		listenIPs = append(listenIPs, addr.Address)
+	}
+
+	return config.NewRecursorReader(r.dnsManager, listenIPs).Get()
+}
+
 // domainsFromConfig logs and skips suffixes and routing domains that cannot
 // be used. It ignores all of them when bosh-dns can forward to the
-// systemd-resolved stub resolver, because a name that bosh-dns cannot answer
-// would then loop between the two.
-func domainsFromConfig(cfg config.Config, ownSuffixFile string, handlerDomains []string, recordSet *records.RecordSet, fs system.FileSystem, logr logger.Logger) []string {
+// systemd-resolved stub resolver, or when it cannot tell, because a name that
+// bosh-dns cannot answer would then loop between the two.
+func domainsFromConfig(cfg config.Config, ownSuffixFile string, handlerDomains []string, recordSet *records.RecordSet, fs system.FileSystem, recursorReader config.RecursorReader, logr logger.Logger) []string {
 	var routingDomains []string
 	for _, rawRoutingDomain := range cfg.SystemdResolvedRoutingDomains {
 		routingDomain, err := aliases.CanonicalDomain(rawRoutingDomain)
@@ -141,28 +177,44 @@ func domainsFromConfig(cfg config.Config, ownSuffixFile string, handlerDomains [
 	suffixes := aliases.SuffixesFromGlob(fs, aliases.NewFSSuffixesLoader(fs), ownSuffixFile, aliasSuffixFilesGlob(cfg), logr)
 
 	domains, registered := systemdResolvedDomains(handlerDomains, recordSet, suffixes, cfg.UpcheckDomains, routingDomains)
-	if !forwardsToStubResolver(cfg) {
+	// With no suffix applied and no routing domains, this is master's list
+	// either way, so there is no need to read the recursors.
+	if !registered && len(routingDomains) == 0 {
+		return domains
+	}
+
+	forwards, err := forwardsToStubResolver(cfg, recursorReader)
+	if !forwards {
 		return domains
 	}
 
 	if registered {
-		logr.Warn(logTag, "Ignoring alias suffixes and systemd_resolved.routing_domains because bosh-dns can forward to the systemd-resolved stub resolver, which would send a name in those domains that bosh-dns cannot answer back to bosh-dns. Set disable_recursors: true, or set recursors that do not include 127.0.0.53 or 127.0.0.54.")
+		reason := "bosh-dns can forward to the systemd-resolved stub resolver"
+		if err != nil {
+			reason = fmt.Sprintf("bosh-dns could not read its recursors (%s), so it may forward to the systemd-resolved stub resolver", err)
+		}
+		logr.Warn(logTag, "Ignoring alias suffixes and systemd_resolved.routing_domains because %s, which would send a name in those domains that bosh-dns cannot answer back to bosh-dns. Set disable_recursors: true, or set recursors that do not include 127.0.0.53 or 127.0.0.54.", reason)
 	}
 	domains, _ = systemdResolvedDomains(handlerDomains, recordSet, aliases.NewSuffixes(), cfg.UpcheckDomains, nil)
 
 	return domains
 }
 
-// forwardsToStubResolver treats empty recursors as the stub resolver,
-// because bosh-dns then reads them from /etc/resolv.conf.
-func forwardsToStubResolver(cfg config.Config) bool {
+// forwardsToStubResolver reports whether bosh-dns can forward to the
+// systemd-resolved stub resolver. When recursors is empty, it judges the
+// recursors that the reader discovers, with the same exclusion rules as the
+// server, and it reports true with the error when they cannot be read.
+func forwardsToStubResolver(cfg config.Config, recursorReader config.RecursorReader) (bool, error) {
 	if !cfg.ConfigureSystemdResolved || cfg.DisableRecursors {
-		return false
+		return false, nil
 	}
 
-	recursors := cfg.Recursors
-	if len(recursors) == 0 {
-		recursors = []string{systemdResolvedStubs[0].String()}
+	if len(cfg.Recursors) == 0 {
+		// cfg is a copy, so the discovered recursors stay out of the caller's config.
+		if err := config.ConfigureRecursors(recursorReader, &cfg); err != nil {
+			return true, err
+		}
+		return namesStubResolver(cfg.Recursors, nil), nil
 	}
 
 	excluded := map[string]bool{}
@@ -172,6 +224,12 @@ func forwardsToStubResolver(cfg config.Config) bool {
 		}
 	}
 
+	return namesStubResolver(cfg.Recursors, excluded), nil
+}
+
+// namesStubResolver reports whether any of the recursors names a
+// systemd-resolved stub address that is not in excluded.
+func namesStubResolver(recursors []string, excluded map[string]bool) bool {
 	for _, recursor := range recursors {
 		if stub, ok := stubResolver(recursor); ok && !excluded[stub] {
 			return true
