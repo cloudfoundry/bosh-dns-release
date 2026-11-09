@@ -2,6 +2,7 @@
 name: bosh-dns
 
 templates:
+  alias_suffixes.json.erb: dns/alias_suffixes.json
   aliases.json.erb: dns/aliases.json
   bpm.yml.erb: config/bpm.yml
   bosh_dns_ctl.erb: bin/bosh_dns_ctl
@@ -68,6 +69,14 @@ properties:
   alias_files_glob:
     description: "Glob for any files to look for DNS alias information"
     default: /var/vcap/jobs/*/dns/aliases.json
+  alias_suffixes:
+    description: "Hash of alias to a domain that systemd-resolved is configured with in place of that alias. The domain must be the alias or a parent of it. Link aliases from the director with a uuid placeholder are expanded per instance and are not covered here; use systemd_resolved.routing_domains for them. Only used when configure_systemd_resolved is true, though entries are checked when the job renders either way"
+    default: {}
+    example:
+      bbs.service.cf.internal: service.cf.internal
+  alias_suffix_files_glob:
+    description: "Glob for files from other jobs in the same format as alias_suffixes. Defaults to the dns/alias_suffixes.json file of every job. The alias_suffixes property wins over these files. Only used when configure_systemd_resolved is true"
+    example: /var/vcap/jobs/*/dns/alias_suffixes.json
 
   override_nameserver:
     description: "Configure ourselves as the system nameserver (e.g. /etc/resolv.conf will be watched and overwritten). Should be disabled on Linux for Noble stemcells and later as systemd-resolved is intended to be the default resolver"
@@ -76,6 +85,10 @@ properties:
   configure_systemd_resolved:
     description: "Create a virtual interface so systemd-resolved can use bosh-dns to resolve queries. Should be enabled on Linux for Noble stemcells and later so systemd-resolved can forward queries to bosh-dns"
     default: false
+  systemd_resolved.routing_domains:
+    description: "Domains that systemd-resolved is configured with in place of the names under them, which keeps the bosh-dns link under the systemd-resolved limit of 256 domains. Each name is replaced by the longest entry it equals or sits under. systemd-resolved then sends every query in an entry to bosh-dns, so set disable_recursors to true or set recursors that are not the systemd-resolved stub resolver. Only used when configure_systemd_resolved is true, though entries are checked when the job renders either way"
+    default: []
+    example: [ bosh ]
 
   handlers:
     description: "Array of handler configurations"

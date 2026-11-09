@@ -12,6 +12,275 @@ describe 'bosh-dns' do
 
   it_behaves_like 'common config.json'
 
+  describe 'config/config.json' do
+    let(:template) { job.template('config/config.json') }
+    let(:properties) { {} }
+    let(:rendered) { JSON.parse(template.render(properties)) }
+    let(:corpus) do
+      JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../src/bosh-dns/dns/server/aliases/testdata/domain_corpus.json')))
+    end
+
+    def render_error(properties)
+      template.render(properties)
+      nil
+    rescue StandardError => e
+      e.message
+    end
+
+    context 'with no properties' do
+      it 'writes the same keys as without alias suffixes and routing domains' do
+        expect(rendered.keys).to contain_exactly(
+          'address', 'port', 'log_level', 'disable_recursors', 'configure_systemd_resolved', 'recursors',
+          'excluded_recursors', 'records_file', 'addresses_files_glob', 'alias_files_glob', 'upcheck_domains',
+          'recursor_timeout', 'recursor_max_retries', 'request_timeout', 'recursor_selection', 'jobs_dir', 'api',
+          'health', 'metrics', 'cache', 'handlers_files_glob', 'internal_upcheck_domain', 'logging'
+        )
+      end
+    end
+
+    context 'systemd_resolved.routing_domains' do
+      context 'configured' do
+        let(:properties) { {'systemd_resolved' => {'routing_domains' => ['bosh', 'Service.CF.Internal.']}} }
+
+        it 'writes the routing domains' do
+          expect(rendered['systemd_resolved_routing_domains']).to eq(['bosh', 'Service.CF.Internal.'])
+        end
+      end
+
+      it 'accepts and rejects the same domains as the systemd-resolved updater' do
+        mismatches = corpus['domains'].reject do |entry|
+          error = render_error('systemd_resolved' => {'routing_domains' => ['bosh', entry['domain']]})
+          if entry['error'].empty?
+            error.nil?
+          else
+            error&.start_with?("systemd_resolved.routing_domains entry #{entry['domain'].inspect}: #{entry['error']}")
+          end
+        end
+
+        expect(mismatches).to be_empty
+      end
+
+      context 'with an entry that is not a string' do
+        let(:properties) { {'systemd_resolved' => {'routing_domains' => [53]}} }
+
+        it 'fails to render' do
+          expect { rendered }.to raise_error(/systemd_resolved\.routing_domains entry 53: not a string/)
+        end
+      end
+
+      context 'when it is not an array' do
+        let(:properties) { {'systemd_resolved' => {'routing_domains' => 'bosh'}} }
+
+        it 'fails to render' do
+          expect { rendered }.to raise_error(/systemd_resolved\.routing_domains must be an array/)
+        end
+      end
+    end
+
+    context 'alias_suffix_files_glob' do
+      context 'configured' do
+        let(:properties) { {'alias_suffix_files_glob' => '/other/*/suffixes.json'} }
+
+        it 'writes the glob' do
+          expect(rendered['alias_suffix_files_glob']).to eq('/other/*/suffixes.json')
+        end
+      end
+    end
+
+    context 'alias_suffixes' do
+      it 'accepts and rejects the same entries as the systemd-resolved updater' do
+        mismatches = corpus['alias_suffixes'].reject do |entry|
+          error = render_error('alias_suffixes' => {entry['alias'] => entry['suffix']})
+          if entry['error'].empty?
+            error.nil?
+          else
+            error&.start_with?("alias_suffixes entry #{entry['alias'].inspect}: ") && error.include?(entry['error'])
+          end
+        end
+
+        expect(mismatches).to be_empty
+      end
+
+      context 'with a plain and an underscore alias on the same host' do
+        let(:properties) { {'alias_suffixes' => {'a.b.internal' => 'b.internal', '_.a.b.internal' => 'internal'}} }
+
+        it 'renders' do
+          expect(rendered['configure_systemd_resolved']).to eq(false)
+        end
+      end
+
+      context 'with keys that differ only in case and name the same suffix' do
+        let(:properties) { {'alias_suffixes' => {'bbs.service.cf.internal' => 'service.cf.internal', 'BBS.Service.CF.Internal' => 'Service.CF.Internal.'}} }
+
+        it 'renders' do
+          expect(rendered['configure_systemd_resolved']).to eq(false)
+        end
+      end
+
+      context 'with keys that differ only in case and name different suffixes' do
+        let(:properties) do
+          {'alias_suffixes' => {'bbs.service.cf.internal' => 'cf.internal', 'BBS.Service.CF.Internal' => 'service.cf.internal'}}
+        end
+
+        it 'fails to render' do
+          expect { rendered }.to raise_error(/alias_suffixes entry "bbs\.service\.cf\.internal": the alias already has the suffix "service\.cf\.internal\."/)
+        end
+      end
+
+      context 'with a suffix that is not a string' do
+        let(:properties) { {'alias_suffixes' => {'bbs.service.cf.internal' => ['service.cf.internal']}} }
+
+        it 'fails to render' do
+          expect { rendered }.to raise_error(/alias_suffixes entry "bbs\.service\.cf\.internal": suffix \["service\.cf\.internal"\]: not a string/)
+        end
+      end
+
+      context 'with an alias that is not a string' do
+        let(:properties) { {'alias_suffixes' => {1 => 'internal'}} }
+
+        it 'fails to render, because the template engine only accepts string property keys' do
+          expect { rendered }.to raise_error(NoMethodError, /to_sym/)
+        end
+      end
+
+      context 'when it is not a hash' do
+        let(:properties) { {'alias_suffixes' => ['service.cf.internal']} }
+
+        it 'fails to render' do
+          expect { rendered }.to raise_error(/alias_suffixes must be a hash of alias to domain/)
+        end
+      end
+    end
+
+    context 'when configure_systemd_resolved is true and bosh-dns can forward to the systemd-resolved stub resolver' do
+      let(:stub_properties) { {'configure_systemd_resolved' => true, 'disable_recursors' => false, 'recursors' => []} }
+
+      context 'with routing domains' do
+        let(:properties) { stub_properties.merge('systemd_resolved' => {'routing_domains' => ['bosh']}) }
+
+        it 'fails to render and names the fix' do
+          expect { rendered }.to raise_error(/need disable_recursors: true, or recursors that do not include the systemd-resolved stub resolver/)
+        end
+      end
+
+      context 'with alias suffixes' do
+        let(:properties) { stub_properties.merge('alias_suffixes' => {'bbs.service.cf.internal' => 'service.cf.internal'}) }
+
+        it 'fails to render and names the fix' do
+          expect { rendered }.to raise_error(/need disable_recursors: true/)
+        end
+      end
+
+      context 'with the stub resolver as an explicit recursor' do
+        let(:properties) { stub_properties.merge('recursors' => ['10.0.0.2', '127.0.0.53:53'], 'systemd_resolved' => {'routing_domains' => ['bosh']}) }
+
+        it 'fails to render' do
+          expect { rendered }.to raise_error(/need disable_recursors: true/)
+        end
+      end
+
+      context 'with the proxy stub resolver as an explicit recursor' do
+        let(:properties) { stub_properties.merge('recursors' => ['127.0.0.54'], 'systemd_resolved' => {'routing_domains' => ['bosh']}) }
+
+        it 'fails to render' do
+          expect { rendered }.to raise_error(/need disable_recursors: true/)
+        end
+      end
+
+      context 'without routing domains or alias suffixes' do
+        let(:properties) { stub_properties }
+
+        it 'renders' do
+          expect(rendered['configure_systemd_resolved']).to eq(true)
+        end
+      end
+    end
+
+    context 'when configure_systemd_resolved is true and bosh-dns cannot forward to the systemd-resolved stub resolver' do
+      let(:stub_properties) do
+        {
+          'configure_systemd_resolved' => true,
+          'disable_recursors' => false,
+          'recursors' => [],
+          'systemd_resolved' => {'routing_domains' => ['bosh']},
+          'alias_suffixes' => {'bbs.service.cf.internal' => 'service.cf.internal'},
+        }
+      end
+
+      context 'with disable_recursors set to true' do
+        let(:properties) { stub_properties.merge('disable_recursors' => true) }
+
+        it 'renders' do
+          expect(rendered['systemd_resolved_routing_domains']).to eq(['bosh'])
+        end
+      end
+
+      context 'with explicit recursors' do
+        let(:properties) { stub_properties.merge('recursors' => ['10.0.0.2']) }
+
+        it 'renders' do
+          expect(rendered['systemd_resolved_routing_domains']).to eq(['bosh'])
+        end
+      end
+
+      context 'with the stub resolver on another port' do
+        let(:properties) { stub_properties.merge('recursors' => ['127.0.0.53:5353']) }
+
+        it 'renders' do
+          expect(rendered['systemd_resolved_routing_domains']).to eq(['bosh'])
+        end
+      end
+
+      context 'with the stub resolver read from resolv.conf and excluded' do
+        let(:properties) { stub_properties.merge('excluded_recursors' => ['127.0.0.53']) }
+
+        it 'renders' do
+          expect(rendered['systemd_resolved_routing_domains']).to eq(['bosh'])
+        end
+      end
+
+      context 'with the stub resolver as an explicit recursor and excluded' do
+        let(:properties) { stub_properties.merge('recursors' => ['127.0.0.53'], 'excluded_recursors' => ['127.0.0.53:53']) }
+
+        it 'renders' do
+          expect(rendered['systemd_resolved_routing_domains']).to eq(['bosh'])
+        end
+      end
+    end
+
+    context 'when configure_systemd_resolved is false and recursors come from the system resolver' do
+      let(:properties) do
+        {
+          'configure_systemd_resolved' => false,
+          'systemd_resolved' => {'routing_domains' => ['bosh']},
+          'alias_suffixes' => {'bbs.service.cf.internal' => 'service.cf.internal'},
+        }
+      end
+
+      it 'renders' do
+        expect(rendered['systemd_resolved_routing_domains']).to eq(['bosh'])
+      end
+    end
+  end
+
+  describe 'dns/alias_suffixes.json' do
+    let(:template) { job.template('dns/alias_suffixes.json') }
+    let(:properties) { {} }
+    let(:rendered) { JSON.parse(template.render(properties)) }
+
+    it 'defaults to an empty object' do
+      expect(rendered).to eq({})
+    end
+
+    context 'configured' do
+      let(:properties) { {'alias_suffixes' => {'bbs.service.cf.internal' => 'service.cf.internal', '_.under.internal' => 'internal'}} }
+
+      it 'writes the alias suffixes' do
+        expect(rendered).to eq({'bbs.service.cf.internal' => 'service.cf.internal', '_.under.internal' => 'internal'})
+      end
+    end
+  end
+
   describe 'bin/is-system-resolver' do
     let(:template) { job.template('bin/is-system-resolver') }
 

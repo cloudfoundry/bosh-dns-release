@@ -1,3 +1,60 @@
+<%
+  # The systemd-resolved updater applies the same rules. Both are tested against
+  # src/bosh-dns/dns/server/aliases/testdata/domain_corpus.json.
+  canonical_domain = lambda do |label, raw|
+    raise "#{label}: not a string" unless raw.is_a?(String)
+    error = if raw.empty? then 'empty domain'
+            elsif !raw.ascii_only? then 'only ASCII characters are allowed'
+            elsif raw =~ /\s/ then 'whitespace is not allowed'
+            elsif raw.start_with?('~') then 'write it without the ~ prefix'
+            elsif raw.include?('*') then 'wildcards are not allowed'
+            elsif raw.chomp('.').empty? then 'the root domain is not allowed'
+            elsif raw.chomp('.').length > 253 ||
+                  !raw.downcase.chomp('.').split('.', -1).all? { |l| l =~ /\A[a-z0-9_]([a-z0-9_-]{0,61}[a-z0-9_])?\z/ }
+              'not a valid domain name'
+            end
+    raise "#{label}: #{error}" if error
+    raw.downcase.chomp('.') + '.'
+  end
+
+  routing_domains = p('systemd_resolved.routing_domains')
+  raise 'systemd_resolved.routing_domains must be an array' unless routing_domains.is_a?(Array)
+  routing_domains.each { |d| canonical_domain.call("systemd_resolved.routing_domains entry #{d.inspect}", d) }
+
+  alias_suffixes = p('alias_suffixes')
+  raise 'alias_suffixes must be a hash of alias to domain' unless alias_suffixes.is_a?(Hash)
+  suffix_by_alias = {}
+  alias_suffixes.keys.sort.each do |raw_alias|
+    entry = "alias_suffixes entry #{raw_alias.inspect}"
+    raise "#{entry}: empty alias" if raw_alias.empty?
+    suffix = canonical_domain.call("#{entry}: suffix #{alias_suffixes[raw_alias].inspect}", alias_suffixes[raw_alias])
+    key = [raw_alias.start_with?('_.'), canonical_domain.call("#{entry}: invalid alias", raw_alias.delete_prefix('_.'))]
+    unless key[1] == suffix || key[1].end_with?(".#{suffix}")
+      raise "#{entry}: suffix #{suffix.inspect} is not the alias or a parent of it"
+    end
+    if suffix_by_alias.fetch(key, suffix) != suffix
+      raise "#{entry}: the alias already has the suffix #{suffix_by_alias[key].inspect}"
+    end
+    suffix_by_alias[key] = suffix
+  end
+
+  # bosh-dns forwards to the systemd-resolved stub resolver when recursors names
+  # it, or when recursors is empty and bosh-dns reads it from resolv.conf.
+  without_port = ->(r) { r.to_s.sub(/:53\z/, '') }
+  stubs = (p('recursors').empty? ? ['127.0.0.53'] : p('recursors')).map(&without_port) & %w[127.0.0.53 127.0.0.54]
+  stubs -= p('excluded_recursors').map(&without_port)
+  if p('configure_systemd_resolved') && !p('disable_recursors') && !stubs.empty? &&
+     (!routing_domains.empty? || !alias_suffixes.empty?)
+    raise 'systemd_resolved.routing_domains and alias_suffixes need disable_recursors: true, or recursors that do not ' \
+          'include the systemd-resolved stub resolver, when configure_systemd_resolved is true. Otherwise a name in ' \
+          'those domains that bosh-dns cannot answer loops between bosh-dns and systemd-resolved.'
+  end
+
+  # Written only when set, so that config.json is unchanged when they are not.
+  optional_config = {}
+  optional_config[:systemd_resolved_routing_domains] = routing_domains unless routing_domains.empty?
+  if_p('alias_suffix_files_glob') { |glob| optional_config[:alias_suffix_files_glob] = glob }
+-%>
 <%=
 {
   address: p('address'),
@@ -51,5 +108,5 @@
     },
     tags: p('logging.tags')
   }
-}.to_json
+}.merge(optional_config).to_json
 %>
