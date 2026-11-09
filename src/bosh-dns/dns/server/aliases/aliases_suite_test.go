@@ -1,6 +1,7 @@
 package aliases_test
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -31,4 +32,12 @@ func MustNewConfigFromMap(load map[string][]string) aliases.Config {
 		Fail(err.Error())
 	}
 	return config
+}
+
+func MustNewSuffixesFromMap(load map[string]string) aliases.Suffixes {
+	suffixes, errs := aliases.NewSuffixesFromMap(load)
+	if len(errs) > 0 {
+		Fail(fmt.Sprintf("%v", errs))
+	}
+	return suffixes
 }

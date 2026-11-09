@@ -35,6 +35,14 @@ func mustNewConfigFromMap(load map[string][]string) aliases.Config {
 	return config
 }
 
+func mustNewSuffixesFromMap(load map[string]string) aliases.Suffixes {
+	suffixes, errs := aliases.NewSuffixesFromMap(load)
+	if len(errs) > 0 {
+		Fail(fmt.Sprintf("%v", errs))
+	}
+	return suffixes
+}
+
 var _ = Describe("RecordSet", func() {
 	var (
 		recordSet             *records.RecordSet
@@ -319,6 +327,132 @@ var _ = Describe("RecordSet", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(recordSet.Domains()).To(ConsistOf("withadot.", "nodot.", "domain.", "alias1."))
+		})
+	})
+
+	Describe("SystemdResolvedDomains", func() {
+		BeforeEach(func() {
+			aliasList = mustNewConfigFromMap(map[string][]string{
+				"a.service.cf.internal": {"instance0.my-group.my-network.my-deployment.domain."},
+				"b.service.cf.internal": {"instance1.my-group.my-network.my-deployment.domain."},
+				"plain.alias":           {"instance0.my-group.my-network.my-deployment.domain."},
+			})
+
+			fileReader.GetReturns([]byte(`{
+				"record_keys": ["id", "num_id", "instance_group", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
+				"record_infos": [
+					["instance0", "0", "my-group", "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "domain."],
+					["instance1", "1", "my-group", "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", "domain."]
+				],
+				"aliases": {
+					"director.alias": [{"group_id": "1", "root_domain": "domain"}]
+				}
+			}`), nil)
+			fakeAliasQueryEncoder.EncodeAliasesIntoQueriesReturns(map[string][]string{
+				"director.alias": {"q-s0.q-g1.domain."},
+			})
+
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, aliasList, fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, fakeAliasQueryEncoder)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		suffixMessages := func(callCount func() int, argsForCall func(int) (string, string, []interface{})) []string {
+			var messages []string
+			for i := 0; i < callCount(); i++ {
+				tag, message, args := argsForCall(i)
+				if tag == "RecordSet" && strings.HasPrefix(message, "Ignoring the alias suffix") {
+					messages = append(messages, fmt.Sprintf(message, args...))
+				}
+			}
+			return messages
+		}
+		debugMessages := func() []string { return suffixMessages(fakeLogger.DebugCallCount, fakeLogger.DebugArgsForCall) }
+		infoMessages := func() []string { return suffixMessages(fakeLogger.InfoCallCount, fakeLogger.InfoArgsForCall) }
+
+		It("returns the same domains as Domains when there are no suffixes", func() {
+			domains, suffixed := recordSet.SystemdResolvedDomains(aliases.NewSuffixes())
+
+			Expect(suffixed).To(BeFalse())
+			Expect(domains).To(Equal(recordSet.Domains()))
+			Expect(domains).To(Equal([]string{"domain.", "a.service.cf.internal.", "b.service.cf.internal.", "director.alias.", "plain.alias."}))
+		})
+
+		It("replaces suffixed aliases from the job aliases with their suffix", func() {
+			domains, suffixed := recordSet.SystemdResolvedDomains(mustNewSuffixesFromMap(map[string]string{
+				"a.service.cf.internal": "service.cf.internal",
+				"b.service.cf.internal": "service.cf.internal",
+			}))
+
+			Expect(suffixed).To(BeTrue())
+			Expect(domains).To(Equal([]string{"domain.", "director.alias.", "plain.alias.", "service.cf.internal."}))
+			Expect(recordSet.Domains()).To(Equal([]string{"domain.", "a.service.cf.internal.", "b.service.cf.internal.", "director.alias.", "plain.alias."}))
+		})
+
+		It("applies a suffix to an alias that comes from the records file", func() {
+			domains, suffixed := recordSet.SystemdResolvedDomains(mustNewSuffixesFromMap(map[string]string{
+				"director.alias": "alias",
+			}))
+
+			Expect(suffixed).To(BeTrue())
+			Expect(domains).To(Equal([]string{"domain.", "a.service.cf.internal.", "alias.", "b.service.cf.internal."}))
+		})
+
+		It("ignores and debug-logs a suffix for an alias that nothing defines", func() {
+			domains, suffixed := recordSet.SystemdResolvedDomains(mustNewSuffixesFromMap(map[string]string{
+				"missing.service.cf.internal": "service.cf.internal",
+				"_.plain.alias":               "alias",
+			}))
+
+			Expect(suffixed).To(BeFalse())
+			Expect(domains).To(Equal(recordSet.Domains()))
+			Expect(debugMessages()).To(ConsistOf(
+				"Ignoring the alias suffix for _.plain.alias. because no alias source defines it",
+				"Ignoring the alias suffix for missing.service.cf.internal. because no alias source defines it",
+			))
+			Expect(infoMessages()).To(BeEmpty())
+			Expect(fakeLogger.WarnCallCount()).To(Equal(0))
+			Expect(fakeLogger.ErrorCallCount()).To(Equal(0))
+		})
+
+		It("logs at info level a suffix for an alias that only has aliases below it, as a uuid link alias does", func() {
+			fileReader.GetReturns([]byte(`{
+				"record_keys": ["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain"],
+				"record_infos": [
+					["0a1b", "0", "cell", ["7"], "az1", "1", "my-network", "1", "my-deployment", "123.123.123.123", "domain."],
+					["2c3d", "1", "cell", ["7"], "az2", "2", "my-network", "1", "my-deployment", "123.123.123.124", "domain."]
+				],
+				"aliases": {
+					"_.cell.service.cf.internal": [{"group_id": "7", "root_domain": "domain", "placeholder_type": "uuid"}]
+				}
+			}`), nil)
+
+			var err error
+			recordSet, err = records.NewRecordSet(fileReader, aliases.NewConfig(), fakeHealthWatcher, uint(5), shutdownChan, fakeLogger, fakeFiltererFactory, records.NewAliasEncoder())
+			Expect(err).ToNot(HaveOccurred())
+
+			domains, suffixed := recordSet.SystemdResolvedDomains(mustNewSuffixesFromMap(map[string]string{
+				"_.cell.service.cf.internal": "service.cf.internal",
+				"cell.service.cf.internal":   "service.cf.internal",
+			}))
+
+			Expect(suffixed).To(BeFalse())
+			Expect(domains).To(Equal([]string{"domain.", "0a1b.cell.service.cf.internal.", "2c3d.cell.service.cf.internal."}))
+			Expect(infoMessages()).To(ConsistOf(
+				"Ignoring the alias suffix for _.cell.service.cf.internal. because no alias source defines it. Aliases below it exist, as the director writes them for a link alias with a uuid placeholder, and only a systemd_resolved.routing_domains entry covers those",
+				"Ignoring the alias suffix for cell.service.cf.internal. because no alias source defines it. Aliases below it exist, as the director writes them for a link alias with a uuid placeholder, and only a systemd_resolved.routing_domains entry covers those",
+			))
+			Expect(debugMessages()).To(BeEmpty())
+		})
+
+		It("applies the defined suffixes when some are undefined", func() {
+			domains, suffixed := recordSet.SystemdResolvedDomains(mustNewSuffixesFromMap(map[string]string{
+				"a.service.cf.internal":       "service.cf.internal",
+				"missing.service.cf.internal": "cf.internal",
+			}))
+
+			Expect(suffixed).To(BeTrue())
+			Expect(domains).To(Equal([]string{"domain.", "director.alias.", "plain.alias.", "service.cf.internal."}))
 		})
 	})
 

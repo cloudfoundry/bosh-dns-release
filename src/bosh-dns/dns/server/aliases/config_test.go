@@ -3,6 +3,8 @@ package aliases_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"bosh-dns/dns/server/aliases"
 )
 
 var _ = Describe("Config", func() {
@@ -347,6 +349,122 @@ var _ = Describe("Config", func() {
 			})
 
 			Expect(c.AliasHosts()).To(ConsistOf("alias1.", "alias2.", "a.b.c.", "alias3."))
+		})
+	})
+
+	Describe("SuffixedAliasHosts", func() {
+		It("returns the alias hosts when there are no suffixes", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"alias1":           {"1.1.1.1"},
+				"alias2":           {"1.1.1.2"},
+				"_.alias2":         {"1.1.1.3"},
+				"something.alias1": {"1.1.1.4"},
+				"a.b.c.":           {"1.1.1.5"},
+				"_.alias3":         {"1.1.1.6"},
+			})
+
+			Expect(c.SuffixedAliasHosts(aliases.NewSuffixes())).To(Equal([]string{"a.b.c.", "alias1.", "alias2.", "alias3."}))
+			Expect(c.SuffixedAliasHosts(aliases.NewSuffixes())).To(Equal(c.AliasHosts()))
+		})
+
+		It("returns an empty list for an empty config", func() {
+			Expect(aliases.NewConfig().SuffixedAliasHosts(MustNewSuffixesFromMap(map[string]string{"a.internal": "internal"}))).To(BeEmpty())
+		})
+
+		It("replaces each alias that has a suffix with its suffix and collapses the duplicates", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"a.service.cf.internal": {"domain1"},
+				"b.service.cf.internal": {"domain2"},
+				"plain.alias":           {"domain3"},
+			})
+
+			Expect(c.SuffixedAliasHosts(MustNewSuffixesFromMap(map[string]string{
+				"a.service.cf.internal": "service.cf.internal",
+				"b.service.cf.internal": "service.cf.internal",
+			}))).To(Equal([]string{"plain.alias.", "service.cf.internal."}))
+		})
+
+		It("drops hosts that a suffix covers", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"a.service.cf.internal":   {"domain1"},
+				"b.service.cf.internal":   {"domain2"},
+				"x.b.service.cf.internal": {"domain3"},
+			})
+
+			Expect(c.SuffixedAliasHosts(MustNewSuffixesFromMap(map[string]string{
+				"a.service.cf.internal": "service.cf.internal",
+			}))).To(Equal([]string{"service.cf.internal."}))
+		})
+
+		It("uses the suffix of an alias that sits under another alias host", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"a.b.c":   {"domain1"},
+				"x.a.b.c": {"domain2"},
+			})
+
+			Expect(c.AliasHosts()).To(Equal([]string{"a.b.c."}))
+			Expect(c.SuffixedAliasHosts(MustNewSuffixesFromMap(map[string]string{"x.a.b.c": "c"}))).To(Equal([]string{"c."}))
+		})
+
+		It("keeps a host that does not sit under any suffix", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"a.service.cf.internal":  {"domain1"},
+				"b.xservice.cf.internal": {"domain2"},
+			})
+
+			Expect(c.SuffixedAliasHosts(MustNewSuffixesFromMap(map[string]string{
+				"a.service.cf.internal": "service.cf.internal",
+			}))).To(Equal([]string{"b.xservice.cf.internal.", "service.cf.internal."}))
+		})
+
+		It("applies an underscore alias suffix only to the underscore alias", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"_.a.service.cf.internal": {"_.domain1"},
+				"b.other.internal":        {"domain2"},
+			})
+
+			Expect(c.SuffixedAliasHosts(MustNewSuffixesFromMap(map[string]string{
+				"_.a.service.cf.internal": "service.cf.internal",
+				"_.b.other.internal":      "internal",
+			}))).To(Equal([]string{"b.other.internal.", "service.cf.internal."}))
+		})
+
+		It("uses the suffixes of both a plain and an underscore alias on the same host", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"a.b.internal":   {"domain1"},
+				"_.a.b.internal": {"_.domain2"},
+			})
+
+			Expect(c.SuffixedAliasHosts(MustNewSuffixesFromMap(map[string]string{
+				"a.b.internal":   "b.internal",
+				"_.a.b.internal": "internal",
+			}))).To(Equal([]string{"internal."}))
+		})
+
+		It("does not change AliasHosts or resolution", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"a.service.cf.internal": {"domain1"},
+			})
+			c.SuffixedAliasHosts(MustNewSuffixesFromMap(map[string]string{"a.service.cf.internal": "service.cf.internal"}))
+
+			Expect(c.AliasHosts()).To(Equal([]string{"a.service.cf.internal."}))
+			Expect(c.Resolutions("a.service.cf.internal.")).To(Equal([]string{"domain1."}))
+			Expect(c.Resolutions("service.cf.internal.")).To(BeNil())
+		})
+	})
+	Describe("HasAliasUnder", func() {
+		It("reports whether a plain or underscore alias host sits below the domain", func() {
+			c := MustNewConfigFromMap(map[string][]string{
+				"0a1b.cell.service.cf.internal": {"domain1"},
+				"_.under.other.internal":        {"_.domain2"},
+				"exact.internal":                {"domain3"},
+			})
+
+			Expect(c.HasAliasUnder("cell.service.cf.internal.")).To(BeTrue())
+			Expect(c.HasAliasUnder("other.internal.")).To(BeTrue())
+			Expect(c.HasAliasUnder("exact.internal.")).To(BeFalse())
+			Expect(c.HasAliasUnder("ell.service.cf.internal.")).To(BeFalse())
+			Expect(aliases.NewConfig().HasAliasUnder("internal.")).To(BeFalse())
 		})
 	})
 })
