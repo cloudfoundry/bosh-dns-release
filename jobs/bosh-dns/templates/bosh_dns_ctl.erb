@@ -60,7 +60,11 @@ function create_network_interface() {
     resolvectl dns bosh-dns <%= p('address') %>
     resolvectl log-level <%= {'DEBUG' => 'debug', 'INFO' => 'info', 'WARN' => 'warning', 'ERROR' => 'err', 'NONE' => 'emerg'}[p('log_level')] %>
   fi
-  resolvectl default-route bosh-dns no
+  if resolvectl dns 2>/dev/null | grep "Link" | grep -qv "bosh-dns"; then
+    resolvectl default-route bosh-dns no
+  else
+    resolvectl default-route bosh-dns yes
+  fi
 }
 
 function remove_network_interface() {
