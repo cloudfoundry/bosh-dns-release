@@ -2,6 +2,12 @@ package manager
 
 import "github.com/cloudfoundry/bosh-utils/system"
 
+//counterfeiter:generate . SystemdResolvedManager
+
+type SystemdResolvedManager interface {
+	UpdateDomains([]string) error
+}
+
 type systemdResolvedManager struct {
 	cmdRunner system.CmdRunner
 }

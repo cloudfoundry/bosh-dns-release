@@ -230,6 +230,42 @@ var _ = Describe("Config", func() {
 		})
 	})
 
+	Context("systemd-resolved domains", func() {
+		It("defaults to no routing domains and no alias suffix files", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.SystemdResolvedRoutingDomains).To(BeEmpty())
+			Expect(dnsConfig.AliasSuffixFilesGlob).To(BeEmpty())
+		})
+
+		It("loads the routing domains and the alias suffix files glob", func() {
+			configFilePath := writeConfigFile(`{
+				"address": "127.0.0.1",
+				"port": 53,
+				"systemd_resolved_routing_domains": ["bosh", "service.cf.internal."],
+				"alias_suffix_files_glob": "/var/vcap/jobs/*/dns/alias_suffixes.json"
+			}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.SystemdResolvedRoutingDomains).To(Equal([]string{"bosh", "service.cf.internal."}))
+			Expect(dnsConfig.AliasSuffixFilesGlob).To(Equal("/var/vcap/jobs/*/dns/alias_suffixes.json"))
+		})
+
+		It("loads routing domains it would not register without rejecting them, because only the systemd-resolved updater uses them", func() {
+			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "systemd_resolved_routing_domains": ["~bosh", "", ".", "*.bosh"]}`)
+
+			dnsConfig, err := config.LoadFromFile(configFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(dnsConfig.SystemdResolvedRoutingDomains).To(Equal([]string{"~bosh", "", ".", "*.bosh"}))
+		})
+	})
+
 	Context("records_file", func() {
 		It("allows configuring the path", func() {
 			configFilePath := writeConfigFile(`{"address": "127.0.0.1", "port": 53, "records_file": "/some/path"}`)

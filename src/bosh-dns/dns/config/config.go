@@ -37,6 +37,9 @@ type Config struct {
 	UpcheckDomains           []string     `json:"upcheck_domains,omitempty"`
 	JobsDir                  string       `json:"jobs_dir,omitempty"`
 
+	SystemdResolvedRoutingDomains []string `json:"systemd_resolved_routing_domains,omitempty"`
+	AliasSuffixFilesGlob          string   `json:"alias_suffix_files_glob,omitempty"`
+
 	LogLevel string `json:"log_level,omitempty"`
 
 	API APIConfig `json:"api"`
