@@ -191,7 +191,7 @@ func domainsFromConfig(cfg config.Config, ownSuffixFile string, handlerDomains [
 	if registered {
 		reason := "bosh-dns can forward to the systemd-resolved stub resolver"
 		if err != nil {
-			reason = fmt.Sprintf("bosh-dns could not read its recursors (%s), so it may forward to the systemd-resolved stub resolver", err)
+			reason = fmt.Sprintf("bosh-dns could not work out its recursors (%s), so it may forward to the systemd-resolved stub resolver", err)
 		}
 		logr.Warn(logTag, "Ignoring alias suffixes and systemd_resolved.routing_domains because %s, which would send a name in those domains that bosh-dns cannot answer back to bosh-dns. Set disable_recursors: true, or set recursors that do not include 127.0.0.53 or 127.0.0.54.", reason)
 	}
@@ -201,42 +201,36 @@ func domainsFromConfig(cfg config.Config, ownSuffixFile string, handlerDomains [
 }
 
 // forwardsToStubResolver reports whether bosh-dns can forward to the
-// systemd-resolved stub resolver. When recursors is empty, it judges the
-// recursors that the reader discovers, with the same exclusion rules as the
-// server, and it reports true with the error when they cannot be read.
+// systemd-resolved stub resolver. It judges the recursors the server ends up
+// with, read by the reader when recursors is empty and filtered by the
+// server's exclusion rules, and it reports true with the error when they
+// cannot be worked out.
 func forwardsToStubResolver(cfg config.Config, recursorReader config.RecursorReader) (bool, error) {
 	if !cfg.ConfigureSystemdResolved || cfg.DisableRecursors {
 		return false, nil
 	}
 
-	if len(cfg.Recursors) == 0 {
-		// cfg is a copy, so the discovered recursors stay out of the caller's config.
-		if err := config.ConfigureRecursors(recursorReader, &cfg); err != nil {
-			return true, err
-		}
-		return namesStubResolver(cfg.Recursors, nil), nil
+	// cfg is a copy, so these changes stay out of the caller's config. Ports
+	// are added the way config.LoadFromFile adds them, because exclusion
+	// compares exact strings.
+	var err error
+	if cfg.Recursors, err = config.AppendDefaultDNSPortIfMissing(cfg.Recursors); err != nil {
+		return true, err
+	}
+	if cfg.ExcludedRecursors, err = config.AppendDefaultDNSPortIfMissing(cfg.ExcludedRecursors); err != nil {
+		return true, err
+	}
+	if err = config.ConfigureRecursors(recursorReader, &cfg); err != nil {
+		return true, err
 	}
 
-	excluded := map[string]bool{}
-	for _, recursor := range cfg.ExcludedRecursors {
-		if stub, ok := stubResolver(recursor); ok {
-			excluded[stub] = true
-		}
-	}
-
-	return namesStubResolver(cfg.Recursors, excluded), nil
-}
-
-// namesStubResolver reports whether any of the recursors names a
-// systemd-resolved stub address that is not in excluded.
-func namesStubResolver(recursors []string, excluded map[string]bool) bool {
-	for _, recursor := range recursors {
-		if stub, ok := stubResolver(recursor); ok && !excluded[stub] {
-			return true
+	for _, recursor := range cfg.Recursors {
+		if _, ok := stubResolver(recursor); ok {
+			return true, nil
 		}
 	}
 
-	return false
+	return false, nil
 }
 
 // stubResolver reports which systemd-resolved stub address a recursor names,

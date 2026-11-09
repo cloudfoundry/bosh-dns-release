@@ -607,7 +607,7 @@ var _ = Describe("systemd-resolved domains", func() {
 				Expect(domains).To(Equal(masterDomains(handlerDomains, recordSet, upcheckDomains)))
 				Expect(warnings()).To(ConsistOf(And(
 					ContainSubstring("Ignoring alias suffixes and systemd_resolved.routing_domains"),
-					ContainSubstring("could not read its recursors (no resolv.conf)"),
+					ContainSubstring("could not work out its recursors (no resolv.conf)"),
 					ContainSubstring("disable_recursors: true"),
 				)))
 			})
@@ -743,6 +743,9 @@ var _ = Describe("systemd-resolved domains", func() {
 			Entry("the stub as an IPv4-mapped address", false, []string{"[::ffff:127.0.0.53]:53"}, nil, nil, true),
 			Entry("an explicit stub excluded", false, []string{"127.0.0.53"}, nil, []string{"127.0.0.53:53"}, false),
 			Entry("the other stub excluded", false, []string{"127.0.0.53:53"}, nil, []string{"127.0.0.54:53"}, true),
+			Entry("an explicit stub excluded as an IPv4-mapped address with a port, which the server does not match", false, []string{"127.0.0.53"}, nil, []string{"[::ffff:127.0.0.53]:53"}, true),
+			Entry("an explicit stub excluded as an IPv4-mapped address without a port, which the server reads as 127.0.0.53:53", false, []string{"127.0.0.53"}, nil, []string{"::ffff:127.0.0.53"}, false),
+			Entry("the stub read from resolv.conf excluded as an IPv4-mapped address with a port", false, nil, []string{"127.0.0.53:53"}, []string{"[::ffff:127.0.0.53]:53"}, true),
 		)
 
 		It("reports true with the error when the recursors cannot be read", func() {
@@ -754,6 +757,18 @@ var _ = Describe("systemd-resolved domains", func() {
 			forwards, err := forwardsToStubResolver(cfg, recursorReader)
 
 			Expect(err).To(MatchError("no resolv.conf"))
+			Expect(forwards).To(BeTrue())
+		})
+
+		It("reports true with the error when a recursor is not an address", func() {
+			cfg := config.NewDefaultConfig()
+			cfg.ConfigureSystemdResolved = true
+			cfg.Recursors = []string{"not-an-address"}
+			recursorReader := &configfakes.FakeRecursorReader{}
+
+			forwards, err := forwardsToStubResolver(cfg, recursorReader)
+
+			Expect(err).To(MatchError(ContainSubstring("not-an-address")))
 			Expect(forwards).To(BeTrue())
 		})
 
