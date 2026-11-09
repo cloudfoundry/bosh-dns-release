@@ -55,6 +55,9 @@ func SuffixesFromGlob(globber ConfigGlobber, loader NamedSuffixesLoader, ownFile
 	return merged
 }
 
+// mergeSuffixes adds the entries of next that merged does not already have,
+// and notes in sources which file each one came from. It logs when a later
+// file gives an alias a different suffix, and keeps the earlier one.
 func mergeSuffixes(merged map[string]string, next map[string]string, prefix string, file string, sources map[string]string, logger boshlog.Logger) {
 	for _, host := range slices.Sorted(maps.Keys(next)) {
 		suffix := next[host]

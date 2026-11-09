@@ -36,6 +36,9 @@ type FSSuffixesLoader struct {
 	fs boshsys.FileSystem
 }
 
+// Load reads a JSON object that maps alias hosts to suffixes. It returns an
+// error when the file cannot be read or is not a JSON object. It returns a
+// separate error for each entry that is not usable and keeps the rest.
 func (l FSSuffixesLoader) Load(filename string) (Suffixes, []error, error) {
 	fileContents, err := l.fs.ReadFile(filename)
 	if err != nil {
@@ -64,6 +67,8 @@ func (l FSSuffixesLoader) Load(filename string) (Suffixes, []error, error) {
 	return suffixes, append(errs, entryErrs...), nil
 }
 
+// NewFSSuffixesLoader returns a NamedSuffixesLoader that reads alias suffix
+// files from fs.
 func NewFSSuffixesLoader(fs boshsys.FileSystem) NamedSuffixesLoader {
 	return FSSuffixesLoader{fs: fs}
 }

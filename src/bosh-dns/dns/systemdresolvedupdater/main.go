@@ -28,6 +28,9 @@ const maxLinkDomains = 256
 
 var systemdResolvedStubs = []net.IP{net.IPv4(127, 0, 0, 53), net.IPv4(127, 0, 0, 54)}
 
+// main loads the bosh-dns configuration, the records, and the handlers, and
+// then updates the systemd-resolved domains. It exits with a fatal log when
+// any step fails.
 func main() {
 	var configPath string
 	flag.StringVar(&configPath, "config", "", "path to config file")
@@ -82,6 +85,10 @@ func main() {
 	close(shutdown)
 }
 
+// updateSystemdResolved sends the domains for this configuration to
+// systemd-resolved, and does nothing when systemd-resolved is not configured.
+// It warns when there are more distinct domains than one link accepts, and
+// still sends them. It returns the error from the manager.
 func updateSystemdResolved(systemdResolvedManager manager.SystemdResolvedManager, cfg config.Config, ownSuffixFile string, handlersConfiguration handlers.HandlerConfigs, recordSet *records.RecordSet, fs system.FileSystem, logr logger.Logger) error {
 	if !cfg.ConfigureSystemdResolved {
 		return nil
@@ -100,11 +107,15 @@ func updateSystemdResolved(systemdResolvedManager manager.SystemdResolvedManager
 	return systemdResolvedManager.UpdateDomains(domains)
 }
 
-// ownAliasSuffixFile holds the alias_suffixes property of this job.
+// ownAliasSuffixFile returns the path of this job's alias_suffixes.json,
+// which sits in the dns directory beside the directory that holds the config.
 func ownAliasSuffixFile(configPath string) string {
 	return filepath.Join(filepath.Dir(filepath.Dir(configPath)), "dns", "alias_suffixes.json")
 }
 
+// aliasSuffixFilesGlob returns the configured alias suffix files glob. When
+// none is configured, it returns the default under the jobs directory, or an
+// empty glob if there is no jobs directory.
 func aliasSuffixFilesGlob(cfg config.Config) string {
 	if cfg.AliasSuffixFilesGlob != "" || cfg.JobsDir == "" {
 		return cfg.AliasSuffixFilesGlob
@@ -170,6 +181,9 @@ func forwardsToStubResolver(cfg config.Config) bool {
 	return false
 }
 
+// stubResolver reports which systemd-resolved stub address a recursor names,
+// where the recursor is an address with an optional port that defaults to 53.
+// It returns false for any other address or port.
 func stubResolver(recursor string) (string, bool) {
 	host, port, err := net.SplitHostPort(recursor)
 	if err != nil {
@@ -224,6 +238,9 @@ func systemdResolvedDomains(handlerDomains []string, recordSet *records.RecordSe
 	return uniqueDomains, registered
 }
 
+// routingDomainFor returns the routing domain with the most labels that the
+// domain equals or sits under. It returns the domain unchanged and false when
+// no routing domain applies.
 func routingDomainFor(domain string, routingDomains []string) (string, bool) {
 	name := dns.CanonicalName(domain)
 	match := domain

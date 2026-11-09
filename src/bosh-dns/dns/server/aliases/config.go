@@ -216,6 +216,9 @@ func (c Config) AliasHosts() []string {
 	return c.aliasHosts
 }
 
+// getAliasHosts returns the sorted, fully qualified alias hosts that have no
+// parent domain among the other alias hosts. A Config caches the result for
+// AliasHosts when it is built or merged.
 func (c Config) getAliasHosts() []string {
 	return topLevelHosts(c.allAliasHosts())
 }
@@ -241,6 +244,8 @@ func (c Config) HasAliasUnder(domain string) bool {
 	return false
 }
 
+// addSuffixedHosts adds a host to allHosts for each alias, using the alias's
+// suffix in place of the alias when suffixes has one.
 func addSuffixedHosts(allHosts map[string]bool, aliases map[string][]string, suffixes map[string]string) {
 	for host := range aliases {
 		if suffix, found := suffixes[host]; found {
@@ -251,6 +256,8 @@ func addSuffixedHosts(allHosts map[string]bool, aliases map[string][]string, suf
 	}
 }
 
+// topLevelHosts returns the sorted, fully qualified hosts that are not
+// subdomains of another host in allHosts.
 func topLevelHosts(allHosts map[string]bool) []string {
 	hosts := []string{}
 

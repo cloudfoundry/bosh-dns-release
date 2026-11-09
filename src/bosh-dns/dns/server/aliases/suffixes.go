@@ -23,6 +23,7 @@ type Suffixes struct {
 	underscoreSuffixes map[string]string
 }
 
+// NewSuffixes returns a Suffixes with no entries that is ready to use.
 func NewSuffixes() Suffixes {
 	return Suffixes{
 		suffixes:           map[string]string{},
@@ -45,6 +46,10 @@ func NewSuffixesFromMap(load map[string]string) (Suffixes, []error) {
 	return suffixes, errs
 }
 
+// set records the suffix for an alias, where an alias starting with "_." is
+// kept apart from one without it. It rejects an empty alias, an invalid alias
+// or suffix, a suffix that is neither the alias nor a parent of it, and a
+// second suffix that differs from the first. Repeating the same suffix is fine.
 func (s Suffixes) set(rawAlias string, rawSuffix string) error {
 	if rawAlias == "" {
 		return bosherr.Error("empty alias")
@@ -82,6 +87,7 @@ func (s Suffixes) set(rawAlias string, rawSuffix string) error {
 	return nil
 }
 
+// IsEmpty reports whether s holds no suffixes.
 func (s Suffixes) IsEmpty() bool {
 	return len(s.suffixes) == 0 && len(s.underscoreSuffixes) == 0
 }
