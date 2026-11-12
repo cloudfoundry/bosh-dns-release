@@ -1,4 +1,6 @@
 require_relative 'shared_examples'
+require 'tmpdir'
+require 'fileutils'
 
 def render_monit(properties = {})
   job_dir = File.join(File.dirname(__FILE__), '../../jobs/bosh-dns')
@@ -190,7 +192,132 @@ describe 'bosh-dns' do
       it 'invokes the dummy interface setup and runs the systemd-resolved updater' do
         expect(rendered).to match(/^create_network_interface$/)
         expect(rendered).to include('bosh-dns-systemd-resolved-updater')
-        expect(rendered).to include('resolvectl default-route bosh-dns no')
+      end
+
+      def run_default_route_detection(rendered_script, resolvectl_dns_output:, resolvectl_dns_exit: 0)
+        Dir.mktmpdir do |dir|
+          dns_file   = File.join(dir, 'dns_output')
+          calls_file = File.join(dir, 'calls')
+          File.write(dns_file, resolvectl_dns_output)
+          File.write(File.join(dir, 'resolvectl'), <<~SH)
+            #!/bin/bash
+            if [[ "$1" == "dns" && "$#" -eq 1 ]]; then
+              cat "#{dns_file}"
+              exit #{resolvectl_dns_exit}
+            fi
+            echo "$@" >> "#{calls_file}"
+          SH
+          FileUtils.chmod(0755, File.join(dir, 'resolvectl'))
+          File.write(File.join(dir, 'ip'), "#!/bin/bash\nexit 0\n")
+          FileUtils.chmod(0755, File.join(dir, 'ip'))
+
+          fn = rendered_script.match(/function create_network_interface\(\) \{.*?\n\}/m)&.to_s
+          raise 'create_network_interface not found in rendered script' unless fn
+
+          system('bash', '-c', %(PATH="#{dir}:$PATH"\n#{fn}\ncreate_network_interface))
+          File.exist?(calls_file) ? File.read(calls_file).strip : ''
+        end
+      end
+
+      it 'strips DefaultRoute when another DNS interface has servers configured (IaaS with eth0)' do
+        dns_output = "Global:\nLink 2 (eth0): 8.8.8.8\nLink 3 (bosh-dns): 169.254.0.2"
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
+        expect(calls).to     include('default-route bosh-dns no')
+        expect(calls).not_to include('default-route bosh-dns yes')
+      end
+
+      it 'keeps DefaultRoute when bosh-dns is the sole DNS interface (BOSH-lite)' do
+        dns_output = "Global:\nLink 3 (bosh-dns): 169.254.0.2"
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
+        expect(calls).to     include('default-route bosh-dns yes')
+        expect(calls).not_to include('default-route bosh-dns no')
+      end
+
+      it 'keeps DefaultRoute when another link exists but has no DNS servers configured' do
+        dns_output = "Global:\nLink 2 (eth0):\nLink 3 (bosh-dns): 169.254.0.2"
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
+        expect(calls).to     include('default-route bosh-dns yes')
+        expect(calls).not_to include('default-route bosh-dns no')
+      end
+
+      it 'strips DefaultRoute when Global DNS is configured (even with no Link-based DNS)' do
+        dns_output = "Global: 8.8.8.8\nLink 2 (eth0):\nLink 3 (bosh-dns): 169.254.0.2"
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
+        expect(calls).to     include('default-route bosh-dns no')
+        expect(calls).not_to include('default-route bosh-dns yes')
+      end
+
+      it 'strips DefaultRoute conservatively when resolvectl enumeration fails' do
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: 'error output', resolvectl_dns_exit: 1)
+        expect(calls).to     include('default-route bosh-dns no')
+        expect(calls).not_to include('default-route bosh-dns yes')
+      end
+    end
+  end
+
+  describe 'bin/bosh_dns_ctl' do
+    let(:template) { job.template('bin/bosh_dns_ctl') }
+
+    context 'on Noble (configure_systemd_resolved: true)' do
+      let(:rendered) { template.render({'override_nameserver' => false, 'configure_systemd_resolved' => true}) }
+
+      def run_default_route_detection(rendered_script, resolvectl_dns_output:, resolvectl_dns_exit: 0)
+        Dir.mktmpdir do |dir|
+          dns_file   = File.join(dir, 'dns_output')
+          calls_file = File.join(dir, 'calls')
+          File.write(dns_file, resolvectl_dns_output)
+          File.write(File.join(dir, 'resolvectl'), <<~SH)
+            #!/bin/bash
+            if [[ "$1" == "dns" && "$#" -eq 1 ]]; then
+              cat "#{dns_file}"
+              exit #{resolvectl_dns_exit}
+            fi
+            echo "$@" >> "#{calls_file}"
+          SH
+          FileUtils.chmod(0755, File.join(dir, 'resolvectl'))
+          File.write(File.join(dir, 'ip'), "#!/bin/bash\nexit 0\n")
+          FileUtils.chmod(0755, File.join(dir, 'ip'))
+
+          fn = rendered_script.match(/function create_network_interface\(\) \{.*?\n\}/m)&.to_s
+          raise 'create_network_interface not found in rendered script' unless fn
+
+          system('bash', '-c', %(PATH="#{dir}:$PATH"\n#{fn}\ncreate_network_interface))
+          File.exist?(calls_file) ? File.read(calls_file).strip : ''
+        end
+      end
+
+      it 'strips DefaultRoute when another DNS interface has servers configured (IaaS with eth0)' do
+        dns_output = "Global:\nLink 2 (eth0): 8.8.8.8\nLink 3 (bosh-dns): 169.254.0.2"
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
+        expect(calls).to     include('default-route bosh-dns no')
+        expect(calls).not_to include('default-route bosh-dns yes')
+      end
+
+      it 'keeps DefaultRoute when bosh-dns is the sole DNS interface (BOSH-lite)' do
+        dns_output = "Global:\nLink 3 (bosh-dns): 169.254.0.2"
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
+        expect(calls).to     include('default-route bosh-dns yes')
+        expect(calls).not_to include('default-route bosh-dns no')
+      end
+
+      it 'keeps DefaultRoute when another link exists but has no DNS servers configured' do
+        dns_output = "Global:\nLink 2 (eth0):\nLink 3 (bosh-dns): 169.254.0.2"
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
+        expect(calls).to     include('default-route bosh-dns yes')
+        expect(calls).not_to include('default-route bosh-dns no')
+      end
+
+      it 'strips DefaultRoute when Global DNS is configured (even with no Link-based DNS)' do
+        dns_output = "Global: 8.8.8.8\nLink 2 (eth0):\nLink 3 (bosh-dns): 169.254.0.2"
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
+        expect(calls).to     include('default-route bosh-dns no')
+        expect(calls).not_to include('default-route bosh-dns yes')
+      end
+
+      it 'strips DefaultRoute conservatively when resolvectl enumeration fails' do
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: 'error output', resolvectl_dns_exit: 1)
+        expect(calls).to     include('default-route bosh-dns no')
+        expect(calls).not_to include('default-route bosh-dns yes')
       end
     end
   end
