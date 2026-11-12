@@ -240,6 +240,13 @@ describe 'bosh-dns' do
         expect(calls).not_to include('default-route bosh-dns no')
       end
 
+      it 'strips DefaultRoute when Global DNS is configured (even with no Link-based DNS)' do
+        dns_output = "Global: 8.8.8.8\nLink 2 (eth0):\nLink 3 (bosh-dns): 169.254.0.2"
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
+        expect(calls).to     include('default-route bosh-dns no')
+        expect(calls).not_to include('default-route bosh-dns yes')
+      end
+
       it 'strips DefaultRoute conservatively when resolvectl enumeration fails' do
         calls = run_default_route_detection(rendered, resolvectl_dns_output: 'error output', resolvectl_dns_exit: 1)
         expect(calls).to     include('default-route bosh-dns no')
@@ -298,6 +305,13 @@ describe 'bosh-dns' do
         calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
         expect(calls).to     include('default-route bosh-dns yes')
         expect(calls).not_to include('default-route bosh-dns no')
+      end
+
+      it 'strips DefaultRoute when Global DNS is configured (even with no Link-based DNS)' do
+        dns_output = "Global: 8.8.8.8\nLink 2 (eth0):\nLink 3 (bosh-dns): 169.254.0.2"
+        calls = run_default_route_detection(rendered, resolvectl_dns_output: dns_output)
+        expect(calls).to     include('default-route bosh-dns no')
+        expect(calls).not_to include('default-route bosh-dns yes')
       end
 
       it 'strips DefaultRoute conservatively when resolvectl enumeration fails' do

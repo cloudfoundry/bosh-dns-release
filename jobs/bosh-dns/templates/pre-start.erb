@@ -49,7 +49,7 @@ function create_network_interface() {
     resolvectl log-level <%= {'DEBUG' => 'debug', 'INFO' => 'info', 'WARN' => 'warning', 'ERROR' => 'err', 'NONE' => 'emerg'}[p('log_level')] %>
   fi
   if dns_out=$(resolvectl dns 2>&1); then
-    if echo "${dns_out}" | grep -v "bosh-dns" | grep -qE "Link [0-9]+ \([^)]+\): [^[:space:]]"; then
+    if echo "${dns_out}" | grep -v "bosh-dns" | grep -qE "(^Global:[[:space:]]+[^[:space:]]|Link [0-9]+ \([^)]+\): [^[:space:]])"; then
       resolvectl default-route bosh-dns no
     else
       resolvectl default-route bosh-dns yes
