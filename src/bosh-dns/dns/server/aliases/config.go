@@ -216,9 +216,50 @@ func (c Config) AliasHosts() []string {
 	return c.aliasHosts
 }
 
+// getAliasHosts returns the sorted, fully qualified alias hosts that have no
+// parent domain among the other alias hosts. A Config caches the result for
+// AliasHosts when it is built or merged.
 func (c Config) getAliasHosts() []string {
-	aliasHosts := []string{}
-	allHosts := c.allAliasHosts()
+	return topLevelHosts(c.allAliasHosts())
+}
+
+// SuffixedAliasHosts returns the alias hosts with each alias that has a
+// suffix in s replaced by that suffix, pruned the same way as AliasHosts.
+func (c Config) SuffixedAliasHosts(s Suffixes) []string {
+	allHosts := map[string]bool{}
+	addSuffixedHosts(allHosts, c.aliases, s.suffixes)
+	addSuffixedHosts(allHosts, c.underscoreAliases, s.underscoreSuffixes)
+
+	return topLevelHosts(allHosts)
+}
+
+// HasAliasUnder reports whether an alias host sits below domain.
+func (c Config) HasAliasUnder(domain string) bool {
+	for host := range c.allAliasHosts() {
+		if host != domain && dns.IsSubDomain(domain, host) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// addSuffixedHosts adds a host to allHosts for each alias, using the alias's
+// suffix in place of the alias when suffixes has one.
+func addSuffixedHosts(allHosts map[string]bool, aliases map[string][]string, suffixes map[string]string) {
+	for host := range aliases {
+		if suffix, found := suffixes[host]; found {
+			allHosts[suffix] = true
+		} else {
+			allHosts[host] = true
+		}
+	}
+}
+
+// topLevelHosts returns the sorted, fully qualified hosts that are not
+// subdomains of another host in allHosts.
+func topLevelHosts(allHosts map[string]bool) []string {
+	hosts := []string{}
 
 	for host := range allHosts {
 		foundParentDomain := false
@@ -231,13 +272,13 @@ func (c Config) getAliasHosts() []string {
 		}
 
 		if !foundParentDomain {
-			aliasHosts = append(aliasHosts, dns.Fqdn(host))
+			hosts = append(hosts, dns.Fqdn(host))
 		}
 	}
 
-	sort.Strings(aliasHosts)
+	sort.Strings(hosts)
 
-	return aliasHosts
+	return hosts
 }
 
 func (c Config) allAliasHosts() map[string]bool {

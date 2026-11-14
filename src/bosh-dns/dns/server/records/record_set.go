@@ -279,6 +279,30 @@ func (r *RecordSet) Domains() []string {
 	return append(r.domains, r.mergedAliasList.AliasHosts()...)
 }
 
+// SystemdResolvedDomains returns Domains with each alias that has a suffix
+// replaced by that suffix. The bool reports whether any suffix applied.
+func (r *RecordSet) SystemdResolvedDomains(suffixes aliases.Suffixes) ([]string, bool) {
+	r.recordsMutex.RLock()
+	defer r.recordsMutex.RUnlock()
+
+	applicable, undefined := suffixes.DefinedIn(r.mergedAliasList)
+	for _, alias := range undefined {
+		if r.mergedAliasList.HasAliasUnder(strings.TrimPrefix(alias, "_.")) {
+			r.logger.Info("RecordSet", "Ignoring the alias suffix for %s because no alias source defines it. Aliases below it exist, as the director writes them for a link alias with a uuid placeholder, and only a systemd_resolved.routing_domains entry covers those", alias)
+		} else {
+			r.logger.Debug("RecordSet", "Ignoring the alias suffix for %s because no alias source defines it", alias)
+		}
+	}
+
+	aliasHosts := r.mergedAliasList.SuffixedAliasHosts(applicable)
+
+	domains := make([]string, 0, len(r.domains)+len(aliasHosts))
+	domains = append(domains, r.domains...)
+	domains = append(domains, aliasHosts...)
+
+	return domains, !applicable.IsEmpty()
+}
+
 func (r *RecordSet) update() {
 	contents, err := r.recordFileReader.Get()
 	if err != nil {

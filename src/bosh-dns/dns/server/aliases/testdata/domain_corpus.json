@@ -1,0 +1,273 @@
+{
+  "domains": [
+    {
+      "domain": "bosh",
+      "error": ""
+    },
+    {
+      "domain": "service.cf.internal.",
+      "error": ""
+    },
+    {
+      "domain": "Service.CF.Internal",
+      "error": ""
+    },
+    {
+      "domain": "_tcp.bosh-dns",
+      "error": ""
+    },
+    {
+      "domain": "10.in-addr.arpa",
+      "error": ""
+    },
+    {
+      "domain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bosh",
+      "error": ""
+    },
+    {
+      "domain": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bosh",
+      "error": ""
+    },
+    {
+      "domain": "",
+      "error": "empty domain"
+    },
+    {
+      "domain": ".",
+      "error": "the root domain is not allowed"
+    },
+    {
+      "domain": "~bosh",
+      "error": "write it without the ~ prefix"
+    },
+    {
+      "domain": "*.bosh",
+      "error": "wildcards are not allowed"
+    },
+    {
+      "domain": "bo sh",
+      "error": "whitespace is not allowed"
+    },
+    {
+      "domain": "bosh\t",
+      "error": "whitespace is not allowed"
+    },
+    {
+      "domain": "bosh\n",
+      "error": "whitespace is not allowed"
+    },
+    {
+      "domain": "service..internal",
+      "error": "not a valid domain name"
+    },
+    {
+      "domain": "bosh..",
+      "error": "not a valid domain name"
+    },
+    {
+      "domain": ".bosh",
+      "error": "not a valid domain name"
+    },
+    {
+      "domain": "-bad.bosh",
+      "error": "not a valid domain name"
+    },
+    {
+      "domain": "bad-.bosh",
+      "error": "not a valid domain name"
+    },
+    {
+      "domain": "a\\.b.bosh",
+      "error": "not a valid domain name"
+    },
+    {
+      "domain": "bosh!",
+      "error": "not a valid domain name"
+    },
+    {
+      "domain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bosh",
+      "error": "not a valid domain name"
+    },
+    {
+      "domain": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bosh",
+      "error": "not a valid domain name"
+    },
+    {
+      "domain": "\u212aube.internal",
+      "error": "only ASCII characters are allowed"
+    },
+    {
+      "domain": "b\u00f6sh",
+      "error": "only ASCII characters are allowed"
+    },
+    {
+      "domain": "bosh\u00a0",
+      "error": "only ASCII characters are allowed"
+    },
+    {
+      "domain": "bosh\u2028",
+      "error": "only ASCII characters are allowed"
+    },
+    {
+      "domain": "bosh\u0085",
+      "error": "only ASCII characters are allowed"
+    }
+  ],
+  "alias_suffixes": [
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": "service.cf.internal",
+      "error": ""
+    },
+    {
+      "alias": "locket.service.cf.internal",
+      "suffix": "Locket.Service.CF.Internal.",
+      "error": ""
+    },
+    {
+      "alias": "BBS.Service.CF.Internal",
+      "suffix": "service.cf.internal.",
+      "error": ""
+    },
+    {
+      "alias": "a.b.internal.",
+      "suffix": "b.internal",
+      "error": ""
+    },
+    {
+      "alias": "_.under.internal",
+      "suffix": "internal",
+      "error": ""
+    },
+    {
+      "alias": "_.foo.bar",
+      "suffix": "foo.bar",
+      "error": ""
+    },
+    {
+      "alias": "_.a.b",
+      "suffix": "b",
+      "error": ""
+    },
+    {
+      "alias": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bosh",
+      "suffix": "bosh",
+      "error": ""
+    },
+    {
+      "alias": "",
+      "suffix": "internal",
+      "error": "empty alias"
+    },
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": "",
+      "error": "empty domain"
+    },
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": ".",
+      "error": "the root domain is not allowed"
+    },
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": "~service.cf.internal",
+      "error": "write it without the ~ prefix"
+    },
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": "*.cf.internal",
+      "error": "wildcards are not allowed"
+    },
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": "service .cf.internal",
+      "error": "whitespace is not allowed"
+    },
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": "-bad.internal",
+      "error": "not a valid domain name"
+    },
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": "\u212a.internal",
+      "error": "only ASCII characters are allowed"
+    },
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": "other.internal",
+      "error": "is not the alias or a parent of it"
+    },
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": "vice.cf.internal",
+      "error": "is not the alias or a parent of it"
+    },
+    {
+      "alias": "bbs.service.cf.internal",
+      "suffix": "x.bbs.service.cf.internal",
+      "error": "is not the alias or a parent of it"
+    },
+    {
+      "alias": "_.foo.bar",
+      "suffix": "x.foo.bar",
+      "error": "is not the alias or a parent of it"
+    },
+    {
+      "alias": "_.a.b",
+      "suffix": "_.a.b",
+      "error": "is not the alias or a parent of it"
+    },
+    {
+      "alias": "_.",
+      "suffix": "internal",
+      "error": "empty domain"
+    },
+    {
+      "alias": ".",
+      "suffix": "internal",
+      "error": "the root domain is not allowed"
+    },
+    {
+      "alias": "x\\.svc.internal",
+      "suffix": "svc.internal",
+      "error": "not a valid domain name"
+    },
+    {
+      "alias": "a..internal",
+      "suffix": "internal",
+      "error": "not a valid domain name"
+    },
+    {
+      "alias": ".a.internal",
+      "suffix": "internal",
+      "error": "not a valid domain name"
+    },
+    {
+      "alias": "*.internal",
+      "suffix": "internal",
+      "error": "wildcards are not allowed"
+    },
+    {
+      "alias": "~a.internal",
+      "suffix": "internal",
+      "error": "write it without the ~ prefix"
+    },
+    {
+      "alias": "a b.internal",
+      "suffix": "internal",
+      "error": "whitespace is not allowed"
+    },
+    {
+      "alias": "\u212aube.internal",
+      "suffix": "internal",
+      "error": "only ASCII characters are allowed"
+    },
+    {
+      "alias": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bosh",
+      "suffix": "bosh",
+      "error": "not a valid domain name"
+    }
+  ]
+}
